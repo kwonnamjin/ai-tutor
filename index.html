@@ -302,21 +302,16 @@
             availableVoices = window.speechSynthesis.getVoices();
         };
 
-        // --- ✨ UPDATED CORE: Robust TTS Text Cleaner ✨ ---
-        // 마크다운, 따옴표, 괄호 등 기호를 지우되, 억양을 결정하는 마침표/물음표 등은 남깁니다.
-        // 다중 기호(예: ...)를 하나로 압축하여 한참 멈춰있는 현상을 원천 차단합니다.
+        // --- ✨ NEW CORE: Robust TTS Text Cleaner ✨ ---
+        // 마크다운, 따옴표, 괄호 등 기호를 싹 지워버려서 아나운서처럼 부드럽게 읽게 만듭니다.
+        // 다중 공백이나 줄바꿈도 하나로 압축하여 한참 멈춰있는 현상을 원천 차단합니다.
         function cleanTextForTTS(rawText) {
             if (!rawText) return "";
-            // 1. 읽으면 거슬리는 특수기호 제거 (단, 마침표, 쉼표, 느낌표, 물음표는 억양을 위해 유지)
-            let cleaned = rawText.replace(/[\*\#\`\~\"\'\(\)\[\]\<\>\{\}\_\-\:\;]/g, ' ');
+            // 1. 읽으면 거슬리는 모든 특수기호 및 문장부호 제거 (쉼표, 마침표, 느낌표 포함)
+            let cleaned = rawText.replace(/[\*\#\`\~\"\'\(\)\[\]\<\>\{\}\_\-\:\;\.\,\!\?]/g, ' ');
             // 2. 이모지 제거 (에러 방지)
             cleaned = cleaned.replace(/[\u{1F600}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '');
-            // 3. 다중 문장 부호 압축 (말끝을 길게 끌며 쉬는 현상 방지)
-            cleaned = cleaned.replace(/\.{2,}/g, '.');
-            cleaned = cleaned.replace(/\!{2,}/g, '!');
-            cleaned = cleaned.replace(/\?{2,}/g, '?');
-            cleaned = cleaned.replace/\,{2,}/g, ',');
-            // 4. 다중 공백 압축
+            // 3. 다중 공백 압축 (뚝뚝 끊기는 한참 쉬는 현상 해결)
             return cleaned.replace(/\s+/g, ' ').trim();
         }
 
@@ -734,9 +729,8 @@
             const matchedVoice = getMatchedVoice(langCode);
             if (matchedVoice) currentUtterance.voice = matchedVoice;
 
-            // 속도와 톤 자연스럽게 최적화 (기계음 완화)
-            currentUtterance.rate = 1.0; 
-            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.1 : 0.9;
+            currentUtterance.rate = 0.95; 
+            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
 
             currentUtterance.onstart = () => {
                 isSpeaking = true;
@@ -808,9 +802,8 @@
             const matchedVoice = getMatchedVoice(chunk.lang);
             if (matchedVoice) currentUtterance.voice = matchedVoice;
 
-            // 혼합 언어 발음 시에도 속도와 톤 최적화 적용
-            currentUtterance.rate = 1.0; 
-            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.1 : 0.9;
+            currentUtterance.rate = 0.95; 
+            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
 
             currentUtterance.onstart = () => {
                 isSpeaking = true;
