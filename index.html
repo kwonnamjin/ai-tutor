@@ -864,7 +864,7 @@
             const expLangName = explanationLanguageSelect.options[explanationLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             const targetLangCode = targetLanguageSelect.value;
 
-            // 해설 요청 프롬프트
+            // 해설 요청 프롬프트 (이 부분이 '한국어로' 고정되어 있던 것을 expLangName 변수로 교체했습니다!)
             const prompt = `방금 대화 문장 ("${lastAiMsg}") 내에 있는 가장 중요한 외국어 단어나 문법 1개를 골라, 반드시 [${expLangName}] 언어로 아주 짧고 친절하게 과외 선생님처럼 해설을 작성해줘. 해설 중간중간 설명 대상이 되는 원문(외국어 단어)을 그대로 섞어서 써줘.`;
             
             try {
