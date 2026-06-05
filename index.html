@@ -75,11 +75,11 @@
 </head>
 <body class="h-screen flex items-center justify-center p-4">
 
-    <!-- App Container -->
+    <!-- App Container (Flex column structure ensuring zero overlap) -->
     <div class="bg-white w-full max-w-md h-[820px] max-h-full rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
         
-        <!-- Header -->
-        <div class="bg-blue-600 text-white p-4 flex justify-between items-center z-10 shadow-md">
+        <!-- Header (Fixed top) -->
+        <div class="flex-none bg-blue-600 text-white p-4 flex justify-between items-center z-10 shadow-md">
             <div>
                 <h1 class="text-xl font-bold">TalkAI Tutor</h1>
                 <p class="text-xs text-blue-200">실시간 언어 학습 파트너</p>
@@ -101,7 +101,7 @@
         </div>
 
         <!-- Engine Indicator Strip -->
-        <div class="bg-slate-100 px-4 py-1.5 flex justify-between items-center border-b border-gray-200 text-xs">
+        <div class="flex-none bg-slate-100 px-4 py-1.5 flex justify-between items-center border-b border-gray-200 text-xs">
             <span class="text-gray-500 font-medium">사용 중인 AI 엔진:</span>
             <div class="flex items-center gap-2">
                 <select id="activeEngine" class="bg-white border border-gray-300 rounded px-2 py-0.5 font-bold text-gray-700 focus:outline-none" onchange="changeEngine()">
@@ -123,8 +123,8 @@
             </div>
         </div>
 
-        <!-- Chat / Subtitles Area -->
-        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 no-scrollbar pb-32">
+        <!-- Chat / Subtitles Area (Now perfectly bounded by the sibling components, absolute layout removed) -->
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 no-scrollbar pb-6">
             <!-- System Welcome Message -->
             <div class="flex flex-col space-y-1">
                 <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] shadow-sm self-start" id="welcomeMessage">
@@ -136,8 +136,8 @@
             </div>
         </div>
 
-        <!-- Controls Area -->
-        <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 pb-6 flex flex-col items-center gap-3 z-20">
+        <!-- Controls Area (Changed from Absolute to Static Flex Child to guarantee content is never covered) -->
+        <div class="flex-none bg-white border-t border-gray-200 p-4 pb-6 flex flex-col items-center gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
             
             <!-- Real-time Speech Input Language Switcher -->
             <div class="bg-gray-100 p-1 rounded-full flex gap-1 text-[11px] font-bold shadow-inner">
@@ -302,6 +302,7 @@
             }
         }
 
+        // --- STREAMING_CHUNK:Initializing STT engine... ---
         // --- Initialize Speech Recognition (STT) ---
         function initSpeechRecognition() {
             if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -445,6 +446,7 @@
             }
         }
 
+        // --- STREAMING_CHUNK:Implementing dynamic dialog system... ---
         // --- Assembling chat history and constructing systemic prompts ---
         function addMessageToChat(sender, text, translation = null) {
             const msgDiv = document.createElement('div');
@@ -505,6 +507,7 @@
             throw new Error("API call max retries exceeded.");
         }
 
+        // --- STREAMING_CHUNK:Connecting with AI platforms... ---
         // --- Connecting with Gemini and DeepSeek for multilingual instruction execution ---
         async function handleUserMessage(text) {
             addMessageToChat('user', text);
@@ -650,6 +653,7 @@
             showToast(`${keyName} 등록이 필요합니다!`);
         }
 
+        // --- STREAMING_CHUNK:Configuring TTS engine outputs... ---
         // --- Configuring multi-accent voice synthesizer targets ---
         function speakText(text, langCode) {
             if (!synthesis) return;
@@ -705,6 +709,7 @@
             }
         }
 
+        // --- STREAMING_CHUNK:Assembling grammatical analysis system... ---
         // --- Executing dynamic contextual query explanations ---
         async function requestExplanation() {
             if (conversationHistory.length === 0) {
