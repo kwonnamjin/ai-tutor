@@ -17,8 +17,8 @@
         }
         
         .avatar-container {
-            width: 150px;
-            height: 150px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             overflow: hidden;
             border: 4px solid #3b82f6;
@@ -68,7 +68,7 @@
 <body class="h-screen flex items-center justify-center p-4">
 
     <!-- App Container -->
-    <div class="bg-white w-full max-w-md h-[800px] max-h-full rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
+    <div class="bg-white w-full max-w-md h-[820px] max-h-full rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
         
         <!-- Header -->
         <div class="bg-blue-600 text-white p-4 flex justify-between items-center z-10 shadow-md">
@@ -83,6 +83,8 @@
                     <option value="es-ES" data-lang-name="스페인어">🇪🇸 스페인어</option>
                     <option value="ja-JP" data-lang-name="일본어">🇯🇵 일본어</option>
                     <option value="zh-CN" data-lang-name="중국어">🇨🇳 중국어</option>
+                    <option value="th-TH" data-lang-name="태국어">🇹🇭 태국어</option>
+                    <option value="vi-VN" data-lang-name="베트남어">🇻🇳 베트남어</option>
                 </select>
                 <button id="settingsBtn" class="w-10 h-10 rounded-lg bg-blue-700 hover:bg-blue-800 flex items-center justify-center transition-colors border border-blue-500" onclick="toggleSettingsModal()">
                     <i class="fa-solid fa-gear text-lg"></i>
@@ -101,48 +103,61 @@
             </div>
         </div>
 
-        <!-- Visual Area (Avatar / Fake Video Call) -->
-        <div class="flex-none bg-gradient-to-b from-blue-50 to-white pt-6 pb-4 flex flex-col items-center justify-center relative">
-            <div id="avatarWrap" class="avatar-container mb-3 transition-all duration-300">
+        <!-- Visual Area (Avatar) -->
+        <div class="flex-none bg-gradient-to-b from-blue-50 to-white pt-5 pb-3 flex flex-col items-center justify-center relative">
+            <div id="avatarWrap" class="avatar-container mb-2.5 transition-all duration-300">
                 <!-- Placeholder for Avatar -->
                 <img src="https://placehold.co/300x300/e2e8f0/475569?text=AI+Tutor" alt="AI Avatar" class="avatar-img" id="avatarImage">
             </div>
             
-            <div id="statusText" class="text-sm font-medium text-gray-500 bg-gray-100 px-4 py-1 rounded-full">
-                준비됨. 하단 마이크를 눌러 대화를 시작하세요.
+            <div id="statusText" class="text-xs font-semibold text-gray-500 bg-gray-100 px-4 py-1 rounded-full">
+                준비됨. 아래 입력 모드를 정하고 마이크를 눌러 시작하세요.
             </div>
         </div>
 
         <!-- Chat / Subtitles Area -->
-        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 no-scrollbar pb-24">
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 no-scrollbar pb-32">
             <!-- System Welcome Message -->
             <div class="flex flex-col space-y-1">
                 <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] shadow-sm self-start" id="welcomeMessage">
-                    <p class="text-sm text-gray-800">안녕하세요! 저는 당신의 AI 언어 튜터입니다. 우측 상단에서 배울 언어를 선택하고 마이크를 눌러 해당 언어로 편하게 말씀해 주세요. 😊</p>
+                    <p class="text-sm text-gray-800">안녕하세요! 당신의 글로벌 AI 튜터입니다. 우측 상단에서 배울 언어를 선택하고 마이크를 눌러 대화를 시작해 보세요. 😊</p>
                     <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded">
-                        <i class="fa-solid fa-circle-info"></i> 선택한 언어의 <b>원어민 음성</b>으로 AI가 자연스럽게 맞대답해 줍니다.
+                        <i class="fa-solid fa-circle-info"></i> 이제 <b>태국어(🇹🇭)</b>와 <b>베트남어(🇻🇳)</b> 대화도 정식으로 지원합니다!
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Controls Area -->
-        <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 pb-6 flex justify-center items-center gap-6 z-20">
+        <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 p-4 pb-6 flex flex-col items-center gap-3 z-20">
             
-            <!-- Stop Audio Button -->
-            <button id="stopAudioBtn" class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow" onclick="stopSpeaking()" disabled>
-                <i class="fa-solid fa-volume-xmark"></i>
-            </button>
+            <!-- Real-time Speech Input Language Switcher -->
+            <div class="bg-gray-100 p-1 rounded-full flex gap-1 text-[11px] font-bold shadow-inner">
+                <button id="inputLangKo" class="px-4 py-1.5 rounded-full transition-all bg-blue-600 text-white shadow" onclick="setInputLanguage('ko')">
+                    🇰🇷 한국어로 인식
+                </button>
+                <button id="inputLangTarget" class="px-4 py-1.5 rounded-full transition-all text-gray-500 hover:text-gray-700" onclick="setInputLanguage('target')">
+                    🌐 외국어로 인식
+                </button>
+            </div>
 
-            <!-- Main Mic Button -->
-            <button id="micBtn" class="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-lg shadow-blue-500/50" onclick="toggleListening()">
-                <i id="micIcon" class="fa-solid fa-microphone"></i>
-            </button>
+            <!-- Action Controls Row -->
+            <div class="flex justify-center items-center gap-8 w-full">
+                <!-- Stop Audio Button -->
+                <button id="stopAudioBtn" class="w-12 h-12 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center hover:bg-gray-200 transition-colors shadow" onclick="stopSpeaking()" disabled>
+                    <i class="fa-solid fa-volume-xmark"></i>
+                </button>
 
-            <!-- Explain Request Button -->
-            <button id="explainBtn" class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow" onclick="requestExplanation()">
-                <i class="fa-solid fa-circle-question"></i>
-            </button>
+                <!-- Main Mic Button -->
+                <button id="micBtn" class="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-lg shadow-blue-500/50" onclick="toggleListening()">
+                    <i id="micIcon" class="fa-solid fa-microphone"></i>
+                </button>
+
+                <!-- Explain Request Button -->
+                <button id="explainBtn" class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow" onclick="requestExplanation()">
+                    <i class="fa-solid fa-circle-question"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Settings Modal (API Key Input Popup) -->
@@ -179,6 +194,12 @@
             </div>
         </div>
 
+        <!-- Custom Toast Notification Container -->
+        <div id="toast" class="fixed bottom-28 left-1/2 transform -translate-x-1/2 bg-gray-800/90 text-white text-xs px-4 py-2.5 rounded-full shadow-lg pointer-events-none transition-all duration-300 opacity-0 scale-90 z-50 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="toastMessage">알림 메시지</span>
+        </div>
+
     </div>
 
     <script>
@@ -188,7 +209,8 @@
         let recognition = null;
         let synthesis = window.speechSynthesis;
         let currentUtterance = null;
-        let conversationHistory = []; // Standard chat history structure
+        let conversationHistory = []; 
+        let userInputLanguage = 'ko'; // 'ko' or 'target'
         
         // Load settings from localStorage
         let selectedEngine = localStorage.getItem('active_engine') || 'gemini';
@@ -204,9 +226,47 @@
         const targetLanguageSelect = document.getElementById('targetLanguage');
         const stopAudioBtn = document.getElementById('stopAudioBtn');
         const activeEngineSelect = document.getElementById('activeEngine');
+        const inputLangKo = document.getElementById('inputLangKo');
+        const inputLangTarget = document.getElementById('inputLangTarget');
 
         // Apply loaded settings to UI
         activeEngineSelect.value = selectedEngine;
+
+        // --- Custom Toast Alert Function ---
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.textContent = message;
+            toast.classList.remove('opacity-0', 'scale-90');
+            toast.classList.add('opacity-100', 'scale-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'scale-100');
+                toast.classList.add('opacity-0', 'scale-90');
+            }, 3000);
+        }
+
+        // --- STREAMING_CHUNK:Configuring multi-language STT settings... ---
+        function setInputLanguage(mode) {
+            userInputLanguage = mode;
+            const selectedLangCode = targetLanguageSelect.value;
+            const selectedLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
+
+            if (mode === 'ko') {
+                inputLangKo.className = "px-4 py-1.5 rounded-full transition-all bg-blue-600 text-white shadow";
+                inputLangTarget.className = "px-4 py-1.5 rounded-full transition-all text-gray-500 hover:text-gray-700";
+                if (recognition) {
+                    recognition.lang = 'ko-KR';
+                }
+                updateStatus("한국어 인식 모드 활성화");
+            } else {
+                inputLangKo.className = "px-4 py-1.5 rounded-full transition-all text-gray-500 hover:text-gray-700";
+                inputLangTarget.className = "px-4 py-1.5 rounded-full transition-all bg-blue-600 text-white shadow";
+                if (recognition) {
+                    recognition.lang = selectedLangCode;
+                }
+                updateStatus(`${selectedLangName} 직접 말하기 모드 활성화`);
+            }
+        }
 
         // --- Initialize Speech Recognition (STT) ---
         function initSpeechRecognition() {
@@ -217,15 +277,15 @@
                 recognition.continuous = false; 
                 recognition.interimResults = false; 
                 
-                // Set language to target language for speech input (User should speak in target language)
-                recognition.lang = targetLanguageSelect.value; 
+                // Establish default starting language
+                recognition.lang = userInputLanguage === 'ko' ? 'ko-KR' : targetLanguageSelect.value;
 
                 recognition.onstart = function() {
                     isListening = true;
                     micBtn.classList.replace('bg-blue-600', 'bg-red-500');
                     micIcon.classList.add('listening-animation');
                     micIcon.classList.replace('fa-microphone', 'fa-ear-listen');
-                    updateStatus("듣는 중...");
+                    updateStatus("듣고 있는 중...");
                     stopSpeaking(); 
                 };
 
@@ -237,9 +297,9 @@
                 recognition.onerror = function(event) {
                     console.error("Speech recognition error", event.error);
                     if (event.error === 'no-speech') {
-                        updateStatus("음성이 인식되지 않았습니다.");
+                        updateStatus("음성이 감지되지 않았습니다.");
                     } else {
-                        updateStatus("오류 발생. 다시 시도해주세요.");
+                        updateStatus("오류 발생. 마이크를 다시 확인해 주세요.");
                     }
                     resetMicButton();
                 };
@@ -249,43 +309,43 @@
                     resetMicButton();
                 };
             } else {
-                updateStatus("브라우저가 음성 인식을 지원하지 않습니다.");
+                updateStatus("음성 인식 비지원 브라우저");
                 micBtn.disabled = true;
                 micBtn.classList.add('opacity-50', 'cursor-not-allowed');
             }
         }
 
-        // Initialize on start
         initSpeechRecognition();
 
-        // --- Handle Language Change ---
+        // --- STREAMING_CHUNK:Handling target language change and dynamically resetting UI... ---
         function changeLanguage() {
             const selectedLangCode = targetLanguageSelect.value;
             const selectedLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             
-            // 1. Re-initialize recognition language
-            if (recognition) {
-                recognition.lang = selectedLangCode;
-            }
+            // Sync user choice for target button label
+            inputLangTarget.textContent = `🌐 ${selectedLangName}로 인식`;
 
-            // 2. Clear conversation history to start new conversation context in new language
+            // Reset current logic settings
+            setInputLanguage(userInputLanguage);
             conversationHistory = [];
 
-            // 3. UI and Status Feedbacks
-            updateStatus(`언어 전환 완료: ${selectedLangName}`);
+            updateStatus(`학습 언어 전환 완료: ${selectedLangName}`);
             
-            // 4. Welcome Message update dynamically
+            // Welcome Card update based on country
             const welcomeDiv = document.getElementById('welcomeMessage');
             welcomeDiv.innerHTML = `
-                <p class="text-sm text-gray-800"><b>${selectedLangName}</b> 튜터 모드가 활성화되었습니다. 하단 마이크 단추를 눌러 <b>${selectedLangName}</b>로 저에게 말씀해 주세요!</p>
+                <p class="text-sm text-gray-800"><b>${selectedLangName}</b> 학습 모드가 활성화되었습니다. 🎙️ <b>${selectedLangName}</b>로 저에게 말을 걸거나, 한국어 인식 탭을 켜고 한국어로 질문하셔도 됩니다!</p>
                 <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded">
-                    <i class="fa-solid fa-circle-info"></i> 문법이 틀려도 괜찮습니다. 친절하게 교정해 드릴게요.
+                    <i class="fa-solid fa-circle-info"></i> 원포인트 족집게 과외 단추(?)를 누르면 문법 해설도 제공합니다.
                 </div>
             `;
             
-            // 5. Stop any playing voice immediately
             stopSpeaking();
         }
+
+        // Initialize UI label on boot
+        const initLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
+        inputLangTarget.textContent = `🌐 ${initLangName}로 인식`;
 
         // --- Settings Modal Functions ---
         function toggleSettingsModal() {
@@ -303,19 +363,18 @@
             localStorage.setItem('deepseek_api_key', deepseekApiKey);
             
             toggleSettingsModal();
-            updateStatus("API 키가 안전하게 저장되었습니다.");
-            avatarWrap.style.borderColor = "#3b82f6"; // Restore border to blue
+            showToast("보안키가 브라우저에 안전하게 저장되었습니다.");
+            avatarWrap.style.borderColor = "#3b82f6";
         }
 
         function changeEngine() {
             selectedEngine = activeEngineSelect.value;
             localStorage.setItem('active_engine', selectedEngine);
-            updateStatus(`엔진 변경: ${selectedEngine === 'gemini' ? 'Google Gemini' : 'DeepSeek'}`);
-            // Clear history when changing engines to prevent layout/context format conflicts
+            updateStatus(`엔진 스위칭: ${selectedEngine === 'gemini' ? 'Google Gemini' : 'DeepSeek'}`);
             conversationHistory = [];
         }
 
-        // --- UI Helper Functions ---
+        // --- UI State Modifiers ---
         function resetMicButton() {
             micBtn.classList.replace('bg-red-500', 'bg-blue-600');
             micIcon.classList.remove('listening-animation');
@@ -329,7 +388,7 @@
 
         function toggleListening() {
             if (!recognition) {
-                alert("음성 인식이 지원되지 않는 환경입니다.");
+                showToast("현재 환경에서는 음성 인식을 지원하지 않습니다.");
                 return;
             }
 
@@ -337,15 +396,20 @@
                 recognition.stop();
             } else {
                 try {
-                    // Update recognition language immediately in case it wasn't set
-                    recognition.lang = targetLanguageSelect.value;
+                    // Refresh language values right before start
+                    if (userInputLanguage === 'ko') {
+                        recognition.lang = 'ko-KR';
+                    } else {
+                        recognition.lang = targetLanguageSelect.value;
+                    }
                     recognition.start();
                 } catch(e) {
-                    console.error("Recognition start error", e);
+                    console.error("STT initiation error", e);
                 }
             }
         }
 
+        // --- STREAMING_CHUNK:Assembling chat history and constructing systemic prompts... ---
         function addMessageToChat(sender, text, translation = null) {
             const msgDiv = document.createElement('div');
             msgDiv.className = "flex flex-col space-y-1 mt-4";
@@ -374,20 +438,17 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        // --- Exponential Backoff Fetch Helper ---
         async function fetchWithRetry(url, options, maxRetries = 5) {
             let delay = 1000;
             for (let i = 0; i < maxRetries; i++) {
                 try {
                     const response = await fetch(url, options);
                     if (response.ok) return response;
-                    
-                    // If rate limited or server error, wait and retry
                     if (response.status === 429 || response.status >= 500) {
                         await new Promise(resolve => setTimeout(resolve, delay));
-                        delay *= 2; // Exponential increase
+                        delay *= 2; 
                     } else {
-                        return response; // Return anyway for clients errors like 400/403
+                        return response;
                     }
                 } catch (error) {
                     if (i === maxRetries - 1) throw error;
@@ -395,14 +456,13 @@
                     delay *= 2;
                 }
             }
-            throw new Error("Maximum retries reached without success.");
+            throw new Error("API call max retries exceeded.");
         }
 
-        // --- Core Logic: Handle User Input and Call AI ---
+        // --- STREAMING_CHUNK:Connecting with Gemini and DeepSeek for multilingual instruction execution... ---
         async function handleUserMessage(text) {
             addMessageToChat('user', text);
             
-            // Validate API Key based on chosen engine
             if (selectedEngine === 'gemini' && !geminiApiKey) {
                 triggerMissingKeyWarning("Gemini API 키");
                 return;
@@ -412,25 +472,30 @@
             }
 
             updateStatus("생각하는 중...");
-            avatarWrap.style.borderColor = "#9ca3af"; // Gray border while thinking
+            avatarWrap.style.borderColor = "#9ca3af"; 
 
             const selectedLangCode = targetLanguageSelect.value;
             const selectedLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
+            const recognizedLangInfo = userInputLanguage === 'ko' ? '한국어' : selectedLangName;
 
-            // Construct System Prompt Instructions
+            // Highly tailored educational multi-language Prompt
             const systemPrompt = `
-당신은 친절하고 전문적인 '${selectedLangName}' 원어민 튜터입니다.
-사용자는 지금 당신과 대화를 나누며 '${selectedLangName}'를 연습하고 있습니다.
+당신은 완벽하고 친절한 '${selectedLangName}' 튜터입니다.
+사용자는 지금 당신과 대화를 나누고 있습니다.
 
 상황 규정:
-1. 사용자가 '${selectedLangName}'로 음성 입력을 하여 말을 걸면, 당신은 그 흐름에 어울리는 원어민 수준의 답변을 '${selectedLangName}'로 이어나가야 합니다.
-2. 만약 사용자가 보낸 문장에 명백한 문법적 어색함이나 오류가 있다면 가볍게 바로잡아 주고, 자연스러운 '${selectedLangName}' 표현으로 바꾸어 응답을 이어나가 주세요.
-3. 답변은 반드시 아래의 JSON 형식으로만 완벽하게 출력해야 합니다. JSON 마크다운 외 다른 문자열을 절대 추가하지 마세요:
+1. 사용자가 이번 대화에서 발화한 언어 종류: "${recognizedLangInfo}"
+2. 만약 사용자가 "한국어"로 말했다면:
+   - 사용자가 무슨 말을 하고자 하는지 영리하게 추정하여, 사용자의 한국어 의도에 꼭 들어맞는 완벽한 자연어 '${selectedLangName}' 대답 또는 번역을 '${selectedLangName}'로 제공해 주세요.
+3. 만약 사용자가 "${selectedLangName}"로 말했다면:
+   - 그것은 연습하고 있는 대상 외국어입니다. 그에 응답하는 '${selectedLangName}' 원어민 수준 대답을 '${selectedLangName}'로 이어나가세요.
+   - 사용자의 해당 외국어 발화에 문법/단어 어색함이 있다면 "korean_translation" 부분에 가볍고 친절한 조언을 한글로 덧붙여 주세요.
+4. 모든 응답은 한 치의 오차도 없이 완벽한 JSON 형식으로만 응답해야 합니다. 마크다운 기호 없이 오직 JSON 덩어리만 출력해야 안전합니다:
 {
-    "foreign_text": "원어민 언어로 대답한 자연스러운 대화 내용 (원어민 억양으로 자연스럽게 TTS가 읽어줄 내용, 오직 ${selectedLangName}로만 작성)",
-    "korean_translation": "해당 답변의 자연스러운 한글 해석 및 사용자의 잘못된 표현 교정 팁"
+    "foreign_text": "오직 '${selectedLangName}'로만 작성된 정교하고 친절한 회화 답변 (음성 TTS로 읽히며 절대 영어 번역이나 한국어 번역이 이곳에 섞여 들어오면 안 됨)",
+    "korean_translation": "해당 외국어 답변에 대한 한국어 해석 및 사용자의 잘못된 표현 교정 조언"
 }
-4. 대화의 피드백을 자연스럽게 제공하고, 답변은 한 번에 1~2문장 정도로 가볍고 짧게 작성하여 모바일 화면에서 학습자가 부담을 느끼지 않게 대화체로 대답하세요.
+5. 길이는 딱 1~2개 문장 정도로 쉽고 군더더기 없이 일상 속 대화처럼 처리하세요.
             `;
 
             let foreignText = "";
@@ -438,14 +503,13 @@
 
             try {
                 if (selectedEngine === 'gemini') {
-                    // --- GOOGLE GEMINI API CALL ---
-                    // Prepare conversation history
+                    // Setup internal Gemini structure
                     if (conversationHistory.length === 0) {
                         conversationHistory.push({ role: "user", parts: [{ text: "안녕, 대화를 시작하자." }] });
-                        conversationHistory.push({ role: "model", parts: [{ text: JSON.stringify({ foreign_text: "Hello! Let's start the conversation.", korean_translation: "안녕하세요! 대화를 시작합시다." }) }] });
+                        conversationHistory.push({ role: "model", parts: [{ text: JSON.stringify({ foreign_text: "Hello, let's learn!", korean_translation: "안녕하세요, 함께 배워봐요!" }) }] });
                     }
                     conversationHistory.push({ role: "user", parts: [{ text: text }] });
-                    if (conversationHistory.length > 8) conversationHistory.shift();
+                    if (conversationHistory.length > 10) conversationHistory.shift();
 
                     const payload = {
                         contents: conversationHistory,
@@ -471,23 +535,20 @@
                         foreignText = parsedResponse.foreign_text;
                         koreanText = parsedResponse.korean_translation;
 
-                        // Save model response back to context
                         conversationHistory.push({ role: "model", parts: [{ text: JSON.stringify(parsedResponse) }] });
                     }
 
                 } else {
-                    // --- DEEPSEEK API CALL ---
-                    // Prepare messages in Standard ChatML format
+                    // DeepSeek Multi-turn structures
                     if (conversationHistory.length === 0) {
                         conversationHistory.push({ role: "system", content: systemPrompt });
                     }
                     conversationHistory.push({ role: "user", content: text });
                     
-                    if (conversationHistory.length > 9) {
-                        // Keep system instruction but slide the dialog window
+                    if (conversationHistory.length > 11) {
                         conversationHistory = [
                             conversationHistory[0],
-                            ...conversationHistory.slice(conversationHistory.length - 8)
+                            ...conversationHistory.slice(conversationHistory.length - 10)
                         ];
                     }
 
@@ -509,7 +570,7 @@
                         body: JSON.stringify(payload)
                     });
 
-                    if (!response.ok) throw new Error(`DeepSeek Error: ${response.status}`);
+                    if (!response.ok) throw new Error(`DeepSeek API Server Error: ${response.status}`);
                     const result = await response.json();
 
                     if (result.choices && result.choices.length > 0) {
@@ -523,59 +584,56 @@
                     }
                 }
 
-                // Update Visuals and Output Audio
                 if (foreignText) {
                     addMessageToChat('ai', foreignText, koreanText);
                     speakText(foreignText, selectedLangCode);
                 }
 
             } catch (error) {
-                console.error("AI API Error:", error);
-                updateStatus("오류 발생. 키 혹은 접속 상태를 확인하세요.");
-                avatarWrap.style.borderColor = "#ef4444"; // Highlight Red
-                
-                addMessageToChat('ai', `죄송합니다. ${selectedEngine === 'gemini' ? 'Gemini' : 'DeepSeek'} 서비스에서 답변을 받지 못했습니다. 우측 상단 ⚙️ 설정을 클릭해 올바른 API 키가 입력되었는지 재확인 해주세요.`);
+                console.error("AI Action error:", error);
+                updateStatus("오류 발생. 인터넷 또는 키 설정을 확인하세요.");
+                avatarWrap.style.borderColor = "#ef4444"; 
+                addMessageToChat('ai', `답변을 불러오는데 실패했습니다. ⚙️ 아이콘을 눌러 올바른 인증 보완키를 등록하셨는지 점검해 주십시오.`);
             }
         }
 
         function triggerMissingKeyWarning(keyName) {
-            updateStatus(`${keyName} 등록 필요!`);
+            updateStatus(`${keyName} 없음`);
             toggleSettingsModal();
             avatarWrap.style.borderColor = "#ef4444"; 
-            addMessageToChat('ai', `대화를 시작하기 전에 우측 상단 ⚙️ 버튼을 누르고 올바른 **${keyName}**를 입력해 주세요.`);
+            showToast(`${keyName} 등록이 필요합니다!`);
         }
 
-        // --- Text-to-Speech (TTS) Logic ---
+        // --- STREAMING_CHUNK:Configuring multi-accent voice synthesizer targets... ---
         function speakText(text, langCode) {
             if (!synthesis) return;
 
             stopSpeaking(); 
 
             currentUtterance = new SpeechSynthesisUtterance(text);
-            currentUtterance.lang = langCode; // Read in native language accent
+            currentUtterance.lang = langCode; 
             
             const voices = synthesis.getVoices();
-            // Try to find natural-sounding voices for the target language (like Google voices)
+            // Intelligent voice match based on language tags and patterns (e.g. Google, Natural, Premium)
             const preferredVoice = voices.find(voice => voice.lang.includes(langCode) && (voice.name.includes('Google') || voice.name.includes('Natural') || voice.name.includes('Premium')));
             
             if(preferredVoice) {
                 currentUtterance.voice = preferredVoice;
             } else {
-                // Fallback to any voice available for that specific country code
                 const fallbackVoice = voices.find(voice => voice.lang.includes(langCode));
                 if (fallbackVoice) currentUtterance.voice = fallbackVoice;
             }
 
-            currentUtterance.rate = 0.9; // Normal slightly slower speed for learners
+            currentUtterance.rate = 0.85; // Gently slow down output for learners to parse comfortably
             currentUtterance.pitch = 1.0;
 
             currentUtterance.onstart = () => {
                 isSpeaking = true;
-                updateStatus("말하는 중...");
+                updateStatus("말하고 있습니다...");
                 avatarWrap.classList.add('speaking-pulse');
                 avatarWrap.style.borderColor = "#3b82f6"; 
                 stopAudioBtn.disabled = false;
-                stopAudioBtn.classList.replace('text-gray-600', 'text-red-500');
+                stopAudioBtn.classList.replace('text-gray-400', 'text-red-500');
             };
 
             currentUtterance.onend = () => {
@@ -583,11 +641,11 @@
                 updateStatus("대기 중");
                 avatarWrap.classList.remove('speaking-pulse');
                 stopAudioBtn.disabled = true;
-                stopAudioBtn.classList.replace('text-red-500', 'text-gray-600');
+                stopAudioBtn.classList.replace('text-red-500', 'text-gray-400');
             };
 
             currentUtterance.onerror = (e) => {
-                console.error("TTS Error", e);
+                console.error("TTS Engine failure:", e);
                 isSpeaking = false;
                 avatarWrap.classList.remove('speaking-pulse');
             };
@@ -601,19 +659,18 @@
             }
         }
 
-        // --- Auxiliary Features: Instant Concept Explanation ---
+        // --- STREAMING_CHUNK:Executing dynamic contextual query explanations... ---
         async function requestExplanation() {
             if (conversationHistory.length === 0) {
-                alert("설명할 이전 대화가 없습니다.");
+                showToast("분석할 이전 대화 데이터가 없습니다.");
                 return;
             }
 
             if (selectedEngine === 'gemini' && !geminiApiKey) return;
             if (selectedEngine === 'deepseek' && !deepseekApiKey) return;
 
-            updateStatus("설명 분석 중...");
+            updateStatus("문법 족집게 해설 분석 중...");
 
-            // Get last assistant text
             let lastAiMessage = "";
             if (selectedEngine === 'gemini') {
                 for (let i = conversationHistory.length - 1; i >= 0; i--) {
@@ -640,11 +697,11 @@
             }
 
             if(!lastAiMessage) {
-                updateStatus("설명할 내용을 찾지 못했습니다.");
+                updateStatus("대상 문장을 감지하지 못했습니다.");
                 return;
             }
 
-            const prompt = `방금 대화에서 한 문장 ("${lastAiMessage}") 내에 중요하게 볼 수 있는 핵심 문법 패턴이나 단어 1~2개만 한국어로 아주 친절하고 단순하게 과외해주듯이 텍스트로 요약해서 알려줘. (너무 길지 않게)`;
+            const prompt = `방금 학습자가 진행했던 대화 ("${lastAiMessage}") 내에 중요하게 등장한 어휘, 핵심 문법 또는 문화적 표현 형태를 1~2가지만 콕 집어 아주 친절하고 단순한 한국어 학원 과외 형태로 친절히 핵심 요약해서 반환해주세요.`;
 
             try {
                 let explanation = "";
@@ -663,7 +720,7 @@
                     const payload = {
                         model: "deepseek-chat",
                         messages: [
-                            { role: "system", content: "당신은 한국어로 핵심만 간단히 과외해주는 유능한 교사입니다." },
+                            { role: "system", content: "당신은 아주 친절하고 전문적인 원포인트 언어강사입니다." },
                             { role: "user", content: prompt }
                         ]
                     };
@@ -684,9 +741,9 @@
                     const msgDiv = document.createElement('div');
                     msgDiv.className = "flex flex-col space-y-1 mt-4";
                     msgDiv.innerHTML = `
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-3 w-full shadow-sm text-center">
-                            <p class="text-xs font-bold text-yellow-800 mb-1"><i class="fa-solid fa-lightbulb"></i> 원포인트 족집게 과외</p>
-                            <p class="text-sm text-gray-800">${explanation.replace(/\n/g, '<br>')}</p>
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full shadow-sm text-left">
+                            <p class="text-xs font-bold text-yellow-800 mb-1.5"><i class="fa-solid fa-lightbulb"></i> 원포인트 족집게 과외</p>
+                            <p class="text-sm text-gray-800 leading-relaxed">${explanation.replace(/\n/g, '<br>')}</p>
                         </div>
                     `;
                     chatContainer.appendChild(msgDiv);
@@ -694,12 +751,12 @@
                     updateStatus("대기 중");
                 }
             } catch (error) {
-                console.error("Explanation Error:", error);
-                updateStatus("설명을 불러오는데 실패했습니다.");
+                console.error("Error during grammar coaching call:", error);
+                updateStatus("피드백을 생성하는 동안 오류가 발생했습니다.");
             }
         }
 
-        // Initialize voices on load
+        // Boot-load synthesizer voices
         window.speechSynthesis.onvoiceschanged = function() {
             window.speechSynthesis.getVoices();
         };
