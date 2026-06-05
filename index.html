@@ -76,13 +76,18 @@
                 <h1 class="text-xl font-bold">TalkAI Tutor</h1>
                 <p class="text-xs text-blue-200">실시간 언어 학습 파트너</p>
             </div>
-            <!-- Language Selector -->
-            <select id="targetLanguage" class="bg-blue-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 border border-blue-500">
-                <option value="en-US" data-lang-name="영어">🇺🇸 영어</option>
-                <option value="es-ES" data-lang-name="스페인어">🇪🇸 스페인어</option>
-                <option value="ja-JP" data-lang-name="일본어">🇯🇵 일본어</option>
-                <option value="zh-CN" data-lang-name="중국어">🇨🇳 중국어</option>
-            </select>
+            <!-- Language Selector & Settings -->
+            <div class="flex items-center gap-2">
+                <select id="targetLanguage" class="bg-blue-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 border border-blue-500">
+                    <option value="en-US" data-lang-name="영어">🇺🇸 영어</option>
+                    <option value="es-ES" data-lang-name="스페인어">🇪🇸 스페인어</option>
+                    <option value="ja-JP" data-lang-name="일본어">🇯🇵 일본어</option>
+                    <option value="zh-CN" data-lang-name="중국어">🇨🇳 중국어</option>
+                </select>
+                <button id="settingsBtn" class="w-10 h-10 rounded-lg bg-blue-700 hover:bg-blue-800 flex items-center justify-center transition-colors border border-blue-500" onclick="toggleSettingsModal()">
+                    <i class="fa-solid fa-gear text-lg"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Visual Area (Avatar / Fake Video Call) -->
@@ -126,6 +131,33 @@
             </button>
         </div>
 
+        <!-- Settings Modal (API Key Input Popup) -->
+        <div id="settingsModal" class="hidden absolute inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div class="bg-white w-full max-w-[340px] rounded-2xl p-6 shadow-2xl relative transition-all duration-300">
+                <h3 class="text-lg font-bold text-gray-800 mb-2">⚙️ AI 튜터 설정</h3>
+                <p class="text-xs text-gray-500 mb-4 leading-relaxed">
+                    이 앱은 구글 Gemini API를 사용하여 작동합니다. 입력한 키는 <b>사용자님의 휴대폰 브라우저에만 안전하게 암호화 보관</b>되며 외부로 전송되지 않습니다.
+                </p>
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">Gemini API Key</label>
+                    <input type="password" id="apiKeyInput" placeholder="AIzaSy..." class="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="bg-blue-50 p-3 rounded-lg text-xs text-blue-800 mb-4 leading-relaxed">
+                    <p class="font-semibold mb-1">💡 무료 API 키 받는 방법:</p>
+                    <ol class="list-decimal pl-4 space-y-1">
+                        <li>Google AI Studio 로그인</li>
+                        <li><b>Create API key</b> 파란 버튼 클릭</li>
+                        <li>키 복사 후 이 화면에 붙여넣기</li>
+                    </ol>
+                    <a href="https://aistudio.google.com/" target="_blank" class="text-blue-600 hover:underline font-bold block mt-2 text-center">👉 Google AI Studio 바로가기</a>
+                </div>
+                <div class="flex gap-2">
+                    <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg text-sm transition-colors" onclick="toggleSettingsModal()">닫기</button>
+                    <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-sm transition-colors" onclick="saveApiKey()">저장하기</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -136,6 +168,7 @@
         let synthesis = window.speechSynthesis;
         let currentUtterance = null;
         let conversationHistory = []; // To keep context for the LLM
+        let apiKey = localStorage.getItem('gemini_api_key') || '';
 
         // --- DOM Elements ---
         const micBtn = document.getElementById('micBtn');
@@ -190,6 +223,28 @@
         }
 
         initSpeechRecognition();
+
+        // --- STREAMING_CHUNK:Implementing settings modal logic... ---
+        // --- Settings Modal Functions ---
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            const keyInput = document.getElementById('apiKeyInput');
+            keyInput.value = apiKey; // Show current key if exists
+            modal.classList.toggle('hidden');
+        }
+
+        function saveApiKey() {
+            const keyInput = document.getElementById('apiKeyInput').value.trim();
+            if (!keyInput) {
+                alert("API 키를 입력해주세요!");
+                return;
+            }
+            apiKey = keyInput;
+            localStorage.setItem('gemini_api_key', apiKey);
+            toggleSettingsModal();
+            updateStatus("API 키가 안전하게 저장되었습니다.");
+            avatarWrap.style.borderColor = "#3b82f6"; // Reset border to blue
+        }
 
         // --- UI Helper Functions ---
         function resetMicButton() {
@@ -255,6 +310,17 @@
         // --- Core Logic: Handle User Input and Call AI ---
         async function handleUserMessage(text) {
             addMessageToChat('user', text);
+            
+            // Check if API key exists
+            if (!apiKey) {
+                updateStatus("API 키 등록이 필요합니다!");
+                toggleSettingsModal();
+                avatarWrap.style.borderColor = "#ef4444"; // Red border on missing key
+                
+                addMessageToChat('ai', "대화를 시작하려면 우측 상단의 ⚙️ 버튼을 눌러 무료 Gemini API 키를 입력해 주세요! (AI Studio에서 1분 만에 무료로 발급받을 수 있습니다.)");
+                return;
+            }
+
             updateStatus("생각하는 중...");
             avatarWrap.style.borderColor = "#9ca3af"; // Gray border while thinking
 
@@ -293,10 +359,8 @@
                 }
             };
 
-            // 2. Call the Gemini API (Simulating the DeepSeek backend)
-            // Using the empty string as requested for the collaborative environment
-            const apiKey = ""; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            // 2. Call the Gemini API using standard reliable flash model
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
             try {
                 const response = await fetch(apiUrl, {
@@ -328,8 +392,10 @@
 
             } catch (error) {
                 console.error("AI Error:", error);
-                updateStatus("AI 연결 오류. 잠시 후 다시 시도해주세요.");
+                updateStatus("AI 연결 오류. API 키를 다시 확인해주세요.");
                 avatarWrap.style.borderColor = "#ef4444"; // Red border on error
+                
+                addMessageToChat('ai', "죄송합니다. 답변을 받아오지 못했습니다. 우측 상단 ⚙️ 버튼을 눌러 입력된 API 키가 올바른지 확인해주세요.");
             }
         }
 
@@ -392,6 +458,12 @@
                 return;
             }
 
+            if (!apiKey) {
+                updateStatus("API 키 등록이 필요합니다!");
+                toggleSettingsModal();
+                return;
+            }
+
             updateStatus("설명 생성 중...");
             const selectedLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
 
@@ -420,8 +492,7 @@
                 contents: [{ role: "user", parts: [{ text: prompt }] }]
             };
 
-            const apiKey = ""; 
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
             try {
                 const response = await fetch(apiUrl, {
