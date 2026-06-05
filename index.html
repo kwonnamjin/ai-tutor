@@ -763,28 +763,61 @@
             const cleanedText = cleanTextForTTS(text);
             if(!cleanedText) return;
 
-            // 해설 언어가 한국어(ko-KR)일 때만 한국어와 외국어를 안전하게 분리하여 번갈아 읽음
-            if (baseLangCode === 'ko-KR') {
-                // 스페인어 악센트(á), 베트남어 성조(đ), 중국어 한자 등이 쪼개져서 에러나는 현상 완벽 방지
-                // 한글이 있는 구간과 아닌 구간을 명확하게 덩어리로 나눔
-                const regex = /([\u3131-\u318E\uAC00-\uD7A3][\u3131-\u318E\uAC00-\uD7A3\s\.\,\!\?]*)|([^\u3131-\u318E\uAC00-\uD7A3]+)/g;
-                
-                let parts = [];
-                let match;
-                while ((match = regex.exec(cleanedText)) !== null) {
-                    if (match[1] && match[1].trim() !== '') {
-                        parts.push({ text: match[1].trim(), lang: baseLangCode }); 
-                    }
-                    if (match[2] && match[2].trim() !== '') {
-                        parts.push({ text: match[2].trim(), lang: targetLangCode }); 
-                    }
-                }
+            // 라틴 문자(영어,스페인어,베트남어 등) 덩어리와 비라틴/아시아 문자 덩어리를 스마트하게 분리하는 정규식
+            const chunkRegex = /([a-zA-ZÀ-ỹĐđ]+[\s\d\.\,\!\?\'\"]*)|([^a-zA-ZÀ-ỹĐđ]+)/g;
+            
+            let parts = [];
+            let match;
+            
+            // 베이스 언어와 타겟 언어의 그룹 코드 (앞 2자리)
+            const baseGroup = baseLangCode.substring(0, 2);
+            const targetGroup = targetLangCode.substring(0, 2);
+            const latinLangs = ['en', 'es', 'vi']; 
 
-                if(parts.length > 0) {
-                    speechQueue = parts;
-                    isProcessingQueue = true;
-                    return processSpeechQueue();
+            while ((match = chunkRegex.exec(cleanedText)) !== null) {
+                if (match[1] && match[1].trim() !== '') {
+                    // 1. 라틴 알파벳 구간 (영어, 스페인어, 베트남어)
+                    let assignLang = baseLangCode; 
+                    
+                    if (latinLangs.includes(targetGroup) && !latinLangs.includes(baseGroup)) {
+                        assignLang = targetLangCode; // 해설이 일본어고 타겟이 영어면 -> 영어 원어민 성우로
+                    } else if (!latinLangs.includes(targetGroup) && !latinLangs.includes(baseGroup)) {
+                        assignLang = 'en-US'; // 해설/타겟 둘 다 아시아 언어인데 영어 단어가 나오면 -> 기본 영어 성우로
+                    }
+                    parts.push({ text: match[1].trim(), lang: assignLang }); 
                 }
+                
+                if (match[2] && match[2].trim() !== '') {
+                    // 2. 비라틴/아시아 문자 구간 (한국어, 일본어, 중국어, 태국어)
+                    let assignLang = baseLangCode;
+                    let asianText = match[2].trim();
+
+                    // 글자 자체의 유니코드(모양)를 분석하여 압도적으로 정확하게 원어민 성우를 강제 배정!
+                    if (/[\uAC00-\uD7A3]/.test(asianText)) {
+                        assignLang = 'ko-KR'; // 한글이 섞여있으면 무조건 한국어 성우
+                    } else if (/[\u3040-\u30FF]/.test(asianText)) {
+                        assignLang = 'ja-JP'; // 히라가나/가타카나가 있으면 무조건 일본어 성우
+                    } else if (/[\u0E00-\u0E7F]/.test(asianText)) {
+                        assignLang = 'th-TH'; // 태국어가 있으면 무조건 태국어 성우
+                    } else if (/[\u4E00-\u9FFF]/.test(asianText)) {
+                        // 한자만 있는 경우 중국어인지 일본어인지 판별
+                        if (targetGroup === 'zh' || baseGroup === 'zh') assignLang = 'zh-CN';
+                        else if (targetGroup === 'ja' || baseGroup === 'ja') assignLang = 'ja-JP';
+                    } else {
+                        // 숫자나 기호 등인 경우
+                        if (!latinLangs.includes(targetGroup) && latinLangs.includes(baseGroup)) {
+                            assignLang = targetLangCode; 
+                        }
+                    }
+                    
+                    parts.push({ text: asianText, lang: assignLang }); 
+                }
+            }
+
+            if(parts.length > 0) {
+                speechQueue = parts;
+                isProcessingQueue = true;
+                return processSpeechQueue();
             }
 
             // 해설 언어가 한국어가 아니거나 쪼개기가 실패하면 원래 톤으로 한 번에 자연스럽게 읽음
