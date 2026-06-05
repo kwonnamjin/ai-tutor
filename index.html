@@ -126,7 +126,7 @@
         <!-- Visual Area / Avatar -->
         <div class="flex-none bg-gradient-to-b from-blue-50 to-white pt-4 pb-3 flex flex-col items-center justify-center relative border-b border-gray-100 shadow-sm z-10">
             <div id="avatarWrap" class="avatar-container mb-2 transition-all duration-300">
-                <img src="https://placehold.co/300x300/e2e8f0/475569?text=AI+Tutor" alt="AI Avatar" class="avatar-img" id="avatarImage">
+                <img src="호두 꿀벌_2.jpg" alt="AI Avatar" class="avatar-img" id="avatarImage" onerror="this.src='https://placehold.co/300x300/e2e8f0/475569?text=AI+Tutor'">
             </div>
             <div id="statusText" class="text-xs font-semibold text-gray-500 bg-white border border-gray-200 px-4 py-1.5 rounded-full shadow-sm">
                 준비됨. 하단 마이크를 눌러 대화를 시작하세요.
@@ -213,8 +213,8 @@
                 <div class="mb-5">
                     <label class="block text-sm font-semibold text-gray-800 mb-2"><i class="fa-solid fa-person-half-dress text-purple-500"></i> AI 목소리 성별</label>
                     <div class="flex bg-gray-100 p-1 rounded-lg">
-                        <button id="genderFemaleBtn" class="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 transition-colors" onclick="selectGender('female')">👩 여성</button>
-                        <button id="genderMaleBtn" class="flex-1 py-2 text-sm font-bold rounded-md text-gray-500 hover:bg-gray-200 transition-colors" onclick="selectGender('male')">👨 남성</button>
+                        <button id="genderFemaleBtn" class="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 transition-colors" onclick="selectGender('female')">👩 여성 (호두)</button>
+                        <button id="genderMaleBtn" class="flex-1 py-2 text-sm font-bold rounded-md text-gray-500 hover:bg-gray-200 transition-colors" onclick="selectGender('male')">👨 남성 (치타)</button>
                     </div>
                 </div>
 
@@ -282,6 +282,7 @@
         const statusText = document.getElementById('statusText');
         const chatContainer = document.getElementById('chatContainer');
         const avatarWrap = document.getElementById('avatarWrap');
+        const avatarImage = document.getElementById('avatarImage');
         const targetLanguageSelect = document.getElementById('targetLanguage');
         const sttInputLanguageSelect = document.getElementById('sttInputLanguage');
         const explanationLanguageSelect = document.getElementById('explanationLanguage');
@@ -293,7 +294,7 @@
         document.getElementById('fontSizeSlider').value = currentFontSize;
         document.documentElement.style.setProperty('--chat-font-size', `${currentFontSize}px`);
         explanationLanguageSelect.value = currentExpLanguage;
-        updateGenderUI(currentVoiceGender);
+        updateGenderUI(currentVoiceGender, true); 
 
         // --- Init Text-to-Speech Voices ---
         let availableVoices = [];
@@ -396,7 +397,7 @@
                 document.getElementById('deepseekKeyInput').value = deepseekApiKey;
                 document.getElementById('fontSizeSlider').value = currentFontSize;
                 explanationLanguageSelect.value = currentExpLanguage;
-                updateGenderUI(currentVoiceGender);
+                updateGenderUI(currentVoiceGender, false);
                 modal.classList.remove('hidden');
             } else {
                 modal.classList.add('hidden');
@@ -412,19 +413,21 @@
         let tempGender = currentVoiceGender;
         function selectGender(gender) {
             tempGender = gender;
-            updateGenderUI(gender); 
+            updateGenderUI(gender, false); 
         }
 
-        function updateGenderUI(gender) {
+        function updateGenderUI(gender, applyImage = false) {
             const fBtn = document.getElementById('genderFemaleBtn');
             const mBtn = document.getElementById('genderMaleBtn');
             
             if (gender === 'female') {
                 fBtn.className = "flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 transition-colors border border-blue-200";
                 mBtn.className = "flex-1 py-2 text-sm font-bold rounded-md text-gray-500 hover:bg-gray-200 transition-colors border border-transparent";
+                if(applyImage) avatarImage.src = "호두 꿀벌_2.jpg";
             } else {
                 mBtn.className = "flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 transition-colors border border-blue-200";
                 fBtn.className = "flex-1 py-2 text-sm font-bold rounded-md text-gray-500 hover:bg-gray-200 transition-colors border border-transparent";
+                if(applyImage) avatarImage.src = "치타 팔짱_2.jpg";
             }
         }
 
@@ -443,6 +446,7 @@
 
             currentVoiceGender = tempGender;
             localStorage.setItem('voice_gender', currentVoiceGender);
+            updateGenderUI(currentVoiceGender, true);
 
             toggleSettingsModal(false);
             updateStatus("설정이 저장되었습니다.");
@@ -584,7 +588,6 @@
             const selectedLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             const inputLangName = sttInputLanguageSelect.options[sttInputLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             const appMode = appModeSelect.value;
-            const expLangName = explanationLanguageSelect.options[explanationLanguageSelect.selectedIndex].getAttribute('data-lang-name');
 
             let systemPrompt = "";
 
@@ -606,7 +609,7 @@
 4. 답변은 반드시 아래 JSON 형식으로만 완벽하게 출력하세요:
 {
     "foreign_text": "오직 ${selectedLangName}로만 작성된 튜터의 자연스러운 대화 내용",
-    "korean_translation": "해당 답변에 대한 [${expLangName}] 번역 및 사용자 코멘트/피드백"
+    "korean_translation": "해당 답변의 자연스러운 모국어 해석 및 사용자 코멘트/피드백"
 }
 5. 대화는 한 번에 1~2문장 정도로 가볍게 작성하세요.`;
             }
@@ -729,7 +732,7 @@
             if (matchedVoice) currentUtterance.voice = matchedVoice;
 
             currentUtterance.rate = 0.95; 
-            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.1 : 0.8;
+            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
 
             currentUtterance.onstart = () => {
                 isSpeaking = true;
@@ -752,7 +755,7 @@
             synthesis.speak(currentUtterance);
         }
 
-        // --- ✨ Advanced TTS: Mixed Language Speaker ✨ ---
+        // --- Advanced TTS: Mixed Language Speaker ---
         function speakMixedText(text, baseLangCode, targetLangCode) {
             if (!synthesis) return;
             stopSpeaking();
@@ -766,7 +769,7 @@
             let parts = [];
             let match;
             
-            // 베이스 언어(해설언어)와 타겟 언어(학습언어)의 그룹 코드 (앞 2자리)
+            // 베이스 언어와 타겟 언어의 그룹 코드 (앞 2자리)
             const baseGroup = baseLangCode.substring(0, 2);
             const targetGroup = targetLangCode.substring(0, 2);
             const latinLangs = ['en', 'es', 'vi']; 
@@ -835,7 +838,7 @@
             if (matchedVoice) currentUtterance.voice = matchedVoice;
 
             currentUtterance.rate = 0.95; 
-            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.1 : 0.8;
+            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
 
             currentUtterance.onstart = () => {
                 isSpeaking = true;
@@ -894,7 +897,7 @@
             const expLangName = explanationLanguageSelect.options[explanationLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             const targetLangCode = targetLanguageSelect.value;
 
-            // 해설 요청 프롬프트 (사용자 선택 언어 동적 반영)
+            // 해설 요청 프롬프트
             const prompt = `방금 대화 문장 ("${lastAiMsg}") 내에 있는 가장 중요한 외국어 단어나 문법 1개를 골라, 반드시 [${expLangName}] 언어로 아주 짧고 친절하게 과외 선생님처럼 해설을 작성해줘. 해설 중간중간 설명 대상이 되는 원문(외국어 단어)을 그대로 섞어서 써줘.`;
             
             try {
