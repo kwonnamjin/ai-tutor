@@ -78,7 +78,7 @@
             </div>
             <!-- Language Selector & Settings -->
             <div class="flex items-center gap-2">
-                <select id="targetLanguage" class="bg-blue-700 text-white text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 border border-blue-500">
+                <select id="targetLanguage" class="bg-blue-700 text-white text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 border border-blue-500" onchange="changeLanguage()">
                     <option value="en-US" data-lang-name="영어">🇺🇸 영어</option>
                     <option value="es-ES" data-lang-name="스페인어">🇪🇸 스페인어</option>
                     <option value="ja-JP" data-lang-name="일본어">🇯🇵 일본어</option>
@@ -117,10 +117,10 @@
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 no-scrollbar pb-24">
             <!-- System Welcome Message -->
             <div class="flex flex-col space-y-1">
-                <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] shadow-sm self-start">
-                    <p class="text-sm text-gray-800">안녕하세요! 저는 당신의 AI 언어 튜터입니다. 우측 상단에서 언어를 선택하고 마이크를 눌러 말씀해 주세요. </p>
+                <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] shadow-sm self-start" id="welcomeMessage">
+                    <p class="text-sm text-gray-800">안녕하세요! 저는 당신의 AI 언어 튜터입니다. 우측 상단에서 배울 언어를 선택하고 마이크를 눌러 해당 언어로 편하게 말씀해 주세요. 😊</p>
                     <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded">
-                        <i class="fa-solid fa-circle-info"></i> 이제 Google Gemini 뿐만 아니라 <b>DeepSeek API</b>도 설정하여 사용할 수 있습니다!
+                        <i class="fa-solid fa-circle-info"></i> 선택한 언어의 <b>원어민 음성</b>으로 AI가 자연스럽게 맞대답해 줍니다.
                     </div>
                 </div>
             </div>
@@ -216,7 +216,9 @@
                 
                 recognition.continuous = false; 
                 recognition.interimResults = false; 
-                recognition.lang = 'ko-KR'; // Korean base input
+                
+                // Set language to target language for speech input (User should speak in target language)
+                recognition.lang = targetLanguageSelect.value; 
 
                 recognition.onstart = function() {
                     isListening = true;
@@ -234,7 +236,11 @@
 
                 recognition.onerror = function(event) {
                     console.error("Speech recognition error", event.error);
-                    updateStatus("오류 발생. 다시 시도해주세요.");
+                    if (event.error === 'no-speech') {
+                        updateStatus("음성이 인식되지 않았습니다.");
+                    } else {
+                        updateStatus("오류 발생. 다시 시도해주세요.");
+                    }
                     resetMicButton();
                 };
 
@@ -249,7 +255,37 @@
             }
         }
 
+        // Initialize on start
         initSpeechRecognition();
+
+        // --- Handle Language Change ---
+        function changeLanguage() {
+            const selectedLangCode = targetLanguageSelect.value;
+            const selectedLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
+            
+            // 1. Re-initialize recognition language
+            if (recognition) {
+                recognition.lang = selectedLangCode;
+            }
+
+            // 2. Clear conversation history to start new conversation context in new language
+            conversationHistory = [];
+
+            // 3. UI and Status Feedbacks
+            updateStatus(`언어 전환 완료: ${selectedLangName}`);
+            
+            // 4. Welcome Message update dynamically
+            const welcomeDiv = document.getElementById('welcomeMessage');
+            welcomeDiv.innerHTML = `
+                <p class="text-sm text-gray-800"><b>${selectedLangName}</b> 튜터 모드가 활성화되었습니다. 하단 마이크 단추를 눌러 <b>${selectedLangName}</b>로 저에게 말씀해 주세요!</p>
+                <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded">
+                    <i class="fa-solid fa-circle-info"></i> 문법이 틀려도 괜찮습니다. 친절하게 교정해 드릴게요.
+                </div>
+            `;
+            
+            // 5. Stop any playing voice immediately
+            stopSpeaking();
+        }
 
         // --- Settings Modal Functions ---
         function toggleSettingsModal() {
@@ -301,6 +337,8 @@
                 recognition.stop();
             } else {
                 try {
+                    // Update recognition language immediately in case it wasn't set
+                    recognition.lang = targetLanguageSelect.value;
                     recognition.start();
                 } catch(e) {
                     console.error("Recognition start error", e);
@@ -382,16 +420,17 @@
             // Construct System Prompt Instructions
             const systemPrompt = `
 당신은 친절하고 전문적인 '${selectedLangName}' 원어민 튜터입니다.
-사용자가 한국어로 말하면, 그 말을 자연스러운 '${selectedLangName}'로 번역하여 대화를 이어나가거나 답변해주세요.
-사용자가 어색한 표현을 쓰면 자연스러운 표현으로 고쳐서 답변에 반영해주세요.
+사용자는 지금 당신과 대화를 나누며 '${selectedLangName}'를 연습하고 있습니다.
 
-규칙:
-1. 답변은 반드시 다음 JSON 형식 구조로만 완벽히 출력해야 합니다:
+상황 규정:
+1. 사용자가 '${selectedLangName}'로 음성 입력을 하여 말을 걸면, 당신은 그 흐름에 어울리는 원어민 수준의 답변을 '${selectedLangName}'로 이어나가야 합니다.
+2. 만약 사용자가 보낸 문장에 명백한 문법적 어색함이나 오류가 있다면 가볍게 바로잡아 주고, 자연스러운 '${selectedLangName}' 표현으로 바꾸어 응답을 이어나가 주세요.
+3. 답변은 반드시 아래의 JSON 형식으로만 완벽하게 출력해야 합니다. JSON 마크다운 외 다른 문자열을 절대 추가하지 마세요:
 {
-    "foreign_text": "원어민 언어로 작성된 답변 (사용자에게 읽어줄 텍스트)",
-    "korean_translation": "해당 답변의 한국어 번역 및 간략한 문법/표현 팁"
+    "foreign_text": "원어민 언어로 대답한 자연스러운 대화 내용 (원어민 억양으로 자연스럽게 TTS가 읽어줄 내용, 오직 ${selectedLangName}로만 작성)",
+    "korean_translation": "해당 답변의 자연스러운 한글 해석 및 사용자의 잘못된 표현 교정 팁"
 }
-2. 답변은 대화체로 1~2문장 정도로 간결하게 작성하세요.
+4. 대화의 피드백을 자연스럽게 제공하고, 답변은 한 번에 1~2문장 정도로 가볍고 짧게 작성하여 모바일 화면에서 학습자가 부담을 느끼지 않게 대화체로 대답하세요.
             `;
 
             let foreignText = "";
@@ -401,6 +440,10 @@
                 if (selectedEngine === 'gemini') {
                     // --- GOOGLE GEMINI API CALL ---
                     // Prepare conversation history
+                    if (conversationHistory.length === 0) {
+                        conversationHistory.push({ role: "user", parts: [{ text: "안녕, 대화를 시작하자." }] });
+                        conversationHistory.push({ role: "model", parts: [{ text: JSON.stringify({ foreign_text: "Hello! Let's start the conversation.", korean_translation: "안녕하세요! 대화를 시작합시다." }) }] });
+                    }
                     conversationHistory.push({ role: "user", parts: [{ text: text }] });
                     if (conversationHistory.length > 8) conversationHistory.shift();
 
@@ -509,15 +552,21 @@
             stopSpeaking(); 
 
             currentUtterance = new SpeechSynthesisUtterance(text);
-            currentUtterance.lang = langCode;
+            currentUtterance.lang = langCode; // Read in native language accent
             
             const voices = synthesis.getVoices();
-            const preferredVoice = voices.find(voice => voice.lang.includes(langCode) && (voice.name.includes('Google') || voice.name.includes('Natural')));
+            // Try to find natural-sounding voices for the target language (like Google voices)
+            const preferredVoice = voices.find(voice => voice.lang.includes(langCode) && (voice.name.includes('Google') || voice.name.includes('Natural') || voice.name.includes('Premium')));
+            
             if(preferredVoice) {
                 currentUtterance.voice = preferredVoice;
+            } else {
+                // Fallback to any voice available for that specific country code
+                const fallbackVoice = voices.find(voice => voice.lang.includes(langCode));
+                if (fallbackVoice) currentUtterance.voice = fallbackVoice;
             }
 
-            currentUtterance.rate = 0.9; 
+            currentUtterance.rate = 0.9; // Normal slightly slower speed for learners
             currentUtterance.pitch = 1.0;
 
             currentUtterance.onstart = () => {
