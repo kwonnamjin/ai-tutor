@@ -218,7 +218,7 @@
                     </div>
                 </div>
 
-                <!-- 3. NEW: Explanation Language Setting -->
+                <!-- 3. Explanation Language Setting -->
                 <div class="mb-5">
                     <label class="block text-sm font-semibold text-gray-800 mb-2"><i class="fa-solid fa-language text-green-500"></i> 과외 해설 언어 (설명용)</label>
                     <select id="explanationLanguage" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 outline-none bg-gray-50">
@@ -230,7 +230,7 @@
                         <option value="th-TH" data-lang-name="태국어">🇹🇭 태국어로 해설 듣기</option>
                         <option value="vi-VN" data-lang-name="베트남어">🇻🇳 베트남어로 해설 듣기</option>
                     </select>
-                    <p class="text-[10px] text-gray-400 mt-1">* 튜터가 설명해 주는 언어를 직접 선택할 수 있습니다.</p>
+                    <p class="text-[10px] text-gray-400 mt-1">* 튜터가 설명해 주는 언어를 직접 선택할 수 있습니다. 섞인 외국어는 원어민 발음으로 읽어줍니다!</p>
                 </div>
 
                 <!-- 4. API Keys Setting -->
@@ -265,6 +265,8 @@
         let synthesis = window.speechSynthesis;
         let currentUtterance = null;
         let conversationHistory = []; 
+        let speechQueue = []; // Queue for mixed language chunks
+        let isProcessingQueue = false;
         
         // Load configurations from localStorage
         let selectedEngine = localStorage.getItem('active_engine') || 'gemini';
@@ -369,7 +371,6 @@
                 recognition.stop();
             } else {
                 try {
-                    // 유저가 설정한 '내 음성 언어'를 STT 엔진에 그대로 주입
                     recognition.lang = sttInputLanguageSelect.value;
                     recognition.start();
                 } catch(e) { console.error(e); }
@@ -456,7 +457,6 @@
             const langName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             updateStatus(`언어 전환: ${langName}`);
             
-            // 튜터 모드일 경우 편의를 위해 '내 음성 언어'도 목표 언어로 자동 전환 (원어민 연습용)
             sttInputLanguageSelect.value = targetLanguageSelect.value;
 
             const welcomeDiv = document.getElementById('welcomeMessage');
@@ -481,7 +481,15 @@
         function playSavedAudio(btnElem) {
             const text = btnElem.getAttribute('data-speak-text');
             const lang = btnElem.getAttribute('data-lang-code');
-            if(text && lang) speakText(text, lang);
+            const isMixed = btnElem.getAttribute('data-mixed-lang') === 'true';
+            
+            if (text) {
+                if (isMixed) {
+                    speakMixedText(text, lang, targetLanguageSelect.value); // 본문 언어, 타겟 외국어
+                } else {
+                    speakText(text, lang);
+                }
+            }
         }
 
         // --- Core Message Rendering ---
@@ -657,16 +665,9 @@
             }
         }
 
-        // --- Text-to-Speech (TTS) Logic ---
-        function speakText(text, langCode) {
-            if (!synthesis) return;
-            stopSpeaking(); 
-
-            currentUtterance = new SpeechSynthesisUtterance(text);
-            currentUtterance.lang = langCode; 
-            
+        // --- Basic Text-to-Speech (TTS) Logic ---
+        function getMatchedVoice(langCode) {
             let langVoices = availableVoices.filter(v => v.lang.includes(langCode) || v.lang.replace('-','_') === langCode.replace('-','_'));
-            
             if (langVoices.length > 0) {
                 const isFemale = (currentVoiceGender === 'female');
                 let matchedVoice = langVoices.find(v => {
@@ -685,22 +686,28 @@
                         matchedVoice = langVoices[0];
                     }
                 }
-                currentUtterance.voice = matchedVoice;
+                return matchedVoice;
             }
+            return null;
+        }
+
+        function speakText(text, langCode) {
+            if (!synthesis) return;
+            stopSpeaking(); 
+
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            currentUtterance.lang = langCode; 
+            
+            const matchedVoice = getMatchedVoice(langCode);
+            if (matchedVoice) currentUtterance.voice = matchedVoice;
 
             currentUtterance.rate = 0.95; 
-            
-            if (currentVoiceGender === 'female') {
-                currentUtterance.pitch = 1.2; 
-            } else {
-                currentUtterance.pitch = 0.7; 
-            }
+            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
 
             currentUtterance.onstart = () => {
                 isSpeaking = true;
                 updateStatus("말하는 중...");
-                avatarWrap.classList.add('speaking-pulse');
-                avatarWrap.classList.add('speaking-bob'); 
+                avatarWrap.classList.add('speaking-pulse', 'speaking-bob');
                 avatarWrap.style.borderColor = "#3b82f6"; 
                 stopAudioBtn.disabled = false;
                 stopAudioBtn.classList.replace('text-gray-600', 'text-red-500');
@@ -709,25 +716,96 @@
             currentUtterance.onend = () => {
                 isSpeaking = false;
                 updateStatus("대기 중");
-                avatarWrap.classList.remove('speaking-pulse');
-                avatarWrap.classList.remove('speaking-bob'); 
+                avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); 
                 stopAudioBtn.disabled = true;
                 stopAudioBtn.classList.replace('text-red-500', 'text-gray-600');
             };
 
-            currentUtterance.onerror = () => { 
-                isSpeaking = false; 
-                avatarWrap.classList.remove('speaking-pulse'); 
-                avatarWrap.classList.remove('speaking-bob');
+            currentUtterance.onerror = () => { stopSpeakingUI(); };
+            synthesis.speak(currentUtterance);
+        }
+
+        // --- Advanced TTS: Mixed Language Speaker ---
+        // 한글 텍스트에 영어/일본어 등이 섞여있을 때 문장을 분리하여 다국어 성우로 읽어주는 함수
+        function speakMixedText(text, baseLangCode, targetLangCode) {
+            if (!synthesis) return;
+            stopSpeaking();
+            
+            // Regex to roughly detect segments. Simplified for demonstration: matches Latin characters or specific foreign blocks.
+            // A more robust app would use an NLP API, but for frontend, we separate by typical character sets.
+            const regex = targetLangCode.includes('en') ? /([a-zA-Z\s.,!?]+)|([^a-zA-Z\s.,!?]+)/g : 
+                          targetLangCode.includes('ja') ? /([\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]+)|([^\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]+)/g :
+                          targetLangCode.includes('zh') ? /([\u4e00-\u9fa5]+)|([^\u4e00-\u9fa5]+)/g :
+                          /([a-zA-Z\s.,!?]+)|([^a-zA-Z\s.,!?]+)/g; // Default fallback to Latin separation
+
+            let parts = [];
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                if (match[1] && match[1].trim() !== '') {
+                    parts.push({ text: match[1], lang: targetLangCode }); // Foreign part
+                }
+                if (match[2] && match[2].trim() !== '') {
+                    parts.push({ text: match[2], lang: baseLangCode }); // Base part (e.g. Korean)
+                }
+            }
+
+            // Fallback if parsing fails or no target matched
+            if(parts.length === 0) {
+                return speakText(text, baseLangCode);
+            }
+
+            speechQueue = parts;
+            isProcessingQueue = true;
+            processSpeechQueue();
+        }
+
+        function processSpeechQueue() {
+            if (speechQueue.length === 0) {
+                stopSpeakingUI();
+                return;
+            }
+
+            let chunk = speechQueue.shift();
+            currentUtterance = new SpeechSynthesisUtterance(chunk.text);
+            currentUtterance.lang = chunk.lang;
+            
+            const matchedVoice = getMatchedVoice(chunk.lang);
+            if (matchedVoice) currentUtterance.voice = matchedVoice;
+
+            currentUtterance.rate = 0.95; 
+            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
+
+            currentUtterance.onstart = () => {
+                isSpeaking = true;
+                avatarWrap.classList.add('speaking-pulse', 'speaking-bob');
+                stopAudioBtn.disabled = false;
+                stopAudioBtn.classList.replace('text-gray-600', 'text-red-500');
             };
+
+            currentUtterance.onend = () => {
+                processSpeechQueue(); // Play next chunk
+            };
+
+            currentUtterance.onerror = () => { stopSpeakingUI(); };
             
             synthesis.speak(currentUtterance);
         }
 
+        function stopSpeakingUI() {
+            isSpeaking = false;
+            isProcessingQueue = false;
+            speechQueue = [];
+            updateStatus("대기 중");
+            avatarWrap.classList.remove('speaking-pulse', 'speaking-bob');
+            stopAudioBtn.disabled = true;
+            stopAudioBtn.classList.replace('text-red-500', 'text-gray-600');
+        }
+
         function stopSpeaking() {
-            if (synthesis && synthesis.speaking) synthesis.cancel();
-            avatarWrap.classList.remove('speaking-pulse');
-            avatarWrap.classList.remove('speaking-bob');
+            if (synthesis) {
+                synthesis.cancel();
+                stopSpeakingUI();
+            }
         }
 
         // --- Auxiliary Feature: Quick Explanation in Custom Language ---
@@ -739,7 +817,6 @@
             
             updateStatus("해설 분석 중...");
             
-            // Get last AI message from chat UI if history is empty or specificText is not provided
             let lastAiMsg = specificText;
             if (!lastAiMsg) {
                 const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border');
@@ -751,11 +828,12 @@
 
             if(!lastAiMsg) return updateStatus("설명할 문장을 찾지 못했습니다.");
 
-            // 설정에서 사용자가 선택한 해설 언어 정보 가져오기
             const expLangCode = explanationLanguageSelect.value;
             const expLangName = explanationLanguageSelect.options[explanationLanguageSelect.selectedIndex].getAttribute('data-lang-name');
+            const targetLangCode = targetLanguageSelect.value; // For mixed TTS
 
-            const prompt = `방금 대화 문장 ("${lastAiMsg}") 내에 있는 가장 중요한 단어나 문법 1개를 골라, 반드시 [${expLangName}] 언어로 아주 짧고 친절하게 과외 선생님처럼 해설을 작성해줘.`;
+            // 핵심: 다국어(Mixed) 설명을 유도하는 프롬프트
+            const prompt = `방금 대화 문장 ("${lastAiMsg}") 내에 있는 가장 중요한 외국어 단어나 문법 1개를 골라, 반드시 [${expLangName}] 언어로 아주 짧고 친절하게 과외 선생님처럼 해설을 작성해줘. 해설 중간중간 설명 대상이 되는 원문(외국어 단어)을 그대로 섞어서 써줘.`;
             
             try {
                 let explanation = "";
@@ -777,9 +855,11 @@
                     const escapedText = explanation.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                     const msgDiv = document.createElement('div');
                     msgDiv.className = "flex flex-col space-y-1 mt-4 fade-in";
+                    
+                    // 해설 다시 듣기 버튼에 data-mixed-lang 속성을 추가하여 speakMixedText 함수를 타도록 설정
                     msgDiv.innerHTML = `
                         <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full shadow-md relative">
-                            <button onclick="playSavedAudio(this)" data-speak-text="${escapedText}" data-lang-code="${expLangCode}" class="absolute top-3 right-3 text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 w-7 h-7 flex shrink-0 items-center justify-center rounded-full transition-colors shadow-sm">
+                            <button onclick="playSavedAudio(this)" data-speak-text="${escapedText}" data-lang-code="${expLangCode}" data-mixed-lang="true" class="absolute top-3 right-3 text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 w-7 h-7 flex shrink-0 items-center justify-center rounded-full transition-colors shadow-sm">
                                 <i class="fa-solid fa-volume-high text-sm"></i>
                             </button>
                             <p class="text-xs font-bold text-yellow-800 mb-2"><i class="fa-solid fa-lightbulb"></i> 맞춤형 족집게 과외 (${expLangName})</p>
