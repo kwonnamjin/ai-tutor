@@ -502,9 +502,14 @@
                 let translationHtml = translation ? `<p class="text-xs text-gray-500 mt-2 border-t pt-2 border-gray-100">${translation}</p>` : '';
                 
                 let replayBtnHtml = targetLangCode ? `
-                    <button onclick="playSavedAudio(this)" data-speak-text="${escapedText}" data-lang-code="${targetLangCode}" class="ml-2 text-blue-400 hover:text-blue-600 transition-colors w-7 h-7 flex shrink-0 items-center justify-center rounded-full hover:bg-blue-50 shadow-sm border border-blue-100 bg-white">
-                        <i class="fa-solid fa-volume-high text-sm"></i>
-                    </button>
+                    <div class="flex gap-1 ml-2 shrink-0">
+                        <button onclick="requestExplanation('${escapedText}')" class="text-green-500 hover:text-green-700 transition-colors w-7 h-7 flex items-center justify-center rounded-full hover:bg-green-50 shadow-sm border border-green-100 bg-white" title="이 문장 해설 듣기">
+                            <i class="fa-solid fa-lightbulb text-sm"></i>
+                        </button>
+                        <button onclick="playSavedAudio(this)" data-speak-text="${escapedText}" data-lang-code="${targetLangCode}" class="text-blue-400 hover:text-blue-600 transition-colors w-7 h-7 flex items-center justify-center rounded-full hover:bg-blue-50 shadow-sm border border-blue-100 bg-white" title="다시 듣기">
+                            <i class="fa-solid fa-volume-high text-sm"></i>
+                        </button>
+                    </div>
                 ` : '';
 
                 bubbleHtml = `
@@ -726,20 +731,22 @@
         }
 
         // --- Auxiliary Feature: Quick Explanation in Custom Language ---
-        async function requestExplanation() {
-            if (conversationHistory.length === 0 && appModeSelect.value === 'translate') {
+        async function requestExplanation(specificText = null) {
+            if (conversationHistory.length === 0 && appModeSelect.value === 'translate' && !specificText) {
                 updateStatus("설명할 이전 대화가 없습니다."); return;
             }
             if ((selectedEngine === 'gemini' && !geminiApiKey) || (selectedEngine === 'deepseek' && !deepseekApiKey)) return;
             
             updateStatus("해설 분석 중...");
             
-            // Get last AI message from chat UI if history is empty (e.g. translate mode)
-            let lastAiMsg = "";
-            const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border');
-            if(aiBubbles.length > 0) {
-                const lastBubble = aiBubbles[aiBubbles.length - 1];
-                lastAiMsg = lastBubble.querySelector('.chat-text-dynamic').innerText;
+            // Get last AI message from chat UI if history is empty or specificText is not provided
+            let lastAiMsg = specificText;
+            if (!lastAiMsg) {
+                const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border');
+                if(aiBubbles.length > 0) {
+                    const lastBubble = aiBubbles[aiBubbles.length - 1];
+                    lastAiMsg = lastBubble.querySelector('.chat-text-dynamic').innerText;
+                }
             }
 
             if(!lastAiMsg) return updateStatus("설명할 문장을 찾지 못했습니다.");
