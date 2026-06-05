@@ -63,6 +63,14 @@
             -ms-overflow-style: none;  /* IE and Edge */
             scrollbar-width: none;  /* Firefox */
         }
+
+        /* 글자 크기 유동적 조절을 위한 CSS 변수 지정 */
+        :root {
+            --chat-font-size: 15px;
+        }
+        .dynamic-text {
+            font-size: var(--chat-font-size) !important;
+        }
     </style>
 </head>
 <body class="h-screen flex items-center justify-center p-4">
@@ -120,9 +128,9 @@
             <!-- System Welcome Message -->
             <div class="flex flex-col space-y-1">
                 <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] shadow-sm self-start" id="welcomeMessage">
-                    <p class="text-sm text-gray-800">안녕하세요! 당신의 글로벌 AI 튜터입니다. 우측 상단에서 배울 언어를 선택하고 마이크를 눌러 대화를 시작해 보세요. 😊</p>
+                    <p class="text-sm text-gray-800 dynamic-text">안녕하세요! 당신의 글로벌 AI 튜터입니다. 우측 상단에서 배울 언어를 선택하고 마이크를 눌러 대화를 시작해 보세요. 😊</p>
                     <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded">
-                        <i class="fa-solid fa-circle-info"></i> 이제 <b>태국어(🇹🇭)</b>와 <b>베트남어(🇻🇳)</b> 대화도 정식으로 지원합니다!
+                        <i class="fa-solid fa-circle-info"></i> AI가 보낸 답변의 <b>스피커 버튼(🔊)</b>을 누르면 언제든 다시 들을 수 있습니다!
                     </div>
                 </div>
             </div>
@@ -163,9 +171,9 @@
         <!-- Settings Modal (API Key Input Popup) -->
         <div id="settingsModal" class="hidden absolute inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div class="bg-white w-full max-w-[360px] rounded-2xl p-6 shadow-2xl relative transition-all duration-300 max-h-[90%] overflow-y-auto no-scrollbar">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">⚙️ AI 튜터 엔진 설정</h3>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">⚙️ AI 튜터 엔진 및 설정</h3>
                 <p class="text-xs text-gray-500 mb-4 leading-relaxed">
-                    선택한 인공지능의 API 키를 입력해 주세요. 키는 <b>사용자님의 브라우저(핸드폰)에만 암호화 보관</b>되며 외부로 무단 전송되지 않습니다.
+                    API 키 및 글자 크기 등 세부 환경을 제어합니다. 키는 <b>사용자님의 기기 내부</b>에만 저장됩니다.
                 </p>
                 
                 <!-- Gemini Key Input -->
@@ -182,14 +190,28 @@
                     <a href="https://platform.deepseek.com/" target="_blank" class="text-[10px] text-purple-600 hover:underline mt-0.5 block"><i class="fa-solid fa-arrow-up-right-from-square"></i> DeepSeek API 플랫폼 바로가기</a>
                 </div>
 
+                <!-- Dynamic Font Size Slider -->
+                <div class="mb-4 border-t pt-3 border-gray-100">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="text-xs font-semibold text-gray-700">3. 글자 크기 설정 (Font Size)</label>
+                        <span id="fontSizeVal" class="text-xs text-blue-600 font-bold">15px</span>
+                    </div>
+                    <input type="range" id="fontSizeSlider" min="14" max="22" value="15" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600" oninput="updateFontSize(this.value)">
+                    <div class="flex justify-between text-[9px] text-gray-400 px-0.5">
+                        <span>작게</span>
+                        <span>중간</span>
+                        <span>크게</span>
+                    </div>
+                </div>
+
                 <div class="bg-gray-50 p-3 rounded-lg text-xs text-gray-700 mb-4 space-y-1">
                     <p class="font-semibold text-gray-800"><i class="fa-solid fa-wand-magic-sparkles"></i> 팁:</p>
-                    <p>현재 사용하려는 엔진을 상단 선택 창에서 활성화하고 알맞은 API 키를 채워 넣으면 바로 작동합니다!</p>
+                    <p>글자 크기는 설정하는 즉시 모든 대화창의 말풍선에 실시간 적용됩니다!</p>
                 </div>
 
                 <div class="flex gap-2">
                     <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg text-sm transition-colors" onclick="toggleSettingsModal()">닫기</button>
-                    <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-sm transition-colors" onclick="saveApiKeys()">저장하기</button>
+                    <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg text-sm transition-colors" onclick="saveSettings()">저장하기</button>
                 </div>
             </div>
         </div>
@@ -216,6 +238,7 @@
         let selectedEngine = localStorage.getItem('active_engine') || 'gemini';
         let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
         let deepseekApiKey = localStorage.getItem('deepseek_api_key') || '';
+        let chatFontSize = parseInt(localStorage.getItem('chat_font_size')) || 15;
 
         // --- DOM Elements ---
         const micBtn = document.getElementById('micBtn');
@@ -228,9 +251,14 @@
         const activeEngineSelect = document.getElementById('activeEngine');
         const inputLangKo = document.getElementById('inputLangKo');
         const inputLangTarget = document.getElementById('inputLangTarget');
+        const fontSizeSlider = document.getElementById('fontSizeSlider');
+        const fontSizeVal = document.getElementById('fontSizeVal');
 
         // Apply loaded settings to UI
         activeEngineSelect.value = selectedEngine;
+        fontSizeSlider.value = chatFontSize;
+        fontSizeVal.textContent = chatFontSize + 'px';
+        document.documentElement.style.setProperty('--chat-font-size', chatFontSize + 'px');
 
         // --- Custom Toast Alert Function ---
         function showToast(message) {
@@ -245,7 +273,13 @@
             }, 3000);
         }
 
-        // --- STREAMING_CHUNK:Configuring multi-language STT settings... ---
+        // --- Font Size Adjustment ---
+        function updateFontSize(val) {
+            chatFontSize = val;
+            fontSizeVal.textContent = val + 'px';
+            document.documentElement.style.setProperty('--chat-font-size', val + 'px');
+        }
+
         function setInputLanguage(mode) {
             userInputLanguage = mode;
             const selectedLangCode = targetLanguageSelect.value;
@@ -317,7 +351,6 @@
 
         initSpeechRecognition();
 
-        // --- STREAMING_CHUNK:Handling target language change and dynamically resetting UI... ---
         function changeLanguage() {
             const selectedLangCode = targetLanguageSelect.value;
             const selectedLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
@@ -334,7 +367,7 @@
             // Welcome Card update based on country
             const welcomeDiv = document.getElementById('welcomeMessage');
             welcomeDiv.innerHTML = `
-                <p class="text-sm text-gray-800"><b>${selectedLangName}</b> 학습 모드가 활성화되었습니다. 🎙️ <b>${selectedLangName}</b>로 저에게 말을 걸거나, 한국어 인식 탭을 켜고 한국어로 질문하셔도 됩니다!</p>
+                <p class="text-sm text-gray-800 dynamic-text"><b>${selectedLangName}</b> 학습 모드가 활성화되었습니다. 🎙️ <b>${selectedLangName}</b>로 저에게 말을 걸거나, 한국어 인식 탭을 켜고 한국어로 질문하셔도 됩니다!</p>
                 <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded">
                     <i class="fa-solid fa-circle-info"></i> 원포인트 족집게 과외 단추(?)를 누르면 문법 해설도 제공합니다.
                 </div>
@@ -352,18 +385,21 @@
             const modal = document.getElementById('settingsModal');
             document.getElementById('geminiKeyInput').value = geminiApiKey;
             document.getElementById('deepseekKeyInput').value = deepseekApiKey;
+            fontSizeSlider.value = chatFontSize;
+            fontSizeVal.textContent = chatFontSize + 'px';
             modal.classList.toggle('hidden');
         }
 
-        function saveApiKeys() {
+        function saveSettings() {
             geminiApiKey = document.getElementById('geminiKeyInput').value.trim();
             deepseekApiKey = document.getElementById('deepseekKeyInput').value.trim();
 
             localStorage.setItem('gemini_api_key', geminiApiKey);
             localStorage.setItem('deepseek_api_key', deepseekApiKey);
+            localStorage.setItem('chat_font_size', chatFontSize);
             
             toggleSettingsModal();
-            showToast("보안키가 브라우저에 안전하게 저장되었습니다.");
+            showToast("보안키 및 설정값이 브라우저에 안전하게 저장되었습니다.");
             avatarWrap.style.borderColor = "#3b82f6";
         }
 
@@ -409,7 +445,7 @@
             }
         }
 
-        // --- STREAMING_CHUNK:Assembling chat history and constructing systemic prompts... ---
+        // --- Assembling chat history and constructing systemic prompts ---
         function addMessageToChat(sender, text, translation = null) {
             const msgDiv = document.createElement('div');
             msgDiv.className = "flex flex-col space-y-1 mt-4";
@@ -419,15 +455,25 @@
             if (sender === 'user') {
                 bubbleHtml = `
                     <div class="bg-blue-600 text-white rounded-2xl rounded-tr-none p-3 max-w-[85%] shadow-sm self-end">
-                        <p class="text-sm">${text}</p>
+                        <p class="text-sm dynamic-text">${text}</p>
                     </div>
                 `;
             } else if (sender === 'ai') {
+                const selectedLangCode = targetLanguageSelect.value;
+                // Escape single/double quotes to prevent JS crashes inside inline onclick
+                const escapedText = text.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                
                 let translationHtml = translation ? `<p class="text-xs text-gray-500 mt-2 border-t pt-1 border-gray-100">${translation}</p>` : '';
                 
                 bubbleHtml = `
-                    <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] shadow-sm self-start">
-                        <p class="text-sm font-medium text-gray-800">${text}</p>
+                    <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[85%] shadow-sm self-start relative group">
+                        <!-- Replay Audio Button (Speaker Icon) -->
+                        <button onclick="speakText('${escapedText}', '${selectedLangCode}')" 
+                                class="absolute top-2 right-2 text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 w-6 h-6 rounded-full flex items-center justify-center transition-colors" 
+                                title="다시 듣기">
+                            <i class="fa-solid fa-volume-high text-xs"></i>
+                        </button>
+                        <p class="text-sm font-medium text-gray-800 pr-6 dynamic-text">${text}</p>
                         ${translationHtml}
                     </div>
                 `;
@@ -459,7 +505,7 @@
             throw new Error("API call max retries exceeded.");
         }
 
-        // --- STREAMING_CHUNK:Connecting with Gemini and DeepSeek for multilingual instruction execution... ---
+        // --- Connecting with Gemini and DeepSeek for multilingual instruction execution ---
         async function handleUserMessage(text) {
             addMessageToChat('user', text);
             
@@ -604,7 +650,7 @@
             showToast(`${keyName} 등록이 필요합니다!`);
         }
 
-        // --- STREAMING_CHUNK:Configuring multi-accent voice synthesizer targets... ---
+        // --- Configuring multi-accent voice synthesizer targets ---
         function speakText(text, langCode) {
             if (!synthesis) return;
 
@@ -659,7 +705,7 @@
             }
         }
 
-        // --- STREAMING_CHUNK:Executing dynamic contextual query explanations... ---
+        // --- Executing dynamic contextual query explanations ---
         async function requestExplanation() {
             if (conversationHistory.length === 0) {
                 showToast("분석할 이전 대화 데이터가 없습니다.");
