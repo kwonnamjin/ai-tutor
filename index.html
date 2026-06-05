@@ -108,7 +108,7 @@
                     <option value="vi-VN" data-lang-name="베트남어">🇻🇳 베트남어</option>
                     <option value="ko-KR" data-lang-name="한국어">🇰🇷 한국어</option>
                 </select>
-                <button id="settingsBtn" class="w-10 h-10 rounded-lg bg-blue-700 hover:bg-blue-800 flex items-center justify-center transition-colors border border-blue-500" onclick="toggleSettingsModal(true)">
+                <button id="settingsBtn" class="w-10 h-10 rounded-lg bg-blue-700 hover:bg-blue-800 flex items-center justify-center transition-colors border border-blue-500 shadow-sm" onclick="toggleSettingsModal(true)">
                     <i class="fa-solid fa-gear text-lg"></i>
                 </button>
             </div>
@@ -117,7 +117,7 @@
         <!-- Engine Indicator Strip -->
         <div class="flex-none bg-slate-100 px-4 py-2 flex justify-between items-center border-b border-gray-200 text-xs">
             <span class="text-gray-500 font-medium">사용 중인 AI 엔진:</span>
-            <select id="activeEngine" class="bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 outline-none cursor-pointer" onchange="changeEngine()">
+            <select id="activeEngine" class="bg-white border border-gray-300 rounded px-2 py-1 font-bold text-gray-700 outline-none cursor-pointer shadow-sm" onchange="changeEngine()">
                 <option value="gemini">Google Gemini</option>
                 <option value="deepseek">DeepSeek (딥시크)</option>
             </select>
@@ -134,7 +134,7 @@
         </div>
 
         <!-- Chat / Subtitles Area -->
-        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 no-scrollbar">
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 no-scrollbar pb-6">
             <!-- System Welcome Message -->
             <div class="flex flex-col space-y-1">
                 <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[90%] shadow-sm self-start" id="welcomeMessage">
@@ -147,12 +147,12 @@
             </div>
         </div>
 
-        <!-- Controls Area -->
+        <!-- Controls Area (Flexbox to prevent overlap) -->
         <div class="flex-none bg-white border-t border-gray-200 pt-3 pb-6 sm:pb-4 px-4 flex flex-col z-20">
             
             <!-- App Mode Selector -->
             <div class="flex justify-center mb-3">
-                <div class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 w-full max-w-[300px]">
+                <div class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 w-full max-w-[300px] shadow-sm">
                     <select id="appMode" class="w-full bg-transparent text-xs font-bold text-gray-700 text-center py-2 outline-none cursor-pointer" onchange="changeAppMode()">
                         <option value="tutor">🎓 원어민 튜터 모드</option>
                         <option value="translate">🌐 즉시 번역 통역기</option>
@@ -162,7 +162,7 @@
 
             <!-- Full STT Input Language Selector -->
             <div id="sttToggleContainer" class="flex justify-center mb-3 transition-opacity duration-300">
-                <div class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200">
+                <div class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 shadow-sm">
                     <span class="text-[10px] text-gray-500 font-bold px-2">🗣️ 내 음성 언어:</span>
                     <select id="sttInputLanguage" class="bg-white text-xs font-bold text-blue-600 rounded-full px-3 py-1 outline-none shadow-sm cursor-pointer border border-gray-200" onchange="updateStatus('입력 언어가 변경되었습니다.')">
                         <option value="ko-KR" data-lang-name="한국어">🇰🇷 한국어</option>
@@ -187,7 +187,7 @@
                     <i id="micIcon" class="fa-solid fa-microphone"></i>
                 </button>
 
-                <!-- Explain Request Button -->
+                <!-- Explain Request Button (Global) -->
                 <button id="explainBtn" class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow outline-none" onclick="requestExplanation()">
                     <i class="fa-solid fa-circle-question text-lg"></i>
                 </button>
@@ -221,7 +221,7 @@
                 <!-- 3. Explanation Language Setting -->
                 <div class="mb-5">
                     <label class="block text-sm font-semibold text-gray-800 mb-2"><i class="fa-solid fa-language text-green-500"></i> 과외 해설 언어 (설명용)</label>
-                    <select id="explanationLanguage" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 outline-none bg-gray-50">
+                    <select id="explanationLanguage" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 outline-none bg-gray-50 shadow-sm cursor-pointer">
                         <option value="ko-KR" data-lang-name="한국어">🇰🇷 한국어로 해설 듣기</option>
                         <option value="en-US" data-lang-name="영어">🇺🇸 영어로 해설 듣기</option>
                         <option value="ja-JP" data-lang-name="일본어">🇯🇵 일본어로 해설 듣기</option>
@@ -239,17 +239,17 @@
                     <div class="space-y-3">
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">Google Gemini API Key</label>
-                            <input type="password" id="geminiKeyInput" placeholder="AIzaSy..." class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 outline-none">
+                            <input type="password" id="geminiKeyInput" placeholder="AIzaSy..." class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 outline-none shadow-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-1">DeepSeek API Key</label>
-                            <input type="password" id="deepseekKeyInput" placeholder="sk-..." class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 outline-none">
+                            <input type="password" id="deepseekKeyInput" placeholder="sk-..." class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-blue-500 outline-none shadow-sm">
                         </div>
                     </div>
                 </div>
 
                 <!-- Save/Close Buttons -->
-                <div class="flex gap-2 mt-6 pt-4 border-t">
+                <div class="flex gap-2 mt-6 pt-4 border-t border-gray-100">
                     <button class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-lg text-sm transition-colors shadow-sm" onclick="toggleSettingsModal(false)">취소</button>
                     <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors shadow-sm" onclick="saveSettings()">저장하기</button>
                 </div>
@@ -301,6 +301,19 @@
         window.speechSynthesis.onvoiceschanged = () => {
             availableVoices = window.speechSynthesis.getVoices();
         };
+
+        // --- ✨ NEW CORE: Robust TTS Text Cleaner ✨ ---
+        // 마크다운, 따옴표, 괄호 등 기호를 싹 지워버려서 아나운서처럼 부드럽게 읽게 만듭니다.
+        // 다중 공백이나 줄바꿈도 하나로 압축하여 한참 멈춰있는 현상을 원천 차단합니다.
+        function cleanTextForTTS(rawText) {
+            if (!rawText) return "";
+            // 1. 읽으면 거슬리는 모든 특수기호 및 문장부호 제거 (쉼표, 마침표, 느낌표 포함)
+            let cleaned = rawText.replace(/[\*\#\`\~\"\'\(\)\[\]\<\>\{\}\_\-\:\;\.\,\!\?]/g, ' ');
+            // 2. 이모지 제거 (에러 방지)
+            cleaned = cleaned.replace(/[\u{1F600}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '');
+            // 3. 다중 공백 압축 (뚝뚝 끊기는 한참 쉬는 현상 해결)
+            return cleaned.replace(/\s+/g, ' ').trim();
+        }
 
         // --- App Mode Toggle Logic ---
         function changeAppMode() {
@@ -478,20 +491,6 @@
 
         function updateStatus(text) { statusText.textContent = text; }
 
-        function playSavedAudio(btnElem) {
-            const text = btnElem.getAttribute('data-speak-text');
-            const lang = btnElem.getAttribute('data-lang-code');
-            const isMixed = btnElem.getAttribute('data-mixed-lang') === 'true';
-            
-            if (text) {
-                if (isMixed) {
-                    speakMixedText(text, lang, targetLanguageSelect.value); // 본문 언어, 타겟 외국어
-                } else {
-                    speakText(text, lang);
-                }
-            }
-        }
-
         // --- Core Message Rendering ---
         function addMessageToChat(sender, text, translation = null, targetLangCode = null) {
             const msgDiv = document.createElement('div');
@@ -506,24 +505,20 @@
                     </div>
                 `;
             } else if (sender === 'ai') {
-                // 1. 시각(화면)용 텍스트: **단어** 를 굵게(<b>) 표시하도록 정규식 처리
+                // 시각용: **강조** 를 실제 굵은 글씨로 변환
                 const visualText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
                 
-                // 2. TTS(음성)용 텍스트: *, #, `, ~ 등 마크다운 특수기호 완전히 제거 (읽기 방지)
-                const speechText = text.replace(/[\*\#\`\~]/g, '');
-                
-                // 3. HTML 속성에 안전하게 넣기 위한 이스케이프 처리
-                const escapedTextForExplain = text.replace(/"/g, '&quot;').replace(/'/g, '&#39;'); // 원문 유지
-                const escapedSpeechText = speechText.replace(/"/g, '&quot;').replace(/'/g, '&#39;'); // 기호 제거본
+                // 속성용(버튼): HTML 깨짐 방지용 이스케이프 처리 (순수 원문 보존)
+                const escapedForDataAttr = text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
                 let translationHtml = translation ? `<p class="text-xs text-gray-500 mt-2 border-t pt-2 border-gray-100">${translation}</p>` : '';
                 
                 let replayBtnHtml = targetLangCode ? `
                     <div class="flex gap-1 ml-2 shrink-0">
-                        <button onclick="requestExplanation('${escapedTextForExplain}')" class="text-green-500 hover:text-green-700 transition-colors w-7 h-7 flex items-center justify-center rounded-full hover:bg-green-50 shadow-sm border border-green-100 bg-white" title="이 문장 해설 듣기">
+                        <button onclick="requestSpecificExplanation(this)" data-explain-text="${escapedForDataAttr}" class="text-green-500 hover:text-green-700 transition-colors w-7 h-7 flex items-center justify-center rounded-full hover:bg-green-50 shadow-sm border border-green-100 bg-white" title="이 문장 족집게 과외 듣기">
                             <i class="fa-solid fa-lightbulb text-sm"></i>
                         </button>
-                        <button onclick="playSavedAudio(this)" data-speak-text="${escapedSpeechText}" data-lang-code="${targetLangCode}" class="text-blue-400 hover:text-blue-600 transition-colors w-7 h-7 flex items-center justify-center rounded-full hover:bg-blue-50 shadow-sm border border-blue-100 bg-white" title="다시 듣기">
+                        <button onclick="playSavedAudio(this)" data-speak-text="${escapedForDataAttr}" data-lang-code="${targetLangCode}" class="text-blue-400 hover:text-blue-600 transition-colors w-7 h-7 flex items-center justify-center rounded-full hover:bg-blue-50 shadow-sm border border-blue-100 bg-white" title="다시 듣기">
                             <i class="fa-solid fa-volume-high text-sm"></i>
                         </button>
                     </div>
@@ -543,6 +538,26 @@
             msgDiv.innerHTML = bubbleHtml;
             chatContainer.appendChild(msgDiv);
             setTimeout(() => { chatContainer.scrollTop = chatContainer.scrollHeight; }, 50);
+        }
+
+        // --- Interaction Handlers for Audio/Explain Buttons ---
+        function playSavedAudio(btnElem) {
+            const text = btnElem.getAttribute('data-speak-text');
+            const lang = btnElem.getAttribute('data-lang-code');
+            const isMixed = btnElem.getAttribute('data-mixed-lang') === 'true';
+            
+            if (text) {
+                if (isMixed) {
+                    speakMixedText(text, lang, targetLanguageSelect.value);
+                } else {
+                    speakText(text, lang);
+                }
+            }
+        }
+
+        function requestSpecificExplanation(btnElem) {
+            const specificText = btnElem.getAttribute('data-explain-text');
+            requestExplanation(specificText);
         }
 
         async function fetchWithRetry(url, options, maxRetries = 3) {
@@ -594,7 +609,7 @@
 3. 사용자가 보낸 문장에 오류가 있다면 가볍게 바로잡아 주세요.
 4. 답변은 반드시 아래 JSON 형식으로만 완벽하게 출력하세요:
 {
-    "foreign_text": "오직 ${selectedLangName}로만 작성된 튜터의 자연스러운 대화 내용 (원어민 억양 TTS 재생용)",
+    "foreign_text": "오직 ${selectedLangName}로만 작성된 튜터의 자연스러운 대화 내용",
     "korean_translation": "해당 답변의 자연스러운 모국어 해석 및 사용자 코멘트/피드백"
 }
 5. 대화는 한 번에 1~2문장 정도로 가볍게 작성하세요.`;
@@ -664,7 +679,7 @@
 
                 if (foreignText) {
                     addMessageToChat('ai', foreignText, koreanText, selectedLangCode);
-                    speakText(foreignText, selectedLangCode);
+                    speakText(foreignText, selectedLangCode); // Auto Play
                 }
 
             } catch (error) {
@@ -704,7 +719,11 @@
             if (!synthesis) return;
             stopSpeaking(); 
 
-            currentUtterance = new SpeechSynthesisUtterance(text);
+            // 매우 부드럽게 만들기 위해 텍스트 청소 적용
+            const finalText = cleanTextForTTS(text);
+            if(!finalText) return;
+
+            currentUtterance = new SpeechSynthesisUtterance(finalText);
             currentUtterance.lang = langCode; 
             
             const matchedVoice = getMatchedVoice(langCode);
@@ -735,32 +754,34 @@
         }
 
         // --- Advanced TTS: Mixed Language Speaker ---
-        // 한글 텍스트에 영어/일본어 등이 섞여있을 때 문장을 분리하여 다국어 성우로 읽어주는 함수
         function speakMixedText(text, baseLangCode, targetLangCode) {
             if (!synthesis) return;
             stopSpeaking();
             
-            // Regex to roughly detect segments. Simplified for demonstration: matches Latin characters or specific foreign blocks.
-            // A more robust app would use an NLP API, but for frontend, we separate by typical character sets.
-            const regex = targetLangCode.includes('en') ? /([a-zA-Z\s.,!?]+)|([^a-zA-Z\s.,!?]+)/g : 
-                          targetLangCode.includes('ja') ? /([\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]+)|([^\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]+)/g :
-                          targetLangCode.includes('zh') ? /([\u4e00-\u9fa5]+)|([^\u4e00-\u9fa5]+)/g :
-                          /([a-zA-Z\s.,!?]+)|([^a-zA-Z\s.,!?]+)/g; // Default fallback to Latin separation
+            // 특수문자가 싹 지워져 공백으로 압축된 텍스트 획득
+            const cleanedText = cleanTextForTTS(text);
+            if(!cleanedText) return;
+
+            // 영어, 일본어, 중국어, 태국어 등 주요 타겟 언어 분리 로직 (특수문자 제외하고 글자만 추출됨)
+            const regex = targetLangCode.includes('en') || targetLangCode.includes('es') ? /([a-zA-Z\s]+)|([^a-zA-Z\s]+)/g : 
+                          targetLangCode.includes('ja') ? /([\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf\s]+)|([^\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf\s]+)/g :
+                          targetLangCode.includes('zh') ? /([\u4e00-\u9fa5\s]+)|([^\u4e00-\u9fa5\s]+)/g :
+                          targetLangCode.includes('th') ? /([\u0e00-\u0e7f\s]+)|([^\u0e00-\u0e7f\s]+)/g :
+                          /([a-zA-Z\s]+)|([^a-zA-Z\s]+)/g;
 
             let parts = [];
             let match;
-            while ((match = regex.exec(text)) !== null) {
+            while ((match = regex.exec(cleanedText)) !== null) {
                 if (match[1] && match[1].trim() !== '') {
-                    parts.push({ text: match[1], lang: targetLangCode }); // Foreign part
+                    parts.push({ text: match[1].trim(), lang: targetLangCode }); 
                 }
                 if (match[2] && match[2].trim() !== '') {
-                    parts.push({ text: match[2], lang: baseLangCode }); // Base part (e.g. Korean)
+                    parts.push({ text: match[2].trim(), lang: baseLangCode }); 
                 }
             }
 
-            // Fallback if parsing fails or no target matched
             if(parts.length === 0) {
-                return speakText(text, baseLangCode);
+                return speakText(cleanedText, baseLangCode);
             }
 
             speechQueue = parts;
@@ -839,9 +860,9 @@
 
             const expLangCode = explanationLanguageSelect.value;
             const expLangName = explanationLanguageSelect.options[explanationLanguageSelect.selectedIndex].getAttribute('data-lang-name');
-            const targetLangCode = targetLanguageSelect.value; // For mixed TTS
+            const targetLangCode = targetLanguageSelect.value;
 
-            // 핵심: 다국어(Mixed) 설명을 유도하는 프롬프트
+            // 해설 요청 프롬프트
             const prompt = `방금 대화 문장 ("${lastAiMsg}") 내에 있는 가장 중요한 외국어 단어나 문법 1개를 골라, 반드시 [${expLangName}] 언어로 아주 짧고 친절하게 과외 선생님처럼 해설을 작성해줘. 해설 중간중간 설명 대상이 되는 원문(외국어 단어)을 그대로 섞어서 써줘.`;
             
             try {
@@ -861,20 +882,19 @@
                 }
 
                 if (explanation) {
-                    // 1. TTS(음성)용 텍스트: 마크다운 특수기호 제거 (읽기 방지)
-                    const speechText = explanation.replace(/[\*\#\`\~]/g, '');
-                    const escapedSpeechText = speechText.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-                    
-                    // 2. 시각(화면)용 텍스트: **단어** 를 굵게(<b>) 표시 및 줄바꿈 처리
+                    // 시각(화면)용 텍스트: **단어** 를 굵게(<b>) 표시 및 줄바꿈 처리
                     let visualText = explanation.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
                     visualText = visualText.replace(/\n/g, '<br>');
+
+                    // 속성용(버튼): 이스케이프 처리하여 HTML 깨짐 방지
+                    const escapedForDataAttr = explanation.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
                     const msgDiv = document.createElement('div');
                     msgDiv.className = "flex flex-col space-y-1 mt-4 fade-in";
                     
                     msgDiv.innerHTML = `
                         <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full shadow-md relative">
-                            <button onclick="playSavedAudio(this)" data-speak-text="${escapedSpeechText}" data-lang-code="${expLangCode}" data-mixed-lang="true" class="absolute top-3 right-3 text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 w-7 h-7 flex shrink-0 items-center justify-center rounded-full transition-colors shadow-sm">
+                            <button onclick="playSavedAudio(this)" data-speak-text="${escapedForDataAttr}" data-lang-code="${expLangCode}" data-mixed-lang="true" class="absolute top-3 right-3 text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 w-7 h-7 flex shrink-0 items-center justify-center rounded-full transition-colors shadow-sm">
                                 <i class="fa-solid fa-volume-high text-sm"></i>
                             </button>
                             <p class="text-xs font-bold text-yellow-800 mb-2"><i class="fa-solid fa-lightbulb"></i> 맞춤형 족집게 과외 (${expLangName})</p>
