@@ -135,7 +135,7 @@
             </div>
         </div>
 
-        <!-- Controls Area -->
+        <!-- Controls Area (최적화된 하단 패널 적용) -->
         <div class="flex-none bg-white border-t border-gray-200 pt-2 pb-4 sm:pb-3 px-3 flex flex-col z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             
             <!-- 상단 설정 (모드 & 내 언어) : 한 줄 배치 -->
@@ -732,24 +732,46 @@
             }
         }
 
+        // --- 성별 설정에 따른 이미지 적용 함수 ---
         let tempGender = currentVoiceGender;
         function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
+        
         function updateGenderUI(g, applyImg=false) {
-            if(g==='female') { document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; if(applyImg) avatarImage.src="https://api.dicebear.com/7.x/bottts/svg?seed=Jane"; }
-            else { document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; if(applyImg) avatarImage.src="https://api.dicebear.com/7.x/bottts/svg?seed=John"; }
+            if(g === 'female') { 
+                document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; 
+                document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; 
+                // 미소녀 이미지 적용
+                if(applyImg) avatarImage.src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&auto=format&fit=crop"; 
+            } else { 
+                document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; 
+                document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; 
+                // 미소년 이미지 적용
+                if(applyImg) avatarImage.src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=300&auto=format&fit=crop"; 
+            }
         }
+
         function toggleSettingsModal(s=true) {
             let m=document.getElementById('settingsModal');
-            if(s) { document.getElementById('geminiKeyInput').value=geminiApiKey; document.getElementById('deepseekKeyInput').value=deepseekApiKey; document.getElementById('fontSizeSlider').value=localStorage.getItem('chat_font_size')||14; m.classList.remove('hidden'); }
-            else { m.classList.add('hidden'); document.documentElement.style.setProperty('--chat-font-size', localStorage.getItem('chat_font_size')+'px'); }
+            if(s) { 
+                document.getElementById('geminiKeyInput').value=geminiApiKey; 
+                document.getElementById('deepseekKeyInput').value=deepseekApiKey; 
+                document.getElementById('fontSizeSlider').value=localStorage.getItem('chat_font_size')||14; 
+                m.classList.remove('hidden'); 
+            } else { 
+                m.classList.add('hidden'); 
+                document.documentElement.style.setProperty('--chat-font-size', localStorage.getItem('chat_font_size')+'px'); 
+            }
         }
+
         function saveSettings() {
             geminiApiKey=document.getElementById('geminiKeyInput').value.trim(); localStorage.setItem('gemini_api_key',geminiApiKey);
             deepseekApiKey=document.getElementById('deepseekKeyInput').value.trim(); localStorage.setItem('deepseek_api_key',deepseekApiKey);
             localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value);
             localStorage.setItem('explanation_language', document.getElementById('explanationLanguage').value);
-            currentVoiceGender=tempGender; localStorage.setItem('voice_gender',currentVoiceGender); updateGenderUI(currentVoiceGender,true);
-            determineActiveEngine(); // 키 저장 후 엔진 다시 감지
+            currentVoiceGender=tempGender; 
+            localStorage.setItem('voice_gender',currentVoiceGender); 
+            updateGenderUI(currentVoiceGender,true); // 성별에 맞는 이미지 업데이트 실행
+            determineActiveEngine(); 
             toggleSettingsModal(false);
         }
         window.speechSynthesis.onvoiceschanged = () => {};
