@@ -12,7 +12,6 @@
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; }
         .chat-text-dynamic { font-size: var(--chat-font-size); line-height: 1.5; }
         
-        /* 아바타 크기를 기존 120px에서 70px로 대폭 축소하여 대화창 공간 확보 */
         .avatar-container { width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 3px solid #3b82f6; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3); position: relative; margin: 0 auto; transition: border-color 0.3s ease; }
         .avatar-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s ease; }
         
@@ -20,19 +19,15 @@
         @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
         .speaking-bob { animation: bob 0.5s infinite alternate ease-in-out; }
         @keyframes bob { from { transform: translateY(0); } to { transform: translateY(-5px); } }
-        .listening-animation { animation: bounce 1s infinite alternate; color: #ef4444; }
-        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
         
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* 터치 선택용 단어 스타일 */
         .word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
-        .word-span.selected { background-color: #fef08a; /* yellow-200 */ color: #854d0e; /* yellow-800 */ font-weight: 600; }
+        .word-span.selected { background-color: #fef08a; color: #854d0e; font-weight: 600; }
         
-        /* 해설창 안의 선택 단어 스타일 (조금 더 진하게) */
         .exp-word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
-        .exp-word-span.selected { background-color: #fde047; /* yellow-300 */ color: #a16207; font-weight: 600; }
+        .exp-word-span.selected { background-color: #fde047; color: #a16207; font-weight: 600; }
     </style>
 </head>
 <body class="p-0 sm:p-4" onclick="handleBodyClick(event)">
@@ -46,7 +41,7 @@
                 <p class="text-xs text-blue-200">실시간 언어 학습 파트너</p>
             </div>
             <div class="flex items-center gap-2">
-                <select id="targetLanguage" class="bg-blue-700 text-white text-xs rounded-lg focus:ring-blue-500 border border-blue-500 p-2 outline-none cursor-pointer" onchange="conversationHistory=[]; updateStatus('학습 언어 변경됨')">
+                <select id="targetLanguage" class="bg-blue-700 text-white text-xs rounded-lg focus:ring-blue-500 border border-blue-500 p-2 outline-none cursor-pointer" onchange="targetLanguageChanged()">
                     <option value="en-US" data-lang-name="영어">🇺🇸 영어</option>
                     <option value="es-ES" data-lang-name="스페인어">🇪🇸 스페인어</option>
                     <option value="ja-JP" data-lang-name="일본어">🇯🇵 일본어</option>
@@ -61,13 +56,13 @@
             </div>
         </div>
 
-        <!-- Engine Indicator -->
+        <!-- Engine Indicator (텍스트로 변경됨) -->
         <div class="flex-none bg-slate-100 px-4 py-1.5 flex justify-between items-center border-b border-gray-200 text-[11px]">
             <span class="text-gray-500 font-medium">사용 중인 AI 엔진:</span>
-            <span id="activeEngineText" class="font-bold text-gray-700">설정 필요</span>
+            <span id="activeEngineText" class="font-bold text-gray-700 text-xs">설정 필요</span>
         </div>
 
-        <!-- Avatar Area (축소됨) -->
+        <!-- Avatar Area -->
         <div class="flex-none bg-gradient-to-b from-blue-50 to-white pt-2 pb-2 flex flex-col items-center justify-center relative border-b border-gray-100 shadow-sm z-10">
             <div id="avatarWrap" class="avatar-container mb-1 transition-all duration-300">
                 <img src="호두 꿀벌_2.jpg" alt="AI Avatar" class="avatar-img" id="avatarImage" onerror="this.src='https://placehold.co/300x300/e2e8f0/475569?text=AI+Tutor'">
@@ -77,7 +72,7 @@
             </div>
         </div>
 
-        <!-- Chat Area (넓어짐) -->
+        <!-- Chat Area -->
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 no-scrollbar pb-6">
             <div class="flex flex-col space-y-1">
                 <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[90%] shadow-sm self-start" id="welcomeMessage">
@@ -101,6 +96,7 @@
                 </div>
             </div>
 
+            <!-- 하단 입력 언어 (상단과 분리됨) -->
             <div id="sttToggleContainer" class="flex justify-center mb-3 transition-opacity duration-300">
                 <div class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 shadow-sm">
                     <span class="text-[10px] text-gray-500 font-bold px-2">🗣️ 내 음성 언어:</span>
@@ -183,18 +179,16 @@
         let conversationHistory = []; 
         let currentUtterance = null;
         
-        let selectedEngine = ''; // 엔진 자동 선택을 위해 초기화
+        let selectedEngine = ''; 
         let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
         let deepseekApiKey = localStorage.getItem('deepseek_api_key') || '';
         let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
         
-        // Touch Selection Variables
         let currentBubbleId = null;
         let startIndex = -1;
         let endIndex = -1;
         let bubbleCounter = 0;
 
-        // Elements
         const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
         const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
         const avatarWrap = document.getElementById('avatarWrap'), avatarImage = document.getElementById('avatarImage');
@@ -204,9 +198,10 @@
         // Apply Load Settings
         document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
         updateGenderUI(currentVoiceGender, true); 
-        determineActiveEngine(); // 초기 로드 시 엔진 자동 감지
+        determineActiveEngine(); // 로드 시 엔진 감지 실행
 
-        // --- STREAMING_CHUNK:Configuring STT and touch selection handler... ---
+        // --- STT ---
+        function initSpeechRecognition() {
             if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 recognition = new SpeechRecognition();
@@ -220,7 +215,7 @@
                 recognition.onend = () => resetMic();
             } else { updateStatus("STT 미지원 환경"); }
         }
-        initSpeechRecognition();
+        initSpeechRecognition(); // 누락되었던 함수 호출 복원
 
         function toggleListening() {
             if(!recognition) return;
@@ -301,11 +296,9 @@
             } else {
                 bubbleCounter++;
                 const bId = `ai-msg-${bubbleCounter}`;
-                // 속성용(TTS/버튼) 텍스트 정리: 줄바꿈 문자로 인한 자바스크립트 끊김 방지
                 const pureText = text.replace(/[\*\#\`]/g, '');
                 const escapedFullText = pureText.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/\n/g, ' ').replace(/\r/g, '');
                 
-                // 화면용 텍스트 변환
                 const visualText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
                 const spansHtml = createSpansForText(visualText, bId, false);
 
@@ -328,7 +321,7 @@
             setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
         }
 
-        // --- TTS Engine (Smooth Reading) ---
+        // --- TTS Engine ---
         function cleanTextForTTS(raw) {
             return raw.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
         }
@@ -360,7 +353,7 @@
             synthesis.speak(currentUtterance);
         }
         function stopSpeaking() { synthesis.cancel(); }
-        // --- STREAMING_CHUNK:AI API fetching and prompt structures... ---
+
         // --- LLM API Logic ---
         async function fetchAPI(url, options) {
             let delay=500;
@@ -420,7 +413,7 @@
             } catch(e) { updateStatus("API 연동 에러"); avatarWrap.style.borderColor="#ef4444"; }
         }
 
-        // --- Explanation Logic (Smart Select & Full Sentence) ---
+        // --- Explanation Logic ---
         async function requestExplanationGlobal() {
             const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border:not(.bg-yellow-50)');
             if(aiBubbles.length === 0) return updateStatus("설명할 대화가 없습니다.");
@@ -473,7 +466,6 @@
                     const expBId = `exp-msg-${bubbleCounter}`;
                     
                     const pureExp = explanation.replace(/[\*\#\`]/g, '');
-                    // 줄바꿈이 버튼 속성을 망치지 않도록 방지
                     const esc = pureExp.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/\n/g, ' ').replace(/\r/g, '');
                     
                     const visualExp = explanation.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
@@ -502,6 +494,11 @@
         // --- General Settings ---
         function changeAppMode() { conversationHistory=[]; updateStatus("모드 변경됨"); }
         
+        function targetLanguageChanged() {
+            conversationHistory = [];
+            updateStatus('학습 언어 변경됨');
+        }
+
         function determineActiveEngine() {
             if (geminiApiKey) {
                 selectedEngine = 'gemini';
@@ -511,7 +508,7 @@
                 activeEngineText.textContent = 'DeepSeek';
             } else {
                 selectedEngine = '';
-                activeEngineText.textContent = '설정 필요';
+                activeEngineText.textContent = '설정 필요 (API 키 입력)';
             }
         }
 
