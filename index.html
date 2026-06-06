@@ -349,10 +349,39 @@
             const isExp = currentBubbleId.startsWith('exp-');
             const text = getSelectedTextFromBubble(currentBubbleId, isExp);
             if (text) {
-                // 부모 p 태그에서 언어 정보 가져오기
-                const pTag = document.getElementById(`bubble-${currentBubbleId}`);
-                const lang = pTag.getAttribute('data-lang') || document.getElementById('targetLanguage').value;
-                speakText(text, lang);
+                const targetLang = document.getElementById('targetLanguage').value;
+                const expLang = document.getElementById('explanationLanguage').value;
+                let speakLang = targetLang;
+
+                if (isExp) {
+                    // 해설 창 텍스트의 언어 자동 감지 (원어민 발음 출력)
+                    const hasHangul = /[\u3131-\uD79D]/.test(text);
+                    const hasKana = /[\u3040-\u30ff]/.test(text);
+                    const hasHanzi = /[\u4e00-\u9fa5]/.test(text);
+                    const hasThai = /[\u0E00-\u0E7F]/.test(text);
+                    const hasLatin = /[a-zA-ZÀ-ÿ]/.test(text);
+
+                    if (hasHangul && targetLang !== 'ko-KR') {
+                        // 한글이 포함되어 있고 타겟 언어가 한국어가 아니면 한국어/해설 언어 TTS 사용
+                        speakLang = expLang.startsWith('ko') ? 'ko-KR' : expLang;
+                    } else if (['en-US', 'es-ES', 'vi-VN'].includes(targetLang) && hasLatin) {
+                        speakLang = targetLang;
+                    } else if (targetLang === 'ja-JP' && (hasKana || hasHanzi)) {
+                        speakLang = targetLang;
+                    } else if (targetLang === 'zh-CN' && hasHanzi) {
+                        speakLang = targetLang;
+                    } else if (targetLang === 'th-TH' && hasThai) {
+                        speakLang = targetLang;
+                    } else {
+                        speakLang = targetLang;
+                    }
+                } else {
+                    // 일반 대화창의 경우 지정된 언어 사용
+                    const pTag = document.getElementById(`bubble-${currentBubbleId}`);
+                    speakLang = pTag.getAttribute('data-lang') || targetLang;
+                }
+                
+                speakText(text, speakLang);
             }
         }
 
