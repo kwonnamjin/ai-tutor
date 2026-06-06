@@ -650,27 +650,12 @@
         }
         function stopSpeaking() { synthesis.cancel(); }
 
-        // --- LLM API Logic (통신 구조 강화 및 오류 처리 최적화) ---
+        // --- LLM API Logic ---
         async function fetchAPI(url, options) {
             let delay=500;
             for(let i=0;i<3;i++) {
-                try { 
-                    const res = await fetch(url, options); 
-                    if(res.ok) return res; 
-                    
-                    // 400에러(잘못된 키 등)는 재시도해도 의미가 없으므로 바로 에러를 뿜게 처리
-                    if(res.status >= 400 && res.status < 500) {
-                        const errData = await res.json().catch(() => ({}));
-                        console.error("클라이언트 설정 에러 (API 키 등을 확인하세요):", errData);
-                        throw new Error(errData.error?.message || "API 인증 에러");
-                    }
-                    
-                    await new Promise(r=>setTimeout(r,delay)); 
-                    delay*=2; 
-                }
-                catch(e) { 
-                    if(i==2 || e.message.includes("API 인증 에러")) throw e; 
-                }
+                try { const res = await fetch(url, options); if(res.ok) return res; await new Promise(r=>setTimeout(r,delay)); delay*=2; }
+                catch(e) { if(i==2) throw e; }
             }
         }
 
@@ -691,31 +676,38 @@
 
             try {
                 let foreign="", korean="";
-                
-                // [수정완료: Gemini API 카멜케이스 적용 및 쿼리 파라미터 복구]
-                if(selectedEngine==='gemini') {
-                    if(mode==='tutor' && conversationHistory.length===0) conversationHistory.push({role:"user",parts:[{text:"Hi"}]},{role:"model",parts:[{text:JSON.stringify({foreign_text:"Hello! Let's talk.",korean_translation:"안녕! 대화하자."})}]});
-                    let ctx = mode==='translate'?[]:conversationHistory;
-                    ctx.push({role:"user",parts:[{text:`[입력:${inputName}] ${text}`}]});
-                    if(ctx.length>8) ctx.shift();
-                    
-                    let res = await fetchAPI(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: ctx,
-                            systemInstruction: { parts: [{ text: sysPrompt }] }, // 카멜케이스 수정
-                            generationConfig: { responseMimeType: "application/json" } // 카멜케이스 수정
-                        })
-                    });
-                    
-                    let data = await res.json();
-                    let parsed = JSON.parse(data.candidates[0].content.parts[0].text);
-                    foreign = parsed.foreign_text; korean = parsed.korean_translation;
-                    
-                    if(mode==='tutor') conversationHistory.push({role:"model",parts:[{text:JSON.stringify(parsed)}]});
-                    else ctx.pop();
-                } else {
+                // [수정된 Gemini API 호출부]
+if(selectedEngine==='gemini') {
+    if(mode==='tutor' && conversationHistory.length===0) conversationHistory.push({role:"user",parts:[{text:"Hi"}]},{role:"model",parts:[{text:JSON.stringify({foreign_text:"Hello! Let's talk.",korean_translation:"안녕! 대화하자."})}]});
+    let ctx = mode==='translate'?[]:conversationHistory;
+    ctx.push({role:"user",parts:[{text:`[입력:${inputName}] ${text}`}]});
+    if(ctx.length>8) ctx.shift();
+
+    // 헤더 방식으로 키를 전달하고, system_instruction 구조를 표준화함
+    let res = await fetchAPI(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent`, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            'x-goog-api-key': geminiApiKey // URL 대신 헤더로 키 전달
+        },
+        body: JSON.stringify({
+            contents: ctx,
+            system_instruction: { parts: [{ text: sysPrompt }] },
+            generationConfig: { response_mime_type: "application/json" }
+        })
+    });
+
+    let data = await res.json();
+    if (!data.candidates || !data.candidates[0].content) {
+        console.error("API Response Error:", data);
+        throw new Error("Invalid Response");
+    }
+    let parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+    foreign = parsed.foreign_text; korean = parsed.korean_translation;
+    
+    if(mode==='tutor') conversationHistory.push({role:"model",parts:[{text:JSON.stringify(parsed)}]});
+    else ctx.pop();
+} else {
                     let ctx = mode==='tutor'?conversationHistory:[{role:"system",content:sysPrompt},{role:"user",content:text}];
                     if(mode==='tutor') {
                         if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
@@ -733,14 +725,10 @@
                     addMessageToChat('ai', foreign, korean, targetLang);
                     speakText(foreign, targetLang);
                 }
-            } catch(e) { 
-                console.error("API 연동 에러 확인:", e);
-                updateStatus("API 연동 에러 (설정을 확인하세요)"); 
-                avatarWrap.style.borderColor="#ef4444"; 
-            }
+            } catch(e) { updateStatus("API 연동 에러"); avatarWrap.style.borderColor="#ef4444"; }
         }
 
-        // --- Explanation Logic (해설 버튼 - 여기도 Gemini 파라미터 수정 적용) ---
+        // --- Explanation Logic ---
         async function requestExplanationGlobal() {
             const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border:not(.bg-yellow-50)');
             if(aiBubbles.length === 0) return updateStatus("설명할 대화가 없습니다.");
@@ -775,21 +763,16 @@
                 prompt = `원문 "${cleanFullText}"에서 사용자가 콕 집은 부분은 "${cleanTargetWord}" 입니다. 이 표현의 뜻과 쓰임새, 주의할 점, 예문 1개를 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력해.`;
             } else {
                 focusTitle = isExpSource ? `해설 내용 추가 족집게 분석` : `전체 문장 족집게 해설`;
-                prompt = `문장 "${cleanFullText}" 의 전체적인 문법 구조나 가장 핵심적인 표현 1 일개를 골라, 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력.`;
+                prompt = `문장 "${cleanFullText}" 의 전체적인 문법 구조나 가장 핵심적인 표현 1~2개를 골라, 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력.`;
             }
 
             try {
                 let explanation = "";
                 if (selectedEngine === 'gemini') {
-                    // [수정완료: 해설 호출 시 오류 발생 안하도록 통일]
-                    let res = await fetchAPI(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json' }, 
-                        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] }) 
-                    });
+                    let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] }) });
                     let data = await res.json(); explanation = data.candidates[0].content.parts[0].text;
                 } else {
-                    let res = await fetchAPI("https://api.deepseek.com/v1/chat/completions", { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${deepseekApiKey}` }, body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: prompt }] }) });
+                    let res = await fetch("https://api.deepseek.com/v1/chat/completions", { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${deepseekApiKey}` }, body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: prompt }] }) });
                     let data = await res.json(); explanation = data.choices[0].message.content;
                 }
 
@@ -819,10 +802,7 @@
                     updateStatus("해설 완료");
                     clearSelection(); 
                 }
-            } catch(e) { 
-                console.error("해설 에러 확인:", e);
-                updateStatus("해설 실패"); 
-            }
+            } catch(e) { updateStatus("해설 실패"); }
         }
 
         // --- General Settings ---
