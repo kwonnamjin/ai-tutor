@@ -1,191 +1,10 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AI 실시간 언어 튜터</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root { --chat-font-size: 14px; }
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; }
-        .chat-text-dynamic { font-size: var(--chat-font-size); line-height: 1.5; }
-        
-        .avatar-container { width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 3px solid #3b82f6; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3); position: relative; margin: 0 auto; transition: border-color 0.3s ease; background-color: #fff; }
-        .avatar-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s ease; }
-        
-        .speaking-pulse { animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
-        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(59, 130, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } }
-        .speaking-bob { animation: bob 0.5s infinite alternate ease-in-out; }
-        @keyframes bob { from { transform: translateY(0); } to { transform: translateY(-5px); } }
-        
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
-        .word-span.selected { background-color: #fef08a; color: #854d0e; font-weight: 600; }
-        
-        .exp-word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
-        .exp-word-span.selected { background-color: #fde047; color: #a16207; font-weight: 600; }
-        
-        /* 툴팁 화살표 CSS */
-        .tooltip-arrow::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1f2937 transparent transparent transparent; }
-    </style>
-</head>
-<body class="p-0 sm:p-4" onclick="handleBodyClick(event)">
-
-    <div class="bg-white w-full max-w-md h-full sm:h-[850px] max-h-full sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative">
-        
-        <!-- Header -->
-        <div class="flex-none bg-blue-600 text-white p-4 flex justify-between items-center z-10 shadow-md">
-            <div>
-                <h1 class="text-xl font-bold">TalkAI Tutor</h1>
-                <p class="text-xs text-blue-200">실시간 언어 학습 파트너</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <select id="targetLanguage" class="bg-blue-700 text-white text-xs rounded-lg focus:ring-blue-500 border border-blue-500 p-2 outline-none cursor-pointer" onchange="targetLanguageChanged()">
-                    <option value="en-US" data-lang-name="영어">🇺🇸 영어</option>
-                    <option value="es-ES" data-lang-name="스페인어">🇪🇸 스페인어</option>
-                    <option value="ja-JP" data-lang-name="일본어">🇯🇵 일본어</option>
-                    <option value="zh-CN" data-lang-name="중국어">🇨🇳 중국어</option>
-                    <option value="th-TH" data-lang-name="태국어">🇹🇭 태국어</option>
-                    <option value="vi-VN" data-lang-name="베트남어">🇻🇳 베트남어</option>
-                    <option value="ko-KR" data-lang-name="한국어">🇰🇷 한국어</option>
-                    <option value="ar-SA" data-lang-name="아랍어">🇸🇦 아랍어</option>
-                </select>
-                <button class="w-10 h-10 rounded-lg bg-blue-700 hover:bg-blue-800 flex items-center justify-center transition-colors border border-blue-500 shadow-sm" onclick="toggleSettingsModal(true)">
-                    <i class="fa-solid fa-gear text-lg"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- 인앱 브라우저 경고 배너 -->
-        <div id="inAppWarning" class="hidden flex-none bg-red-100 text-red-700 px-4 py-2 text-[11px] font-bold flex items-center justify-between z-10 border-b border-red-200">
-            <span class="flex-1"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-500"></i> 카카오/네이버 등에서는 마이크가 제한될 수 있습니다. 우측 메뉴에서 <b>'다른 브라우저로 열기'</b>를 선택해 주세요.</span>
-            <button onclick="document.getElementById('inAppWarning').style.display='none'" class="ml-2 px-2 py-1 text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-
+<!-- ... existing code ... -->
         <!-- Engine Indicator -->
         <div class="flex-none bg-slate-100 px-4 py-1.5 flex justify-between items-center border-b border-gray-200 text-[11px]">
             <span class="text-gray-500 font-medium">사용 중인 AI 엔진:</span>
             <span id="activeEngineText" class="font-bold text-gray-700 text-xs">설정 필요</span>
         </div>
-
-        <!-- Avatar Area -->
-        <div class="flex-none bg-gradient-to-b from-blue-50 to-white pt-2 pb-2 flex flex-col items-center justify-center relative border-b border-gray-100 shadow-sm z-10">
-            <div id="avatarWrap" class="avatar-container mb-1 transition-all duration-300">
-                <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&auto=format&fit=crop" alt="AI Avatar" class="avatar-img" id="avatarImage" onerror="this.src='https://placehold.co/300x300/e2e8f0/475569?text=AI+Tutor'">
-            </div>
-            <div id="statusText" class="text-[10px] font-semibold text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm">
-                준비됨. 하단 마이크를 눌러 시작하세요.
-            </div>
-        </div>
-
-        <!-- Chat Area -->
-        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 no-scrollbar pb-6 relative">
-            <div class="flex flex-col space-y-1">
-                <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[95%] shadow-sm self-start" id="welcomeMessage">
-                    <p class="chat-text-dynamic text-gray-800 font-bold mb-3 border-b pb-2">👋 안녕하세요! 당신의 AI 튜터입니다.</p>
-                    
-                    <div class="space-y-3 text-xs text-gray-700 leading-relaxed">
-                        <!-- 기능 안내 1: 대화 및 모드 -->
-                        <div class="flex items-start gap-2">
-                            <div class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-microphone text-[10px]"></i></div>
-                            <div>
-                                <p class="font-bold text-gray-800 mb-0.5">실시간 음성 대화</p>
-                                <p class="text-gray-500">하단의 파란 마이크를 눌러 말해보세요. <b>대화형 튜터</b>와 <b>통번역</b> 모드를 지원합니다.</p>
-                            </div>
-                        </div>
-
-                        <!-- 기능 안내 2: 단어 선택 -->
-                        <div class="flex items-start gap-2">
-                            <div class="w-6 h-6 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-hand-pointer text-[10px]"></i></div>
-                            <div>
-                                <p class="font-bold text-gray-800 mb-0.5">스마트 단어 선택</p>
-                                <p class="text-gray-500">말풍선 속 텍스트를 터치하여 구간을 선택하면 숨겨진 메뉴가 나타납니다.</p>
-                            </div>
-                        </div>
-
-                        <!-- 기능 안내 3: 듣기 및 해설 -->
-                        <div class="flex items-start gap-2">
-                            <div class="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-graduation-cap text-[10px]"></i></div>
-                            <div>
-                                <p class="font-bold text-gray-800 mb-0.5">원어민 발음 & 맞춤 해설</p>
-                                <p class="text-gray-500">선택한 단어만 원어민 발음으로 <b>다시 듣기(🔊)</b> 하거나, <b>집중 해설(💡)</b>을 받을 수 있습니다.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 pt-3 border-t border-gray-100 text-[11px] text-center text-blue-500 font-semibold bg-blue-50 rounded-lg p-2">
-                        <i class="fa-solid fa-gear"></i> 우측 상단 톱니바퀴를 눌러 API 키를 먼저 등록해 주세요.
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 단어 선택 시 나타나는 플로팅 툴팁 -->
-            <div id="selectionTooltip" class="hidden absolute z-50 bg-gray-800 text-white rounded-lg shadow-xl flex items-center px-1 py-1 tooltip-arrow transition-opacity duration-200 opacity-0 pointer-events-none" style="transform: translate(-50%, -100%); margin-top: -8px;">
-                <button onclick="readSelectedText()" class="hover:bg-gray-700 p-2 rounded-md transition-colors flex items-center justify-center text-blue-300" title="선택 부분 읽기">
-                    <i class="fa-solid fa-volume-high text-sm"></i>
-                </button>
-                <div class="w-px h-5 bg-gray-600 mx-1"></div>
-                <button onclick="explainSelectedText()" class="hover:bg-gray-700 p-2 rounded-md transition-colors flex items-center justify-center text-yellow-300" title="선택 부분 해설">
-                    <i class="fa-solid fa-lightbulb text-sm"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Controls Area (최적화된 하단 패널 적용) -->
-        <div class="flex-none bg-white border-t border-gray-200 pt-2 pb-4 sm:pb-3 px-3 flex flex-col z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-            
-            <!-- 상단 설정 (모드 & 내 언어) : 한 줄 배치 -->
-            <div class="flex justify-between items-center gap-2 mb-2">
-                <div class="bg-gray-100 rounded-full flex-1 border border-gray-200 shadow-sm">
-                    <select id="appMode" class="w-full bg-transparent text-[11px] sm:text-xs font-bold text-gray-700 text-center py-1.5 outline-none cursor-pointer" onchange="changeAppMode()">
-                        <option value="tutor">🎓 대화형 튜터</option>
-                        <option value="translate">🌐 통번역 모드</option>
-                    </select>
-                </div>
-
-                <div id="sttToggleContainer" class="bg-gray-100 rounded-full flex-1 flex items-center border border-gray-200 shadow-sm pl-2 transition-opacity duration-300">
-                    <span class="text-[10px] text-gray-500 font-bold pr-1 shrink-0">🗣️</span>
-                    <select id="sttInputLanguage" class="flex-1 bg-white text-[11px] sm:text-xs font-bold text-blue-600 rounded-r-full py-1.5 px-1 outline-none cursor-pointer border-l border-gray-200 w-full" onchange="updateStatus('내 음성 언어 변경됨')">
-                        <option value="ko-KR" data-lang-name="한국어">🇰🇷 한국어</option>
-                        <option value="en-US" data-lang-name="영어">🇺🇸 영어</option>
-                        <option value="ja-JP" data-lang-name="일본어">🇯🇵 일본어</option>
-                        <option value="zh-CN" data-lang-name="중국어">🇨🇳 중국어</option>
-                        <option value="es-ES" data-lang-name="스페인어">🇪🇸 스페인어</option>
-                        <option value="th-TH" data-lang-name="태국어">🇹🇭 태국어</option>
-                        <option value="vi-VN" data-lang-name="베트남어">🇻🇳 베트남어</option>
-                        <option value="ar-SA" data-lang-name="아랍어">🇸🇦 아랍어</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- 텍스트 입력창 (마이크 불가 환경 대비) -->
-            <div class="flex gap-2 mb-2">
-                <input type="text" id="textInput" placeholder="마이크가 안 될 때는 직접 입력해 보세요..." class="flex-1 h-9 rounded-full bg-gray-50 border border-gray-300 px-3 text-[11px] sm:text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner" onkeypress="if(event.key==='Enter') sendTextMessage()">
-                <button class="w-9 h-9 shrink-0 rounded-full bg-gray-700 text-white flex items-center justify-center hover:bg-gray-800 transition-colors shadow-md outline-none" onclick="sendTextMessage()">
-                    <i class="fa-solid fa-paper-plane text-xs"></i>
-                </button>
-            </div>
-
-            <!-- 주요 제어 버튼 (오디오, 마이크, 해설) -->
-            <div class="flex justify-center items-center gap-3">
-                <button id="stopAudioBtn" class="flex-1 max-w-[80px] h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow outline-none" onclick="stopSpeaking()" disabled>
-                    <i class="fa-solid fa-volume-xmark text-sm"></i>
-                </button>
-
-                <button id="micBtn" class="w-14 h-14 shrink-0 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-lg shadow-blue-500/50 outline-none" onclick="toggleListening()">
-                    <i id="micIcon" class="fa-solid fa-microphone"></i>
-                </button>
-
-                <button class="flex-1 max-w-[100px] h-10 rounded-full bg-yellow-100 text-yellow-700 font-bold text-[11px] flex items-center justify-center gap-1 hover:bg-yellow-200 transition-colors shadow outline-none border border-yellow-300" onclick="requestExplanationGlobal()">
-                    <i class="fa-solid fa-lightbulb"></i> 과외 해설
-                </button>
-            </div>
-        </div>
-
+<!-- ... existing code ... -->
         <!-- Settings Modal -->
         <div id="settingsModal" class="hidden absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div class="bg-white w-full max-w-[360px] rounded-2xl p-5 shadow-2xl relative transition-all duration-300 max-h-[95%] overflow-y-auto no-scrollbar">
@@ -219,12 +38,15 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="block text-sm font-semibold text-gray-800 mb-2">API 키 설정</label>
+                    <label class="block text-sm font-semibold text-gray-800 mb-2">API 키 설정 <span class="text-[10px] text-gray-500 font-normal ml-1">(하나만 입력해도 작동)</span></label>
+                    <input type="password" id="groqKeyInput" placeholder="Groq Key (추천/가장빠름/무료)" class="w-full border border-green-300 bg-green-50 rounded-lg p-2 text-sm outline-none focus:ring-1 focus:ring-green-500 mb-2 transition-colors">
                     <input type="password" id="geminiKeyInput" placeholder="Gemini Key" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none mb-2">
                     <input type="password" id="deepseekKeyInput" placeholder="DeepSeek Key" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none">
                 </div>
+                
+                <p class="text-[10px] text-gray-500 mb-2"><i class="fa-solid fa-circle-info"></i> 무료인 Groq 키를 발급받아 가장 위에 입력하세요. 입력된 키 중 상단(Groq > Gemini > DeepSeek)의 키를 우선 사용합니다.</p>
 
-                <div class="flex gap-2 mt-6 pt-4 border-t">
+                <div class="flex gap-2 mt-4 pt-4 border-t">
                     <button class="flex-1 bg-gray-100 text-gray-700 py-2.5 rounded-lg text-sm" onclick="toggleSettingsModal(false)">취소</button>
                     <button class="flex-1 bg-blue-600 text-white py-2.5 rounded-lg text-sm" onclick="saveSettings()">저장</button>
                 </div>
@@ -263,6 +85,7 @@
         let selectedEngine = ''; 
         let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
         let deepseekApiKey = localStorage.getItem('deepseek_api_key') || '';
+        let groqApiKey = localStorage.getItem('groq_api_key') || ''; // Groq 키 추가
         let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
         
         let currentBubbleId = null;
@@ -270,386 +93,7 @@
         let endIndex = -1;
         let bubbleCounter = 0;
 
-        const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
-        const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
-        const avatarWrap = document.getElementById('avatarWrap'), avatarImage = document.getElementById('avatarImage');
-        const stopAudioBtn = document.getElementById('stopAudioBtn');
-        const activeEngineText = document.getElementById('activeEngineText');
-        const selectionTooltip = document.getElementById('selectionTooltip');
-
-        // --- In-App Browser Detection & Text Input ---
-        function checkInAppBrowser() {
-            const ua = navigator.userAgent.toLowerCase();
-            const inAppWarning = document.getElementById('inAppWarning');
-            if (ua.match(/kakaotalk|naver|daum|line|instagram|facebook/i)) {
-                if(inAppWarning) inAppWarning.classList.remove('hidden');
-            }
-        }
-        
-        function sendTextMessage() {
-            const input = document.getElementById('textInput');
-            const text = input.value.trim();
-            if (text) {
-                input.value = '';
-                handleUserMessage(text);
-            }
-        }
-
-        // Apply Load Settings
-        document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
-        updateGenderUI(currentVoiceGender, true); 
-        determineActiveEngine();
-        checkInAppBrowser(); // 인앱 브라우저 체크 실행
-
-        // --- STT (음성 인식 초기화 및 하이브리드 로직 적용) ---
-        function initSpeechRecognition() {
-            // 웹 브라우저(미리보기) 용 Fallback 로직
-            if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-                const SpeechReq = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechReq();
-                recognition.onstart = () => {
-                    // 네이티브 앱이 아닐 경우만 상태 업데이트
-                    if (typeof Capacitor === 'undefined' || !Capacitor.isNativePlatform()) {
-                        isListening = true; stopSpeaking(); 
-                        micBtn.classList.replace('bg-blue-600', 'bg-red-500'); micIcon.classList.replace('fa-microphone', 'fa-ear-listen');
-                        updateStatus("듣는 중... (웹)");
-                    }
-                };
-                recognition.onresult = (e) => handleUserMessage(e.results[0][0].transcript);
-                recognition.onerror = () => { resetMic(); updateStatus("인식 실패 또는 권한 없음"); };
-                recognition.onend = () => resetMic();
-            } else { 
-                updateStatus("마이크 미지원 (텍스트로 입력하세요)"); 
-                micBtn.disabled = true;
-                micBtn.classList.replace('bg-blue-600', 'bg-gray-400');
-                micBtn.classList.remove('hover:scale-105');
-            }
-        }
-        initSpeechRecognition();
-
-        // [신규 코드 적용] 플러그인 방식이 포함된 음성 인식 토글
-        async function toggleListening() {
-            // 1. 네이티브 앱(Capacitor 모바일 환경)인 경우
-            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && typeof SpeechRecognition !== 'undefined') {
-                try {
-                    const { status } = await SpeechRecognition.requestPermission();
-                    if (status !== 'granted') {
-                        alert("앱 설정에서 마이크 권한을 허용해 주세요.");
-                        return;
-                    }
-
-                    if (isListening) {
-                        await SpeechRecognition.stop();
-                        isListening = false;
-                        resetMic();
-                    } else {
-                        isListening = true;
-                        stopSpeaking();
-                        micBtn.classList.replace('bg-blue-600', 'bg-red-500'); 
-                        micIcon.classList.replace('fa-microphone', 'fa-ear-listen');
-                        updateStatus("듣는 중... (앱)");
-
-                        const result = await SpeechRecognition.start({
-                            language: document.getElementById('sttInputLanguage').value,
-                            maxResults: 1,
-                            prompt: "AI 튜터에게 말씀하세요...",
-                            partialResults: false,
-                            popup: true // 안드로이드 기본 마이크 팝업 띄우기
-                        });
-
-                        if (result.matches && result.matches.length > 0) {
-                            handleUserMessage(result.matches[0]);
-                        }
-                        isListening = false;
-                        resetMic();
-                    }
-                } catch (err) {
-                    console.error("네이티브 음성 인식 에러:", err);
-                    updateStatus("음성 인식 취소됨");
-                    isListening = false;
-                    resetMic();
-                }
-            } 
-            // 2. 일반 웹 브라우저 환경인 경우 (기존 로직 사용)
-            else {
-                if(!recognition) return;
-                if(isListening) {
-                    recognition.stop();
-                } else { 
-                    recognition.lang = document.getElementById('sttInputLanguage').value; 
-                    recognition.start(); 
-                }
-            }
-        }
-
-        function resetMic() { isListening = false; micBtn.classList.replace('bg-red-500', 'bg-blue-600'); micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); if(!isSpeaking) updateStatus("대기 중"); }
-        function updateStatus(txt) { statusText.textContent = txt; }
-
-        // --- Smart Touch Selection & Tooltip Logic ---
-        function clearSelection() {
-            document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
-            startIndex = -1; endIndex = -1; currentBubbleId = null;
-            hideSelectionTooltip();
-        }
-        
-        function handleWordClick(event, bubbleId, wordIndex, isExplanation = false) {
-            event.stopPropagation(); 
-            
-            if (currentBubbleId !== null && currentBubbleId !== bubbleId) clearSelection();
-            currentBubbleId = bubbleId;
-
-            if (startIndex === -1) {
-                startIndex = wordIndex;
-                endIndex = wordIndex;
-            } else if (startIndex === wordIndex && endIndex === wordIndex) {
-                clearSelection(); return;
-            } else {
-                endIndex = wordIndex;
-                if (startIndex > endIndex) { let temp = startIndex; startIndex = endIndex; endIndex = temp; }
-            }
-
-            const container = document.getElementById(`bubble-${bubbleId}`);
-            const spanClass = isExplanation ? '.exp-word-span' : '.word-span';
-            const words = container.querySelectorAll(spanClass);
-            
-            let lastSelectedSpan = null;
-
-            words.forEach(span => {
-                const idx = parseInt(span.getAttribute('data-index'));
-                if (idx >= startIndex && idx <= endIndex) {
-                    span.classList.add('selected');
-                    lastSelectedSpan = span; // 마지막 요소 저장
-                } else {
-                    span.classList.remove('selected');
-                }
-            });
-
-            if (lastSelectedSpan) {
-                showSelectionTooltip(lastSelectedSpan);
-            }
-        }
-
-        function showSelectionTooltip(targetElement) {
-            const containerRect = chatContainer.getBoundingClientRect();
-            const rect = targetElement.getBoundingClientRect();
-            
-            // chatContainer 내부에서의 상대 좌표 계산
-            const top = rect.top - containerRect.top + chatContainer.scrollTop;
-            const left = rect.left - containerRect.left + (rect.width / 2);
-
-            selectionTooltip.style.top = `${top}px`;
-            selectionTooltip.style.left = `${left}px`;
-            selectionTooltip.classList.remove('hidden');
-            
-            // 약간의 딜레이를 주어 transition이 적용되게 함
-            setTimeout(() => {
-                selectionTooltip.classList.remove('opacity-0');
-                selectionTooltip.classList.remove('pointer-events-none');
-            }, 10);
-        }
-
-        function hideSelectionTooltip() {
-            selectionTooltip.classList.add('opacity-0');
-            selectionTooltip.classList.add('pointer-events-none');
-            setTimeout(() => {
-                selectionTooltip.classList.add('hidden');
-            }, 200);
-        }
-
-        function handleBodyClick(e) {
-            // 단어, 툴팁, 툴팁 내부 버튼 클릭이 아닐 경우에만 선택 해제
-            if (!e.target.classList.contains('word-span') && 
-                !e.target.classList.contains('exp-word-span') && 
-                !e.target.closest('#selectionTooltip') &&
-                !e.target.closest('button')) {
-                clearSelection();
-            }
-        }
-
-        function getSelectedTextFromBubble(bubbleId, isExplanation = false) {
-            if(startIndex === -1) return null;
-            const container = document.getElementById(`bubble-${bubbleId}`);
-            if(!container) return null;
-            let textArr = [];
-            const spanClass = isExplanation ? '.exp-word-span' : '.word-span';
-            const words = container.querySelectorAll(spanClass);
-            words.forEach(span => {
-                const idx = parseInt(span.getAttribute('data-index'));
-                if (idx >= startIndex && idx <= endIndex) textArr.push(span.textContent);
-            });
-            
-            // 띄어쓰기 없는 언어(일본어, 중국어, 태국어)는 선택된 단어를 공백 없이 그대로 연결
-            const lang = container.getAttribute('data-lang') || 'ko-KR';
-            if (['ja-JP', 'zh-CN', 'th-TH'].includes(lang)) {
-                return textArr.join('');
-            }
-            return textArr.join(' ');
-        }
-
-        function createSpansForText(text, bubbleId, isExplanation = false, langCode = 'ko-KR') {
-            const spanClass = isExplanation ? 'exp-word-span' : 'word-span';
-            
-            // 브라우저의 Intl.Segmenter를 사용하여 언어별 단어 분리 (특히 일본어/중국어/태국어)
-            if (window.Intl && Intl.Segmenter) {
-                const parts = text.split(/(<[^>]*>)/g); // HTML 태그 보호
-                let idx = 0;
-                let resultHtml = '';
-                
-                const segmenter = new Intl.Segmenter(langCode, { granularity: 'word' });
-                
-                parts.forEach(part => {
-                    if (part.startsWith('<') && part.endsWith('>')) {
-                        resultHtml += part;
-                    } else {
-                        const segments = segmenter.segment(part);
-                        for (const {segment} of segments) {
-                            if (segment.trim() === '') {
-                                resultHtml += segment;
-                            } else {
-                                resultHtml += `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${segment}</span>`;
-                                idx++;
-                            }
-                        }
-                    }
-                });
-                return resultHtml;
-            } else {
-                // Fallback (단순 공백 분리)
-                const wordsArray = text.split(' ');
-                return wordsArray.map((word, idx) => 
-                    `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${word}</span>`
-                ).join(' ');
-            }
-        }
-
-        // --- 툴팁 버튼 액션 ---
-        function readSelectedText() {
-            if (!currentBubbleId) return;
-            const isExp = currentBubbleId.startsWith('exp-');
-            const text = getSelectedTextFromBubble(currentBubbleId, isExp);
-            if (text) {
-                const targetLang = document.getElementById('targetLanguage').value;
-                const expLang = document.getElementById('explanationLanguage').value;
-                let speakLang = targetLang;
-
-                if (isExp) {
-                    // 해설 창 텍스트의 언어 자동 감지 (원어민 발음 출력)
-                    const hasHangul = /[\u3131-\uD79D]/.test(text);
-                    const hasKana = /[\u3040-\u30ff]/.test(text);
-                    const hasHanzi = /[\u4e00-\u9fa5]/.test(text);
-                    const hasThai = /[\u0E00-\u0E7F]/.test(text);
-                    const hasLatin = /[a-zA-ZÀ-ÿ]/.test(text);
-
-                    if (hasHangul && targetLang !== 'ko-KR') {
-                        // 한글이 포함되어 있고 타겟 언어가 한국어가 아니면 한국어/해설 언어 TTS 사용
-                        speakLang = expLang.startsWith('ko') ? 'ko-KR' : expLang;
-                    } else if (['en-US', 'es-ES', 'vi-VN'].includes(targetLang) && hasLatin) {
-                        speakLang = targetLang;
-                    } else if (targetLang === 'ja-JP' && (hasKana || hasHanzi)) {
-                        speakLang = targetLang;
-                    } else if (targetLang === 'zh-CN' && hasHanzi) {
-                        speakLang = targetLang;
-                    } else if (targetLang === 'th-TH' && hasThai) {
-                        speakLang = targetLang;
-                    } else {
-                        speakLang = targetLang;
-                    }
-                } else {
-                    // 일반 대화창의 경우 지정된 언어 사용
-                    const pTag = document.getElementById(`bubble-${currentBubbleId}`);
-                    speakLang = pTag.getAttribute('data-lang') || targetLang;
-                }
-                
-                speakText(text, speakLang);
-            }
-        }
-
-        function explainSelectedText() {
-            if (!currentBubbleId) return;
-            const isExp = currentBubbleId.startsWith('exp-');
-            const pTag = document.getElementById(`bubble-${currentBubbleId}`);
-            if(!pTag) return;
-            
-            const fullTxt = Array.from(pTag.querySelectorAll('span')).map(s=>s.textContent).join(' ');
-            const selTxt = getSelectedTextFromBubble(currentBubbleId, isExp);
-            
-            requestExplanationFromBubble(currentBubbleId, fullTxt, isExp, selTxt);
-            hideSelectionTooltip(); // 해설 요청 후 툴팁 숨김
-        }
-
-        // --- Message Rendering ---
-        function addMessageToChat(sender, text, translation = null, targetLangCode = null) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = "flex flex-col space-y-1 mt-4";
-            
-            if (sender === 'user') {
-                msgDiv.innerHTML = `<div class="bg-blue-600 text-white rounded-2xl rounded-tr-none p-3 max-w-[85%] self-end chat-text-dynamic">${text}</div>`;
-            } else {
-                bubbleCounter++;
-                const bId = `ai-msg-${bubbleCounter}`;
-                const pureText = text.replace(/[\*\#\`]/g, '');
-                
-                // 따옴표 오류 방지를 위해 encodeURIComponent 사용
-                const safeEncodedText = encodeURIComponent(pureText);
-                
-                const visualText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                const spansHtml = createSpansForText(visualText, bId, false, targetLangCode);
-
-                let extraHtml = `
-                    <div class="flex gap-1 ml-2 shrink-0">
-                        <button onclick="requestExplanationFromBubble('${bId}', decodeURIComponent('${safeEncodedText}'), false)" class="text-green-500 hover:bg-green-50 w-7 h-7 rounded-full bg-white shadow-sm border border-green-100 flex items-center justify-center" title="과외 받기"><i class="fa-solid fa-lightbulb"></i></button>
-                        <button onclick="speakText(decodeURIComponent('${safeEncodedText}'), '${targetLangCode}')" class="text-blue-400 hover:bg-blue-50 w-7 h-7 rounded-full bg-white shadow-sm border border-blue-100 flex items-center justify-center" title="다시 듣기"><i class="fa-solid fa-volume-high"></i></button>
-                    </div>`;
-
-                msgDiv.innerHTML = `
-                    <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[90%] shadow-md self-start relative">
-                        <div class="flex items-start justify-between gap-2">
-                            <p id="bubble-${bId}" data-lang="${targetLangCode}" dir="auto" class="chat-text-dynamic text-gray-800 break-words leading-relaxed">${spansHtml}</p>
-                            ${extraHtml}
-                        </div>
-                        ${translation ? `<p class="text-[11px] text-gray-500 mt-2 border-t pt-1.5 border-gray-100">${translation}</p>` : ''}
-                    </div>`;
-            }
-            chatContainer.appendChild(msgDiv);
-            setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
-        }
-
-        // --- TTS Engine ---
-        function cleanTextForTTS(raw) {
-            return raw.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-
-        function speakText(text, langCode) {
-            if(!synthesis) return;
-            synthesis.cancel();
-            
-            const clean = cleanTextForTTS(text);
-            if(!clean) return;
-
-            currentUtterance = new SpeechSynthesisUtterance(clean);
-            currentUtterance.lang = langCode;
-            
-            let voices = synthesis.getVoices().filter(v => v.lang.startsWith(langCode.substring(0,2)));
-            if(voices.length>0) {
-                const isF = currentVoiceGender === 'female';
-                let v = voices.find(x => isF ? (x.name.toLowerCase().includes('female') || x.name.toLowerCase().includes('girl')) : (x.name.toLowerCase().includes('male') || x.name.toLowerCase().includes('boy')));
-                currentUtterance.voice = v || voices[0];
-            }
-            
-            currentUtterance.rate = 0.95;
-            currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
-
-            currentUtterance.onstart = () => { isSpeaking = true; avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#3b82f6"; stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-gray-600', 'text-red-500'); updateStatus("말하는 중..."); };
-            currentUtterance.onend = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-gray-600'); updateStatus("대기 중"); };
-            currentUtterance.onerror = () => currentUtterance.onend();
-
-            // 약간의 딜레이 후 실행하여 캔슬-실행 엉킴 방지
-            setTimeout(() => {
-                synthesis.speak(currentUtterance);
-            }, 50);
-        }
-        function stopSpeaking() { synthesis.cancel(); }
-
+<!-- ... existing code ... -->
         // --- LLM API Logic ---
         async function fetchAPI(url, options) {
             let delay=500;
@@ -662,7 +106,7 @@
         async function handleUserMessage(text) {
             if(!text) return;
             addMessageToChat('user', text);
-            if(!geminiApiKey && !deepseekApiKey) return toggleSettingsModal(true);
+            if(!geminiApiKey && !deepseekApiKey && !groqApiKey) return toggleSettingsModal(true);
 
             updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#9ca3af";
             const mode = document.getElementById('appMode').value;
@@ -671,8 +115,8 @@
             const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
 
             let sysPrompt = mode === 'translate' 
-                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 출력포맷 JSON: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}`
-                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 1~2문장으로 짧게. 출력포맷 JSON: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
+                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 반드시 JSON 형식으로만 응답해라: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}`
+                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 1~2문장으로 짧게. 반드시 JSON 형식으로만 응답해라: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
 
             try {
                 let foreign="", korean="";
@@ -688,14 +132,21 @@
                     foreign = parsed.foreign_text; korean = parsed.korean_translation;
                     if(mode==='tutor') conversationHistory.push({role:"model",parts:[{text:JSON.stringify(parsed)}]});
                     else ctx.pop();
-                } else {
+                } else if (selectedEngine === 'groq' || selectedEngine === 'deepseek') {
+                    // Groq와 DeepSeek은 OpenAI API 호환 형식을 사용
                     let ctx = mode==='tutor'?conversationHistory:[{role:"system",content:sysPrompt},{role:"user",content:text}];
                     if(mode==='tutor') {
                         if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
                         ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
                         if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)];
                     }
-                    let res = await fetchAPI("https://api.deepseek.com/v1/chat/completions",{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${deepseekApiKey}`},body:JSON.stringify({model:"deepseek-chat",messages:ctx,response_format:{type:"json_object"}})});
+
+                    let apiUrl = selectedEngine === 'groq' ? "https://api.groq.com/openai/v1/chat/completions" : "https://api.deepseek.com/v1/chat/completions";
+                    let apiKey = selectedEngine === 'groq' ? groqApiKey : deepseekApiKey;
+                    // Groq은 llama3-8b-8192 모델 사용 (속도 매우 빠르고 성능 좋음)
+                    let modelName = selectedEngine === 'groq' ? "llama3-8b-8192" : "deepseek-chat";
+
+                    let res = await fetchAPI(apiUrl,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${apiKey}`},body:JSON.stringify({model:modelName,messages:ctx,response_format:{type:"json_object"}})});
                     let data = await res.json();
                     let parsed = JSON.parse(data.choices[0].message.content);
                     foreign = parsed.foreign_text; korean = parsed.korean_translation;
@@ -706,39 +157,16 @@
                     addMessageToChat('ai', foreign, korean, targetLang);
                     speakText(foreign, targetLang);
                 }
-            } catch(e) { updateStatus("API 연동 에러"); avatarWrap.style.borderColor="#ef4444"; }
+            } catch(e) { 
+                console.error("API Error", e);
+                updateStatus(`통신 오류 (${selectedEngine})`); 
+                avatarWrap.style.borderColor="#ef4444"; 
+            }
         }
 
         // --- Explanation Logic ---
         async function requestExplanationGlobal() {
-            const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border:not(.bg-yellow-50)');
-            if(aiBubbles.length === 0) return updateStatus("설명할 대화가 없습니다.");
-            
-            const lastContainer = aiBubbles[aiBubbles.length-1];
-            const pTag = lastContainer.querySelector('p[id^="bubble-"]');
-            if(!pTag) return;
-            const bId = pTag.id.replace('bubble-','');
-            
-            const selTxt = getSelectedTextFromBubble(bId, false);
-            const fullTxt = Array.from(pTag.querySelectorAll('span')).map(s=>s.textContent).join(' ');
-            
-            requestExplanationFromBubble(bId, fullTxt, false, selTxt);
-        }
-
-        async function requestExplanationFromBubble(bId, fullText, isExpSource = false, preSelectedText = null) {
-            updateStatus("해설 분석 중...");
-            
-            const expSel = document.getElementById('explanationLanguage');
-            const expLangName = expSel.options[expSel.selectedIndex].dataset.langName;
-            
-            const targetWord = preSelectedText || getSelectedTextFromBubble(bId, isExpSource);
-            
-            let prompt = "";
-            let focusTitle = "";
-            
-            const cleanFullText = cleanTextForTTS(fullText);
-            const cleanTargetWord = targetWord ? cleanTextForTTS(targetWord) : null;
-            
+<!-- ... existing code ... -->
             if (cleanTargetWord) {
                 focusTitle = `[ ${cleanTargetWord} ] 심화 학습`;
                 prompt = `원문 "${cleanFullText}"에서 사용자가 콕 집은 부분은 "${cleanTargetWord}" 입니다. 이 표현의 뜻과 쓰임새, 주의할 점, 예문 1개를 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력해.`;
@@ -752,41 +180,18 @@
                 if (selectedEngine === 'gemini') {
                     let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] }) });
                     let data = await res.json(); explanation = data.candidates[0].content.parts[0].text;
-                } else {
-                    let res = await fetch("https://api.deepseek.com/v1/chat/completions", { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${deepseekApiKey}` }, body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: prompt }] }) });
+                } else if (selectedEngine === 'groq' || selectedEngine === 'deepseek') {
+                    let apiUrl = selectedEngine === 'groq' ? "https://api.groq.com/openai/v1/chat/completions" : "https://api.deepseek.com/v1/chat/completions";
+                    let apiKey = selectedEngine === 'groq' ? groqApiKey : deepseekApiKey;
+                    let modelName = selectedEngine === 'groq' ? "llama3-8b-8192" : "deepseek-chat";
+
+                    let res = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` }, body: JSON.stringify({ model: modelName, messages: [{ role: "user", content: prompt }] }) });
                     let data = await res.json(); explanation = data.choices[0].message.content;
                 }
 
                 if (explanation) {
                     bubbleCounter++;
-                    const expBId = `exp-msg-${bubbleCounter}`;
-                    
-                    const pureExp = explanation.replace(/[\*\#\`]/g, '');
-                    const safeEncodedExp = encodeURIComponent(pureExp);
-                    
-                    const visualExp = explanation.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                    const tempVisualExp = visualExp.replace(/\n/g, '<br>');
-                    let spansHtml = createSpansForText(tempVisualExp, expBId, true, document.getElementById('explanationLanguage').value);
-
-                    const msgDiv = document.createElement('div');
-                    msgDiv.className = "flex flex-col space-y-1 mt-4";
-                    msgDiv.innerHTML = `
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full shadow-md relative">
-                            <div class="absolute top-2 right-2 flex gap-1">
-                                <button onclick="requestExplanationFromBubble('${expBId}', decodeURIComponent('${safeEncodedExp}'), true)" class="text-green-600 hover:bg-green-100 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm border border-green-200 bg-white" title="이 부분만 추가 설명 듣기"><i class="fa-solid fa-lightbulb text-sm"></i></button>
-                            </div>
-                            <p class="text-xs font-bold text-yellow-800 mb-2"><i class="fa-solid fa-graduation-cap"></i> ${focusTitle}</p>
-                            <p id="bubble-${expBId}" data-lang="${document.getElementById('explanationLanguage').value}" dir="auto" class="chat-text-dynamic text-gray-800 pr-10 leading-relaxed">${spansHtml}</p>
-                        </div>`;
-                    chatContainer.appendChild(msgDiv);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    updateStatus("해설 완료");
-                    clearSelection(); 
-                }
-            } catch(e) { updateStatus("해설 실패"); }
-        }
-
-        // --- General Settings ---
+<!-- ... existing code ... -->
         function changeAppMode() { conversationHistory=[]; updateStatus("모드 변경됨"); }
         
         function targetLanguageChanged() {
@@ -795,39 +200,32 @@
         }
 
         function determineActiveEngine() {
-            if (geminiApiKey) {
+            // 우선순위: Groq -> Gemini -> DeepSeek
+            if (groqApiKey) {
+                selectedEngine = 'groq';
+                activeEngineText.textContent = 'Groq (Llama3)';
+                activeEngineText.className = 'font-bold text-green-600 text-xs';
+            } else if (geminiApiKey) {
                 selectedEngine = 'gemini';
                 activeEngineText.textContent = 'Google Gemini';
+                activeEngineText.className = 'font-bold text-blue-600 text-xs';
             } else if (deepseekApiKey) {
                 selectedEngine = 'deepseek';
                 activeEngineText.textContent = 'DeepSeek';
+                activeEngineText.className = 'font-bold text-purple-600 text-xs';
             } else {
                 selectedEngine = '';
                 activeEngineText.textContent = '설정 필요 (API 키 입력)';
+                activeEngineText.className = 'font-bold text-red-500 text-xs';
             }
         }
 
         // --- 성별 설정에 따른 이미지 적용 함수 ---
-        let tempGender = currentVoiceGender;
-        function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
-        
-        function updateGenderUI(g, applyImg=false) {
-            if(g === 'female') { 
-                document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; 
-                document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; 
-                // 미소녀 이미지 적용
-                if(applyImg) avatarImage.src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&auto=format&fit=crop"; 
-            } else { 
-                document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; 
-                document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; 
-                // 미소년 이미지 적용
-                if(applyImg) avatarImage.src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=300&auto=format&fit=crop"; 
-            }
-        }
-
+<!-- ... existing code ... -->
         function toggleSettingsModal(s=true) {
             let m=document.getElementById('settingsModal');
             if(s) { 
+                document.getElementById('groqKeyInput').value=groqApiKey;
                 document.getElementById('geminiKeyInput').value=geminiApiKey; 
                 document.getElementById('deepseekKeyInput').value=deepseekApiKey; 
                 document.getElementById('fontSizeSlider').value=localStorage.getItem('chat_font_size')||14; 
@@ -839,6 +237,7 @@
         }
 
         function saveSettings() {
+            groqApiKey=document.getElementById('groqKeyInput').value.trim(); localStorage.setItem('groq_api_key',groqApiKey);
             geminiApiKey=document.getElementById('geminiKeyInput').value.trim(); localStorage.setItem('gemini_api_key',geminiApiKey);
             deepseekApiKey=document.getElementById('deepseekKeyInput').value.trim(); localStorage.setItem('deepseek_api_key',deepseekApiKey);
             localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value);
