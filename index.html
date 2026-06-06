@@ -12,7 +12,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; }
         .chat-text-dynamic { font-size: var(--chat-font-size); line-height: 1.5; }
         
-        .avatar-container { width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 3px solid #3b82f6; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3); position: relative; margin: 0 auto; transition: border-color 0.3s ease; }
+        .avatar-container { width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 3px solid #3b82f6; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3); position: relative; margin: 0 auto; transition: border-color 0.3s ease; background-color: #fff; }
         .avatar-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s ease; }
         
         .speaking-pulse { animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
@@ -75,7 +75,7 @@
         <!-- Avatar Area -->
         <div class="flex-none bg-gradient-to-b from-blue-50 to-white pt-2 pb-2 flex flex-col items-center justify-center relative border-b border-gray-100 shadow-sm z-10">
             <div id="avatarWrap" class="avatar-container mb-1 transition-all duration-300">
-                <img src="호두 꿀벌_2.jpg" alt="AI Avatar" class="avatar-img" id="avatarImage" onerror="this.src='https://placehold.co/300x300/e2e8f0/475569?text=AI+Tutor'">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Jane" alt="AI Avatar" class="avatar-img" id="avatarImage" onerror="this.src='https://placehold.co/300x300/e2e8f0/475569?text=AI+Tutor'">
             </div>
             <div id="statusText" class="text-[10px] font-semibold text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-full shadow-sm">
                 준비됨. 하단 마이크를 눌러 시작하세요.
@@ -736,8 +736,8 @@
         let tempGender = currentVoiceGender;
         function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
         function updateGenderUI(g, applyImg=false) {
-            if(g==='female') { document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; if(applyImg) avatarImage.src="호두 꿀벌_2.jpg"; }
-            else { document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; if(applyImg) avatarImage.src="치타 팔짱_2.jpg"; }
+            if(g==='female') { document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; if(applyImg) avatarImage.src="https://api.dicebear.com/7.x/bottts/svg?seed=Jane"; }
+            else { document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; if(applyImg) avatarImage.src="https://api.dicebear.com/7.x/bottts/svg?seed=John"; }
         }
         function toggleSettingsModal(s=true) {
             let m=document.getElementById('settingsModal');
