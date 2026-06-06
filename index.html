@@ -332,15 +332,49 @@
                 const idx = parseInt(span.getAttribute('data-index'));
                 if (idx >= startIndex && idx <= endIndex) textArr.push(span.textContent);
             });
+            
+            // 띄어쓰기 없는 언어(일본어, 중국어, 태국어)는 선택된 단어를 공백 없이 그대로 연결
+            const lang = container.getAttribute('data-lang') || 'ko-KR';
+            if (['ja-JP', 'zh-CN', 'th-TH'].includes(lang)) {
+                return textArr.join('');
+            }
             return textArr.join(' ');
         }
 
-        function createSpansForText(text, bubbleId, isExplanation = false) {
-            const wordsArray = text.split(' ');
+        function createSpansForText(text, bubbleId, isExplanation = false, langCode = 'ko-KR') {
             const spanClass = isExplanation ? 'exp-word-span' : 'word-span';
-            return wordsArray.map((word, idx) => 
-                `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${word}</span>`
-            ).join(' ');
+            
+            // 브라우저의 Intl.Segmenter를 사용하여 언어별 단어 분리 (특히 일본어/중국어/태국어)
+            if (window.Intl && Intl.Segmenter) {
+                const parts = text.split(/(<[^>]*>)/g); // HTML 태그 보호
+                let idx = 0;
+                let resultHtml = '';
+                
+                const segmenter = new Intl.Segmenter(langCode, { granularity: 'word' });
+                
+                parts.forEach(part => {
+                    if (part.startsWith('<') && part.endsWith('>')) {
+                        resultHtml += part;
+                    } else {
+                        const segments = segmenter.segment(part);
+                        for (const {segment} of segments) {
+                            if (segment.trim() === '') {
+                                resultHtml += segment;
+                            } else {
+                                resultHtml += `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${segment}</span>`;
+                                idx++;
+                            }
+                        }
+                    }
+                });
+                return resultHtml;
+            } else {
+                // Fallback (단순 공백 분리)
+                const wordsArray = text.split(' ');
+                return wordsArray.map((word, idx) => 
+                    `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${word}</span>`
+                ).join(' ');
+            }
         }
 
         // --- 툴팁 버튼 액션 ---
@@ -414,7 +448,7 @@
                 const safeEncodedText = encodeURIComponent(pureText);
                 
                 const visualText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                const spansHtml = createSpansForText(visualText, bId, false);
+                const spansHtml = createSpansForText(visualText, bId, false, targetLangCode);
 
                 let extraHtml = `
                     <div class="flex gap-1 ml-2 shrink-0">
@@ -586,9 +620,8 @@
                     const safeEncodedExp = encodeURIComponent(pureExp);
                     
                     const visualExp = explanation.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                    const tempVisualExp = visualExp.replace(/\n/g, ' [[BR]] ');
-                    let spansHtml = createSpansForText(tempVisualExp, expBId, true);
-                    spansHtml = spansHtml.replace(/\[\[BR\]\]/g, '<br>');
+                    const tempVisualExp = visualExp.replace(/\n/g, '<br>');
+                    let spansHtml = createSpansForText(tempVisualExp, expBId, true, document.getElementById('explanationLanguage').value);
 
                     const msgDiv = document.createElement('div');
                     msgDiv.className = "flex flex-col space-y-1 mt-4";
