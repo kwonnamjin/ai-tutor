@@ -60,6 +60,12 @@
             </div>
         </div>
 
+        <!-- 인앱 브라우저 경고 배너 -->
+        <div id="inAppWarning" class="hidden flex-none bg-red-100 text-red-700 px-4 py-2 text-[11px] font-bold flex items-center justify-between z-10 border-b border-red-200">
+            <span class="flex-1"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-500"></i> 카카오/네이버 등에서는 마이크가 제한될 수 있습니다. 우측 메뉴에서 <b>'다른 브라우저로 열기'</b>를 선택해 주세요.</span>
+            <button onclick="document.getElementById('inAppWarning').style.display='none'" class="ml-2 px-2 py-1 text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
         <!-- Engine Indicator -->
         <div class="flex-none bg-slate-100 px-4 py-1.5 flex justify-between items-center border-b border-gray-200 text-[11px]">
             <span class="text-gray-500 font-medium">사용 중인 AI 엔진:</span>
@@ -158,6 +164,14 @@
                 </div>
             </div>
 
+            <!-- 텍스트 입력창 (마이크 불가 환경 대비) -->
+            <div class="flex gap-2 mb-3 px-2">
+                <input type="text" id="textInput" placeholder="마이크가 안 될 때는 직접 입력해 보세요..." class="flex-1 h-10 rounded-full bg-gray-50 border border-gray-300 px-4 text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner" onkeypress="if(event.key==='Enter') sendTextMessage()">
+                <button class="w-10 h-10 shrink-0 rounded-full bg-gray-700 text-white flex items-center justify-center hover:bg-gray-800 transition-colors shadow-md outline-none" onclick="sendTextMessage()">
+                    <i class="fa-solid fa-paper-plane text-sm"></i>
+                </button>
+            </div>
+
             <div class="flex justify-center items-center gap-4">
                 <button id="stopAudioBtn" class="flex-1 max-w-[80px] h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow outline-none" onclick="stopSpeaking()" disabled>
                     <i class="fa-solid fa-volume-xmark text-lg"></i>
@@ -243,10 +257,29 @@
         const activeEngineText = document.getElementById('activeEngineText');
         const selectionTooltip = document.getElementById('selectionTooltip');
 
+        // --- In-App Browser Detection & Text Input ---
+        function checkInAppBrowser() {
+            const ua = navigator.userAgent.toLowerCase();
+            const inAppWarning = document.getElementById('inAppWarning');
+            if (ua.match(/kakaotalk|naver|daum|line|instagram|facebook/i)) {
+                if(inAppWarning) inAppWarning.classList.remove('hidden');
+            }
+        }
+        
+        function sendTextMessage() {
+            const input = document.getElementById('textInput');
+            const text = input.value.trim();
+            if (text) {
+                input.value = '';
+                handleUserMessage(text);
+            }
+        }
+
         // Apply Load Settings
         document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
         updateGenderUI(currentVoiceGender, true); 
         determineActiveEngine();
+        checkInAppBrowser(); // 인앱 브라우저 체크 실행
 
         // --- STT ---
         function initSpeechRecognition() {
@@ -259,9 +292,14 @@
                     updateStatus("듣는 중...");
                 };
                 recognition.onresult = (e) => handleUserMessage(e.results[0][0].transcript);
-                recognition.onerror = () => { resetMic(); updateStatus("인식 실패"); };
+                recognition.onerror = () => { resetMic(); updateStatus("인식 실패 또는 권한 없음"); };
                 recognition.onend = () => resetMic();
-            } else { updateStatus("STT 미지원 환경"); }
+            } else { 
+                updateStatus("마이크 미지원 (텍스트로 입력하세요)"); 
+                micBtn.disabled = true;
+                micBtn.classList.replace('bg-blue-600', 'bg-gray-400');
+                micBtn.classList.remove('hover:scale-105');
+            }
         }
         initSpeechRecognition();
 
