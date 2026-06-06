@@ -145,7 +145,7 @@
             <!-- System Welcome Message -->
             <div class="flex flex-col space-y-1">
                 <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[90%] shadow-sm self-start" id="welcomeMessage">
-                    <p class="chat-text-dynamic text-gray-800 font-medium mb-1">안녕하세요! 저는 당신의 AI 튜터입니다.</p>
+                    <p class="chat-text-dynamic text-gray-800 font-medium mb-1">안녕하세요! 저는 당신의 대화형 AI 튜터입니다.</p>
                     <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded leading-relaxed">
                         <i class="fa-solid fa-circle-info"></i> 원어민 튜터 모드로 대화하거나 즉시 번역 모드를 사용할 수 있습니다.<br>
                         💡 <b>단어를 터치(클릭)</b>해서 구간을 선택한 후 💡나 ? 버튼을 누르면 그 단어만 과외해 줍니다!
@@ -157,20 +157,12 @@
         <!-- Controls Area -->
         <div class="flex-none bg-white border-t border-gray-200 pt-3 pb-6 sm:pb-4 px-4 flex flex-col z-20" onclick="clearWordSelection()">
             
-            <!-- App Mode & Level Selector Row -->
-            <div class="flex justify-center gap-2 mb-3">
-                <div class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 flex-1 max-w-[150px] shadow-sm">
+            <!-- App Mode Selector Row (Level Removed) -->
+            <div class="flex justify-center mb-3">
+                <div class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 w-full max-w-[150px] shadow-sm">
                     <select id="appMode" class="w-full bg-transparent text-xs font-bold text-gray-700 text-center py-2 outline-none cursor-pointer" onchange="changeAppMode()">
                         <option value="tutor">🎓 튜터 모드</option>
                         <option value="translate">🌐 번역 통역기</option>
-                    </select>
-                </div>
-                <div id="levelContainer" class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 flex-1 max-w-[150px] shadow-sm transition-opacity duration-300">
-                    <select id="proficiencyLevel" class="w-full bg-transparent text-xs font-bold text-blue-600 text-center py-2 outline-none cursor-pointer" onchange="changeLevel()">
-                        <option value="beginner">🌱 초급 (Beginner)</option>
-                        <option value="intermediate">🌿 중급 (Inter)</option>
-                        <option value="advanced">🌳 고급 (Advanced)</option>
-                        <option value="native">🔥 원어민 (Native)</option>
                     </select>
                 </div>
             </div>
@@ -284,7 +276,6 @@
         let currentFontSize = localStorage.getItem('chat_font_size') || '14';
         let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
         let currentExpLanguage = localStorage.getItem('explanation_language') || 'ko-KR';
-        let currentLevel = localStorage.getItem('proficiency_level') || 'intermediate';
 
         // DOM
         const micBtn = document.getElementById('micBtn');
@@ -298,14 +289,12 @@
         const explanationLanguageSelect = document.getElementById('explanationLanguage');
         const stopAudioBtn = document.getElementById('stopAudioBtn');
         const appModeSelect = document.getElementById('appMode');
-        const levelSelect = document.getElementById('proficiencyLevel');
 
         // Init UI
         document.getElementById('activeEngine').value = selectedEngine;
         document.getElementById('fontSizeSlider').value = currentFontSize;
         document.documentElement.style.setProperty('--chat-font-size', `${currentFontSize}px`);
         explanationLanguageSelect.value = currentExpLanguage;
-        levelSelect.value = currentLevel;
         updateGenderUI(currentVoiceGender, true); 
 
         let availableVoices = [];
@@ -384,7 +373,6 @@
         }
 
         function wrapTextWithClickableSpans(text, msgId) {
-            // 시각적 방해를 막기 위해 마크다운 기호를 우선 제거 후 단어 단위로 쪼갬
             let cleanText = text.replace(/\*\*(.*?)\*\*/g, '$1'); 
             let tokens = cleanText.split(/([ \n\t]+)/);
             let wrapped = "";
@@ -400,27 +388,17 @@
             return wrapped;
         }
 
-
         // --- App Modes ---
         function changeAppMode() {
             conversationHistory = []; 
             if(appModeSelect.value === 'translate') {
-                levelSelect.parentElement.classList.add('opacity-30', 'pointer-events-none'); 
                 updateStatus("번역 모드: 마이크를 눌러 말하세요.");
                 document.getElementById('welcomeMessage').innerHTML = `
                     <p class="chat-text-dynamic text-gray-800 font-medium mb-1"><b>🌐 즉시 번역 모드</b>가 켜졌습니다.</p>
                 `;
             } else {
-                levelSelect.parentElement.classList.remove('opacity-30', 'pointer-events-none');
                 changeLanguage(); 
             }
-        }
-
-        function changeLevel() {
-            currentLevel = levelSelect.value;
-            localStorage.setItem('proficiency_level', currentLevel);
-            conversationHistory = []; 
-            changeLanguage();
         }
 
         // --- STT ---
@@ -562,7 +540,6 @@
                 const escapedForDataAttr = text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 let translationHtml = translation ? `<p class="text-xs text-gray-500 mt-2 border-t pt-2 border-gray-100">${translation}</p>` : '';
                 
-                // 적용: 스마트 단어 쪼개기 래핑
                 const clickableTextHtml = wrapTextWithClickableSpans(text, msgId);
 
                 let replayBtnHtml = targetLangCode ? `
@@ -625,9 +602,18 @@
             
             let sysPrompt = "";
             if (appModeSelect.value === 'translate') {
-                sysPrompt = `입력된 [${inputLangName}] 문장을 [${selectedLangName}]로 완벽하게 번역하세요. 결과는 반드시 JSON 형식으로 { "foreign_text": "번역된 문장", "korean_translation": "" } 로 출력하세요.`;
+                sysPrompt = `당신은 실시간 통번역기입니다. 입력된 [${inputLangName}] 문장을 [${selectedLangName}]로 완벽하게 번역하세요. 
+결과는 반드시 JSON 형식으로 출력하며, "foreign_text"에는 번역된 문장을, "korean_translation"에는 해당 번역문의 원래 의미나 [${expLangName}] 해석을 적어주세요. 
+예: { "foreign_text": "번역된 타겟 언어", "korean_translation": "해당 문장의 모국어 뜻" }`;
             } else {
-                sysPrompt = `당신은 '${selectedLangName}' 튜터입니다. 사용자가 '${selectedLangName}'로 말했다면 자연스러운 원어민 답변을, '${inputLangName}'로 말했다면 분석 및 대화 유도를 하세요. 해설 및 팁 부분은 반드시 [${expLangName}]로 작성하세요. 출력은 무조건 JSON 형식 { "foreign_text": "${selectedLangName} 텍스트", "korean_translation": "해당 문장의 ${expLangName} 해석 및 교정 팁" } 이어야 합니다.`;
+                // 튜터 모드 프롬프트를 완전히 '대화형'으로 개선
+                sysPrompt = `당신은 '${selectedLangName}' 튜터이자 친근한 대화 파트너입니다.
+절대 사용자의 말을 단순하게 번역만 해서 돌려주지 마세요. 
+사용자가 '${selectedLangName}'나 '${inputLangName}'로 말을 걸면, **그 질문이나 말에 대해 실제 친구처럼 자연스러운 대답(실제 대화)**을 '${selectedLangName}'로 이어나가세요.
+(예: 사용자가 한국어로 "오늘 날씨 어때?"라고 물으면, 날씨에 대한 대답을 타겟 언어로 해야 합니다.)
+설명 및 팁 부분은 반드시 [${expLangName}]로 작성하세요.
+출력은 무조건 JSON 형식이어야 합니다: 
+{ "foreign_text": "${selectedLangName}로 작성된 자연스러운 대화 답변", "korean_translation": "해당 답변의 ${expLangName} 해석 및 교정 팁" }`;
             }
 
             try {
