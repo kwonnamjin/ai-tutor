@@ -85,7 +85,7 @@
                 <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[90%] shadow-sm self-start" id="welcomeMessage">
                     <p class="chat-text-dynamic text-gray-800 font-medium mb-1">안녕하세요! 저는 당신의 AI 튜터입니다.</p>
                     <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded leading-relaxed">
-                        <i class="fa-solid fa-circle-info"></i> 단어를 연속으로 두 번 터치하면 <b>구간이 선택</b>됩니다.<br>선택 후 전구(💡)를 누르면 그 부분만 과외해 드려요!
+                        <i class="fa-solid fa-circle-info"></i> 단어를 연속으로 두 번 터치하면 <b>구간이 선택</b>됩니다.<br>선택 후 전구(💡)나 하단의 해설 버튼을 누르면 그 부분만 과외해 드려요!
                     </div>
                 </div>
             </div>
@@ -118,17 +118,18 @@
                 </div>
             </div>
 
-            <div class="flex justify-center items-center gap-6">
-                <button id="stopAudioBtn" class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow outline-none" onclick="stopSpeaking()" disabled>
+            <div class="flex justify-center items-center gap-4">
+                <button id="stopAudioBtn" class="flex-1 max-w-[80px] h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow outline-none" onclick="stopSpeaking()" disabled>
                     <i class="fa-solid fa-volume-xmark text-lg"></i>
                 </button>
 
-                <button id="micBtn" class="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-lg shadow-blue-500/50 outline-none" onclick="toggleListening()">
+                <button id="micBtn" class="w-16 h-16 shrink-0 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-lg shadow-blue-500/50 outline-none" onclick="toggleListening()">
                     <i id="micIcon" class="fa-solid fa-microphone"></i>
                 </button>
 
-                <button class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors shadow outline-none" onclick="requestExplanationGlobal()">
-                    <i class="fa-solid fa-circle-question text-lg"></i>
+                <!-- NEW: 텍스트 기반 넓적한 해설 버튼 -->
+                <button class="flex-1 max-w-[110px] h-12 rounded-full bg-yellow-100 text-yellow-700 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-yellow-200 transition-colors shadow outline-none border border-yellow-300" onclick="requestExplanationGlobal()">
+                    <i class="fa-solid fa-lightbulb"></i> 과외 해설
                 </button>
             </div>
         </div>
@@ -509,12 +510,10 @@
                         <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full shadow-md relative">
                             <div class="absolute top-2 right-2 flex gap-1">
                                 <!-- 해설창 안의 전구(💡) 버튼 (꼬리물기 과외용) -->
-                                <button onclick="requestExplanationFromBubble('${expBId}', '${esc}', true)" class="text-green-600 hover:bg-green-100 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm border border-green-200 bg-white"><i class="fa-solid fa-lightbulb text-sm"></i></button>
-                                <!-- 해설창 안의 스피커(🔊) 버튼 -->
-                                <button onclick="speakText('${esc}', '${expLangCode}')" class="text-blue-500 hover:bg-blue-100 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm border border-blue-200 bg-white"><i class="fa-solid fa-volume-high text-sm"></i></button>
+                                <button onclick="requestExplanationFromBubble('${expBId}', '${esc}', true)" class="text-green-600 hover:bg-green-100 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm border border-green-200 bg-white" title="이 부분만 추가 설명 듣기"><i class="fa-solid fa-lightbulb text-sm"></i></button>
                             </div>
                             <p class="text-xs font-bold text-yellow-800 mb-2"><i class="fa-solid fa-graduation-cap"></i> ${focusTitle}</p>
-                            <p id="bubble-${expBId}" class="chat-text-dynamic text-gray-800 pr-14 leading-relaxed">${spansHtml}</p>
+                            <p id="bubble-${expBId}" class="chat-text-dynamic text-gray-800 pr-10 leading-relaxed">${spansHtml}</p>
                         </div>`;
                     chatContainer.appendChild(msgDiv);
                     chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -535,13 +534,13 @@
         let tempGender = currentVoiceGender;
         function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
         function updateGenderUI(g, applyImg=false) {
-            if(g==='female') { document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600"; document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200"; if(applyImg) avatarImage.src="호두 꿀벌_2.jpg"; }
-            else { document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600"; document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200"; if(applyImg) avatarImage.src="치타 팔짱_2.jpg"; }
+            if(g==='female') { document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; if(applyImg) avatarImage.src="호두 꿀벌_2.jpg"; }
+            else { document.getElementById('genderMaleBtn').className="flex-1 py-2 text-sm font-bold rounded-md bg-white shadow-sm text-blue-600 border border-blue-200"; document.getElementById('genderFemaleBtn').className="flex-1 py-2 text-sm font-bold text-gray-500 hover:bg-gray-200 border border-transparent"; if(applyImg) avatarImage.src="치타 팔짱_2.jpg"; }
         }
         function toggleSettingsModal(s=true) {
             let m=document.getElementById('settingsModal');
             if(s) { document.getElementById('geminiKeyInput').value=geminiApiKey; document.getElementById('deepseekKeyInput').value=deepseekApiKey; document.getElementById('fontSizeSlider').value=localStorage.getItem('chat_font_size')||14; m.classList.remove('hidden'); }
-            else m.classList.add('hidden');
+            else { m.classList.add('hidden'); document.documentElement.style.setProperty('--chat-font-size', localStorage.getItem('chat_font_size')+'px'); }
         }
         function saveSettings() {
             geminiApiKey=document.getElementById('geminiKeyInput').value.trim(); localStorage.setItem('gemini_api_key',geminiApiKey);
