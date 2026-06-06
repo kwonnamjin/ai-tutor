@@ -52,6 +52,7 @@
                     <option value="th-TH" data-lang-name="태국어">🇹🇭 태국어</option>
                     <option value="vi-VN" data-lang-name="베트남어">🇻🇳 베트남어</option>
                     <option value="ko-KR" data-lang-name="한국어">🇰🇷 한국어</option>
+                    <option value="ar-SA" data-lang-name="아랍어">🇸🇦 아랍어</option>
                 </select>
                 <button class="w-10 h-10 rounded-lg bg-blue-700 hover:bg-blue-800 flex items-center justify-center transition-colors border border-blue-500 shadow-sm" onclick="toggleSettingsModal(true)">
                     <i class="fa-solid fa-gear text-lg"></i>
@@ -122,6 +123,7 @@
                         <option value="es-ES" data-lang-name="스페인어">🇪🇸 스페인어</option>
                         <option value="th-TH" data-lang-name="태국어">🇹🇭 태국어</option>
                         <option value="vi-VN" data-lang-name="베트남어">🇻🇳 베트남어</option>
+                        <option value="ar-SA" data-lang-name="아랍어">🇸🇦 아랍어</option>
                     </select>
                 </div>
             </div>
@@ -169,6 +171,7 @@
                         <option value="es-ES" data-lang-name="스페인어">🇪🇸 스페인어</option>
                         <option value="th-TH" data-lang-name="태국어">🇹🇭 태국어</option>
                         <option value="vi-VN" data-lang-name="베트남어">🇻🇳 베트남어</option>
+                        <option value="ar-SA" data-lang-name="아랍어">🇸🇦 아랍어</option>
                     </select>
                 </div>
 
@@ -459,7 +462,7 @@
                 msgDiv.innerHTML = `
                     <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[90%] shadow-md self-start relative">
                         <div class="flex items-start justify-between gap-2">
-                            <p id="bubble-${bId}" data-lang="${targetLangCode}" class="chat-text-dynamic text-gray-800 break-words leading-relaxed">${spansHtml}</p>
+                            <p id="bubble-${bId}" data-lang="${targetLangCode}" dir="auto" class="chat-text-dynamic text-gray-800 break-words leading-relaxed">${spansHtml}</p>
                             ${extraHtml}
                         </div>
                         ${translation ? `<p class="text-[11px] text-gray-500 mt-2 border-t pt-1.5 border-gray-100">${translation}</p>` : ''}
@@ -631,7 +634,7 @@
                                 <button onclick="requestExplanationFromBubble('${expBId}', decodeURIComponent('${safeEncodedExp}'), true)" class="text-green-600 hover:bg-green-100 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm border border-green-200 bg-white" title="이 부분만 추가 설명 듣기"><i class="fa-solid fa-lightbulb text-sm"></i></button>
                             </div>
                             <p class="text-xs font-bold text-yellow-800 mb-2"><i class="fa-solid fa-graduation-cap"></i> ${focusTitle}</p>
-                            <p id="bubble-${expBId}" data-lang="${document.getElementById('explanationLanguage').value}" class="chat-text-dynamic text-gray-800 pr-10 leading-relaxed">${spansHtml}</p>
+                            <p id="bubble-${expBId}" data-lang="${document.getElementById('explanationLanguage').value}" dir="auto" class="chat-text-dynamic text-gray-800 pr-10 leading-relaxed">${spansHtml}</p>
                         </div>`;
                     chatContainer.appendChild(msgDiv);
                     chatContainer.scrollTop = chatContainer.scrollHeight;
