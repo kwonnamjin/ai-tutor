@@ -682,8 +682,9 @@
                     ctx.push({role:"user",parts:[{text:`[입력:${inputName}] ${text}`}]});
                     if(ctx.length>8) ctx.shift();
                     
-                    let res = await fetchAPI(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:ctx,systemInstruction:{parts:[{text:sysPrompt}]},generationConfig:{responseMimeType:"application/json"}})});
+                    let res = await fetchAPI(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:ctx,system_instruction:{parts:[{text:sysPrompt}]},generationConfig:{response_Mime_Type:"application/json"}})});
                     let data = await res.json();
+                    if (!data.candidates || !data.candidates[0].content) throw new Error("Invalid Response");
                     let parsed = JSON.parse(data.candidates[0].content.parts[0].text);
                     foreign = parsed.foreign_text; korean = parsed.korean_translation;
                     if(mode==='tutor') conversationHistory.push({role:"model",parts:[{text:JSON.stringify(parsed)}]});
