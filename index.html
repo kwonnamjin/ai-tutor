@@ -141,7 +141,7 @@
                     <p class="chat-text-dynamic text-gray-800 font-medium mb-1">안녕하세요! 저는 당신의 AI 튜터입니다.</p>
                     <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded leading-relaxed">
                         <i class="fa-solid fa-circle-info"></i> 원어민 튜터 모드로 대화하거나 즉시 번역 모드를 사용할 수 있습니다.<br>
-                        ⚙️ 설정에서 '해설 언어'를 변경하여 원하는 언어로 문법 설명을 들을 수도 있어요!
+                        💡 <b>단어를 드래그(선택)</b>하고 전구 버튼을 누르면 그 단어만, <b>그냥 누르면 문장 전체</b>를 해설해 줍니다!
                     </div>
                 </div>
             </div>
@@ -546,7 +546,7 @@
                 bubbleHtml = `
                     <div class="bg-white border border-gray-200 rounded-2xl rounded-tl-none p-3 max-w-[90%] shadow-md self-start">
                         <div class="flex items-start justify-between gap-2">
-                            <p class="chat-text-dynamic font-medium text-gray-800 break-words">${visualText}</p>
+                            <p class="chat-text-dynamic font-medium text-gray-800 break-words select-text">${visualText}</p>
                             ${replayBtnHtml}
                         </div>
                         ${translationHtml}
@@ -895,31 +895,46 @@
             }
         }
 
-        // --- Auxiliary Feature: Quick Explanation in Custom Language ---
+        // --- Auxiliary Feature: Smart Explanation (Sentence or Selected Word) ---
         async function requestExplanation(specificText = null) {
             if (conversationHistory.length === 0 && appModeSelect.value === 'translate' && !specificText) {
                 updateStatus("설명할 이전 대화가 없습니다."); return;
             }
             if ((selectedEngine === 'gemini' && !geminiApiKey) || (selectedEngine === 'deepseek' && !deepseekApiKey)) return;
             
-            updateStatus("해설 분석 중...");
-            
-            let lastAiMsg = specificText;
-            if (!lastAiMsg) {
+            let textToExplain = specificText;
+            let explanationMode = 'sentence'; // 'sentence' or 'word'
+
+            // 1. 사용자가 화면의 텍스트를 드래그(선택)했는지 확인
+            const selection = window.getSelection().toString().trim();
+            if (selection.length > 0) {
+                textToExplain = selection;
+                explanationMode = 'word';
+            } 
+            // 2. 선택한 텍스트도 없고 특정 텍스트(전구 버튼)도 아니면 마지막 문장 가져오기
+            else if (!textToExplain) {
                 const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border');
                 if(aiBubbles.length > 0) {
                     const lastBubble = aiBubbles[aiBubbles.length - 1];
-                    lastAiMsg = lastBubble.querySelector('.chat-text-dynamic').innerText;
+                    const textP = lastBubble.querySelector('.chat-text-dynamic.font-medium');
+                    textToExplain = textP ? textP.innerText : lastBubble.innerText;
                 }
             }
 
-            if(!lastAiMsg) return updateStatus("설명할 문장을 찾지 못했습니다.");
+            if(!textToExplain) return updateStatus("설명할 텍스트를 찾지 못했습니다.");
+
+            updateStatus(explanationMode === 'word' ? "선택한 단어 해설 분석 중..." : "전체 문장 해설 분석 중...");
 
             const expLangCode = explanationLanguageSelect.value;
             const expLangName = explanationLanguageSelect.options[explanationLanguageSelect.selectedIndex].getAttribute('data-lang-name');
-            const targetLangCode = targetLanguageSelect.value;
 
-            const prompt = `방금 대화 문장 ("${lastAiMsg}") 내에 있는 가장 중요한 외국어 단어나 문법 1개를 골라, 반드시 [${expLangName}] 언어로 아주 짧고 친절하게 과외 선생님처럼 해설을 작성해줘. 해설 중간중간 설명 대상이 되는 원문(외국어 단어)을 그대로 섞어서 써줘.`;
+            // 모드에 따라 프롬프트(명령어) 분기
+            let prompt = "";
+            if (explanationMode === 'word') {
+                prompt = `방금 대화 문장 중에서 사용자가 다음 단어/표현을 선택했습니다: "${textToExplain}". 이 표현의 정확한 뜻과 쓰임새를 반드시 [${expLangName}] 언어로 아주 짧고 친절하게 과외 선생님처럼 해설해줘. 설명 중간에 이 단어를 활용한 짧은 예문도 하나 넣어줘.`;
+            } else {
+                prompt = `방금 대화 문장 ("${textToExplain}")에 대해 다음 두 가지를 반드시 [${expLangName}] 언어로 친절하게 제공해줘: 1. 문장 전체의 자연스러운 번역. 2. 이 문장에 쓰인 핵심 문법이나 중요한 단어 1~2개에 대한 상세한 해설.`;
+            }
             
             try {
                 let explanation = "";
@@ -942,6 +957,8 @@
                     visualText = visualText.replace(/\n/g, '<br>');
 
                     const escapedForDataAttr = explanation.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    
+                    let titleIcon = explanationMode === 'word' ? '<i class="fa-solid fa-magnifying-glass"></i> 선택 단어 해설' : '<i class="fa-solid fa-lightbulb"></i> 문장 전체 해설';
 
                     const msgDiv = document.createElement('div');
                     msgDiv.className = "flex flex-col space-y-1 mt-4 fade-in";
@@ -951,7 +968,11 @@
                             <button onclick="playSavedAudio(this)" data-speak-text="${escapedForDataAttr}" data-lang-code="${expLangCode}" data-mixed-lang="true" class="absolute top-3 right-3 text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 w-7 h-7 flex shrink-0 items-center justify-center rounded-full transition-colors shadow-sm">
                                 <i class="fa-solid fa-volume-high text-sm"></i>
                             </button>
-                            <p class="text-xs font-bold text-yellow-800 mb-2"><i class="fa-solid fa-lightbulb"></i> 맞춤형 족집게 과외 (${expLangName})</p>
+                            <p class="text-xs font-bold text-yellow-800 mb-2">${titleIcon} (${expLangName})</p>
+                            <div class="bg-white/60 px-3 py-2 rounded-lg mb-3 border border-yellow-100">
+                                <p class="text-[10px] text-gray-500 font-semibold mb-0.5">질문 대상:</p>
+                                <p class="text-sm font-medium text-gray-800">"${textToExplain}"</p>
+                            </div>
                             <p class="chat-text-dynamic text-gray-800 pr-6 leading-relaxed">${visualText}</p>
                         </div>
                     `;
