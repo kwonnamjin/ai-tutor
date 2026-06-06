@@ -28,6 +28,10 @@
         /* 터치 선택용 단어 스타일 */
         .word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
         .word-span.selected { background-color: #fef08a; /* yellow-200 */ color: #854d0e; /* yellow-800 */ font-weight: 600; }
+        
+        /* 해설창 안의 선택 단어 스타일 (조금 더 진하게) */
+        .exp-word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
+        .exp-word-span.selected { background-color: #fde047; /* yellow-300 */ color: #a16207; font-weight: 600; }
     </style>
 </head>
 <body class="p-0 sm:p-4" onclick="handleBodyClick(event)">
@@ -229,11 +233,13 @@
 
         // --- Smart Touch Selection Logic ---
         function clearSelection() {
-            document.querySelectorAll('.word-span').forEach(el => el.classList.remove('selected'));
+            // 메인 대화창 및 해설창 모두의 선택 해제
+            document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
             startIndex = -1; endIndex = -1; currentBubbleId = null;
         }
         
-        function handleWordClick(event, bubbleId, wordIndex) {
+        // 메인 채팅 말풍선 & 해설 말풍선 공용 클릭 핸들러
+        function handleWordClick(event, bubbleId, wordIndex, isExplanation = false) {
             event.stopPropagation(); // 배경 클릭 무시
             
             // 다른 말풍선을 클릭했으면 초기화
@@ -256,7 +262,9 @@
 
             // 시각적 하이라이트 적용
             const container = document.getElementById(`bubble-${bubbleId}`);
-            const words = container.querySelectorAll('.word-span');
+            const spanClass = isExplanation ? '.exp-word-span' : '.word-span';
+            const words = container.querySelectorAll(spanClass);
+            
             words.forEach(span => {
                 const idx = parseInt(span.getAttribute('data-index'));
                 if (idx >= startIndex && idx <= endIndex) span.classList.add('selected');
@@ -266,19 +274,34 @@
 
         // 말풍선 밖 배경 클릭 시 선택 해제
         function handleBodyClick(e) {
-            if (!e.target.classList.contains('word-span') && !e.target.closest('button')) clearSelection();
+            // 클릭한 요소가 단어(span)가 아니며 버튼도 아닐 때
+            if (!e.target.classList.contains('word-span') && !e.target.classList.contains('exp-word-span') && !e.target.closest('button')) {
+                clearSelection();
+            }
         }
 
-        function getSelectedTextFromBubble(bubbleId) {
+        // 특정 버블(메인 또는 해설)에서 현재 노란색으로 하이라이트 된 텍스트만 추출
+        function getSelectedTextFromBubble(bubbleId, isExplanation = false) {
             if(startIndex === -1) return null;
             const container = document.getElementById(`bubble-${bubbleId}`);
+            if(!container) return null;
             let textArr = [];
-            const words = container.querySelectorAll('.word-span');
+            const spanClass = isExplanation ? '.exp-word-span' : '.word-span';
+            const words = container.querySelectorAll(spanClass);
             words.forEach(span => {
                 const idx = parseInt(span.getAttribute('data-index'));
                 if (idx >= startIndex && idx <= endIndex) textArr.push(span.textContent);
             });
             return textArr.join(' ');
+        }
+
+        // 전체 텍스트를 터치 가능한 Span 태그들로 쪼개는 헬퍼 함수
+        function createSpansForText(text, bubbleId, isExplanation = false) {
+            const wordsArray = text.split(' ');
+            const spanClass = isExplanation ? 'exp-word-span' : 'word-span';
+            return wordsArray.map((word, idx) => 
+                `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${word}</span>`
+            ).join(' ');
         }
 
         // --- Message Rendering ---
@@ -291,17 +314,18 @@
             } else {
                 bubbleCounter++;
                 const bId = `ai-msg-${bubbleCounter}`;
-                const escapedFullText = text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                // 속성용(TTS): 마크다운 등 방해 기호 없는 순수 텍스트
+                const pureText = text.replace(/[\*\#\`]/g, '');
+                const escapedFullText = pureText.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
                 
-                // 단어 단위로 span 감싸기 (터치 선택용)
-                // HTML 태그가 망가지지 않게 띄어쓰기 기준으로 쪼갬
-                const wordsArray = text.split(' ');
-                let spansHtml = wordsArray.map((word, idx) => `<span class="word-span" data-index="${idx}" onclick="handleWordClick(event, '${bId}', ${idx})">${word}</span>`).join(' ');
+                // 화면용: 마크다운 굵기를 살려 보여주기 위해 정규식 변환 후, 다시 띄어쓰기로 쪼갬
+                const visualText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                const spansHtml = createSpansForText(visualText, bId, false);
 
                 let extraHtml = `
                     <div class="flex gap-1 ml-2 shrink-0">
-                        <button onclick="requestExplanationFromBubble('${bId}', '${escapedFullText}')" class="text-green-500 hover:bg-green-50 w-7 h-7 rounded-full bg-white shadow-sm border border-green-100 flex items-center justify-center"><i class="fa-solid fa-lightbulb"></i></button>
-                        <button onclick="speakText('${escapedFullText}', '${targetLangCode}')" class="text-blue-400 hover:bg-blue-50 w-7 h-7 rounded-full bg-white shadow-sm border border-blue-100 flex items-center justify-center"><i class="fa-solid fa-volume-high"></i></button>
+                        <button onclick="requestExplanationFromBubble('${bId}', '${escapedFullText}', false)" class="text-green-500 hover:bg-green-50 w-7 h-7 rounded-full bg-white shadow-sm border border-green-100 flex items-center justify-center" title="과외 받기"><i class="fa-solid fa-lightbulb"></i></button>
+                        <button onclick="speakText('${escapedFullText}', '${targetLangCode}')" class="text-blue-400 hover:bg-blue-50 w-7 h-7 rounded-full bg-white shadow-sm border border-blue-100 flex items-center justify-center" title="다시 듣기"><i class="fa-solid fa-volume-high"></i></button>
                     </div>`;
 
                 msgDiv.innerHTML = `
@@ -318,7 +342,6 @@
         }
 
         // --- TTS Engine (Smooth Reading) ---
-        // 딱딱 끊기는 문제를 막기 위해 클리닝을 거친 후 '전체 통문장'으로 읽습니다.
         function cleanTextForTTS(raw) {
             return raw.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
         }
@@ -333,7 +356,6 @@
             currentUtterance = new SpeechSynthesisUtterance(clean);
             currentUtterance.lang = langCode;
             
-            // Find natural voice matching gender
             let voices = synthesis.getVoices().filter(v => v.lang.startsWith(langCode.substring(0,2)));
             if(voices.length>0) {
                 const isF = currentVoiceGender === 'female';
@@ -413,44 +435,47 @@
 
         // --- Explanation Logic (Smart Select & Full Sentence) ---
         async function requestExplanationGlobal() {
-            // 가장 하단 ? 버튼 누름: 최근 말풍선 찾아서 처리
-            const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border');
+            const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border:not(.bg-yellow-50)');
             if(aiBubbles.length === 0) return updateStatus("설명할 대화가 없습니다.");
             
             const lastContainer = aiBubbles[aiBubbles.length-1];
-            // 최근 말풍선 ID 추출 (id="bubble-ai-msg-X")
             const pTag = lastContainer.querySelector('p[id^="bubble-"]');
             if(!pTag) return;
             const bId = pTag.id.replace('bubble-','');
             
-            // 만약 그 말풍선에 선택된 단어가 있다면 그걸로, 없으면 전체 텍스트
-            const selTxt = getSelectedTextFromBubble(bId);
+            // 글로벌 버튼을 눌렀을 때는 메인 채팅창(isExplanation=false) 기준으로 가져옴
+            const selTxt = getSelectedTextFromBubble(bId, false);
             const fullTxt = Array.from(pTag.querySelectorAll('span')).map(s=>s.textContent).join(' ');
             
-            requestExplanationFromBubble(bId, fullTxt, selTxt);
+            requestExplanationFromBubble(bId, fullTxt, false, selTxt);
         }
 
-        async function requestExplanationFromBubble(bId, fullText, preSelectedText = null) {
+        // bId: 버블ID, fullText: 버블의 전체텍스트, isExpSource: 해설창에서 누른 전구인지 여부, preSelectedText: (글로벌버튼용)미리추출된선택단어
+        async function requestExplanationFromBubble(bId, fullText, isExpSource = false, preSelectedText = null) {
             updateStatus("해설 분석 중...");
             
             const expSel = document.getElementById('explanationLanguage');
             const expLangName = expSel.options[expSel.selectedIndex].dataset.langName;
             const expLangCode = expSel.value;
             
-            // 현재 터치된 텍스트가 있는지 확인 (파라미터로 안넘어왔으면 직접 검사)
-            const targetWord = preSelectedText || getSelectedTextFromBubble(bId);
+            // 파라미터로 선택 단어가 안넘어왔다면 현재 클릭된 말풍선에서 직접 추출
+            const targetWord = preSelectedText || getSelectedTextFromBubble(bId, isExpSource);
             
             let prompt = "";
             let focusTitle = "";
             
-            if (targetWord) {
+            // 특수기호 제거 (순수 텍스트 기반으로 프롬프트 전송)
+            const cleanFullText = cleanTextForTTS(fullText);
+            const cleanTargetWord = targetWord ? cleanTextForTTS(targetWord) : null;
+            
+            if (cleanTargetWord) {
                 // 특정 단어/구간 선택 됨
-                focusTitle = `[ ${targetWord} ] 단어/구문 해설`;
-                prompt = `문장 "${fullText}"에서 사용자가 궁금해하는 부분은 "${targetWord}" 입니다. 이 부분의 뜻과 쓰임새, 예문 1개를 [${expLangName}] 언어로 친절하게 과외하듯 설명해. 결과만 출력해.`;
+                focusTitle = `[ ${cleanTargetWord} ] 심화 학습`;
+                prompt = `원문 "${cleanFullText}"에서 사용자가 콕 집은 부분은 "${cleanTargetWord}" 입니다. 이 표현의 뜻과 쓰임새, 주의할 점, 예문 1개를 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력해.`;
             } else {
                 // 선택 안됨 -> 전체 문장 해설
-                focusTitle = `전체 문장 족집게 해설`;
-                prompt = `문장 "${fullText}" 의 전체 문법 구조나 가장 핵심적인 표현 1개를 골라, 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 결과만 출력.`;
+                focusTitle = isExpSource ? `해설 내용 추가 족집게 분석` : `전체 문장 족집게 해설`;
+                prompt = `문장 "${cleanFullText}" 의 전체적인 문법 구조나 가장 핵심적인 표현 1~2개를 골라, 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력.`;
             }
 
             try {
@@ -464,19 +489,37 @@
                 }
 
                 if (explanation) {
-                    const esc = explanation.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    bubbleCounter++;
+                    const expBId = `exp-msg-${bubbleCounter}`;
+                    
+                    // TTS용 순수 텍스트
+                    const pureExp = explanation.replace(/[\*\#\`]/g, '');
+                    const esc = pureExp.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                    
+                    // 시각용 텍스트 + 단어 쪼개기 (해설창 내부 터치 지원)
+                    const visualExp = explanation.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                    // <br> 태그를 임시로 치환 후 단어 쪼개고 복구
+                    const tempVisualExp = visualExp.replace(/\n/g, ' [[BR]] ');
+                    let spansHtml = createSpansForText(tempVisualExp, expBId, true);
+                    spansHtml = spansHtml.replace(/\[\[BR\]\]/g, '<br>');
+
                     const msgDiv = document.createElement('div');
                     msgDiv.className = "flex flex-col space-y-1 mt-4";
                     msgDiv.innerHTML = `
                         <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 w-full shadow-md relative">
-                            <button onclick="speakText('${esc}', '${expLangCode}')" class="absolute top-3 right-3 text-yellow-600 hover:bg-yellow-200 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm bg-white"><i class="fa-solid fa-volume-high text-sm"></i></button>
+                            <div class="absolute top-2 right-2 flex gap-1">
+                                <!-- 해설창 안의 전구(💡) 버튼 (꼬리물기 과외용) -->
+                                <button onclick="requestExplanationFromBubble('${expBId}', '${esc}', true)" class="text-green-600 hover:bg-green-100 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm border border-green-200 bg-white"><i class="fa-solid fa-lightbulb text-sm"></i></button>
+                                <!-- 해설창 안의 스피커(🔊) 버튼 -->
+                                <button onclick="speakText('${esc}', '${expLangCode}')" class="text-blue-500 hover:bg-blue-100 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm border border-blue-200 bg-white"><i class="fa-solid fa-volume-high text-sm"></i></button>
+                            </div>
                             <p class="text-xs font-bold text-yellow-800 mb-2"><i class="fa-solid fa-graduation-cap"></i> ${focusTitle}</p>
-                            <p class="chat-text-dynamic text-gray-800 pr-6">${explanation.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</p>
+                            <p id="bubble-${expBId}" class="chat-text-dynamic text-gray-800 pr-14 leading-relaxed">${spansHtml}</p>
                         </div>`;
                     chatContainer.appendChild(msgDiv);
                     chatContainer.scrollTop = chatContainer.scrollHeight;
                     updateStatus("해설 완료");
-                    clearSelection(); // 해설 완료 후 노란색 선택 풀기
+                    clearSelection(); // 해설 완료 후 기존 선택 풀기
                 }
             } catch(e) { updateStatus("해설 실패"); }
         }
