@@ -150,12 +150,23 @@
         <!-- Controls Area (Flexbox to prevent overlap) -->
         <div class="flex-none bg-white border-t border-gray-200 pt-3 pb-6 sm:pb-4 px-4 flex flex-col z-20">
             
-            <!-- App Mode Selector -->
-            <div class="flex justify-center mb-3">
-                <div class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 w-full max-w-[300px] shadow-sm">
+            <!-- App Mode & Level Selector Row -->
+            <div class="flex justify-center gap-2 mb-3">
+                <!-- App Mode Selector -->
+                <div class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 flex-1 max-w-[150px] shadow-sm">
                     <select id="appMode" class="w-full bg-transparent text-xs font-bold text-gray-700 text-center py-2 outline-none cursor-pointer" onchange="changeAppMode()">
-                        <option value="tutor">🎓 원어민 튜터 모드</option>
-                        <option value="translate">🌐 즉시 번역 통역기</option>
+                        <option value="tutor">🎓 튜터 모드</option>
+                        <option value="translate">🌐 번역 통역기</option>
+                    </select>
+                </div>
+                
+                <!-- Proficiency Level Selector (New) -->
+                <div id="levelContainer" class="bg-gray-100 p-1 rounded-full flex items-center border border-gray-200 flex-1 max-w-[150px] shadow-sm transition-opacity duration-300">
+                    <select id="proficiencyLevel" class="w-full bg-transparent text-xs font-bold text-blue-600 text-center py-2 outline-none cursor-pointer" onchange="changeLevel()">
+                        <option value="beginner">🌱 초급 (Beginner)</option>
+                        <option value="intermediate">🌿 중급 (Inter)</option>
+                        <option value="advanced">🌳 고급 (Advanced)</option>
+                        <option value="native">🔥 원어민 (Native)</option>
                     </select>
                 </div>
             </div>
@@ -275,6 +286,7 @@
         let currentFontSize = localStorage.getItem('chat_font_size') || '14';
         let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
         let currentExpLanguage = localStorage.getItem('explanation_language') || 'ko-KR';
+        let currentLevel = localStorage.getItem('proficiency_level') || 'intermediate';
 
         // --- DOM Elements ---
         const micBtn = document.getElementById('micBtn');
@@ -288,12 +300,15 @@
         const explanationLanguageSelect = document.getElementById('explanationLanguage');
         const stopAudioBtn = document.getElementById('stopAudioBtn');
         const appModeSelect = document.getElementById('appMode');
+        const levelSelect = document.getElementById('proficiencyLevel');
+        const levelContainer = document.getElementById('levelContainer');
 
         // Apply loaded settings to UI immediately
         document.getElementById('activeEngine').value = selectedEngine;
         document.getElementById('fontSizeSlider').value = currentFontSize;
         document.documentElement.style.setProperty('--chat-font-size', `${currentFontSize}px`);
         explanationLanguageSelect.value = currentExpLanguage;
+        levelSelect.value = currentLevel;
         updateGenderUI(currentVoiceGender, true); 
 
         // --- Init Text-to-Speech Voices ---
@@ -302,15 +317,12 @@
             availableVoices = window.speechSynthesis.getVoices();
         };
 
-        // --- ✨ NEW CORE: Robust TTS Text Cleaner ✨ ---
-        // 마크다운, 따옴표, 괄호 등 기호를 싹 지워버려서 아나운서처럼 부드럽게 읽게 만듭니다.
-        // 단, 억양을 살리는 마침표, 쉼표, 느낌표, 물음표(.,!?)는 반드시 살려둡니다.
+        // --- ✨ TTS Text Cleaner ✨ ---
         function cleanTextForTTS(rawText) {
             if (!rawText) return "";
             let cleaned = rawText.replace(/[\*\#\`\~\"\'\(\)\[\]\<\>\{\}\_\-\:\;]/g, ' ');
             cleaned = cleaned.replace(/[\u{1F600}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, '');
             cleaned = cleaned.replace(/\s+/g, ' ').trim();
-            // 연속된 기호 압축 (한참 쉬는 현상 해결)
             return cleaned.replace(/\.{2,}/g, '.').replace(/\!{2,}/g, '!').replace(/\?{2,}/g, '?');
         }
 
@@ -321,14 +333,24 @@
             const targetLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             
             if(mode === 'translate') {
+                levelContainer.classList.add('opacity-30', 'pointer-events-none'); // 번역 모드 시 레벨 비활성화
                 updateStatus("번역 모드: 마이크를 눌러 말하세요.");
                 document.getElementById('welcomeMessage').innerHTML = `
                     <p class="chat-text-dynamic text-gray-800 font-medium mb-1"><b>🌐 즉시 번역 모드</b>가 켜졌습니다.</p>
                     <p class="text-xs text-gray-500 leading-relaxed">하단에서 '내 음성 언어'를 자유롭게 선택하고 말하면, 우측 상단의 <b>[${targetLangName}]</b>로 즉시 번역해 드립니다.</p>
                 `;
             } else {
+                levelContainer.classList.remove('opacity-30', 'pointer-events-none');
                 changeLanguage(); // 환영 메시지 복구
             }
+        }
+
+        function changeLevel() {
+            currentLevel = levelSelect.value;
+            localStorage.setItem('proficiency_level', currentLevel);
+            conversationHistory = []; // 레벨이 바뀌면 대화 초기화 (새로운 레벨 적용을 위해)
+            changeLanguage(); // 환영 메시지 재설정
+            updateStatus("학습 레벨이 변경되었습니다.");
         }
 
         // --- Initialize Speech Recognition (STT) ---
@@ -467,13 +489,14 @@
             
             conversationHistory = [];
             const langName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
-            updateStatus(`언어 전환: ${langName}`);
+            const levelText = levelSelect.options[levelSelect.selectedIndex].text;
+            updateStatus(`언어/레벨 전환: ${langName} (${levelText})`);
             
             sttInputLanguageSelect.value = targetLanguageSelect.value;
 
             const welcomeDiv = document.getElementById('welcomeMessage');
             welcomeDiv.innerHTML = `
-                <p class="chat-text-dynamic text-gray-800 font-medium mb-1"><b>${langName}</b> 튜터 모드가 활성화되었습니다.</p>
+                <p class="chat-text-dynamic text-gray-800 font-medium mb-1"><b>${langName}</b> 튜터 모드 (<b>${levelText}</b>)가 활성화되었습니다.</p>
                 <div class="mt-2 text-xs text-blue-600 font-semibold bg-blue-50 p-2 rounded leading-relaxed">
                     <i class="fa-solid fa-check"></i> '내 음성 언어'를 <b>${langName}</b>로 두고 말하기를 연습하세요.<br>모르는 걸 질문할 땐 하단에서 <b>한국어</b>로 바꿔서 편하게 질문하세요!
                 </div>
@@ -504,10 +527,7 @@
                     </div>
                 `;
             } else if (sender === 'ai') {
-                // 시각용: **강조** 를 실제 굵은 글씨로 변환
                 const visualText = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-                
-                // 속성용(버튼): HTML 깨짐 방지용 이스케이프 처리 (순수 원문 보존)
                 const escapedForDataAttr = text.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
                 let translationHtml = translation ? `<p class="text-xs text-gray-500 mt-2 border-t pt-2 border-gray-100">${translation}</p>` : '';
@@ -575,6 +595,7 @@
             }
         }
 
+        // --- AI API Communication ---
         async function handleUserMessage(text) {
             addMessageToChat('user', text);
             
@@ -588,6 +609,18 @@
             const selectedLangName = targetLanguageSelect.options[targetLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             const inputLangName = sttInputLanguageSelect.options[sttInputLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             const appMode = appModeSelect.value;
+
+            // 레벨에 따른 맞춤형 지시사항 생성
+            let levelInstruction = "";
+            if (currentLevel === 'beginner') {
+                levelInstruction = "사용자는 이제 막 언어를 배우기 시작한 '초급(Beginner)' 수준입니다. 아주 쉽고 짧은 문장으로 말하고, 기초적인 단어만 사용하세요. 복잡한 문법은 피하고 한 번에 한 가지 질문만 하세요.";
+            } else if (currentLevel === 'intermediate') {
+                levelInstruction = "사용자는 일상 대화가 가능한 '중급(Intermediate)' 수준입니다. 자주 쓰이는 실생활 표현과 다양한 어휘를 사용하되 너무 난해한 문장은 피하고, 자연스럽게 대화를 이끌어주세요.";
+            } else if (currentLevel === 'advanced') {
+                levelInstruction = "사용자는 '고급(Advanced)' 수준입니다. 고급 어휘, 관용구, 뉴스나 토론에 나올 법한 복잡한 문장 구조를 사용하여 풍부한 대화를 나누세요. 미묘한 뉘앙스 차이도 교정해주세요.";
+            } else if (currentLevel === 'native') {
+                levelInstruction = "사용자는 '원어민(Native)' 수준의 대화를 원합니다. 실제 현지인들이 쓰는 슬랭, 줄임말, 최신 유행어, 관용 표현을 아주 적극적으로 사용하고 교과서적인 딱딱한 표현은 절대 피하세요.";
+            }
 
             let systemPrompt = "";
 
@@ -603,15 +636,16 @@
             } else {
                 systemPrompt = `당신은 친절하고 전문적인 '${selectedLangName}' 원어민 튜터입니다.
 상황 규정:
-1. 사용자가 '${selectedLangName}'로 말했다면, 그에 어울리는 원어민 수준의 답변을 '${selectedLangName}'로 이어나가세요.
-2. 사용자가 다른 언어(${inputLangName})로 말했다면, 그 말을 분석하여 '${selectedLangName}'로 답변/번역을 제공하면서 자연스럽게 대화를 유도하세요.
-3. 사용자가 보낸 문장에 오류가 있다면 가볍게 바로잡아 주세요.
-4. 답변은 반드시 아래 JSON 형식으로만 완벽하게 출력하세요:
+1. ${levelInstruction}
+2. 사용자가 '${selectedLangName}'로 말했다면, 그에 어울리는 원어민 수준의 답변을 '${selectedLangName}'로 이어나가세요.
+3. 사용자가 다른 언어(${inputLangName})로 말했다면, 그 말을 분석하여 '${selectedLangName}'로 답변/번역을 제공하면서 자연스럽게 대화를 유도하세요.
+4. 사용자가 보낸 문장에 오류가 있다면 가볍게 바로잡아 주세요.
+5. 답변은 반드시 아래 JSON 형식으로만 완벽하게 출력하세요:
 {
     "foreign_text": "오직 ${selectedLangName}로만 작성된 튜터의 자연스러운 대화 내용",
     "korean_translation": "해당 답변의 자연스러운 모국어 해석 및 사용자 코멘트/피드백"
 }
-5. 대화는 한 번에 1~2문장 정도로 가볍게 작성하세요.`;
+6. 대화는 한 번에 1~2문장 정도로 가볍게 작성하세요.`;
             }
 
             let foreignText = "", koreanText = "";
@@ -690,7 +724,6 @@
 
         // --- Basic Text-to-Speech (TTS) Logic ---
         function getMatchedVoice(langCode) {
-            // 스마트폰/OS 파편화를 막기 위해 언어코드 앞 2자리(es, vi, zh, ko 등)만 추출하여 아주 넓게 검색합니다.
             const baseLang = langCode.split('-')[0].toLowerCase();
             let langVoices = availableVoices.filter(v => v.lang.toLowerCase().startsWith(baseLang));
             
@@ -721,7 +754,6 @@
             if (!synthesis) return;
             stopSpeaking(); 
 
-            // 매우 부드럽게 만들기 위해 텍스트 청소 적용
             const finalText = cleanTextForTTS(text);
             if(!finalText) return;
 
@@ -763,53 +795,44 @@
             const cleanedText = cleanTextForTTS(text);
             if(!cleanedText) return;
 
-            // 라틴 문자(영어,스페인어,베트남어 등) 덩어리와 비라틴/아시아 문자 덩어리를 스마트하게 분리하는 정규식
             const chunkRegex = /([a-zA-ZÀ-ỹĐđ]+[\s\d\.\,\!\?\'\"]*)|([^a-zA-ZÀ-ỹĐđ]+)/g;
-            
             let parts = [];
             let match;
             
-            // 베이스 언어와 타겟 언어의 그룹 코드 (앞 2자리)
             const baseGroup = baseLangCode.substring(0, 2);
             const targetGroup = targetLangCode.substring(0, 2);
             const latinLangs = ['en', 'es', 'vi']; 
 
             while ((match = chunkRegex.exec(cleanedText)) !== null) {
                 if (match[1] && match[1].trim() !== '') {
-                    // 1. 라틴 알파벳 구간 (영어, 스페인어, 베트남어)
                     let assignLang = baseLangCode; 
                     
                     if (latinLangs.includes(targetGroup) && !latinLangs.includes(baseGroup)) {
-                        assignLang = targetLangCode; // 해설이 일본어고 타겟이 영어면 -> 영어 원어민 성우로
+                        assignLang = targetLangCode; 
                     } else if (!latinLangs.includes(targetGroup) && !latinLangs.includes(baseGroup)) {
-                        assignLang = 'en-US'; // 해설/타겟 둘 다 아시아 언어인데 영어 단어가 나오면 -> 기본 영어 성우로
+                        assignLang = 'en-US'; 
                     }
                     parts.push({ text: match[1].trim(), lang: assignLang }); 
                 }
                 
                 if (match[2] && match[2].trim() !== '') {
-                    // 2. 비라틴/아시아 문자 구간 (한국어, 일본어, 중국어, 태국어)
                     let assignLang = baseLangCode;
                     let asianText = match[2].trim();
 
-                    // 글자 자체의 유니코드(모양)를 분석하여 압도적으로 정확하게 원어민 성우를 강제 배정!
                     if (/[\uAC00-\uD7A3]/.test(asianText)) {
-                        assignLang = 'ko-KR'; // 한글이 섞여있으면 무조건 한국어 성우
+                        assignLang = 'ko-KR'; 
                     } else if (/[\u3040-\u30FF]/.test(asianText)) {
-                        assignLang = 'ja-JP'; // 히라가나/가타카나가 있으면 무조건 일본어 성우
+                        assignLang = 'ja-JP'; 
                     } else if (/[\u0E00-\u0E7F]/.test(asianText)) {
-                        assignLang = 'th-TH'; // 태국어가 있으면 무조건 태국어 성우
+                        assignLang = 'th-TH'; 
                     } else if (/[\u4E00-\u9FFF]/.test(asianText)) {
-                        // 한자만 있는 경우 중국어인지 일본어인지 판별
                         if (targetGroup === 'zh' || baseGroup === 'zh') assignLang = 'zh-CN';
                         else if (targetGroup === 'ja' || baseGroup === 'ja') assignLang = 'ja-JP';
                     } else {
-                        // 숫자나 기호 등인 경우
                         if (!latinLangs.includes(targetGroup) && latinLangs.includes(baseGroup)) {
                             assignLang = targetLangCode; 
                         }
                     }
-                    
                     parts.push({ text: asianText, lang: assignLang }); 
                 }
             }
@@ -820,7 +843,6 @@
                 return processSpeechQueue();
             }
 
-            // 해설 언어가 한국어가 아니거나 쪼개기가 실패하면 원래 톤으로 한 번에 자연스럽게 읽음
             speakText(cleanedText, baseLangCode);
         }
 
@@ -848,7 +870,7 @@
             };
 
             currentUtterance.onend = () => {
-                processSpeechQueue(); // Play next chunk
+                processSpeechQueue(); 
             };
 
             currentUtterance.onerror = () => { stopSpeakingUI(); };
@@ -897,7 +919,6 @@
             const expLangName = explanationLanguageSelect.options[explanationLanguageSelect.selectedIndex].getAttribute('data-lang-name');
             const targetLangCode = targetLanguageSelect.value;
 
-            // 해설 요청 프롬프트
             const prompt = `방금 대화 문장 ("${lastAiMsg}") 내에 있는 가장 중요한 외국어 단어나 문법 1개를 골라, 반드시 [${expLangName}] 언어로 아주 짧고 친절하게 과외 선생님처럼 해설을 작성해줘. 해설 중간중간 설명 대상이 되는 원문(외국어 단어)을 그대로 섞어서 써줘.`;
             
             try {
@@ -917,11 +938,9 @@
                 }
 
                 if (explanation) {
-                    // 시각(화면)용 텍스트: **단어** 를 굵게(<b>) 표시 및 줄바꿈 처리
                     let visualText = explanation.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
                     visualText = visualText.replace(/\n/g, '<br>');
 
-                    // 속성용(버튼): 이스케이프 처리하여 HTML 깨짐 방지
                     const escapedForDataAttr = explanation.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
                     const msgDiv = document.createElement('div');
