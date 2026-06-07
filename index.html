@@ -75,9 +75,8 @@
         <!-- Avatar Area - 배경 그라데이션 및 네온 스타일 반영 -->
         <div class="flex-none bg-gradient-to-b from-blue-50 to-slate-100 pt-4 pb-3 flex flex-col items-center justify-center relative border-b border-slate-200 shadow-sm z-10">
             <div id="avatarWrap" class="avatar-container mb-2 transition-all duration-300">
-                <!-- 기존 외부 이미지(unsplash) 삭제 및 로컬 이미지(app-icon.png)로 변경 -->
-                <!-- 주의: 실제 파일 이름이 다를 경우 src 속성의 값을 해당 파일 이름으로 변경해주세요. -->
-                <img src="./app-icon.png" alt="AI Avatar" class="avatar-img" id="avatarImage" onerror="this.src='https://placehold.co/300x300/1e293b/60a5fa?text=AI'">
+                <!-- 파일명 오타 방지 및 강제 로컬 경로 지정 -->
+                <img src="app-icon.png" alt="AI Avatar" class="avatar-img" id="avatarImage" onerror="this.src='https://placehold.co/300x300/1e293b/60a5fa?text=AI'">
             </div>
             <div id="statusText" class="text-[10px] font-bold text-blue-700 bg-blue-100/80 border border-blue-200 px-4 py-1 rounded-full shadow-sm backdrop-blur-sm">
                 준비됨. 하단 마이크를 눌러 시작하세요.
@@ -860,17 +859,15 @@
         let tempGender = currentVoiceGender;
         function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
         
+        function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
+        
         function updateGenderUI(g, applyImg=false) {
             if(g === 'female') { 
                 document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white shadow-sm text-blue-600 border border-blue-200"; 
                 document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
-                // 설정에서 성별을 바꿀 때 더 이상 외부 이미지를 불러오지 않고, 항상 로컬 이미지를 유지하도록 수정
-                // if(applyImg) avatarImage.src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&auto=format&fit=crop"; 
             } else { 
                 document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white shadow-sm text-blue-600 border border-blue-200"; 
                 document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
-                // 설정에서 성별을 바꿀 때 더 이상 외부 이미지를 불러오지 않고, 항상 로컬 이미지를 유지하도록 수정
-                // if(applyImg) avatarImage.src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=300&auto=format&fit=crop"; 
             }
         }
 
