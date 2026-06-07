@@ -37,7 +37,6 @@
 
     <div class="bg-slate-50 w-full max-w-md h-full sm:h-[850px] max-h-full sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative border border-slate-700">
         
-        <!-- Header -->
         <div class="flex-none bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center z-10 shadow-lg border-b border-blue-800">
             <div>
                 <h1 class="text-xl font-extrabold tracking-tight">TalkAI Tutor</h1>
@@ -220,7 +219,7 @@
         // import { Capacitor } from '@capacitor/core';
         // import { SpeechRecognition } from '@capacitor-community/speech-recognition';
         // import { Device } from '@capacitor/device';
-        // import 'cordova-plugin-purchase'; // 인앱 결제 플러그인 임포트 (필요 시 주석 해제)
+        // import 'cordova-plugin-purchase'; // 인앱 결제 플러그인 임포트 
 
         const SUPPORTED_LANGUAGES = [
             { code: "en-US", name: "영어", flag: "🇺🇸" },
@@ -403,10 +402,30 @@
         }
 
         // ==========================================
+        // 서버에 구독 해제(만료)를 알리는 함수
+        // ==========================================
+        async function revokePremiumWithServer() {
+            if (localStorage.getItem('is_premium') !== 'true') return; // 이미 해제되었으면 무시
+            
+            console.log("서버에 구독 만료 처리 요청 중...");
+            localStorage.setItem('is_premium', 'false');
+            updateBadgeUI();
+
+            try {
+                await fetchAPI(WORKER_URL + 'revoke', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
+                    body: JSON.stringify({ platform: "android" })
+                });
+            } catch (e) {
+                console.error("구독 해제 서버 통신 오류");
+            }
+        }
+
+        // ==========================================
         // [추가된 부분] 구글 플레이 결제 스토어 초기화
         // ==========================================
         function initStore() {
-            // 웹 환경이거나 플러그인이 로드되지 않은 경우 종료
             if (!window.store) {
                 console.log("결제 플러그인을 찾을 수 없거나 웹 브라우저 환경입니다.");
                 return;
@@ -420,16 +439,28 @@
                 type: store.PAID_SUBSCRIPTION
             });
 
-            // 2. 결제 승인 시 처리할 이벤트 세팅
+            // 2-1. 결제 승인 또는 이미 활성화된 상태일 때
             store.when(PRODUCT_ID).approved(async (product) => {
                 updateStatus("결제 확인 및 서버 승인 중...");
                 product.verify(); // 1차 검증
-                
-                // 백엔드로 영수증(토큰)을 보내서 프리미엄 권한 부여
                 await verifyReceiptWithServer(product.transaction.id);
-                
-                // ★매우 중요: 구글에 지급 완료 통보
-                product.finish(); 
+                product.finish(); // ★매우 중요: 구글에 지급 완료 통보
+            });
+
+            // 앱을 켤 때마다 구독이 유효한지 확인
+            store.when(PRODUCT_ID).owned((product) => {
+                // 사용자가 이미 구독 중이라면 로컬 변수 확실히 활성화
+                if (localStorage.getItem('is_premium') !== 'true') {
+                    localStorage.setItem('is_premium', 'true');
+                    enableInputs();
+                    updateBadgeUI();
+                }
+            });
+
+            // 2-2. 결제가 취소, 환불, 만료되었을 때 (권한 회수 로직)
+            store.when(PRODUCT_ID).expired((product) => {
+                updateStatus("구독이 만료되었습니다.");
+                revokePremiumWithServer();
             });
 
             store.when(PRODUCT_ID).cancelled(() => {
@@ -441,7 +472,16 @@
                 updateStatus("결제 중 오류가 발생했습니다.");
             });
 
-            // 3. 스토어 새로고침 및 초기화 실행
+            // 3. 스토어 초기화가 끝났을 때 최종 점검 (교차 검증)
+            store.ready(() => {
+                const product = store.get(PRODUCT_ID);
+                // 구글에는 구독권이 없는데 우리 앱만 프리미엄 상태라면 -> 강제 만료 처리
+                if (product && !product.owned && localStorage.getItem('is_premium') === 'true') {
+                    revokePremiumWithServer();
+                }
+            });
+
+            // 스토어 새로고침 및 초기화 실행
             store.refresh();
         }
 
@@ -452,14 +492,13 @@
         });
 
         // ==========================================
-        // [수정된 부분] 실제 결제창 호출 로직
+        // 실제 결제창 호출 로직
         // ==========================================
         async function processUpgrade() {
             const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
 
             if (!isNative) {
-                // 웹 브라우저 환경 (테스트용 가짜 결제 진행)
-                const confirmMock = confirm("[웹 개발자 모드]\n구글 플레이 결제는 실제 폰에서만 뜹니다.\n강제로 결제 성공 처리할까요?");
+                const confirmMock = confirm("[웹 개발자 모드]\n강제로 결제 성공 처리할까요?");
                 if (!confirmMock) return;
                 
                 await verifyReceiptWithServer("mock_receipt_12345");
@@ -474,8 +513,6 @@
 
                 updateStatus("구글 플레이 결제창 여는 중...");
                 const PRODUCT_ID = "talkai_premium_monthly"; 
-                
-                // 초기화된 스토어에 상품 결제창 띄우기 요청
                 store.order(PRODUCT_ID);
 
             } catch (e) {
@@ -801,7 +838,7 @@
                 let parsed = JSON.parse(data.choices[0].message.content);
                 
                 if (parsed.foreign_text === "LIMIT_REACHED") {
-                    enforcePaywall(parsed.korean_translation); 
+                    enforcePaywall(parsed.korean_translation); // TIME_OVER 또는 COUNT_OVER
                     return;
                 }
                 
