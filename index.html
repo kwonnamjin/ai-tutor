@@ -85,48 +85,7 @@
                 준비됨. 하단 마이크를 눌러 시작하세요.
             </div>
         </div>
-        <!-- Chat Area -->
-        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 no-scrollbar pb-6 relative">
-            <div class="flex flex-col space-y-4">
-                <!-- 첫 화면 프리미엄 구독 안내 배너 (대화창 첫 번째 말풍선으로 배치됨) -->
-                <div id="premiumBanner" class="bg-gradient-to-r from-indigo-600 via-blue-600 to-blue-500 rounded-2xl rounded-tl-none p-3 max-w-[95%] shadow-md cursor-pointer hover:shadow-lg transition-all transform hover:-translate-y-0.5 self-start" onclick="processUpgrade()">
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0 text-yellow-300 border border-white/30 backdrop-blur-sm">
-                                <i class="fa-solid fa-crown text-lg"></i>
-                            </div>
-                            <div>
-                                <p class="text-white font-black text-sm tracking-wide">프리미엄 무제한 구독</p>
-                                <p class="text-blue-100 text-[11px] font-medium mt-0.5">월 4,500원(VAT 포함)으로 무제한 학습!</p>
-                            </div>
-                        </div>
-                        <div class="text-white bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors border border-white/30 backdrop-blur-sm whitespace-nowrap">
-                            알아보기 <i class="fa-solid fa-chevron-right text-[10px] ml-0.5"></i>
-                        </div>
-                    </div>
-                </div>
-                <!-- Welcome Message 스타일 변경 -->
-                <div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md shadow-blue-900/5 self-start" id="welcomeMessage">
-                    <p class="chat-text-dynamic text-slate-800 font-extrabold mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><i class="fa-solid fa-robot text-blue-500"></i> 당신의 AI 튜터입니다.</p>
-                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-                <div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-5 text-4xl shadow-inner border border-slate-100">
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-                <h3 class="text-2xl font-black text-slate-800 mb-2 tracking-tight">튜터링 종료</h3>
-                <p id="paywallReasonText" class="text-sm font-medium text-slate-500 mb-6 leading-relaxed">무료 체험 기간이 끝났거나 제공된 대화 건수를 모두 소진하셨습니다.</p>
-                
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl mb-8 border border-blue-100 text-left shadow-sm">
-                    <p class="text-sm font-extrabold text-blue-900 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-crown text-yellow-500"></i> 프리미엄 무제한 패스</p>
-                    <p class="text-[11px] text-blue-700/80 leading-relaxed font-medium">흐름이 끊기지 않는 완벽한 학습!<br>월 4,500원(VAT 포함)으로 시간과 횟수 제한 없이 AI 튜터와 무제한 대화하세요.</p>
-                </div>
-                <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-sm py-4 rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2" onclick="processUpgrade()">
-                    <i class="fa-brands fa-google-play"></i> 구글 플레이로 결제하기
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <script type="module">            
         <!-- Chat Area -->
         <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 no-scrollbar pb-6 relative">
             <div class="flex flex-col space-y-1">
@@ -403,14 +362,10 @@
         function updateBadgeUI() {
             const badge = document.getElementById('usageBadge');
             const remainText = document.getElementById('remainCountText');
-            const premiumBanner = document.getElementById('premiumBanner');
             
             if (localStorage.getItem('is_premium') === 'true') {
                 badge.innerHTML = '<i class="fa-solid fa-crown text-yellow-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
                 badge.className = "bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-purple-400 shadow-inner flex items-center";
-                
-                // 프리미엄 유저면 첫 화면 구독 배너 숨김
-                if(premiumBanner) premiumBanner.classList.add('hidden');
             } else {
                 // 앱 내부에서도 날짜가 바뀌었으면 카운트를 0으로 초기화
                 const todayKey = getDailyDateKey();
@@ -422,14 +377,10 @@
                 let count = parseInt(localStorage.getItem('local_total_count') || '0');
                 let remain = Math.max(0, MAX_FREE_COUNT - count);
                 if(remainText) remainText.innerText = `${remain}/${MAX_FREE_COUNT}`;
-                
-                // 무료 유저면 배너 표시
-                if(premiumBanner) premiumBanner.classList.remove('hidden');
             }
         }
 
         function incrementLocalUsage() {
-<!-- ... existing code ... -->
             if(localStorage.getItem('is_premium') === 'true') return;
             
             // 사용 시점에도 날짜 확인 후 리셋
