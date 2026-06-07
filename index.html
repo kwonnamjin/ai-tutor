@@ -404,10 +404,14 @@
         function updateBadgeUI() {
             const badge = document.getElementById('usageBadge');
             const remainText = document.getElementById('remainCountText');
+            const premiumBanner = document.getElementById('premiumBanner');
             
             if (localStorage.getItem('is_premium') === 'true') {
                 badge.innerHTML = '<i class="fa-solid fa-crown text-yellow-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
                 badge.className = "bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-purple-400 shadow-inner flex items-center";
+                
+                // 프리미엄 유저면 첫 화면 구독 배너 숨김
+                if(premiumBanner) premiumBanner.classList.add('hidden');
             } else {
                 // 앱 내부에서도 날짜가 바뀌었으면 카운트를 0으로 초기화
                 const todayKey = getDailyDateKey();
@@ -419,10 +423,14 @@
                 let count = parseInt(localStorage.getItem('local_total_count') || '0');
                 let remain = Math.max(0, MAX_FREE_COUNT - count);
                 if(remainText) remainText.innerText = `${remain}/${MAX_FREE_COUNT}`;
+                
+                // 무료 유저면 배너 표시
+                if(premiumBanner) premiumBanner.classList.remove('hidden');
             }
         }
 
         function incrementLocalUsage() {
+<!-- ... existing code ... -->
             if(localStorage.getItem('is_premium') === 'true') return;
             
             // 사용 시점에도 날짜 확인 후 리셋
