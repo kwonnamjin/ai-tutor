@@ -44,6 +44,10 @@
                 <p class="text-xs text-blue-200">실시간 언어 학습 파트너</p>
             </div>
             <div class="flex items-center gap-2">
+                <!-- 남은 횟수 표시 뱃지 추가 -->
+                <div id="usageBadge" class="bg-blue-800 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg border border-blue-400 shadow-inner flex items-center gap-1">
+                    <i class="fa-solid fa-bolt text-yellow-300"></i> <span id="remainCountText">50/50</span>
+                </div>
                 <!-- 동적으로 채워질 targetLanguage Select -->
                 <select id="targetLanguage" class="bg-blue-700 text-white text-xs rounded-lg focus:ring-blue-500 border border-blue-500 p-2 outline-none cursor-pointer" onchange="targetLanguageChanged()">
                 </select>
@@ -192,6 +196,25 @@
                 </div>
             </div>
         </div>
+
+        <!-- Paywall Modal (결제 안내) -->
+        <div id="paywallModal" class="hidden absolute inset-0 bg-black/80 flex items-center justify-center z-[100] p-4 backdrop-blur-sm transition-opacity duration-300">
+            <div class="bg-white w-full max-w-[320px] rounded-3xl p-6 shadow-2xl text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-pink-500"></div>
+                <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner border border-red-100">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-gray-800 mb-2">일일 무료 튜터링 종료</h3>
+                <p class="text-sm text-gray-600 mb-5 leading-relaxed">오늘 제공된 <b class="text-blue-600">50건</b>의 무료 대화를 모두 사용하셨습니다.<br>내일 오전 6시에 다시 50건이 충전됩니다.</p>
+                <div class="bg-blue-50 p-4 rounded-xl mb-6 border border-blue-100 text-left">
+                    <p class="text-sm font-bold text-blue-800 mb-1"><i class="fa-solid fa-crown text-yellow-500 mr-1"></i> 프리미엄 무제한 이용권</p>
+                    <p class="text-xs text-blue-600 leading-relaxed">흐름이 끊기지 않는 완벽한 학습! 구독 시 횟수 제한 없이 AI 튜터와 대화할 수 있습니다.</p>
+                </div>
+                <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/30" onclick="alert('결제 시스템 연동이 필요한 버튼입니다.')">
+                    프리미엄 결제하기
+                </button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -255,6 +278,9 @@
 
         // --- Variables ---
         const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
+
+        // --- Paywall & Limit Variables ---
+        const DAILY_LIMIT = 50;
 
         let isListening = false, isSpeaking = false, recognition = null;
         const synthesis = window.speechSynthesis;
@@ -552,8 +578,63 @@
             }
         }
 
+        // --- Paywall & Limit Logic ---
+        function getKSTLogicalDate() {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const kstTime = new Date(utc + (9 * 3600000)); // KST UTC+9
+            // 오전 6시 이전이면 이전 날짜로 취급하여 리셋을 지연시킴
+            if (kstTime.getHours() < 6) { kstTime.setDate(kstTime.getDate() - 1); } 
+            return `${kstTime.getFullYear()}-${String(kstTime.getMonth() + 1).padStart(2, '0')}-${String(kstTime.getDate()).padStart(2, '0')}`;
+        }
+
+        function checkDailyLimit() {
+            const todayStr = getKSTLogicalDate();
+            let savedDate = localStorage.getItem('last_usage_date');
+            let usageCount = parseInt(localStorage.getItem('daily_usage_count') || '0');
+
+            if (savedDate !== todayStr) {
+                usageCount = 0; // 새 날짜(오전 6시 지남)면 리셋
+                localStorage.setItem('last_usage_date', todayStr);
+                localStorage.setItem('daily_usage_count', usageCount);
+            }
+            
+            // UI 업데이트 (헤더 뱃지)
+            const remainText = document.getElementById('remainCountText');
+            if(remainText) {
+                let remain = Math.max(0, DAILY_LIMIT - usageCount);
+                remainText.innerText = `${remain}/${DAILY_LIMIT}`;
+            }
+            return usageCount;
+        }
+
+        function enforcePaywall() {
+            document.getElementById('paywallModal').classList.remove('hidden');
+            document.getElementById('textInput').disabled = true;
+            document.getElementById('micBtn').disabled = true;
+            document.getElementById('micBtn').classList.replace('bg-blue-600', 'bg-gray-400');
+            document.getElementById('micBtn').classList.remove('hover:bg-blue-700', 'hover:scale-105');
+            stopSpeaking();
+            updateStatus("무료 이용 횟수 소진됨");
+        }
+
+        function incrementUsage() {
+            let count = checkDailyLimit();
+            count++;
+            localStorage.setItem('daily_usage_count', count);
+            checkDailyLimit(); // UI 갱신
+        }
+
         async function handleUserMessage(text) {
             if(!text) return;
+
+            // --- 요금제 제한 체크 (서버 전송 전) ---
+            let currentUsage = checkDailyLimit();
+            if (currentUsage >= DAILY_LIMIT) {
+                enforcePaywall();
+                return;
+            }
+
             addMessageToChat('user', text);
 
             updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#9ca3af";
@@ -590,6 +671,9 @@
                 let data = await res.json();
                 let parsed = JSON.parse(data.choices[0].message.content);
                 
+                // --- 성공적으로 답변을 받았을 때 횟수 차감 ---
+                incrementUsage();
+                
                 if(mode==='tutor') conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)});
                 
                 if(parsed.foreign_text) {
@@ -620,6 +704,13 @@
         }
 
         async function requestExplanationFromBubble(bId, fullText, isExpSource = false, preSelectedText = null) {
+            // --- 해설 요청 시에도 요금제 제한 체크 ---
+            let currentUsage = checkDailyLimit();
+            if (currentUsage >= DAILY_LIMIT) {
+                enforcePaywall();
+                return;
+            }
+
             updateStatus("해설 분석 중...");
             const expSel = document.getElementById('explanationLanguage');
             const expLangName = expSel.options[expSel.selectedIndex].dataset.langName;
@@ -659,6 +750,9 @@
                 let explanation = data.choices[0].message.content;
 
                 if (explanation) {
+                    // --- 해설 성공 시 횟수 차감 ---
+                    incrementUsage();
+
                     bubbleCounter++;
                     const expBId = `exp-msg-${bubbleCounter}`;
                     const safeEncodedExp = encodeURIComponent(explanation.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
@@ -724,6 +818,11 @@
             toggleSettingsModal(false);
         }
         window.speechSynthesis.onvoiceschanged = () => {};
+
+        // --- 앱 초기 로드 시 남은 횟수 체크 및 차단 ---
+        if (checkDailyLimit() >= DAILY_LIMIT) {
+            enforcePaywall();
+        }
     </script>
 </body>
 </html>
