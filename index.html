@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -176,7 +177,7 @@
             </div>
         </div>
 
-        <!-- Settings Modal (API 키 입력란 삭제, 순수 UI 설정만 남김) -->
+        <!-- Settings Modal -->
         <div id="settingsModal" class="hidden absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div class="bg-white w-full max-w-[360px] rounded-2xl p-5 shadow-2xl relative transition-all duration-300 max-h-[95%] overflow-y-auto no-scrollbar">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">⚙️ 상세 설정</h3>
@@ -217,7 +218,11 @@
     </div>
 
     <script type="module">
-        // HTML 인라인 이벤트 처리를 위해 함수들을 전역(window) 객체에 등록합니다.
+        // [중요: 내 컴퓨터(VS Code)에서 안드로이드 앱으로 빌드할 때 아래 세 줄의 주석(//)을 지워주세요!]
+        // import { Capacitor } from '@capacitor/core';
+        // import { SpeechRecognition } from '@capacitor-community/speech-recognition';
+        // import { Device } from '@capacitor/device'; // <-- 신규: 기기 ID 플러그인
+
         window.handleBodyClick = handleBodyClick;
         window.targetLanguageChanged = targetLanguageChanged;
         window.toggleSettingsModal = toggleSettingsModal;
@@ -235,7 +240,6 @@
         window.requestExplanationFromBubble = requestExplanationFromBubble;
 
         // --- Variables ---
-        // 사용자가 배포한 Cloudflare Worker 프록시 주소 (DeepSeek 연동)
         const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
 
         let isListening = false, isSpeaking = false, recognition = null;
@@ -248,12 +252,39 @@
         let startIndex = -1;
         let endIndex = -1;
         let bubbleCounter = 0;
+        
+        // 내 기기 고유 ID 변수
+        let myDeviceId = "unknown";
 
         const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
         const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
         const avatarWrap = document.getElementById('avatarWrap'), avatarImage = document.getElementById('avatarImage');
         const stopAudioBtn = document.getElementById('stopAudioBtn');
         const selectionTooltip = document.getElementById('selectionTooltip');
+
+        // --- 기기 고유 ID 초기화 로직 ---
+        async function initDeviceID() {
+            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && typeof Device !== 'undefined') {
+                try {
+                    const info = await Device.getId();
+                    myDeviceId = info.identifier; // 핸드폰의 고유 식별자 저장
+                    console.log("기기 식별자 로드 완료:", myDeviceId);
+                } catch (e) {
+                    console.error("Device ID 추출 실패:", e);
+                    myDeviceId = "error-device-id";
+                }
+            } else {
+                // 일반 웹 브라우저(테스트 환경)일 때 임시 ID 발급
+                let localId = localStorage.getItem('web_device_id');
+                if (!localId) {
+                    localId = 'web-' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('web_device_id', localId);
+                }
+                myDeviceId = localId;
+            }
+        }
+        // 앱 시작 시 ID 로드 실행
+        initDeviceID();
 
         // --- In-App Browser Detection & Text Input ---
         function checkInAppBrowser() {
@@ -273,7 +304,6 @@
             }
         }
 
-        // Apply Load Settings
         document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
         updateGenderUI(currentVoiceGender, true); 
         checkInAppBrowser();
@@ -326,7 +356,7 @@
         function resetMic() { isListening = false; micBtn.classList.replace('bg-red-500', 'bg-blue-600'); micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); if(!isSpeaking) updateStatus("대기 중"); }
         function updateStatus(txt) { statusText.textContent = txt; }
 
-        // --- Smart Touch Selection & Tooltip Logic ---
+        // --- Smart Touch Selection ---
         function clearSelection() {
             document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
             startIndex = -1; endIndex = -1; currentBubbleId = null;
@@ -498,7 +528,7 @@
         }
         function stopSpeaking() { synthesis.cancel(); }
 
-        // --- LLM API Logic (Cloudflare Worker 연동 완료) ---
+        // --- LLM API Logic ---
         async function fetchAPI(url, options) {
             let delay=500;
             for(let i=0;i<3;i++) {
@@ -533,10 +563,12 @@
                     if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)];
                 }
                 
-                // 앱 설정키 제거 및 워커 URL을 통한 깔끔한 호출
                 let res = await fetchAPI(WORKER_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Device-ID': myDeviceId // <--- 헤더에 기기 ID를 담아 전송
+                    },
                     body: JSON.stringify({
                         model: "deepseek-chat",
                         messages: ctx,
@@ -560,7 +592,7 @@
             }
         }
 
-        // --- Explanation Logic (Cloudflare Worker 연동 완료) ---
+        // --- Explanation Logic ---
         async function requestExplanationGlobal() {
             const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border:not(.bg-yellow-50)');
             if(aiBubbles.length === 0) return updateStatus("설명할 대화가 없습니다.");
@@ -597,10 +629,12 @@
             }
 
             try {
-                // 사용자가 알려준 워커 스니펫 기반 해설 로직 호출
                 let res = await fetchAPI(WORKER_URL, { 
                     method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Device-ID': myDeviceId // <--- 해설 요청 시에도 기기 ID 포함
+                    }, 
                     body: JSON.stringify({ 
                         model: "deepseek-chat", 
                         messages: [
