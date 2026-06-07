@@ -210,7 +210,6 @@
             { code: "vi-VN", name: "베트남어", flag: "🇻🇳" },
             { code: "ko-KR", name: "한국어", flag: "🇰🇷" },
             { code: "ar-SA", name: "아랍어", flag: "🇸🇦" },
-            // 새로 추가된 3가지 언어
             { code: "fr-FR", name: "프랑스어", flag: "🇫🇷" },
             { code: "ru-RU", name: "러시아어", flag: "🇷🇺" },
             { code: "hi-IN", name: "힌디어", flag: "🇮🇳" }
@@ -565,7 +564,7 @@
 
             let sysPrompt = mode === 'translate' 
                 ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 출력포맷 JSON: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}`
-                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 1~2문장으로 짧게. 출력포맷 JSON: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
+                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 중요: 사용자가 3분 이상 길게 말해달라거나 지나치게 긴 텍스트 작성을 요구할 경우, 실시간 언어 튜터링 목적에 맞지 않음을 알리고 정중히 거절해라. 출력포맷 JSON: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
 
             try {
                 let ctx = mode==='tutor'?conversationHistory:[{role:"system",content:sysPrompt},{role:"user",content:text}];
