@@ -932,31 +932,52 @@
         window.speechSynthesis.onvoiceschanged = () => {};
 
         // --- 💡 첫화면 스와이프 기능 (왼쪽으로 밀어서 롤플레잉 넘어가기) ---
-        function goToRoleplay() {
-            document.body.classList.add("slide-out-left");
-            setTimeout(() => { window.location.href = "roleplay.html"; }, 300);
-        }
-
+        // --- 💡 앱처럼 손가락을 따라오는 부드러운 스와이프 (메인 -> 롤플레잉) ---
         let mainTouchStartX = 0;
         let mainTouchStartY = 0;
+        let isSwipingLeft = false;
 
         window.addEventListener('touchstart', (e) => {
             mainTouchStartX = e.touches[0].clientX;
             mainTouchStartY = e.touches[0].clientY;
-        }, { passive: true, capture: true });
+            isSwipingLeft = false;
+            document.body.style.transition = 'none'; // 드래그 중에는 애니메이션 끄기 (손가락에 즉각 반응)
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            // 화면 오른쪽 끝(40px 이내)에서 터치가 시작되었을 때만 작동
+            if (mainTouchStartX > window.innerWidth - 40) {
+                let currentX = e.touches[0].clientX;
+                let moveX = currentX - mainTouchStartX; // 왼쪽으로 밀면 음수
+                let moveY = Math.abs(e.touches[0].clientY - mainTouchStartY);
+
+                // 위아래 스크롤보다 좌우 스와이프가 크고, 왼쪽으로 밀 때
+                if (Math.abs(moveX) > moveY && moveX < 0) {
+                    e.preventDefault(); // 브라우저 기본 스와이프(뒤로가기 등) 방지
+                    isSwipingLeft = true;
+                    document.body.style.transform = `translateX(${moveX}px)`; // 화면이 손가락을 따라옴!
+                }
+            }
+        }, { passive: false });
 
         window.addEventListener('touchend', (e) => {
-            let touchEndX = e.changedTouches[0].clientX;
-            let touchEndY = e.changedTouches[0].clientY;
+            if (!isSwipingLeft) return;
             
-            let moveX = mainTouchStartX - touchEndX; // 우측에서 좌측으로 민 거리
-            let moveY = Math.abs(touchEndY - mainTouchStartY);
+            let touchEndX = e.changedTouches[0].clientX;
+            let moveX = mainTouchStartX - touchEndX; // 얼마나 밀었는지 확인
 
-            // 화면 오른쪽 끝(우측 테두리에서 30px 이내)에서 시작해서, 왼쪽으로 60px 이상 쓱 밀었을 때
-            if (mainTouchStartX > window.innerWidth - 30 && moveX > 60 && moveX > moveY) {
-                goToRoleplay();
+            // 터치를 떼면 부드러운 트랜지션 복구
+            document.body.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+
+            if (moveX > 70) {
+                // 70px 이상 밀었으면 화면 완전히 왼쪽으로 넘기기
+                document.body.style.transform = `translateX(-100%)`;
+                setTimeout(() => { window.location.href = "roleplay.html"; }, 300);
+            } else {
+                // 조금 밀다 말았으면 다시 원상복구 (튕겨 돌아옴)
+                document.body.style.transform = `translateX(0)`;
             }
-        }, { passive: true, capture: true });
+        }, { passive: true });
 
     
 

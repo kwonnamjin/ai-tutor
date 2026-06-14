@@ -23,9 +23,10 @@
         .selected-card { border-color: #3b82f6 !important; background-color: #eff6ff !important; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3) !important; transform: scale(1.02); }
     
         @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from { transform: translateX(100%); } /* opacity: 0 제거 */
+            to { transform: translateX(0); }      /* opacity: 1 제거 */
         }
+        /* 기존 .slide-out 과 @keyframes slideOut 은 삭제하셔도 됩니다 (JS가 대신함) */
         .slide-out {
             animation: slideOut 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
         }
@@ -317,8 +318,57 @@
 
     // --- 💡 메뉴 스크롤과 겹치지 않는 확실한 스와이프 ---
     function goBack() {
-        document.body.classList.add("slide-out"); 
+        d// --- 💡 앱처럼 손가락을 따라오는 부드러운 스와이프 (뒤로가기) ---
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwipingRight = false;
+
+    window.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        isSwipingRight = false;
+        document.body.style.transition = 'none'; // 드래그 중 애니메이션 끄기
+    }, { passive: true }); 
+
+    window.addEventListener('touchmove', (e) => {
+        // 화면 왼쪽 끝(40px 이내)에서 터치가 시작되었을 때만 작동
+        if (touchStartX < 40) {
+            let currentX = e.touches[0].clientX;
+            let moveX = currentX - touchStartX; // 오른쪽으로 밀면 양수
+            let moveY = Math.abs(e.touches[0].clientY - touchStartY);
+
+            if (moveX > moveY && moveX > 0) {
+                e.preventDefault(); 
+                isSwipingRight = true;
+                document.body.style.transform = `translateX(${moveX}px)`; // 손가락 따라 화면 이동
+            }
+        }
+    }, { passive: false });
+
+    window.addEventListener('touchend', (e) => {
+        if (!isSwipingRight) return;
+        
+        let touchEndX = e.changedTouches[0].clientX;
+        let moveX = touchEndX - touchStartX; 
+
+        document.body.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+
+        if (moveX > 70) {
+            // 충분히 밀었으면 완전히 오른쪽으로 치우기
+            document.body.style.transform = `translateX(100%)`;
+            setTimeout(() => { window.location.href = "index.html"; }, 300);
+        } else {
+            // 밀다 말았으면 원상복구
+            document.body.style.transform = `translateX(0)`;
+        }
+    }, { passive: true });
+
+    // 뒤로가기 화살표 버튼을 눌렀을 때의 동작
+    function goBack() {
+        document.body.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+        document.body.style.transform = `translateX(100%)`;
         setTimeout(() => { window.location.href = "index.html"; }, 300);
+    }
     }
 
     let touchStartX = 0;
