@@ -285,31 +285,31 @@
         }
     }
 
-    // --- 💡 화면 슬라이드 & 손가락 스와이프 뒤로 가기 로직 ---
+    // --- 💡 화면 슬라이드 & 손가락 스와이프 뒤로 가기 로직 (업그레이드 버전) ---
 
-    // 1. 뒤로 가기 버튼을 눌렀을 때 실행되는 함수
     function goBackWithSwipe() {
-        document.body.classList.add("slide-out"); // 화면 빠지는 애니메이션 실행
+        document.body.classList.add("slide-out"); 
         setTimeout(() => {
-            window.location.href = "index.html"; // 0.3초 뒤에 메인 화면으로 이동
+            window.location.href = "index.html"; 
         }, 300);
     }
 
-    // 2. 스마트폰 화면 왼쪽 끝에서 오른쪽으로 스와이프할 때 뒤로 가기
     let touchStartX = 0;
     
+    // 화면을 터치하는 순간의 위치 저장
     document.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
-    });
+    }, { passive: true }); // 브라우저 경고 방지용 옵션
 
+    // 터치를 끝내고 손을 떼는 순간
     document.addEventListener('touchend', (e) => {
         let touchEndX = e.changedTouches[0].clientX;
         
-        // 화면 완전 왼쪽(50px 이내)에서 시작해서, 오른쪽으로 100px 이상 밀었을 때만 작동
-        if (touchStartX < 50 && touchEndX - touchStartX > 100) {
+        // 조건: 시작점이 화면 왼쪽 끝 100px 이내이고, 오른쪽으로 70px 이상 스윽 밀었을 때
+        if (touchStartX < 100 && (touchEndX - touchStartX > 70)) {
             goBackWithSwipe();
         }
-    });
+    }, { passive: true });
 
     // 버튼 이벤트 연결
     document.addEventListener("DOMContentLoaded", () => {
