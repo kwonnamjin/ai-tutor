@@ -144,11 +144,72 @@
     
     <script>
     // --- 1. 가상의 대본 데이터 (나중에는 워커 서버에서 받아옵니다) ---
-    const scriptData = [
-        { id: 1, role: 'ai', en: "Hi there! What can I get for you today?", ko: "안녕하세요! 오늘 무엇을 주문하시겠어요?" },
-        { id: 2, role: 'user', en: "I'll have an iced Americano, please.", ko: "아이스 아메리카노 하나 주세요." },
-        { id: 3, role: 'ai', en: "Sure! What size would you like?", ko: "네! 사이즈는 어떤 걸로 드릴까요?" }
-    ];
+    const scriptData = [ ];
+
+    // (이전 답변의 scriptData 변수 선언 부분은 지우고, 빈 배열로 시작합니다)
+    let scriptData = []; 
+
+    // 대본 생성 버튼에 클릭 이벤트 연결
+    document.querySelector("button:contains('AI 대본 생성하기')").onclick = generateScript;
+
+    async function generateScript() {
+        // 1. UI에서 선택된 레벨과 상황 가져오기 (실제 구현 시 선택된 버튼의 텍스트를 읽어옴)
+        // 임시로 하드코딩 (나중에 선택 로직 추가)
+        const level = "초급"; 
+        const situation = "카페 주문하기"; 
+        
+        const btn = event.target;
+        btn.innerText = "⏳ 딥시크가 대본을 작성 중입니다...";
+        btn.disabled = true;
+
+        try {
+            // 2. 워커 서버로 요청 보내기
+            const response = await fetch(`${WORKER_URL}/generate-script`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ level: level, situation: situation })
+            });
+
+            const data = await response.json(); // AI가 준 JSON 파싱
+            scriptData = data.scriptData; // 전역 변수에 생성된 대본 덮어쓰기!
+
+            // 3. 화면에 대본 그리기
+            renderScript();
+            alert("대본이 준비되었습니다! 하단의 듣기/말하기 버튼을 눌러보세요.");
+
+        } catch (error) {
+            alert("대본 생성에 실패했습니다.");
+        } finally {
+            btn.innerText = "✨ AI 대본 생성하기";
+            btn.disabled = false;
+        }
+    }
+
+    // 받아온 대본을 HTML 말풍선으로 만들어주는 함수
+    function renderScript() {
+        const playerArea = document.querySelector("#scriptPlayer .space-y-4");
+        playerArea.innerHTML = ""; // 기존 대본 지우기
+
+        scriptData.forEach(line => {
+            const isAi = line.role === 'ai';
+            const icon = isAi ? '👱‍♀️' : '👤';
+            const roleName = isAi ? 'AI 상대방' : '나 (사용자)';
+            const colorClass = isAi ? 'purple' : 'blue';
+
+            const lineHtml = `
+                <div class="flex gap-3 p-2 rounded-lg border border-transparent" id="line-${line.id}">
+                    <div class="w-10 h-10 rounded-full bg-${colorClass}-100 flex items-center justify-center text-xl shrink-0">${icon}</div>
+                    <div>
+                        <p class="text-[11px] font-bold text-${colorClass}-600 mb-0.5">${roleName}</p>
+                        <p class="text-sm font-bold text-gray-800">${line.en}</p>
+                        <p class="text-xs text-gray-500 mt-1">${line.ko}</p>
+                    </div>
+                </div>
+            `;
+            playerArea.insertAdjacentHTML('beforeend', lineHtml);
+        });
+    }
+
 
     let currentPlayingIndex = 0;
     let isPlaying = false;
