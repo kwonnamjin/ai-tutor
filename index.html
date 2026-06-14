@@ -31,6 +31,15 @@
         .exp-word-span.selected { background-color: #fde047; color: #a16207; font-weight: 600; }
         
         .tooltip-arrow::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1f2937 transparent transparent transparent; }
+    
+        /* 💡 메인 화면에서 롤플레잉으로 넘어갈 때 왼쪽으로 밀려나는 애니메이션 */
+        .slide-out-left {
+            animation: slideOutLeft 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
+        }
+        @keyframes slideOutLeft {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(-100%); opacity: 0; }
+        }
     </style>
 </head>
 <body class="p-0 sm:p-4" onclick="handleBodyClick(event)">
@@ -994,6 +1003,33 @@
             toggleSettingsModal(false);
         }
         window.speechSynthesis.onvoiceschanged = () => {};
+
+        // --- 💡 인덱스 화면 스와이프 (롤플레잉 화면으로 넘어가기) ---
+        function goToRoleplay() {
+            document.body.classList.add("slide-out-left");
+            setTimeout(() => { window.location.href = "roleplay.html"; }, 300);
+        }
+
+        let mainTouchStartX = 0;
+        let mainTouchStartY = 0;
+
+        window.addEventListener('touchstart', (e) => {
+            mainTouchStartX = e.touches[0].clientX;
+            mainTouchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        window.addEventListener('touchend', (e) => {
+            let touchEndX = e.changedTouches[0].clientX;
+            let touchEndY = e.changedTouches[0].clientY;
+            
+            let moveX = mainTouchStartX - touchEndX; // 우측에서 좌측으로 민 거리
+            let moveY = Math.abs(touchEndY - mainTouchStartY);
+
+            // 화면 오른쪽 끝(우측 테두리에서 30px 이내)에서 시작해서, 왼쪽으로 60px 이상 쓱 밀었을 때
+            if (mainTouchStartX > window.innerWidth - 30 && moveX > 60 && moveX > moveY) {
+                goToRoleplay();
+            }
+        }, { passive: true });
 
     </script>
 </body>

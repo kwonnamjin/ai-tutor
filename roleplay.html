@@ -117,12 +117,16 @@
     </div>
     
     <script>
+    
+
+    // --- 💡 워커 주소 및 기본 변수 설정 (마이크 오류 해결을 위해 isListening 추가) ---
     const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev"; 
     
     let scriptData = []; 
     let currentPlayingIndex = 0;
     let isPlaying = false;
     let recognition = null;
+    let isListening = false; // 💡 마이크 에러의 원인이었던 누락된 변수 추가!
 
     // --- 버튼 클릭 UI 효과 ---
     document.querySelectorAll('.level-btn').forEach(btn => {
@@ -197,7 +201,7 @@
         });
     }
 
-    // --- 마이크 기능 강제 초기화 ---
+    // --- 마이크 기능 초기화 ---
     const SpeechReq = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (SpeechReq) {
         recognition = new SpeechReq();
@@ -247,7 +251,6 @@
         const icon = document.getElementById("roleplayMicIcon");
         const text = document.getElementById("roleplayMicText");
 
-        // 이미 마이크가 켜져있으면 끄기
         if (isListening) {
             recognition.stop();
             return;
@@ -312,13 +315,7 @@
         else alert(`앗, 틀렸습니다! 정답은 '${answer}' 입니다.`);
     }
 
-    // --- 💡 스와이프 뒤로 가기 (모바일 완벽 최적화) ---
-    function goBack() {
-        document.body.classList.add("slide-out"); 
-        setTimeout(() => { window.location.href = "index.html"; }, 300);
-    }
-
-    // --- 💡 스와이프 뒤로 가기 (모바일 완벽 최적화 버전) ---
+    // --- 💡 메뉴 스크롤과 겹치지 않는 확실한 스와이프 ---
     function goBack() {
         document.body.classList.add("slide-out"); 
         setTimeout(() => { window.location.href = "index.html"; }, 300);
@@ -330,7 +327,7 @@
     window.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
-    }, { passive: true, capture: true }); // capture: true로 다른 터치 이벤트에 씹히는 것 방지
+    }, { passive: true, capture: true }); 
 
     window.addEventListener('touchend', (e) => {
         let touchEndX = e.changedTouches[0].clientX;
@@ -339,8 +336,8 @@
         let moveX = touchEndX - touchStartX;
         let moveY = Math.abs(touchEndY - touchStartY);
 
-        // 화면 맨 왼쪽(100px 이내)에서 시작해서, 오른쪽으로 50px 이상 밀었고, 위아래 이동보다 좌우 이동이 클 때 작동
-        if (touchStartX < 100 && moveX > 50 && moveX > moveY) {
+        // 💡 수정됨: 화면 완전 끝(30px 이내)에서만 시작해야 작동함. 이제 가운데 메뉴를 밀어도 안 넘어갑니다!
+        if (touchStartX < 30 && moveX > 60 && moveX > moveY) {
             goBack();
         }
     }, { passive: true, capture: true });
