@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 실시간 언어 튜터</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { --chat-font-size: 14px; }
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; margin: 0; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .chat-text-dynamic { font-size: var(--chat-font-size); line-height: 1.5; }
+        
+        .avatar-container { width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 3px solid #60a5fa; box-shadow: 0 0 15px rgba(96, 165, 250, 0.6); position: relative; margin: 0 auto; transition: all 0.3s ease; background-color: #1e293b; }
+        .avatar-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s ease; }
+        
+        .speaking-pulse { animation: pulse-ring 1.25s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.8); } 70% { box-shadow: 0 0 0 20px rgba(96, 165, 250, 0); } 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0); } }
+        .speaking-bob { animation: bob 0.5s infinite alternate ease-in-out; }
+        @keyframes bob { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
+        .word-span.selected { background-color: #fef08a; color: #854d0e; font-weight: 600; }
+        
+        .exp-word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
+        .exp-word-span.selected { background-color: #fde047; color: #a16207; font-weight: 600; }
+        
+        .tooltip-arrow::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1f2937 transparent transparent transparent; }
+    </style>
+</head>
+<body class="p-0 sm:p-4" onclick="handleBodyClick(event)">
+
+    <div class="bg-slate-50 w-full max-w-md h-full sm:h-[850px] max-h-full sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden relative border border-slate-700">
+        
+        <div class="flex-none bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center z-10 shadow-lg border-b border-blue-800">
+            <div>
+                <h1 class="text-xl font-extrabold tracking-tight">TalkAI Tutor</h1>
+                <p class="text-[10px] text-blue-200 uppercase tracking-widest font-semibold mt-0.5">Smart Language Partner</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <div id="usageBadge" class="bg-blue-950/50 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg border border-blue-500 shadow-inner flex items-center gap-1 backdrop-blur-sm">
+                    <i class="fa-solid fa-bolt text-yellow-400"></i> <span id="remainCountText">50/50</span>
+                </div>
+                <select id="targetLanguage" class="bg-blue-800/80 text-white text-xs rounded-lg focus:ring-blue-400 border border-blue-500 p-2 outline-none cursor-pointer backdrop-blur-sm font-medium" onchange="targetLanguageChanged()">
+                </select>
+                <button class="w-10 h-10 rounded-lg bg-blue-800/80 hover:bg-blue-700 flex items-center justify-center transition-colors border border-blue-500 shadow-sm backdrop-blur-sm" onclick="toggleSettingsModal(true)">
+                    <i class="fa-solid fa-gear text-lg text-blue-100"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="inAppWarning" class="hidden flex-none bg-red-100 text-red-700 px-4 py-2 text-[11px] font-bold flex items-center justify-between z-10 border-b border-red-200 shadow-inner">
+            <span class="flex-1"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-500"></i> 카카오/네이버 등에서는 마이크가 제한될 수 있습니다. 우측 메뉴에서 <b>'다른 브라우저로 열기'</b>를 선택해 주세요.</span>
+            <button onclick="document.getElementById('inAppWarning').style.display='none'" class="ml-2 px-2 py-1 text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <div class="flex-none bg-slate-50/50 px-4 py-1.5 flex justify-between items-center border-b border-slate-300 text-[11px]">
+            <span class="text-slate-500 font-semibold text-[10px] uppercase tracking-wider">AI Engine</span>
+            <span id="activeEngineText" class="font-bold text-blue-600 text-[10px] bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200"><i class="fa-solid fa-shield-halved mr-0.5"></i> DeepSeek Secure</span>
+        </div>
+
+        <div class="flex-none bg-gradient-to-b from-blue-50 to-slate-100 pt-4 pb-3 flex flex-col items-center justify-center relative border-b border-slate-200 shadow-sm z-10">
+            <div id="avatarWrap" class="avatar-container mb-2 transition-all duration-300">
+                <img src="./app-icon.png" alt="AI Avatar" class="avatar-img" id="avatarImage" onerror="this.onerror=null; this.src='https://placehold.co/300x300/1e293b/60a5fa?text=AI'">
+            </div>
+            <div id="statusText" class="text-[10px] font-bold text-blue-700 bg-blue-100/80 border border-blue-200 px-4 py-1 rounded-full shadow-sm backdrop-blur-sm">
+                준비됨. 하단 마이크를 눌러 시작하세요.
+            </div>
+        </div>
+
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 no-scrollbar pb-6 relative">
+             <div id="premiumBanner" class="bg-gradient-to-r from-indigo-600 via-blue-600 to-blue-500 rounded-2xl p-4 shadow-md cursor-pointer hover:shadow-lg transition-all self-start mb-4 mx-4" onclick="processUpgrade()">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-yellow-300 border border-white/30 shrink-0">
+                    <i class="fa-solid fa-crown"></i>
+                </div>
+                <div>
+                    <p class="text-white font-black text-sm">프리미엄 무제한 구독</p>
+                    <p class="text-blue-100 text-[11px] mt-0.5">월 4,500원(VAT 포함)으로 무제한 학습하세요!</p>
+                </div>
+            </div>
+        </div>
+
+            <div class="flex flex-col space-y-1">
+                <div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md shadow-blue-900/5 self-start" id="welcomeMessage">
+                    <p class="chat-text-dynamic text-slate-800 font-extrabold mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><i class="fa-solid fa-robot text-blue-500"></i> 당신의 AI 튜터입니다.</p>
+                    <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+                        <div class="flex items-start gap-2">
+                            <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 border border-blue-100"><i class="fa-solid fa-microphone text-[10px]"></i></div>
+                            <div>
+                                <p class="font-bold text-slate-800 mb-0.5">실시간 음성 대화</p>
+                                <p class="text-slate-500">하단의 파란 마이크를 눌러 말해보세요. <b>대화형 튜터</b>와 <b>통번역</b> 모드를 지원합니다.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5 border border-amber-100"><i class="fa-solid fa-hand-pointer text-[10px]"></i></div>
+                            <div>
+                                <p class="font-bold text-slate-800 mb-0.5">스마트 단어 선택</p>
+                                <p class="text-slate-500">말풍선 속 텍스트를 터치하여 구간을 선택하면 숨겨진 메뉴가 나타납니다.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-100"><i class="fa-solid fa-graduation-cap text-[10px]"></i></div>
+                            <div>
+                                <p class="font-bold text-slate-800 mb-0.5">원어민 발음 & 맞춤 해설</p>
+                                <p class="text-slate-500">선택한 단어만 원어민 발음으로 <b>다시 듣기(🔊)</b> 하거나, <b>집중 해설(💡)</b>을 받을 수 있습니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="selectionTooltip" class="hidden absolute z-50 bg-slate-800 text-white rounded-lg shadow-xl flex items-center px-1 py-1 tooltip-arrow transition-opacity duration-200 opacity-0 pointer-events-none border border-slate-700" style="transform: translate(-50%, -100%); margin-top: -8px;">
+                <button onclick="readSelectedText()" class="hover:bg-slate-700 p-2 rounded-md transition-colors flex items-center justify-center text-blue-400" title="선택 부분 읽기">
+                    <i class="fa-solid fa-volume-high text-sm"></i>
+                </button>
+                <div class="w-px h-5 bg-slate-600 mx-1"></div>
+                <button onclick="explainSelectedText()" class="hover:bg-slate-700 p-2 rounded-md transition-colors flex items-center justify-center text-yellow-400" title="선택 부분 해설">
+                    <i class="fa-solid fa-lightbulb text-sm"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-none bg-white border-t border-slate-200 pt-3 pb-5 sm:pb-4 px-4 flex flex-col z-20 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+            <div class="flex justify-between items-center gap-2 mb-3">
+                <div class="bg-slate-100 rounded-xl flex-1 border border-slate-200 shadow-sm overflow-hidden">
+                    <select id="appMode" class="w-full bg-transparent text-[11px] sm:text-xs font-bold text-slate-700 text-center py-2 outline-none cursor-pointer" onchange="changeAppMode()">
+                        <option value="tutor">🎓 대화형 튜터</option>
+                        <option value="translate">🌐 통번역 모드</option>
+                    </select>
+                </div>
+
+                <div id="sttToggleContainer" class="bg-slate-100 rounded-xl flex-1 flex items-center border border-slate-200 shadow-sm pl-2 transition-opacity duration-300 overflow-hidden">
+                    <span class="text-[10px] text-slate-500 font-bold pr-1 shrink-0">🗣️</span>
+                    <select id="sttInputLanguage" class="flex-1 bg-transparent text-[11px] sm:text-xs font-bold text-blue-600 py-2 px-1 outline-none cursor-pointer border-l border-slate-200 w-full" onchange="updateStatus('내 음성 언어 변경됨')">
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mb-3">
+                <input type="text" id="textInput" placeholder="마이크가 안 될 때는 직접 입력해 보세요..." class="flex-1 h-10 rounded-xl bg-slate-50 border border-slate-300 px-4 text-[11px] sm:text-xs outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all shadow-inner" onkeypress="if(event.key==='Enter') sendTextMessage()">
+                <button id="sendMsgBtn" class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white flex items-center justify-center hover:from-blue-700 hover:to-blue-900 transition-all shadow-md outline-none" onclick="sendTextMessage()">
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                </button>
+            </div>
+
+            <div class="flex justify-center items-center gap-4">
+                <button id="stopAudioBtn" class="flex-1 max-w-[80px] h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200" onclick="stopSpeaking()" disabled>
+                    <i class="fa-solid fa-volume-xmark text-lg"></i>
+                </button>
+
+                <button id="micBtn" class="w-16 h-16 shrink-0 rounded-full bg-gradient-to-b from-blue-400 to-blue-600 text-white flex items-center justify-center text-2xl hover:from-blue-500 hover:to-blue-700 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/40 outline-none border-4 border-white" onclick="toggleListening()">
+                    <i id="micIcon" class="fa-solid fa-microphone drop-shadow-md"></i>
+                </button>
+
+                <button id="expGlobalBtn" class="flex-1 max-w-[100px] h-12 rounded-xl bg-amber-50 text-amber-700 font-bold text-[11px] flex items-center justify-center gap-1.5 hover:bg-amber-100 transition-colors shadow-sm outline-none border border-amber-200" onclick="requestExplanationGlobal()">
+                    <i class="fa-solid fa-lightbulb text-amber-500 text-sm"></i> 과외 해설
+                </button>
+            </div>
+        </div>
+
+        <div id="settingsModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+            <div class="bg-white w-full max-w-[360px] rounded-3xl p-6 shadow-2xl relative transition-all duration-300 max-h-[95%] overflow-y-auto no-scrollbar border border-slate-100">
+                <h3 class="text-xl font-extrabold text-slate-800 mb-5 border-b border-slate-100 pb-3 flex items-center gap-2"><i class="fa-solid fa-gear text-slate-400"></i> 상세 설정</h3>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 mb-3">채팅 글자 크기</label>
+                    <input type="range" id="fontSizeSlider" min="12" max="22" step="1" value="14" class="w-full accent-blue-600" oninput="document.documentElement.style.setProperty('--chat-font-size', this.value + 'px')">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 mb-3">AI 목소리 성별</label>
+                    <div class="flex bg-slate-100 p-1 rounded-xl">
+                        <button id="genderFemaleBtn" class="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm" onclick="selectGender('female')">👩 여성 </button>
+                        <button id="genderMaleBtn" class="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded-lg" onclick="selectGender('male')">👨 남성 </button>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 mb-3">과외 해설 언어</label>
+                    <select id="explanationLanguage" class="w-full border border-slate-300 rounded-xl p-3 text-sm font-medium outline-none bg-slate-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </select>
+                </div>
+
+                <div class="flex gap-3 mt-8 pt-4 border-t border-slate-100">
+                    <button class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl text-sm hover:bg-slate-200 transition-colors" onclick="toggleSettingsModal(false)">닫기</button>
+                    <button class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-3 rounded-xl text-sm hover:opacity-90 transition-opacity shadow-md shadow-blue-600/20" onclick="saveSettings()">저장</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="paywallModal" class="hidden absolute inset-0 bg-slate-900/80 flex items-center justify-center z-[100] p-4 backdrop-blur-md transition-opacity duration-300">
+            <div class="bg-white w-full max-w-[320px] rounded-[2rem] p-8 shadow-2xl text-center relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                <div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-5 text-4xl shadow-inner border border-slate-100">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-800 mb-2 tracking-tight">튜터링 종료</h3>
+                <p id="paywallReasonText" class="text-sm font-medium text-slate-500 mb-6 leading-relaxed">무료 체험 기간이 끝났거나 제공된 대화 건수를 모두 소진하셨습니다.</p>
+                
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-5 rounded-2xl mb-8 border border-blue-100 text-left shadow-sm">
+                    <p class="text-sm font-extrabold text-blue-900 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-crown text-yellow-500"></i> 프리미엄 무제한 패스</p>
+                    <p class="text-[11px] text-blue-700/80 leading-relaxed font-medium">흐름이 끊기지 않는 완벽한 학습!<br>월 9,900원으로 시간과 횟수 제한 없이 AI 튜터와 무제한 대화하세요.</p>
+                </div>
+                <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-sm py-4 rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2" onclick="processUpgrade()">
+                    <i class="fa-brands fa-google-play"></i> 구글 플레이로 결제하기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // [중요: 내 컴퓨터(VS Code)에서 안드로이드 앱으로 빌드할 때 아래 세 줄의 주석(//)을 지워주세요!]
+        // import { Capacitor } from '@capacitor/core';
+        // import { SpeechRecognition } from '@capacitor-community/speech-recognition';
+        // import { Device } from '@capacitor/device';
+        // import 'cordova-plugin-purchase'; // 인앱 결제 플러그인 임포트 
+
+        const SUPPORTED_LANGUAGES = [
+            { code: "en-US", name: "영어", flag: "🇺🇸" },
+            { code: "es-ES", name: "스페인어", flag: "🇪🇸" },
+            { code: "ja-JP", name: "일본어", flag: "🇯🇵" },
+            { code: "zh-CN", name: "중국어", flag: "🇨🇳" },
+            { code: "th-TH", name: "태국어", flag: "🇹🇭" },
+            { code: "vi-VN", name: "베트남어", flag: "🇻🇳" },
+            { code: "ko-KR", name: "한국어", flag: "🇰🇷" },
+            { code: "ar-SA", name: "아랍어", flag: "🇸🇦" },
+            { code: "fr-FR", name: "프랑스어", flag: "🇫🇷" },
+            { code: "ru-RU", name: "러시아어", flag: "🇷🇺" },
+            { code: "hi-IN", name: "힌디어", flag: "🇮🇳" }
+        ];
+
+        function renderLanguageSelects() {
+            const optionsHtml = SUPPORTED_LANGUAGES.map(lang => 
+                `<option value="${lang.code}" data-lang-name="${lang.name}">${lang.flag} ${lang.name}</option>`
+            ).join('');
+
+            document.getElementById('targetLanguage').innerHTML = optionsHtml;
+            document.getElementById('sttInputLanguage').innerHTML = optionsHtml;
+            document.getElementById('explanationLanguage').innerHTML = optionsHtml;
+        }
+
+        renderLanguageSelects();
+        document.getElementById('targetLanguage').value = 'en-US';
+        document.getElementById('sttInputLanguage').value = 'ko-KR';
+        document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
+
+        window.handleBodyClick = handleBodyClick;
+        window.targetLanguageChanged = targetLanguageChanged;
+        window.toggleSettingsModal = toggleSettingsModal;
+        window.changeAppMode = changeAppMode;
+        window.updateStatus = updateStatus;
+        window.sendTextMessage = sendTextMessage;
+        window.stopSpeaking = stopSpeaking;
+        window.toggleListening = toggleListening;
+        window.requestExplanationGlobal = requestExplanationGlobal;
+        window.selectGender = selectGender;
+        window.saveSettings = saveSettings;
+        window.readSelectedText = readSelectedText;
+        window.explainSelectedText = explainSelectedText;
+        window.handleWordClick = handleWordClick;
+        window.requestExplanationFromBubble = requestExplanationFromBubble;
+        window.speakText = speakText;
+        window.processUpgrade = processUpgrade;
+
+        const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
+        const MAX_FREE_COUNT = 50;
+
+        let isListening = false, isSpeaking = false, recognition = null;
+        const synthesis = window.speechSynthesis;
+        let conversationHistory = []; 
+        let currentUtterance = null;
+        let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
+        
+        let currentBubbleId = null;
+        let startIndex = -1;
+        let endIndex = -1;
+        let bubbleCounter = 0;
+        
+        let myDeviceId = "unknown";
+
+        const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
+        const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
+        const avatarWrap = document.getElementById('avatarWrap'), avatarImage = document.getElementById('avatarImage');
+        const stopAudioBtn = document.getElementById('stopAudioBtn');
+        const selectionTooltip = document.getElementById('selectionTooltip');
+
+        function getDailyDateKey() {
+            const now = new Date();
+            const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+            if (kst.getUTCHours() < 6) kst.setUTCDate(kst.getUTCDate() - 1);
+            return `${kst.getUTCFullYear()}-${kst.getUTCMonth()+1}-${kst.getUTCDate()}`;
+        }
+
+        async function initDeviceID() {
+            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && typeof Device !== 'undefined') {
+                try {
+                    const info = await Device.getId();
+                    myDeviceId = info.identifier; 
+                } catch (e) {
+                    console.error("Device ID 추출 실패:", e);
+                    myDeviceId = "error-device-id";
+                }
+            } else {
+                let localId = localStorage.getItem('web_device_id');
+                if (!localId) {
+                    localId = 'web-' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('web_device_id', localId);
+                }
+                myDeviceId = localId;
+            }
+            updateBadgeUI();
+        }
+        initDeviceID();
+
+        function checkInAppBrowser() {
+            const ua = navigator.userAgent.toLowerCase();
+            const inAppWarning = document.getElementById('inAppWarning');
+            if (ua.match(/kakaotalk|naver|daum|line|instagram|facebook/i)) {
+                if(inAppWarning) inAppWarning.classList.remove('hidden');
+            }
+        }
+        
+        function sendTextMessage() {
+            const input = document.getElementById('textInput');
+            const text = input.value.trim();
+            if (text) {
+                input.value = '';
+                handleUserMessage(text);
+            }
+        }
+
+        updateGenderUI(currentVoiceGender, true); 
+        checkInAppBrowser();
+
+        function updateBadgeUI() {
+            const badge = document.getElementById('usageBadge');
+            const remainText = document.getElementById('remainCountText');
+            
+            if (localStorage.getItem('is_premium') === 'true') {
+                badge.innerHTML = '<i class="fa-solid fa-crown text-yellow-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
+                badge.className = "bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-purple-400 shadow-inner flex items-center";
+            } else {
+                const todayKey = getDailyDateKey();
+                if (localStorage.getItem('local_date_key') !== todayKey) {
+                    localStorage.setItem('local_total_count', '0');
+                    localStorage.setItem('local_date_key', todayKey);
+                }
+
+                let count = parseInt(localStorage.getItem('local_total_count') || '0');
+                let remain = Math.max(0, MAX_FREE_COUNT - count);
+                if(remainText) remainText.innerText = `${remain}/${MAX_FREE_COUNT}`;
+            }
+        }
+
+        function incrementLocalUsage() {
+            if(localStorage.getItem('is_premium') === 'true') return;
+            
+            const todayKey = getDailyDateKey();
+            if (localStorage.getItem('local_date_key') !== todayKey) {
+                localStorage.setItem('local_total_count', '0');
+                localStorage.setItem('local_date_key', todayKey);
+            }
+
+            let count = parseInt(localStorage.getItem('local_total_count') || '0');
+            count++;
+            localStorage.setItem('local_total_count', count);
+            updateBadgeUI();
+        }
+
+        function enforcePaywall(reasonCode) {
+            const reasonText = "오늘 제공된 50건의 무료 튜터링 대화를 모두 소진하셨습니다. (내일 오전 6시 자동 초기화)";
+            
+            document.getElementById('paywallReasonText').innerText = reasonText;
+            document.getElementById('paywallModal').classList.remove('hidden');
+            
+            document.getElementById('textInput').disabled = true;
+            document.getElementById('sendMsgBtn').disabled = true;
+            document.getElementById('micBtn').disabled = true;
+            document.getElementById('expGlobalBtn').disabled = true;
+            document.getElementById('micBtn').classList.replace('from-blue-400', 'from-slate-400');
+            document.getElementById('micBtn').classList.replace('to-blue-600', 'to-slate-600');
+            document.getElementById('micBtn').classList.remove('hover:from-blue-500', 'hover:to-blue-700', 'hover:scale-105', 'shadow-blue-500/40');
+            stopSpeaking();
+            updateStatus("무료 이용 횟수 종료됨");
+        }
+
+        function enableInputs() {
+            document.getElementById('textInput').disabled = false;
+            document.getElementById('sendMsgBtn').disabled = false;
+            document.getElementById('micBtn').disabled = false;
+            document.getElementById('expGlobalBtn').disabled = false;
+            document.getElementById('micBtn').classList.replace('from-slate-400', 'from-blue-400');
+            document.getElementById('micBtn').classList.replace('to-slate-600', 'to-blue-600');
+            document.getElementById('micBtn').classList.add('hover:from-blue-500', 'hover:to-blue-700', 'hover:scale-105', 'shadow-blue-500/40');
+            updateStatus("대기 중 (프리미엄 모드)");
+        }
+
+        async function revokePremiumWithServer() {
+            if (localStorage.getItem('is_premium') !== 'true') return; 
+            
+            console.log("서버에 구독 만료 처리 요청 중...");
+            localStorage.setItem('is_premium', 'false');
+            updateBadgeUI();
+
+            try {
+                await fetchAPI(WORKER_URL + 'revoke', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
+                    body: JSON.stringify({ platform: "android" })
+                });
+            } catch (e) {
+                console.error("구독 해제 서버 통신 오류");
+            }
+        }
+
+        function initStore() {
+            if (!window.store) {
+                console.log("결제 플러그인을 찾을 수 없거나 웹 브라우저 환경입니다.");
+                return;
+            }
+
+            const PRODUCT_ID = "talkai_premium_monthly"; 
+
+            store.register({
+                id: PRODUCT_ID,
+                type: store.PAID_SUBSCRIPTION
+            });
+
+            store.when(PRODUCT_ID).approved(async (product) => {
+                updateStatus("결제 확인 및 서버 승인 중...");
+                product.verify(); 
+                await verifyReceiptWithServer(product.transaction.id);
+                product.finish(); 
+            });
+
+            store.when(PRODUCT_ID).owned((product) => {
+                if (localStorage.getItem('is_premium') !== 'true') {
+                    localStorage.setItem('is_premium', 'true');
+                    enableInputs();
+                    updateBadgeUI();
+                }
+            });
+
+            store.when(PRODUCT_ID).expired((product) => {
+                updateStatus("구독이 만료되었습니다.");
+                revokePremiumWithServer();
+            });
+
+            store.when(PRODUCT_ID).cancelled(() => {
+                updateStatus("결제가 취소되었습니다.");
+            });
+
+            store.when(PRODUCT_ID).error((err) => {
+                console.error("결제 에러:", err);
+                updateStatus("결제 중 오류가 발생했습니다.");
+            });
+
+            store.ready(() => {
+                const product = store.get(PRODUCT_ID);
+                if (product && !product.owned && localStorage.getItem('is_premium') === 'true') {
+                    revokePremiumWithServer();
+                }
+            });
+
+            store.refresh();
+        }
+
+        document.addEventListener("deviceready", initStore, false);
+        document.addEventListener("DOMContentLoaded", () => {
+            if(window.store) initStore();
+        });
+
+        async function processUpgrade() {
+            const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
+
+            if (!isNative) {
+                const confirmMock = confirm("[웹 개발자 모드]\n강제로 결제 성공 처리할까요?");
+                if (!confirmMock) return;
+                
+                await verifyReceiptWithServer("mock_receipt_12345");
+                return;
+            }
+
+            try {
+                if (!window.store) {
+                    alert("인앱 결제 모듈이 준비되지 않았습니다. 앱을 껐다 켜주세요.");
+                    return;
+                }
+
+                updateStatus("구글 플레이 결제창 여는 중...");
+                const PRODUCT_ID = "talkai_premium_monthly"; 
+                store.order(PRODUCT_ID);
+
+            } catch (e) {
+                alert("결제 모듈 실행 중 오류가 발생했습니다.");
+                updateStatus("오류 발생");
+            }
+        }
+
+        async function verifyReceiptWithServer(receiptData) {
+            try {
+                const res = await fetchAPI(WORKER_URL + 'upgrade', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Device-ID': myDeviceId 
+                    },
+                    body: JSON.stringify({ 
+                        receipt: receiptData, 
+                        platform: "android" 
+                    })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert("결제가 완료되었습니다! 프리미엄 무제한 모드로 전환됩니다.");
+                    localStorage.setItem('is_premium', 'true');
+                    document.getElementById('paywallModal').classList.add('hidden');
+                    enableInputs();
+                    updateBadgeUI();
+                } else {
+                    alert("서버 승인 처리 중 오류가 발생했습니다.");
+                }
+            } catch (e) {
+                alert("서버 연결에 실패했습니다.");
+                updateStatus("서버 오류");
+            }
+        }
+
+        // --- STT ---
+        function initSpeechRecognition() {
+            if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+                const SpeechReq = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechReq();
+                recognition.onstart = () => {
+                    if (typeof Capacitor === 'undefined' || !Capacitor.isNativePlatform()) {
+                        isListening = true; stopSpeaking(); 
+                        micBtn.classList.replace('from-blue-400', 'from-red-400'); 
+                        micBtn.classList.replace('to-blue-600', 'to-red-600'); 
+                        micBtn.classList.replace('shadow-blue-500/40', 'shadow-red-500/40'); 
+                        micIcon.classList.replace('fa-microphone', 'fa-ear-listen');
+                        updateStatus("듣는 중...");
+                    }
+                };
+                recognition.onresult = (e) => handleUserMessage(e.results[0][0].transcript);
+                recognition.onerror = () => { resetMic(); updateStatus("인식 실패 또는 권한 없음"); };
+                recognition.onend = () => resetMic();
+            } else { 
+                updateStatus("마이크 미지원 (텍스트로 입력하세요)"); 
+                micBtn.disabled = true;
+                micBtn.classList.replace('from-blue-400', 'from-slate-400');
+                micBtn.classList.replace('to-blue-600', 'to-slate-600');
+            }
+        }
+        initSpeechRecognition();
+
+        async function toggleListening() {
+            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && typeof SpeechRecognition !== 'undefined') {
+                try {
+                    const { status } = await SpeechRecognition.requestPermission();
+                    if (status !== 'granted') return alert("앱 설정에서 마이크 권한을 허용해 주세요.");
+                    if (isListening) { await SpeechRecognition.stop(); isListening = false; resetMic(); } 
+                    else {
+                        isListening = true; stopSpeaking();
+                        micBtn.classList.replace('from-blue-400', 'from-red-400'); 
+                        micBtn.classList.replace('to-blue-600', 'to-red-600'); 
+                        micBtn.classList.replace('shadow-blue-500/40', 'shadow-red-500/40'); 
+                        micIcon.classList.replace('fa-microphone', 'fa-ear-listen');
+                        updateStatus("듣는 중...");
+                        const result = await SpeechRecognition.start({ language: document.getElementById('sttInputLanguage').value, maxResults: 1, popup: true });
+                        if (result.matches && result.matches.length > 0) handleUserMessage(result.matches[0]);
+                        isListening = false; resetMic();
+                    }
+                } catch (err) { updateStatus("음성 인식 취소됨"); isListening = false; resetMic(); }
+            } else {
+                if(!recognition) return;
+                if(isListening) recognition.stop();
+                else { recognition.lang = document.getElementById('sttInputLanguage').value; recognition.start(); }
+            }
+        }
+
+        function resetMic() { 
+            isListening = false; 
+            micBtn.classList.replace('from-red-400', 'from-blue-400'); 
+            micBtn.classList.replace('to-red-600', 'to-blue-600'); 
+            micBtn.classList.replace('shadow-red-500/40', 'shadow-blue-500/40'); 
+            micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); 
+            if(!isSpeaking) updateStatus("대기 중"); 
+        }
+        function updateStatus(txt) { statusText.textContent = txt; }
+
+        // --- Smart Touch Selection ---
+        function clearSelection() {
+            document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
+            startIndex = -1; endIndex = -1; currentBubbleId = null;
+            hideSelectionTooltip();
+        }
+        
+        function handleWordClick(event, bubbleId, wordIndex, isExplanation = false) {
+            event.stopPropagation(); 
+            if (currentBubbleId !== null && currentBubbleId !== bubbleId) clearSelection();
+            currentBubbleId = bubbleId;
+
+            if (startIndex === -1) { startIndex = wordIndex; endIndex = wordIndex; } 
+            else if (startIndex === wordIndex && endIndex === wordIndex) { clearSelection(); return; } 
+            else { endIndex = wordIndex; if (startIndex > endIndex) { let temp = startIndex; startIndex = endIndex; endIndex = temp; } }
+
+            const container = document.getElementById(`bubble-${bubbleId}`);
+            const spanClass = isExplanation ? '.exp-word-span' : '.word-span';
+            const words = container.querySelectorAll(spanClass);
+            let lastSelectedSpan = null;
+
+            words.forEach(span => {
+                const idx = parseInt(span.getAttribute('data-index'));
+                if (idx >= startIndex && idx <= endIndex) { span.classList.add('selected'); lastSelectedSpan = span; } 
+                else span.classList.remove('selected');
+            });
+
+            if (lastSelectedSpan) showSelectionTooltip(lastSelectedSpan);
+        }
+
+        function showSelectionTooltip(targetElement) {
+            const containerRect = chatContainer.getBoundingClientRect();
+            const rect = targetElement.getBoundingClientRect();
+            const top = rect.top - containerRect.top + chatContainer.scrollTop;
+            const left = rect.left - containerRect.left + (rect.width / 2);
+
+            selectionTooltip.style.top = `${top}px`;
+            selectionTooltip.style.left = `${left}px`;
+            selectionTooltip.classList.remove('hidden');
+            setTimeout(() => { selectionTooltip.classList.remove('opacity-0', 'pointer-events-none'); }, 10);
+        }
+
+        function hideSelectionTooltip() {
+            selectionTooltip.classList.add('opacity-0', 'pointer-events-none');
+            setTimeout(() => selectionTooltip.classList.add('hidden'), 200);
+        }
+
+        function handleBodyClick(e) {
+            if (!e.target.classList.contains('word-span') && !e.target.classList.contains('exp-word-span') && !e.target.closest('#selectionTooltip') && !e.target.closest('button')) clearSelection();
+        }
+
+        function getSelectedTextFromBubble(bubbleId, isExplanation = false) {
+            if(startIndex === -1) return null;
+            const container = document.getElementById(`bubble-${bubbleId}`);
+            if(!container) return null;
+            let textArr = [];
+            const spanClass = isExplanation ? '.exp-word-span' : '.word-span';
+            container.querySelectorAll(spanClass).forEach(span => {
+                const idx = parseInt(span.getAttribute('data-index'));
+                if (idx >= startIndex && idx <= endIndex) textArr.push(span.textContent);
+            });
+            const lang = container.getAttribute('data-lang') || 'ko-KR';
+            return ['ja-JP', 'zh-CN', 'th-TH'].includes(lang) ? textArr.join('') : textArr.join(' ');
+        }
+
+        function createSpansForText(text, bubbleId, isExplanation = false, langCode = 'ko-KR') {
+            const spanClass = isExplanation ? 'exp-word-span' : 'word-span';
+            if (window.Intl && Intl.Segmenter) {
+                const parts = text.split(/(<[^>]*>)/g);
+                let idx = 0, resultHtml = '';
+                const segmenter = new Intl.Segmenter(langCode, { granularity: 'word' });
+                parts.forEach(part => {
+                    if (part.startsWith('<') && part.endsWith('>')) resultHtml += part;
+                    else {
+                        for (const {segment} of segmenter.segment(part)) {
+                            if (segment.trim() === '') resultHtml += segment;
+                            else { resultHtml += `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${segment}</span>`; idx++; }
+                        }
+                    }
+                });
+                return resultHtml;
+            } else {
+                return text.split(' ').map((word, idx) => `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${word}</span>`).join(' ');
+            }
+        }
+
+        function readSelectedText() {
+            if (!currentBubbleId) return;
+            const isExp = currentBubbleId.startsWith('exp-');
+            const text = getSelectedTextFromBubble(currentBubbleId, isExp);
+            if (text) {
+                const targetLang = document.getElementById('targetLanguage').value;
+                const expLang = document.getElementById('explanationLanguage').value;
+                let speakLang = targetLang;
+
+                if (isExp) {
+                    const hasHangul = /[\u3131-\uD79D]/.test(text);
+                    if (hasHangul && targetLang !== 'ko-KR') speakLang = expLang.startsWith('ko') ? 'ko-KR' : expLang;
+                    else speakLang = targetLang;
+                } else {
+                    speakLang = document.getElementById(`bubble-${currentBubbleId}`).getAttribute('data-lang') || targetLang;
+                }
+                speakText(text, speakLang);
+            }
+        }
+
+        function explainSelectedText() {
+            if (!currentBubbleId) return;
+            const isExp = currentBubbleId.startsWith('exp-');
+            const pTag = document.getElementById(`bubble-${currentBubbleId}`);
+            if(!pTag) return;
+            const fullTxt = Array.from(pTag.querySelectorAll('span')).map(s=>s.textContent).join(' ');
+            const selTxt = getSelectedTextFromBubble(currentBubbleId, isExp);
+            requestExplanationFromBubble(currentBubbleId, fullTxt, isExp, selTxt);
+            hideSelectionTooltip();
+        }
+
+        // --- Message Rendering ---
+        function addMessageToChat(sender, text, translation = null, targetLangCode = null) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = "flex flex-col space-y-1 mt-4";
+            if (sender === 'user') {
+                msgDiv.innerHTML = `<div class="bg-gradient-to-tr from-blue-600 to-blue-500 text-white rounded-2xl rounded-tr-none p-3.5 max-w-[85%] self-end chat-text-dynamic shadow-md font-medium tracking-wide leading-relaxed">${text}</div>`;
+            } else {
+                bubbleCounter++;
+                const bId = `ai-msg-${bubbleCounter}`;
+                const safeEncodedText = encodeURIComponent(text.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
+                const spansHtml = createSpansForText(text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'), bId, false, targetLangCode);
+
+                msgDiv.innerHTML = `
+                    <div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[90%] shadow-md shadow-blue-900/5 self-start relative">
+                        <div class="flex items-start justify-between gap-2">
+                            <p id="bubble-${bId}" data-lang="${targetLangCode}" dir="auto" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${spansHtml}</p>
+                            <div class="flex gap-1 ml-2 shrink-0">
+                                <button onclick="requestExplanationFromBubble('${bId}', decodeURIComponent('${safeEncodedText}'), false)" class="text-emerald-500 hover:bg-emerald-50 w-7 h-7 rounded-full bg-white shadow-sm border border-emerald-100 flex items-center justify-center transition-colors"><i class="fa-solid fa-lightbulb"></i></button>
+                                <button onclick="speakText(decodeURIComponent('${safeEncodedText}'), '${targetLangCode}')" class="text-blue-500 hover:bg-blue-50 w-7 h-7 rounded-full bg-white shadow-sm border border-blue-100 flex items-center justify-center transition-colors"><i class="fa-solid fa-volume-high"></i></button>
+                            </div>
+                        </div>
+                        ${translation ? `<p class="text-slate-500 mt-2 border-t pt-2 border-slate-100 font-medium" style="font-size: calc(var(--chat-font-size) - 3px);">${translation}</p>` : ''}
+                    </div>`;
+            }
+            chatContainer.appendChild(msgDiv);
+            setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
+
+        }
+
+        // --- TTS Engine ---
+        function cleanTextForTTS(raw) { return raw.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').replace(/\s+/g, ' ').trim(); }
+
+        function speakText(text, langCode) {
+            if(!synthesis) return;
+            synthesis.cancel();
+            const clean = cleanTextForTTS(text);
+            if(!clean) return;
+
+            currentUtterance = new SpeechSynthesisUtterance(clean);
+            currentUtterance.lang = langCode;
+            let voices = synthesis.getVoices().filter(v => v.lang.startsWith(langCode.substring(0,2)));
+            if(voices.length>0) {
+                const isF = currentVoiceGender === 'female';
+                let v = voices.find(x => isF ? (x.name.toLowerCase().includes('female') || x.name.toLowerCase().includes('girl')) : (x.name.toLowerCase().includes('male') || x.name.toLowerCase().includes('boy')));
+                currentUtterance.voice = v || voices[0];
+            }
+            currentUtterance.rate = 0.95; currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
+
+            currentUtterance.onstart = () => { isSpeaking = true; avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); updateStatus("말하는 중..."); };
+            currentUtterance.onend = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); updateStatus("대기 중"); };
+            currentUtterance.onerror = () => currentUtterance.onend();
+
+            setTimeout(() => synthesis.speak(currentUtterance), 50);
+        }
+        function stopSpeaking() { synthesis.cancel(); }
+
+        // --- LLM API Logic ---
+        async function fetchAPI(url, options) {
+            let delay=500;
+            for(let i=0;i<3;i++) {
+                try { 
+                    const res = await fetch(url, options); 
+                    if(res.ok) return res; 
+                    if(res.status >= 400 && res.status < 500) throw new Error("API 인증 또는 워커 에러");
+                    await new Promise(r=>setTimeout(r,delay)); delay*=2; 
+                } catch(e) { if(i==2 || e.message.includes("API 인증")) throw e; }
+            }
+        }
+
+        async function handleUserMessage(text) {
+            if(!text) return;
+            addMessageToChat('user', text);
+
+            updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#94a3b8";
+            const mode = document.getElementById('appMode').value;
+            const tLang = document.getElementById('targetLanguage');
+            const targetLang = tLang.value, targetName = tLang.options[tLang.selectedIndex].dataset.langName;
+            const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
+
+            // [핵심 변경 내용]: JSON 필드의 값을 모델이 헷갈리지 않게 아주 명확하게 정의함
+            let sysPrompt = mode === 'translate' 
+                ? `당신은 최고 수준의 전문 통번역기입니다. 사용자가 입력한 [${inputName}] 문장을 [${targetName}]로 완벽하게 번역하세요. 
+[필수 규칙]: 출력은 반드시 아래 JSON 형식을 지키세요.
+1. "foreign_text" 값에는 무조건 [${targetName}]로 번역된 최종 결과만 넣으세요.
+2. "korean_translation" 값에는 사용자의 원래 입력인 [${inputName}] 문장을 그대로 넣으세요.
+출력 JSON: {"foreign_text": "번역된 ${targetName} 문장", "korean_translation": "원문 (${inputName})"}`
+                : `당신은 유쾌한 '${targetName}' 원어민 튜터입니다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도하세요. 대화는 1~2문장으로 짧게 유지.
+[필수 규칙]: 출력은 반드시 아래 JSON 형식을 지키세요.
+1. "foreign_text" 값에는 무조건 오직 [${targetName}]로만 작성된 당신의 답변을 넣으세요.
+2. "korean_translation" 값에는 당신의 답변을 사용자의 언어인 [${inputName}]로 번역 및 해설한 내용을 넣으세요.
+출력 JSON: {"foreign_text": "${targetName}로 작성된 답변", "korean_translation": "${inputName}로 작성된 해석/설명"}`;
+
+            try {
+                let ctx = mode==='tutor'?conversationHistory:[{role:"system",content:sysPrompt},{role:"user",content:text}];
+                if(mode==='tutor') {
+                    if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
+                    ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
+                    if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)];
+                }
+                
+                let res = await fetchAPI(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Device-ID': myDeviceId
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: ctx,
+                        response_format: { type: "json_object" }
+                    })
+                });
+                
+                let data = await res.json();
+                let parsed = JSON.parse(data.choices[0].message.content);
+                
+                if (parsed.foreign_text === "LIMIT_REACHED") {
+                    enforcePaywall(parsed.korean_translation); 
+                    return;
+                }
+                
+                incrementLocalUsage();
+                
+                if(mode==='tutor') conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)});
+                
+                if(parsed.foreign_text) {
+                    addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang);
+                    speakText(parsed.foreign_text, targetLang);
+                }
+            } catch(e) { 
+                console.error("통신 에러:", e);
+                updateStatus("보안 서버 통신 에러"); 
+                avatarWrap.style.borderColor="#f87171"; 
+            }
+        }
+
+        // --- Explanation Logic ---
+        async function requestExplanationGlobal() {
+            const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border:not(.bg-amber-50)');
+            if(aiBubbles.length === 0) return updateStatus("설명할 대화가 없습니다.");
+            
+            const lastContainer = aiBubbles[aiBubbles.length-1];
+            const pTag = lastContainer.querySelector('p[id^="bubble-"]');
+            if(!pTag) return;
+            const bId = pTag.id.replace('bubble-','');
+            
+            const selTxt = getSelectedTextFromBubble(bId, false);
+            const fullTxt = Array.from(pTag.querySelectorAll('span')).map(s=>s.textContent).join(' ');
+            
+            requestExplanationFromBubble(bId, fullTxt, false, selTxt);
+        }
+
+        async function requestExplanationFromBubble(bId, fullText, isExpSource = false, preSelectedText = null) {
+            updateStatus("해설 분석 중...");
+            const expSel = document.getElementById('explanationLanguage');
+            const expLangName = expSel.options[expSel.selectedIndex].dataset.langName;
+            const targetWord = preSelectedText || getSelectedTextFromBubble(bId, isExpSource);
+            
+            let prompt = "";
+            let focusTitle = "";
+            
+            const cleanFullText = cleanTextForTTS(fullText);
+            const cleanTargetWord = targetWord ? cleanTextForTTS(targetWord) : null;
+            
+            if (cleanTargetWord) {
+                focusTitle = `[ ${cleanTargetWord} ] 심화 학습`;
+                prompt = `원문 "${cleanFullText}"에서 사용자가 콕 집은 부분은 "${cleanTargetWord}" 입니다. 이 표현의 뜻과 쓰임새, 주의할 점, 예문 1개를 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력해.`;
+            } else {
+                focusTitle = isExpSource ? `해설 내용 추가 족집게 분석` : `전체 문장 족집게 해설`;
+                prompt = `문장 "${cleanFullText}" 의 전체적인 문법 구조나 핵심 표현을 골라, 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력.`;
+            }
+
+            try {
+                let res = await fetchAPI(WORKER_URL, { 
+                    method: 'POST', 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Device-ID': myDeviceId 
+                    }, 
+                    body: JSON.stringify({ 
+                        model: "deepseek-chat", 
+                        messages: [
+                            { role: "system", content: "당신은 친절한 튜터입니다. 사용자가 선택한 문장을 아주 쉽게 설명해주세요." },
+                            { role: "user", content: prompt }
+                        ]
+                    }) 
+                });
+                
+                let data = await res.json(); 
+                let explanation = data.choices[0].message.content;
+
+                let parsedCheck = null;
+                try { parsedCheck = JSON.parse(explanation); } catch (e) {}
+                
+                if (parsedCheck && parsedCheck.foreign_text === "LIMIT_REACHED") {
+                    enforcePaywall(parsedCheck.korean_translation);
+                    return;
+                }
+
+                if (explanation && !parsedCheck) {
+                    incrementLocalUsage(); 
+
+                    bubbleCounter++;
+                    const expBId = `exp-msg-${bubbleCounter}`;
+                    const safeEncodedExp = encodeURIComponent(explanation.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
+                    const spansHtml = createSpansForText(explanation.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'), expBId, true, document.getElementById('explanationLanguage').value);
+
+                    const msgDiv = document.createElement('div');
+                    msgDiv.className = "flex flex-col space-y-1 mt-4";
+                    msgDiv.innerHTML = `
+                        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 w-full shadow-md relative">
+                            <div class="absolute top-2 right-2 flex gap-1">
+                                <button onclick="requestExplanationFromBubble('${expBId}', decodeURIComponent('${safeEncodedExp}'), true)" class="text-emerald-600 hover:bg-emerald-100 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm border border-emerald-200 bg-white" title="이 부분만 추가 설명 듣기"><i class="fa-solid fa-lightbulb text-sm"></i></button>
+                            </div>
+                            <p class="text-xs font-extrabold text-amber-800 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap"></i> ${focusTitle}</p>
+                            <p id="bubble-${expBId}" data-lang="${document.getElementById('explanationLanguage').value}" dir="auto" class="chat-text-dynamic text-slate-800 pr-10 leading-relaxed font-medium">${spansHtml}</p>
+                        </div>`;
+                    chatContainer.appendChild(msgDiv);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    updateStatus("해설 완료");
+                    clearSelection(); 
+                }
+            } catch(e) { 
+                console.error("해설 에러 확인:", e);
+                updateStatus("해설 실패"); 
+            }
+        }
+
+        // --- General Settings ---
+        function changeAppMode() { conversationHistory=[]; updateStatus("모드 변경됨"); }
+        function targetLanguageChanged() { conversationHistory = []; updateStatus('학습 언어 변경됨'); }
+
+        let tempGender = currentVoiceGender;
+        function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
+        
+        function updateGenderUI(g, applyImg=false) {
+            if(g === 'female') { 
+                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white shadow-sm text-blue-600 border border-blue-200"; 
+                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
+                if(applyImg) avatarImage.src="./app-icon.png"; 
+            } else { 
+                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white shadow-sm text-blue-600 border border-blue-200"; 
+                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
+                if(applyImg) avatarImage.src="./app-icon.png"; 
+            }
+        }
+
+        function toggleSettingsModal(s=true) {
+            let m=document.getElementById('settingsModal');
+            if(s) { 
+                document.getElementById('fontSizeSlider').value=localStorage.getItem('chat_font_size')||14; 
+                m.classList.remove('hidden'); 
+            } else { 
+                m.classList.add('hidden'); 
+                document.documentElement.style.setProperty('--chat-font-size', localStorage.getItem('chat_font_size')+'px'); 
+            }
+        }
+
+        function saveSettings() {
+            localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value);
+            localStorage.setItem('explanation_language', document.getElementById('explanationLanguage').value);
+            currentVoiceGender=tempGender; 
+            localStorage.setItem('voice_gender',currentVoiceGender); 
+            updateGenderUI(currentVoiceGender,true); 
+            toggleSettingsModal(false);
+        }
+        window.speechSynthesis.onvoiceschanged = () => {};
+
+    </script>
+</body>
+</html>
