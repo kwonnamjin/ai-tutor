@@ -15,24 +15,17 @@
             justify-content: center; 
             height: 100vh; 
             margin: 0; 
-            touch-action: pan-y; /* 💡 추가: 브라우저의 기본 좌우 스와이프를 막고 우리 코드만 작동하게 함 */
-            animation: slideIn 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            touch-action: pan-y; /* 💡 브라우저의 기본 스와이프 간섭 방지 */
+            animation: slideIn 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .selected-card { border-color: #3b82f6 !important; background-color: #eff6ff !important; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3) !important; transform: scale(1.02); }
-        .playing-line { border-left: 4px solid #3b82f6; background-color: #f8fafc; transform: translateX(5px); transition: all 0.3s ease; }
     
-        /* 💡 화면 슬라이드 전환 애니메이션 */
-        body {
-            animation: slideIn 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-        }
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        
-        /* 뒤로 가기 누를 때 화면이 빠지는 애니메이션 */
         .slide-out {
             animation: slideOut 0.3s cubic-bezier(0.25, 1, 0.5, 1) forwards !important;
         }
@@ -48,7 +41,7 @@
         
         <!-- 상단 헤더 -->
         <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm">
-            <button class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200" onclick="goBackWithSwipe()">
+            <button class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors" onclick="goBack()">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <h1 class="text-lg font-bold text-gray-800">🎬 실전 롤플레잉</h1>
@@ -57,41 +50,37 @@
 
         <div id="scrollArea" class="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar pb-24">
             
-            <!-- 1. 레벨 선택 섹션 -->
-            <section>
+            <section id="levelSection">
                 <h2 class="text-sm font-bold text-gray-500 mb-3"><i class="fa-solid fa-layer-group text-blue-500"></i> 1. 나의 레벨을 선택하세요</h2>
                 <div class="grid grid-cols-4 gap-2">
-                    <button class="py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all selected-card">입문</button>
-                    <button class="py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">초급</button>
-                    <button class="py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">중급</button>
-                    <button class="py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">원어민</button>
+                    <button class="level-btn py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all selected-card">입문</button>
+                    <button class="level-btn py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">초급</button>
+                    <button class="level-btn py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">중급</button>
+                    <button class="level-btn py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">원어민</button>
                 </div>
             </section>
 
-            <!-- 2. 상황(페르소나) 선택 섹션 (가로 슬라이드 적용 버전만 남김) -->
-            <section>
+            <section id="situationSection">
                 <h2 class="text-sm font-bold text-gray-500 mb-3"><i class="fa-solid fa-masks-theater text-purple-500"></i> 2. 상황을 선택하세요</h2>
-                
                 <div class="flex overflow-x-auto gap-3 pb-2 snap-x no-scrollbar">
-                    <div class="shrink-0 w-32 p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all selected-card snap-center">
+                    <div class="sit-card shrink-0 w-32 p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all selected-card snap-center">
                         <span class="text-3xl block mb-2">☕</span>
                         <span class="font-bold text-sm text-gray-800 whitespace-nowrap">카페 주문</span>
                     </div>
-                    <div class="shrink-0 w-32 p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all snap-center">
+                    <div class="sit-card shrink-0 w-32 p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all snap-center">
                         <span class="text-3xl block mb-2">🛂</span>
                         <span class="font-bold text-sm text-gray-800 whitespace-nowrap">입국 심사대</span>
                     </div>
-                    <div class="shrink-0 w-32 p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all snap-center">
+                    <div class="sit-card shrink-0 w-32 p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all snap-center">
                         <span class="text-3xl block mb-2">🛍️</span>
                         <span class="font-bold text-sm text-gray-800 whitespace-nowrap">옷가게 쇼핑</span>
                     </div>
-                    <div class="shrink-0 w-32 p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all snap-center">
+                    <div class="sit-card shrink-0 w-32 p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all snap-center">
                         <span class="text-3xl block mb-2">🚕</span>
                         <span class="font-bold text-sm text-gray-800 whitespace-nowrap">택시 타기</span>
                     </div>
                 </div>
                 
-                <!-- 💡 버튼에 ID 추가 -->
                 <button id="generateBtn" class="w-full mt-4 bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-black transition-all">
                     ✨ AI 대본 생성하기
                 </button>
@@ -99,79 +88,90 @@
 
             <hr class="border-gray-200 border-dashed border-2 rounded-full my-4">
 
-            <!-- 3. 대본 플레이어 영역 -->
             <section id="scriptPlayer">
                 <div class="bg-blue-50 rounded-2xl p-4 mb-4 border border-blue-100">
-                    <p class="text-xs text-blue-600 font-bold mb-1">상황 설명</p>
-                    <p class="text-sm text-gray-700 font-medium leading-relaxed">원하는 레벨과 상황을 선택한 후 [AI 대본 생성하기]를 눌러주세요!</p>
+                    <p class="text-xs text-blue-600 font-bold mb-1" id="statusBoxTitle">상황 설명</p>
+                    <p class="text-sm text-gray-700 font-medium leading-relaxed" id="statusBoxText">원하는 레벨과 상황을 선택한 후 [AI 대본 생성하기]를 눌러주세요!</p>
                 </div>
                 <div class="space-y-4" id="scriptList">
                     <!-- 대본이 여기에 생성됩니다 -->
                 </div>
             </section>
-
         </div>
 
-        <!-- 하단 액션 컨트롤러 -->
         <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 pb-6 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-3xl">
             <div class="flex justify-between items-center gap-3">
-                <button class="flex flex-col items-center justify-center w-16 h-14 rounded-2xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors">
+                <button onclick="playAudiobook()" class="flex flex-col items-center justify-center w-16 h-14 rounded-2xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors">
                     <i class="fa-solid fa-repeat text-lg mb-1"></i>
                     <span class="text-[10px] font-bold">전체 듣기</span>
                 </button>
-                <button class="flex-1 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-105">
-                    <i class="fa-solid fa-microphone text-xl"></i> 말하기 시작
+                <button onclick="startShadowing()" id="roleplayMicBtn" class="flex-1 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-105">
+                    <i class="fa-solid fa-microphone text-xl" id="roleplayMicIcon"></i> <span id="roleplayMicText">말하기 시작</span>
                 </button>
-                <button class="flex flex-col items-center justify-center w-16 h-14 rounded-2xl bg-yellow-50 text-yellow-600 border border-yellow-200 hover:bg-yellow-100 transition-colors">
+                <button onclick="startQuizMode()" class="flex flex-col items-center justify-center w-16 h-14 rounded-2xl bg-yellow-50 text-yellow-600 border border-yellow-200 hover:bg-yellow-100 transition-colors">
                     <i class="fa-solid fa-gamepad text-lg mb-1"></i>
                     <span class="text-[10px] font-bold text-yellow-700">빈칸 퀴즈</span>
                 </button>
             </div>
         </div>
-
     </div>
     
     <script>
-    // 💡 질문자님의 워커 주소로 변경하셔야 합니다.
-    const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/"; 
+    const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev"; 
     
     let scriptData = []; 
     let currentPlayingIndex = 0;
     let isPlaying = false;
     let recognition = null;
 
-    // 대본 생성 버튼 이벤트 연결
-    document.getElementById("generateBtn").onclick = generateScript;
+    // --- 버튼 클릭 UI 효과 ---
+    document.querySelectorAll('.level-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card'));
+            e.currentTarget.classList.add('selected-card');
+        }
+    });
 
-    async function generateScript(event) {
-        const btn = event.target;
-        btn.innerText = "⏳ 딥시크가 대본을 작성 중입니다...";
+    document.querySelectorAll('.sit-card').forEach(card => {
+        card.onclick = (e) => {
+            document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card'));
+            e.currentTarget.classList.add('selected-card');
+        }
+    });
+
+    // --- 대본 생성 API ---
+    document.getElementById("generateBtn").onclick = async (event) => {
+        const btn = event.currentTarget;
+        
+        const selectedLevel = document.querySelector('.level-btn.selected-card').innerText.trim();
+        const selectedSituation = document.querySelector('.sit-card.selected-card').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
+
+        btn.innerText = "⏳ 딥시크가 작성 중입니다...";
         btn.disabled = true;
 
-        const level = "초급"; // 임시 하드코딩
-        const situation = "카페 주문하기"; // 임시 하드코딩
+        document.getElementById("statusBoxTitle").innerText = `[${selectedLevel}] ${selectedSituation}`;
+        document.getElementById("statusBoxText").innerText = "잠시만 기다려주세요...";
 
         try {
             const response = await fetch(`${WORKER_URL}/generate-script`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ level: level, situation: situation })
+                body: JSON.stringify({ level: selectedLevel, situation: selectedSituation })
             });
 
             const data = await response.json(); 
             scriptData = data.scriptData; 
 
             renderScript();
-            alert("대본이 준비되었습니다! 하단의 듣기/말하기 버튼을 눌러보세요.");
+            document.getElementById("statusBoxText").innerText = "대본이 준비되었습니다! 하단의 듣기/말하기 버튼을 눌러 연습하세요.";
 
         } catch (error) {
-            alert("대본 생성에 실패했습니다. (워커 주소를 확인해주세요)");
-            console.error(error);
+            alert("대본 생성에 실패했습니다. 서버 상태를 확인해주세요.");
         } finally {
-            btn.innerText = "✨ AI 대본 생성하기";
+            btn.innerHTML = "✨ AI 대본 생성하기";
             btn.disabled = false;
         }
-    }
+    };
 
     function renderScript() {
         const playerArea = document.getElementById("scriptList");
@@ -184,7 +184,7 @@
             const colorClass = isAi ? 'purple' : 'blue';
 
             const lineHtml = `
-                <div class="flex gap-3 p-2 rounded-lg border border-transparent" id="line-${line.id}">
+                <div class="flex gap-3 p-2 rounded-lg border border-transparent">
                     <div class="w-10 h-10 rounded-full bg-${colorClass}-100 flex items-center justify-center text-xl shrink-0">${icon}</div>
                     <div>
                         <p class="text-[11px] font-bold text-${colorClass}-600 mb-0.5">${roleName}</p>
@@ -197,9 +197,10 @@
         });
     }
 
-    // STT (음성 인식) 초기화
-    if ('webkitSpeechRecognition' in window) {
-        recognition = new webkitSpeechRecognition();
+    // --- 마이크 기능 강제 초기화 ---
+    const SpeechReq = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechReq) {
+        recognition = new SpeechReq();
         recognition.lang = 'en-US';
         recognition.interimResults = false;
     }
@@ -212,7 +213,6 @@
             isPlaying = false;
             return;
         }
-
         isPlaying = true;
         currentPlayingIndex = 0;
         playNextLine();
@@ -228,24 +228,43 @@
         const utterance = new SpeechSynthesisUtterance(line.en);
         utterance.lang = 'en-US';
         utterance.pitch = line.role === 'ai' ? 1.2 : 0.8; 
-        utterance.rate = 0.9;
-
+        
         utterance.onend = () => {
             currentPlayingIndex++;
             setTimeout(playNextLine, 500);
         };
-
         window.speechSynthesis.speak(utterance);
     }
 
     function startShadowing() {
         if (scriptData.length === 0) return alert("먼저 대본을 생성해주세요!");
-        if (!recognition) return alert("이 브라우저에서는 음성 인식을 지원하지 않습니다.");
+        if (!recognition) return alert("이 브라우저에서는 마이크를 지원하지 않습니다.");
 
         const userLine = scriptData.find(d => d.role === 'user');
+        if(!userLine) return alert("사용자가 읽을 대사가 없습니다.");
+
+        const btn = document.getElementById("roleplayMicBtn");
+        const icon = document.getElementById("roleplayMicIcon");
+        const text = document.getElementById("roleplayMicText");
+
+        // 이미 마이크가 켜져있으면 끄기
+        if (isListening) {
+            recognition.stop();
+            return;
+        }
+
+        btn.classList.replace("from-blue-600", "from-red-500");
+        btn.classList.replace("to-blue-500", "to-red-600");
+        icon.classList.replace("fa-microphone", "fa-ear-listen");
+        text.innerText = "듣고 있습니다...";
+
         alert(`🎤 다음 문장을 소리 내어 읽어보세요!\n\n"${userLine.en}"`);
         
-        recognition.start();
+        try { 
+            recognition.lang = 'en-US';
+            recognition.start(); 
+            isListening = true;
+        } catch(e) { console.log("마이크 시작 에러", e); }
 
         recognition.onresult = (event) => {
             const spokenText = event.results[0][0].transcript.toLowerCase();
@@ -255,22 +274,25 @@
             const targetWords = targetText.split(" ");
             let matchCount = 0;
             
-            targetWords.forEach(word => {
-                if (spokenWords.includes(word)) matchCount++;
-            });
-            
+            targetWords.forEach(word => { if (spokenWords.includes(word)) matchCount++; });
             const score = Math.round((matchCount / targetWords.length) * 100);
             
-            if (score > 80) {
-                alert(`🎉 완벽해요! (일치율 ${score}%)\n인식된 문장: ${spokenText}`);
-            } else {
-                alert(`💪 조금 더 연습해 볼까요? (일치율 ${score}%)\n인식된 문장: ${spokenText}`);
-            }
+            if (score > 80) alert(`🎉 완벽해요! (일치율 ${score}%)\n인식된 문장: ${spokenText}`);
+            else alert(`💪 조금 더 연습해 볼까요? (일치율 ${score}%)\n인식된 문장: ${spokenText}`);
         };
 
-        recognition.onerror = () => {
-            alert("음성을 인식하지 못했습니다. 다시 시도해 주세요.");
+        recognition.onend = () => {
+            isListening = false;
+            btn.classList.replace("from-red-500", "from-blue-600");
+            btn.classList.replace("to-red-600", "to-blue-500");
+            icon.classList.replace("fa-ear-listen", "fa-microphone");
+            text.innerText = "말하기 시작";
         };
+        
+        recognition.onerror = () => {
+            isListening = false;
+            alert("음성 인식에 실패했습니다. 다시 시도해주세요.");
+        }
     }
 
     function startQuizMode() {
@@ -278,7 +300,6 @@
 
         const userLine = scriptData.find(d => d.role === 'user');
         const words = userLine.en.split(" ");
-        
         const randomIdx = Math.floor(Math.random() * words.length);
         const answer = words[randomIdx].replace(/[.,!?]/g, ""); 
         
@@ -287,55 +308,42 @@
 
         const userInput = prompt(`⏳ 제한 시간! 빈칸에 들어갈 단어는?\n\n${quizSentence}`);
         
-        if (userInput && userInput.toLowerCase() === answer.toLowerCase()) {
-            alert("정답입니다! 콤보 +1 🔥");
-        } else {
-            alert(`앗, 틀렸습니다! 정답은 '${answer}' 입니다.`);
-        }
+        if (userInput && userInput.toLowerCase() === answer.toLowerCase()) alert("정답입니다! 콤보 +1 🔥");
+        else alert(`앗, 틀렸습니다! 정답은 '${answer}' 입니다.`);
     }
 
-    // --- 💡 화면 슬라이드 & 손가락 스와이프 뒤로 가기 로직 (초강력 버전) ---
-
-    function goBackWithSwipe() {
+    // --- 💡 스와이프 뒤로 가기 (모바일 완벽 최적화) ---
+    function goBack() {
         document.body.classList.add("slide-out"); 
-        setTimeout(() => {
-            window.location.href = "index.html"; 
-        }, 300);
+        setTimeout(() => { window.location.href = "index.html"; }, 300);
+    }
+
+    // --- 💡 스와이프 뒤로 가기 (모바일 완벽 최적화 버전) ---
+    function goBack() {
+        document.body.classList.add("slide-out"); 
+        setTimeout(() => { window.location.href = "index.html"; }, 300);
     }
 
     let touchStartX = 0;
-    let touchStartY = 0; // 위아래 움직임도 계산하기 위해 Y축 추가
+    let touchStartY = 0;
     
-    // capture: true 옵션을 주어 다른 요소들이 터치를 가로채기 전에 최우선으로 감지합니다.
     window.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
-    }, { passive: true, capture: true });
+    }, { passive: true, capture: true }); // capture: true로 다른 터치 이벤트에 씹히는 것 방지
 
     window.addEventListener('touchend', (e) => {
         let touchEndX = e.changedTouches[0].clientX;
         let touchEndY = e.changedTouches[0].clientY;
         
-        let moveX = touchEndX - touchStartX; // 우측으로 이동한 거리
-        let moveY = Math.abs(touchEndY - touchStartY); // 위아래로 이동한 거리 (절댓값)
-        
-        // [작동 조건 3가지]
-        // 1. 화면 왼쪽 끝(150px 이내)에서 터치를 시작했는가? (인식 범위 넓힘)
-        // 2. 오른쪽으로 50px 이상 쓱 밀었는가?
-        // 3. 위아래 스크롤하는 움직임보다 좌우로 미는 움직임이 더 컸는가? (오작동 방지)
-        if (touchStartX < 150 && moveX > 50 && moveX > moveY) {
-            alert("스와이프 인식됨!")
-            goBackWithSwipe();
+        let moveX = touchEndX - touchStartX;
+        let moveY = Math.abs(touchEndY - touchStartY);
+
+        // 화면 맨 왼쪽(100px 이내)에서 시작해서, 오른쪽으로 50px 이상 밀었고, 위아래 이동보다 좌우 이동이 클 때 작동
+        if (touchStartX < 100 && moveX > 50 && moveX > moveY) {
+            goBack();
         }
     }, { passive: true, capture: true });
-
-    // 버튼 이벤트 연결
-    document.addEventListener("DOMContentLoaded", () => {
-        const buttons = document.querySelectorAll(".absolute.bottom-0 button");
-        buttons[0].onclick = playAudiobook; 
-        buttons[1].onclick = startShadowing;
-        buttons[2].onclick = startQuizMode; 
-    });
     </script>
 </body>
 </html>
