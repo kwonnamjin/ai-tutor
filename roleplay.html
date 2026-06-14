@@ -8,7 +8,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; height: 100vh; margin: 0; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f3f4f6; 
+            display: flex; 
+            justify-content: center; 
+            height: 100vh; 
+            margin: 0; 
+            touch-action: pan-y; /* 💡 추가: 브라우저의 기본 좌우 스와이프를 막고 우리 코드만 작동하게 함 */
+            animation: slideIn 0.35s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .selected-card { border-color: #3b82f6 !important; background-color: #eff6ff !important; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3) !important; transform: scale(1.02); }
@@ -315,6 +324,7 @@
         // 2. 오른쪽으로 50px 이상 쓱 밀었는가?
         // 3. 위아래 스크롤하는 움직임보다 좌우로 미는 움직임이 더 컸는가? (오작동 방지)
         if (touchStartX < 150 && moveX > 50 && moveX > moveY) {
+            alert("스와이프 인식됨!")
             goBackWithSwipe();
         }
     }, { passive: true, capture: true });
