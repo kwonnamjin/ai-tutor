@@ -959,27 +959,3 @@
             }
         }
 
-        function toggleSettingsModal(s=true) {
-            let m=document.getElementById('settingsModal');
-            if(s) { 
-                document.getElementById('fontSizeSlider').value=localStorage.getItem('chat_font_size')||14; 
-                m.classList.remove('hidden'); 
-            } else { 
-                m.classList.add('hidden'); 
-                document.documentElement.style.setProperty('--chat-font-size', localStorage.getItem('chat_font_size')+'px'); 
-            }
-        }
-
-        function saveSettings() {
-            localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value);
-            localStorage.setItem('explanation_language', document.getElementById('explanationLanguage').value);
-            currentVoiceGender=tempGender; 
-            localStorage.setItem('voice_gender',currentVoiceGender); 
-            updateGenderUI(currentVoiceGender,true); 
-            toggleSettingsModal(false);
-        }
-        window.speechSynthesis.onvoiceschanged = () => {};
-
-    </script>
-</body>
-</html>
