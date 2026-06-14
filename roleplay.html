@@ -285,7 +285,7 @@
         }
     }
 
-    // --- 💡 화면 슬라이드 & 손가락 스와이프 뒤로 가기 로직 (업그레이드 버전) ---
+    // --- 💡 화면 슬라이드 & 손가락 스와이프 뒤로 가기 로직 (초강력 버전) ---
 
     function goBackWithSwipe() {
         document.body.classList.add("slide-out"); 
@@ -295,21 +295,29 @@
     }
 
     let touchStartX = 0;
+    let touchStartY = 0; // 위아래 움직임도 계산하기 위해 Y축 추가
     
-    // 화면을 터치하는 순간의 위치 저장
-    document.addEventListener('touchstart', (e) => {
+    // capture: true 옵션을 주어 다른 요소들이 터치를 가로채기 전에 최우선으로 감지합니다.
+    window.addEventListener('touchstart', (e) => {
         touchStartX = e.touches[0].clientX;
-    }, { passive: true }); // 브라우저 경고 방지용 옵션
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true, capture: true });
 
-    // 터치를 끝내고 손을 떼는 순간
-    document.addEventListener('touchend', (e) => {
+    window.addEventListener('touchend', (e) => {
         let touchEndX = e.changedTouches[0].clientX;
+        let touchEndY = e.changedTouches[0].clientY;
         
-        // 조건: 시작점이 화면 왼쪽 끝 100px 이내이고, 오른쪽으로 70px 이상 스윽 밀었을 때
-        if (touchStartX < 100 && (touchEndX - touchStartX > 70)) {
+        let moveX = touchEndX - touchStartX; // 우측으로 이동한 거리
+        let moveY = Math.abs(touchEndY - touchStartY); // 위아래로 이동한 거리 (절댓값)
+        
+        // [작동 조건 3가지]
+        // 1. 화면 왼쪽 끝(150px 이내)에서 터치를 시작했는가? (인식 범위 넓힘)
+        // 2. 오른쪽으로 50px 이상 쓱 밀었는가?
+        // 3. 위아래 스크롤하는 움직임보다 좌우로 미는 움직임이 더 컸는가? (오작동 방지)
+        if (touchStartX < 150 && moveX > 50 && moveX > moveY) {
             goBackWithSwipe();
         }
-    }, { passive: true });
+    }, { passive: true, capture: true });
 
     // 버튼 이벤트 연결
     document.addEventListener("DOMContentLoaded", () => {
