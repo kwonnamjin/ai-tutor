@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TalkAI - 실전 롤플레잉</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; height: 100vh; margin: 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 선택된 카드 스타일 */
+        .selected-card { border-color: #3b82f6 !important; background-color: #eff6ff !important; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3) !important; transform: scale(1.02); }
+        /* 노래방 하이라이트 애니메이션 */
+        .playing-line { border-left: 4px solid #3b82f6; background-color: #f8fafc; transform: translateX(5px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="p-0 sm:p-4">
+
+    <div class="bg-white w-full max-w-md h-full sm:h-[850px] shadow-2xl flex flex-col sm:rounded-3xl overflow-hidden relative">
+        
+        <!-- 상단 헤더 -->
+        <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm">
+            <button class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200" onclick="alert('메인 화면으로 돌아갑니다')">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h1 class="text-lg font-bold text-gray-800">🎬 실전 롤플레잉</h1>
+            <div class="w-10"></div> <!-- 여백 맞춤용 -->
+        </div>
+
+        <div id="scrollArea" class="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar pb-24">
+            
+            <!-- 1. 레벨 선택 섹션 -->
+            <section>
+                <h2 class="text-sm font-bold text-gray-500 mb-3"><i class="fa-solid fa-layer-group text-blue-500"></i> 1. 나의 레벨을 선택하세요</h2>
+                <div class="grid grid-cols-4 gap-2">
+                    <button class="py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all selected-card">입문</button>
+                    <button class="py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">초급</button>
+                    <button class="py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">중급</button>
+                    <button class="py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">원어민</button>
+                </div>
+            </section>
+
+            <!-- 2. 상황(페르소나) 선택 섹션 -->
+            <section>
+                <h2 class="text-sm font-bold text-gray-500 mb-3"><i class="fa-solid fa-masks-theater text-purple-500"></i> 2. 상황을 선택하세요</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all selected-card">
+                        <span class="text-3xl block mb-2">☕</span>
+                        <span class="font-bold text-sm text-gray-800">카페 주문하기</span>
+                    </div>
+                    <div class="p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all">
+                        <span class="text-3xl block mb-2">🛂</span>
+                        <span class="font-bold text-sm text-gray-800">입국 심사대</span>
+                    </div>
+                    <div class="p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all">
+                        <span class="text-3xl block mb-2">🛍️</span>
+                        <span class="font-bold text-sm text-gray-800">옷가게 쇼핑</span>
+                    </div>
+                    <div class="p-4 rounded-2xl border-2 border-gray-100 bg-white text-center cursor-pointer transition-all">
+                        <span class="text-3xl block mb-2">🚕</span>
+                        <span class="font-bold text-sm text-gray-800">길 찾기 & 택시</span>
+                    </div>
+                </div>
+                
+                <button class="w-full mt-4 bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-black transition-all">
+                    ✨ AI 대본 생성하기
+                </button>
+            </section>
+
+            <!-- 구분선 -->
+            <hr class="border-gray-200 border-dashed border-2 rounded-full my-4">
+
+            <!-- 3. 대본 플레이어 (생성 후 나타나는 영역) -->
+            <section id="scriptPlayer">
+                <div class="bg-blue-50 rounded-2xl p-4 mb-4 border border-blue-100">
+                    <p class="text-xs text-blue-600 font-bold mb-1">상황 설명</p>
+                    <p class="text-sm text-gray-700 font-medium leading-relaxed">당신은 뉴욕의 바쁜 카페에 있습니다. 아이스 아메리카노 한 잔과 초코 케이크를 주문해 보세요!</p>
+                </div>
+
+                <!-- 대본 리스트 -->
+                <div class="space-y-4">
+                    <!-- AI (점원) -->
+                    <div class="flex gap-3 playing-line p-2 rounded-lg">
+                        <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-xl shrink-0">👱‍♀️</div>
+                        <div>
+                            <p class="text-[11px] font-bold text-purple-600 mb-0.5">점원 (AI)</p>
+                            <p class="text-sm font-bold text-gray-800">Hi there! What can I get for you today?</p>
+                            <p class="text-xs text-gray-500 mt-1">안녕하세요! 오늘 무엇을 주문하시겠어요?</p>
+                        </div>
+                    </div>
+
+                    <!-- 나 (사용자) -->
+                    <div class="flex gap-3 p-2 rounded-lg border border-transparent">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xl shrink-0">👤</div>
+                        <div>
+                            <p class="text-[11px] font-bold text-blue-600 mb-0.5">나 (사용자)</p>
+                            <p class="text-sm font-bold text-gray-800">I'll have an iced Americano, please.</p>
+                            <p class="text-xs text-gray-500 mt-1">아이스 아메리카노 하나 주세요.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- AI (점원) -->
+                    <div class="flex gap-3 p-2 rounded-lg border border-transparent">
+                        <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-xl shrink-0">👱‍♀️</div>
+                        <div>
+                            <p class="text-[11px] font-bold text-purple-600 mb-0.5">점원 (AI)</p>
+                            <p class="text-sm font-bold text-gray-800">Sure! What size would you like?</p>
+                            <p class="text-xs text-gray-500 mt-1">네! 사이즈는 어떤 걸로 드릴까요?</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- 하단 액션 컨트롤러 (플레이어 모음) -->
+        <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 pb-6 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-3xl">
+            <div class="flex justify-between items-center gap-3">
+                
+                <!-- 반복 듣기 버튼 -->
+                <button class="flex flex-col items-center justify-center w-16 h-14 rounded-2xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors">
+                    <i class="fa-solid fa-repeat text-lg mb-1"></i>
+                    <span class="text-[10px] font-bold">전체 듣기</span>
+                </button>
+
+                <!-- 내 차례 녹음 버튼 -->
+                <button class="flex-1 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-105">
+                    <i class="fa-solid fa-microphone text-xl"></i> 말하기 시작
+                </button>
+
+                <!-- 퀴즈 모드 버튼 -->
+                <button class="flex flex-col items-center justify-center w-16 h-14 rounded-2xl bg-yellow-50 text-yellow-600 border border-yellow-200 hover:bg-yellow-100 transition-colors">
+                    <i class="fa-solid fa-gamepad text-lg mb-1"></i>
+                    <span class="text-[10px] font-bold text-yellow-700">빈칸 퀴즈</span>
+                </button>
+
+            </div>
+        </div>
+
+    </div>
+    
+    <script>
+    // --- 1. 가상의 대본 데이터 (나중에는 워커 서버에서 받아옵니다) ---
+    const scriptData = [
+        { id: 1, role: 'ai', en: "Hi there! What can I get for you today?", ko: "안녕하세요! 오늘 무엇을 주문하시겠어요?" },
+        { id: 2, role: 'user', en: "I'll have an iced Americano, please.", ko: "아이스 아메리카노 하나 주세요." },
+        { id: 3, role: 'ai', en: "Sure! What size would you like?", ko: "네! 사이즈는 어떤 걸로 드릴까요?" }
+    ];
+
+    let currentPlayingIndex = 0;
+    let isPlaying = false;
+    let recognition = null;
+
+    // STT (음성 인식) 초기화
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+    }
+
+    // --- 🔁 기능 1: 전체 듣기 (오디오북 모드) ---
+    function playAudiobook() {
+        if (isPlaying) {
+            window.speechSynthesis.cancel();
+            isPlaying = false;
+            removeHighlights();
+            return;
+        }
+
+        isPlaying = true;
+        currentPlayingIndex = 0;
+        playNextLine();
+    }
+
+    function playNextLine() {
+        if (!isPlaying || currentPlayingIndex >= scriptData.length) {
+            isPlaying = false;
+            removeHighlights();
+            return;
+        }
+
+        const line = scriptData[currentPlayingIndex];
+        highlightLine(currentPlayingIndex); // 현재 읽는 줄 하이라이트
+
+        const utterance = new SpeechSynthesisUtterance(line.en);
+        utterance.lang = 'en-US';
+        
+        // AI는 여자 목소리, User는 남자 목소리 등 피치(Pitch)를 다르게 주어 구분감을 줍니다.
+        utterance.pitch = line.role === 'ai' ? 1.2 : 0.8; 
+        utterance.rate = 0.9;
+
+        utterance.onend = () => {
+            currentPlayingIndex++;
+            setTimeout(playNextLine, 500); // 0.5초 쉬고 다음 줄 읽기
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function highlightLine(index) {
+        removeHighlights();
+        // 실제 구현에서는 각 줄의 HTML 요소에 id(예: line-0, line-1)를 부여하여 선택합니다.
+        // 여기서는 시각적 피드백을 위해 콘솔과 알림을 사용합니다.
+        console.log(`현재 재생 중: ${scriptData[index].en}`);
+    }
+
+    function removeHighlights() {
+        // 하이라이트 CSS(playing-line) 제거 로직
+    }
+
+
+    // --- 🎤 기능 2: 말하기 시작 (섀도잉/평가 모드) ---
+    function startShadowing() {
+        if (!recognition) {
+            alert("이 브라우저에서는 음성 인식을 지원하지 않습니다.");
+            return;
+        }
+
+        // 사용자가 읽어야 할 첫 번째 문장을 찾습니다.
+        const userLine = scriptData.find(d => d.role === 'user');
+        
+        alert(`🎤 다음 문장을 소리 내어 읽어보세요!\n\n"${userLine.en}"`);
+        
+        recognition.start();
+
+        recognition.onresult = (event) => {
+            const spokenText = event.results[0][0].transcript.toLowerCase();
+            const targetText = userLine.en.toLowerCase().replace(/[.,!?]/g, ""); // 구두점 제거
+            
+            // 아주 간단한 일치율 검사 (실제로는 더 정교한 알고리즘 사용)
+            const spokenWords = spokenText.split(" ");
+            const targetWords = targetText.split(" ");
+            let matchCount = 0;
+            
+            targetWords.forEach(word => {
+                if (spokenWords.includes(word)) matchCount++;
+            });
+            
+            const score = Math.round((matchCount / targetWords.length) * 100);
+            
+            if (score > 80) {
+                alert(`🎉 완벽해요! (일치율 ${score}%)\n인식된 문장: ${spokenText}`);
+            } else {
+                alert(`💪 조금 더 연습해 볼까요? (일치율 ${score}%)\n인식된 문장: ${spokenText}`);
+            }
+        };
+
+        recognition.onerror = () => {
+            alert("음성을 인식하지 못했습니다. 다시 시도해 주세요.");
+        };
+    }
+
+
+    // --- 🎮 기능 3: 빈칸 퀴즈 (아케이드 모드) ---
+    function startQuizMode() {
+        // 사용자 대본 중 하나를 골라 무작위 단어를 빈칸으로 만듭니다.
+        const userLine = scriptData.find(d => d.role === 'user');
+        const words = userLine.en.split(" ");
+        
+        // 뺄 단어 랜덤 선택 (예: iced)
+        const randomIdx = Math.floor(Math.random() * words.length);
+        const answer = words[randomIdx].replace(/[.,!?]/g, ""); // 정답 단어
+        
+        words[randomIdx] = "______"; // 빈칸 처리
+        const quizSentence = words.join(" ");
+
+        const userInput = prompt(`⏳ 제한 시간! 빈칸에 들어갈 단어는?\n\n${quizSentence}\n\n(힌트: 얼음이 들어간)`);
+        
+        if (userInput && userInput.toLowerCase() === answer.toLowerCase()) {
+            alert("정답입니다! 콤보 +1 🔥");
+        } else {
+            alert(`앗, 틀렸습니다! 정답은 '${answer}' 입니다.`);
+        }
+    }
+
+    // HTML 버튼들에 함수 연결
+    document.addEventListener("DOMContentLoaded", () => {
+        const buttons = document.querySelectorAll(".absolute.bottom-0 button");
+        buttons[0].onclick = playAudiobook;   // 전체 듣기 버튼
+        buttons[1].onclick = startShadowing;  // 말하기 시작 버튼
+        buttons[2].onclick = startQuizMode;   // 빈칸 퀴즈 버튼
+    });
+</script>
+
+
+</body>
+</html>
