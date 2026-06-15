@@ -176,7 +176,7 @@
                     
                     <button id="expGlobalBtn" class="flex-1 min-w-0 max-w-[100px] h-12 rounded-xl bg-amber-50 text-amber-700 font-bold text-[11px] flex items-center justify-center gap-1.5 hover:bg-amber-100 transition-colors shadow-sm outline-none border border-amber-200" onclick="requestExplanationGlobal()">
                         <i class="fa-solid fa-lightbulb text-amber-500 text-sm shrink-0"></i> 
-                        <span class="truncate">과외 해설</span>
+                        <span id="expGlobalBtnText" class="truncate">과외 해설</span>
                     </button>
                 </div>
             </div>
@@ -466,7 +466,13 @@
                 btn.onclick = () => { 
                     document.getElementById(targetId).value = lang.code; 
                     updateLangDisplays(); 
-                    closeCustomLangPicker(); 
+                    closeCustomLangPicker();
+                    
+                    // 🌟 [추가] 사용자가 언어를 고르면 앱 전체 UI 언어도 그 나라 마법으로 싹 바꿉니다!
+                    if (targetId === 'targetLanguage' && typeof window.changeUILanguage === 'function') {
+                        window.changeUILanguage(lang.code);
+                    }
+                
                 };
                 listContainer.appendChild(btn);
             });
@@ -1091,27 +1097,6 @@
             
         window.renderVocabs();
 
-        window.openCustomLangPicker = function(targetId) {
-            const titles = { 'targetLanguage': '학습할 언어 선택', 'sttInputLanguage': '내 음성 언어 선택', 'explanationLanguage': '해설 언어 선택' };
-            document.getElementById('customLangTitle').innerText = titles[targetId];
-            const listContainer = document.getElementById('customLangList'); listContainer.innerHTML = '';
-            const currentVal = document.getElementById(targetId).value;
-            
-            SUPPORTED_LANGUAGES.forEach(lang => {
-                const isSelected = lang.code === currentVal; const btn = document.createElement('button');
-                btn.className = `py-3 px-4 rounded-xl flex items-center justify-start gap-3 text-sm font-bold transition-all border-2 ${isSelected ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200'}`;
-                btn.innerHTML = `<span class="text-2xl drop-shadow-sm">${lang.flag}</span> <span>${lang.name}</span>`;
-                btn.onclick = () => { 
-                    document.getElementById(targetId).value = lang.code; 
-                    updateLangDisplays(); 
-                    closeCustomLangPicker(); 
-                    // 🚨 에러의 원인이었던 '자동 로딩' 기능을 뺐습니다. 이제 버튼으로만 작동합니다!
-                };
-                listContainer.appendChild(btn);
-            });
-            const modal = document.getElementById('customLangModal'); modal.classList.remove('hidden');
-            setTimeout(() => document.getElementById('customLangContent').style.transform = 'translateY(0)', 10);
-        };
 
         // =======================================================
         // 🔤 4번 방: 기초 알파벳/자모음 엔진 (스마트 캐싱)
@@ -1215,6 +1200,77 @@
             utt.pitch = 1.1; 
             utt.rate = 0.85; // 또박또박 들리도록 속도를 살짝 늦췄습니다.
             window.speechSynthesis.speak(utt);
+        };
+
+        // =======================================================
+        // 🌐 글로벌 다국어 UI 변환 사전 (ID 기준)
+        // =======================================================
+        const UI_DICTIONARY = {
+            // 🇰🇷 한국어 설정일 때
+            "ko": {
+                "roleplayMicText": "말하기 시작 (마이크)",
+                "generateAlphaBtn": "✨ 선택한 언어의 AI 파닉스 가져오기",
+                "generateVocabBtn": "✨ AI 단어장 생성하기",
+                "expGlobalBtnText": "과외 해설",
+                "textInputPlaceholder": "마이크가 안 될 때는 직접 입력해 보세요...",
+                "appMode_tutor": "🎓 대화형 튜터",
+                "appMode_translate": "🌐 통번역 모드"
+            },
+            // 🇺🇸 영어 설정일 때
+            "en": {
+                "roleplayMicText": "Start Speaking (Mic)",
+                "generateAlphaBtn": "✨ Get AI Phonics",
+                "generateVocabBtn": "✨ Generate AI Vocab",
+                "expGlobalBtnText": "Tutor Explain",
+                "textInputPlaceholder": "Type a message here...",
+                "appMode_tutor": "🎓 Chat Tutor",
+                "appMode_translate": "🌐 Translate Mode"
+            },
+            // 🇯🇵 일본어 설정일 때
+            "ja": {
+                "roleplayMicText": "話하기 시작 (マイク)",
+                "generateAlphaBtn": "✨ AIフォニックス取得",
+                "generateVocabBtn": "✨ AI単語帳を作成する",
+                "expGlobalBtnText": "家庭教師の解説",
+                "textInputPlaceholder": "直接入力してください...",
+                "appMode_tutor": "🎓 対話型チューター",
+                "appMode_translate": "🌐 通翻訳モード"
+            },
+            // 🇨🇳 중국어 설정일 때
+            "zh": {
+                "roleplayMicText": "开始说话 (麦克风)",
+                "generateAlphaBtn": "✨ 获取 AI 发音",
+                "generateVocabBtn": "✨ 生成 AI 单词本",
+                "expGlobalBtnText": "家教解析",
+                "textInputPlaceholder": "请在这里输入...",
+                "appMode_tutor": "🎓 对话式导师",
+                "appMode_translate": "🌐 同声传译模式"
+            }
+        };
+
+        // 🪄 화면의 글자들을 1초만에 싹 바꿔치기하는 마법의 함수
+        window.changeUILanguage = function(langCode) {
+            // 전 세계 언어 코드가 들어오더라도 사전이 없으면 기본적으로 영어('en')를 보여주도록 안전장치
+            const currentDict = UI_DICTIONARY[langCode] || UI_DICTIONARY["en"];
+            
+            // 1. 일반 버튼 및 텍스트 바꿔치기
+            for (const [id, text] of Object.entries(currentDict)) {
+                const element = document.getElementById(id);
+                if (element) {
+                    // input 창의 힌트글(placeholder)인 경우
+                    if (id === "textInputPlaceholder") {
+                        document.getElementById("textInput").placeholder = text;
+                    } else {
+                        element.innerText = text;
+                    }
+                }
+            }
+
+            // 2. 1번 방 하단 select 박스(셀렉트 메뉴) 안의 글자들도 따로 바꿔치기
+            const tutorOpt = document.querySelector("#appMode option[value='tutor']");
+            const transOpt = document.querySelector("#appMode option[value='translate']");
+            if (tutorOpt) tutorOpt.text = currentDict["appMode_tutor"];
+            if (transOpt) transOpt.text = currentDict["appMode_translate"];
         };
 
     </script>
