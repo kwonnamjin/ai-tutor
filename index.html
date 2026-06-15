@@ -338,7 +338,6 @@
                 </div>
             </div>
         </div>
-
         
 
         <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
@@ -400,10 +399,48 @@
             // 🚨 앱 시작 시 자동으로 4번 방 로딩기가 도는 것을 막기 위해 자동 실행 코드를 삭제했습니다!
         };
 
-        
+        window.updateLangDisplays = function() {
+            ['targetLanguage', 'sttInputLanguage', 'explanationLanguage'].forEach(id => {
+                const sel = document.getElementById(id); const disp = document.getElementById('disp-' + id);
+                if(sel && disp && sel.options[sel.selectedIndex]) {
+                    const langData = SUPPORTED_LANGUAGES.find(l => l.code === sel.value); disp.innerHTML = `${langData.flag} ${langData.name}`;
+                }
+            });
+            const targetSel = document.getElementById('targetLanguage');
+            ['roleplayLanguage', 'vocabLanguage', 'alphaLanguage'].forEach(id => {
+                const disp = document.getElementById('disp-' + id);
+                if(targetSel && disp && targetSel.options[targetSel.selectedIndex]) {
+                    const langData = SUPPORTED_LANGUAGES.find(l => l.code === targetSel.value); disp.innerHTML = `${langData.flag} ${langData.name}`;
+                }
+            });
+        };
         updateLangDisplays();
 
-        
+        window.openCustomLangPicker = function(targetId) {
+            const titles = { 'targetLanguage': '학습할 언어 선택', 'sttInputLanguage': '내 음성 언어 선택', 'explanationLanguage': '해설 언어 선택' };
+            document.getElementById('customLangTitle').innerText = titles[targetId];
+            const listContainer = document.getElementById('customLangList'); listContainer.innerHTML = '';
+            const currentVal = document.getElementById(targetId).value;
+            
+            SUPPORTED_LANGUAGES.forEach(lang => {
+                const isSelected = lang.code === currentVal; const btn = document.createElement('button');
+                btn.className = `py-3 px-4 rounded-xl flex items-center justify-start gap-3 text-sm font-bold transition-all border-2 ${isSelected ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200'}`;
+                btn.innerHTML = `<span class="text-2xl drop-shadow-sm">${lang.flag}</span> <span>${lang.name}</span>`;
+                btn.onclick = () => { 
+                    document.getElementById(targetId).value = lang.code; 
+                    updateLangDisplays(); 
+                    closeCustomLangPicker(); 
+                };
+                listContainer.appendChild(btn);
+            });
+            const modal = document.getElementById('customLangModal'); modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('customLangContent').style.transform = 'translateY(0)', 10);
+        };
+
+        window.closeCustomLangPicker = function() {
+            document.getElementById('customLangContent').style.transform = 'translateY(100%)';
+            setTimeout(() => document.getElementById('customLangModal').classList.add('hidden'), 300);
+        };
 
         // =======================================================
         // 🌟 1번 방: 핵심 AI 튜터 통신 로직 및 변수 초기화
