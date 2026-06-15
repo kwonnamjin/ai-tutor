@@ -26,10 +26,8 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        .word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
+        .word-span, .exp-word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
         .word-span.selected { background-color: #fef08a; color: #854d0e; font-weight: 600; }
-        
-        .exp-word-span { cursor: pointer; display: inline-block; padding: 0 2px; border-radius: 4px; transition: background-color 0.2s; }
         .exp-word-span.selected { background-color: #fde047; color: #a16207; font-weight: 600; }
         
         .tooltip-arrow::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1f2937 transparent transparent transparent; }
@@ -42,16 +40,12 @@
         .transform-style-3d { transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
-
     </style>
 </head>
 <body class="p-0 sm:p-4 bg-slate-900 overflow-hidden" onclick="handleBodyClick(event)">
 
     <div class="w-full max-w-md h-full sm:h-[850px] max-h-full sm:rounded-3xl shadow-2xl overflow-hidden relative mx-auto bg-slate-900">
         
-        <!-- ======================================================= -->
-        <!-- 🏠 1번 방: 메인 튜터 화면 -->
-        <!-- ======================================================= -->
         <div id="screen-main" class="absolute top-0 left-0 w-full h-full flex flex-col z-10 bg-white overflow-hidden sm:rounded-3xl" style="transform: translateX(0%); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
             <div class="flex-none bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center z-10 shadow-lg border-b border-blue-800">
@@ -170,7 +164,6 @@
                 </div>
             </div>
             
-            <!-- 세팅 모달 -->
             <div id="settingsModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                 <div class="bg-white w-full max-w-[360px] rounded-3xl p-6 shadow-2xl relative transition-all border border-slate-100">
                     <h3 class="text-xl font-extrabold text-slate-800 mb-5 border-b border-slate-100 pb-3 flex items-center gap-2"><i class="fa-solid fa-gear text-slate-400"></i> 상세 설정</h3>
@@ -195,7 +188,6 @@
                 </div>
             </div>
 
-            <!-- 페이월 모달 -->
             <div id="paywallModal" class="hidden absolute inset-0 bg-slate-900/80 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
                 <div class="bg-white w-full max-w-[320px] rounded-[2rem] p-8 shadow-2xl text-center relative overflow-hidden">
                     <div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-5 text-4xl shadow-inner border border-slate-100"><i class="fa-solid fa-lock"></i></div>
@@ -206,9 +198,6 @@
             </div>
         </div>
 
-        <!-- ======================================================= -->
-        <!-- 🎬 2번 방: 롤플레잉 화면 -->
-        <!-- ======================================================= -->
         <div id="screen-roleplay" class="absolute top-0 left-0 w-full h-full flex flex-col z-20 bg-[#f3f4f6] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
@@ -264,9 +253,6 @@
             </div>
         </div>
 
-        <!-- ======================================================= -->
-        <!-- 📝 3번 방: AI 필수 단어장 화면 -->
-        <!-- ======================================================= -->
         <div id="screen-vocab" class="absolute top-0 left-0 w-full h-full flex flex-col z-30 bg-[#f8fafc] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
@@ -292,7 +278,6 @@
                 
                 <div id="mainFlashcardArea" class="hidden flex-col items-center">
                     <div id="vocabFlashcard" class="w-full max-w-sm h-[320px] relative transform-style-3d cursor-pointer shadow-xl rounded-3xl" onclick="this.classList.toggle('rotate-y-180')">
-                        <!-- 앞면 -->
                         <div class="absolute w-full h-full bg-white rounded-3xl border-[3px] border-indigo-100 backface-hidden flex flex-col items-center justify-center p-6 text-center">
                             <div class="absolute top-4 left-0 w-full flex justify-center">
                                 <span id="vcCount" class="text-[10px] text-indigo-500 font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">단어를 선택하세요</span>
@@ -302,7 +287,6 @@
                             <p id="vcPhonetic" class="text-sm text-slate-400 font-semibold mt-1"></p>
                             <p class="absolute bottom-5 text-[10px] text-slate-400 font-medium animate-pulse"><i class="fa-solid fa-hand-pointer"></i> 터치해서 뒤집기</p>
                         </div>
-                        <!-- 뒷면 -->
                         <div class="absolute w-full h-full bg-indigo-600 rounded-3xl border-[3px] border-indigo-700 backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 text-center text-white">
                             <h3 id="vcMeaning" class="text-3xl font-black mb-4"></h3>
                             <div class="w-full h-px bg-indigo-400/50 mb-4"></div>
@@ -324,9 +308,6 @@
             </div>
         </div>
 
-        <!-- ======================================================= -->
-        <!-- 🔤 4번 방: 왕초보 기초 발음 화면 -->
-        <!-- ======================================================= -->
         <div id="screen-alphabet" class="absolute top-0 left-0 w-full h-full flex flex-col z-40 bg-[#f0fdf4] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
@@ -359,7 +340,6 @@
             </div>
         </div>
 
-        <!-- 🌟 커스텀 언어 팝업 (모든 방 공유) -->
         <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
             <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
                 <div class="flex justify-between items-center mb-5">
@@ -374,9 +354,6 @@
 
     </div>
 
-    <!-- ======================================================= -->
-    <!-- 🚀 통합 자바스크립트 마스터 영역 -->
-    <!-- ======================================================= -->
     <script type="module">
         const SUPPORTED_LANGUAGES = [
             { code: "ko-KR", name: "한국어", flag: "🇰🇷" }, { code: "en-US", name: "영어", flag: "🇺🇸" }, { code: "es-ES", name: "스페인어", flag: "🇪🇸" },
@@ -439,17 +416,9 @@
             setTimeout(() => document.getElementById('customLangModal').classList.add('hidden'), 300);
         };
 
-        // 🌟 전역 바인딩
-        window.handleBodyClick = handleBodyClick; window.targetLanguageChanged = targetLanguageChanged;
-        window.toggleSettingsModal = toggleSettingsModal; window.changeAppMode = changeAppMode;
-        window.updateStatus = updateStatus; window.sendTextMessage = sendTextMessage;
-        window.stopSpeaking = stopSpeaking; window.toggleListening = toggleListening;
-        window.requestExplanationGlobal = requestExplanationGlobal; window.selectGender = selectGender;
-        window.saveSettings = saveSettings; window.readSelectedText = readSelectedText;
-        window.explainSelectedText = explainSelectedText; window.handleWordClick = handleWordClick;
-        window.requestExplanationFromBubble = requestExplanationFromBubble; window.speakText = speakText;
-        window.processUpgrade = processUpgrade;
-
+        // =======================================================
+        // 🌟 1번 방: 핵심 AI 튜터 통신 로직 및 변수 초기화
+        // =======================================================
         const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
         const MAX_FREE_COUNT = 50;
 
@@ -458,7 +427,11 @@
         let conversationHistory = JSON.parse(sessionStorage.getItem('llmHistory')) || []; 
         let uiChatHistory = JSON.parse(sessionStorage.getItem('uiHistory')) || []; 
         let bubbleCounter = parseInt(sessionStorage.getItem('bubbleCounter')) || 0; 
-        let currentUtterance = null; let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
+        
+        let currentUtterance = null; 
+        let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
+        let tempGender = currentVoiceGender; // 🚨 '저장 안 됨' 오류 해결을 위한 핵심 변수!
+
         let currentBubbleId = null, startIndex = -1, endIndex = -1, myDeviceId = "unknown";
 
         const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
@@ -478,7 +451,7 @@
         }
         initDeviceID();
 
-        function sendTextMessage() {
+        window.sendTextMessage = function() {
             const input = document.getElementById('textInput'); const text = input.value.trim();
             if (text) { input.value = ''; handleUserMessage(text); }
         }
@@ -518,16 +491,16 @@
             document.getElementById('paywallModal').classList.remove('hidden');
             ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = true);
             micBtn.classList.replace('from-blue-400', 'from-slate-400'); micBtn.classList.replace('to-blue-600', 'to-slate-600');
-            stopSpeaking(); updateStatus("무료 이용 횟수 종료됨");
+            stopSpeaking(); window.updateStatus("무료 이용 횟수 종료됨");
         }
 
         function enableInputs() {
             ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
             micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
-            updateStatus("대기 중");
+            window.updateStatus("대기 중");
         }
 
-        async function processUpgrade() {
+        window.processUpgrade = async function() {
             if (!confirm("[웹 개발자 모드]\n강제로 결제 성공 처리할까요?")) return;
             alert("결제가 완료되었습니다!"); localStorage.setItem('is_premium', 'true');
             document.getElementById('paywallModal').classList.add('hidden'); enableInputs(); updateBadgeUI();
@@ -537,18 +510,18 @@
             if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
                 recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
                 recognition.onstart = () => {
-                    isListening = true; stopSpeaking(); 
+                    isListening = true; window.stopSpeaking(); 
                     micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); 
-                    micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); updateStatus("듣는 중...");
+                    micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); window.updateStatus("듣는 중...");
                 };
                 recognition.onresult = (e) => handleUserMessage(e.results[0][0].transcript);
-                recognition.onerror = () => { resetMic(); updateStatus("인식 실패 또는 권한 없음"); };
+                recognition.onerror = () => { resetMic(); window.updateStatus("인식 실패 또는 권한 없음"); };
                 recognition.onend = () => resetMic();
-            } else { updateStatus("마이크 미지원"); micBtn.disabled = true; }
+            } else { window.updateStatus("마이크 미지원"); micBtn.disabled = true; }
         }
         initSpeechRecognition();
 
-        async function toggleListening() {
+        window.toggleListening = async function() {
             if(!recognition) return;
             if(isListening) recognition.stop();
             else { recognition.lang = document.getElementById('sttInputLanguage').value; recognition.start(); }
@@ -556,9 +529,9 @@
 
         function resetMic() { 
             isListening = false; micBtn.classList.replace('from-red-400', 'from-blue-400'); micBtn.classList.replace('to-red-600', 'to-blue-600'); 
-            micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); if(!isSpeaking) updateStatus("대기 중"); 
+            micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); if(!isSpeaking) window.updateStatus("대기 중"); 
         }
-        function updateStatus(txt) { statusText.textContent = txt; }
+        window.updateStatus = function(txt) { statusText.textContent = txt; }
 
         function clearSelection() {
             document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
@@ -566,7 +539,7 @@
             selectionTooltip.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => selectionTooltip.classList.add('hidden'), 200);
         }
         
-        function handleWordClick(event, bubbleId, wordIndex, isExplanation = false) {
+        window.handleWordClick = function(event, bubbleId, wordIndex, isExplanation = false) {
             event.stopPropagation(); 
             if (currentBubbleId !== null && currentBubbleId !== bubbleId) clearSelection();
             currentBubbleId = bubbleId;
@@ -587,7 +560,7 @@
             }
         }
 
-        function handleBodyClick(e) { if (!e.target.classList.contains('word-span') && !e.target.classList.contains('exp-word-span') && !e.target.closest('#selectionTooltip') && !e.target.closest('button')) clearSelection(); }
+        window.handleBodyClick = function(e) { if (!e.target.classList.contains('word-span') && !e.target.classList.contains('exp-word-span') && !e.target.closest('#selectionTooltip') && !e.target.closest('button')) clearSelection(); }
 
         function getSelectedTextFromBubble(bubbleId, isExplanation = false) {
             if(startIndex === -1) return null; let textArr = [];
@@ -601,15 +574,15 @@
             return text.split(' ').map((word, idx) => `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${word}</span>`).join(' ');
         }
 
-        function readSelectedText() {
+        window.readSelectedText = function() {
             if (!currentBubbleId) return; const text = getSelectedTextFromBubble(currentBubbleId, currentBubbleId.startsWith('exp-'));
-            if (text) speakText(text, document.getElementById('targetLanguage').value);
+            if (text) window.speakText(text, document.getElementById('targetLanguage').value);
         }
 
-        function explainSelectedText() {
+        window.explainSelectedText = function() {
             if (!currentBubbleId) return; const isExp = currentBubbleId.startsWith('exp-');
             const fullTxt = Array.from(document.getElementById(`bubble-${currentBubbleId}`).querySelectorAll('span')).map(s=>s.textContent).join(' ');
-            requestExplanationFromBubble(currentBubbleId, fullTxt, isExp, getSelectedTextFromBubble(currentBubbleId, isExp)); clearSelection();
+            window.requestExplanationFromBubble(currentBubbleId, fullTxt, isExp, getSelectedTextFromBubble(currentBubbleId, isExp)); clearSelection();
         }
 
         function addMessageToChat(sender, text, translation = null, targetLangCode = null, isRestore = false) {
@@ -627,39 +600,106 @@
 
         if (uiChatHistory.length > 0) uiChatHistory.forEach(msg => addMessageToChat(msg.sender, msg.text, msg.translation, msg.targetLangCode, true));
 
-        function speakText(text, langCode) {
+        window.speakText = function(text, langCode) {
             if(!synthesis) return; synthesis.cancel(); const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim(); if(!clean) return;
             currentUtterance = new SpeechSynthesisUtterance(clean); currentUtterance.lang = langCode; currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
-            currentUtterance.onstart = () => { isSpeaking = true; avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); updateStatus("말하는 중..."); };
-            currentUtterance.onend = currentUtterance.onerror = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); updateStatus("대기 중"); };
+            currentUtterance.onstart = () => { isSpeaking = true; avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); window.updateStatus("말하는 중..."); };
+            currentUtterance.onend = currentUtterance.onerror = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); window.updateStatus("대기 중"); };
             setTimeout(() => synthesis.speak(currentUtterance), 50);
         }
-        function stopSpeaking() { synthesis.cancel(); }
+        window.stopSpeaking = function() { synthesis.cancel(); }
 
         async function fetchAPI(url, options) {
             let delay=500;
             for(let i=0;i<3;i++) { try { const res = await fetch(url, options); if(res.ok) return res; await new Promise(r=>setTimeout(r,delay)); delay*=2; } catch(e) { if(i==2) throw e; } }
         }
 
+        // 🚨 이 부분이 1번 방 AI 통신 불가 에러를 해결하는 핵심 코드입니다 (시스템 프롬프트 & JSON 요청 완벽 복구)
         async function handleUserMessage(text) {
-            if(!text) return; addMessageToChat('user', text); updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#94a3b8"; const targetLang = document.getElementById('targetLanguage').value;
+            if(!text) return; 
+            addMessageToChat('user', text); 
+            window.updateStatus("생각하는 중..."); 
+            avatarWrap.style.borderColor = "#94a3b8"; 
+
+            const mode = document.getElementById('appMode').value;
+            const targetLang = document.getElementById('targetLanguage').value;
+            const targetName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
+            const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
+
+            let sysPrompt = mode === 'translate' 
+                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 반드시 아래 JSON 포맷으로 응답해라: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}`
+                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 반드시 아래 JSON 포맷으로 응답해라: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
+
             try {
-                let ctx = [{role:"user",content:`[번역/튜터링 요청] ${text}`}];
-                let res = await fetchAPI(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, body: JSON.stringify({ model: "deepseek-chat", messages: ctx, response_format: { type: "json_object" } }) });
-                let data = await res.json(); let parsed = JSON.parse(data.choices[0].message.content);
-                if (parsed.foreign_text === "LIMIT_REACHED") return enforcePaywall(parsed.korean_translation); incrementLocalUsage();
-                if(parsed.foreign_text) { addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang); speakText(parsed.foreign_text, targetLang); }
-            } catch(e) { updateStatus("서버 에러"); avatarWrap.style.borderColor="#f87171"; }
+                let ctx = mode === 'tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
+                
+                if(mode === 'tutor') {
+                    if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
+                    ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
+                    if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)];
+                    conversationHistory = ctx; 
+                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+                }
+
+                let res = await fetchAPI(WORKER_URL, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
+                    body: JSON.stringify({ model: "deepseek-chat", messages: ctx, response_format: { type: "json_object" } }) 
+                });
+                let data = await res.json(); 
+                let parsed = JSON.parse(data.choices[0].message.content);
+                
+                if (parsed.foreign_text === "LIMIT_REACHED") return enforcePaywall(parsed.korean_translation); 
+                incrementLocalUsage();
+                
+                if(mode==='tutor') {
+                    conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)});
+                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+                }
+
+                if(parsed.foreign_text) { 
+                    addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang); 
+                    window.speakText(parsed.foreign_text, targetLang); 
+                }
+            } catch(e) { 
+                console.error(e);
+                window.updateStatus("AI 서버 통신 에러"); 
+                avatarWrap.style.borderColor="#f87171"; 
+            }
         }
 
-        async function requestExplanationGlobal() { updateStatus("해설 기능 준비중입니다."); }
-        async function requestExplanationFromBubble() { updateStatus("해설 기능 준비중입니다."); }
+        window.requestExplanationGlobal = async function() { window.updateStatus("해설 기능 준비중입니다."); }
+        window.requestExplanationFromBubble = async function() { window.updateStatus("해설 기능 준비중입니다."); }
 
         function clearChatSession() { conversationHistory=[]; uiChatHistory=[]; sessionStorage.clear(); document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el=>el.remove()); }
-        function changeAppMode() { clearChatSession(); } function targetLanguageChanged() { clearChatSession(); }
-        function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
-        function toggleSettingsModal(s=true) { document.getElementById('settingsModal').classList.toggle('hidden', !s); }
-        function saveSettings() { localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); currentVoiceGender=tempGender; toggleSettingsModal(false); }
+        window.changeAppMode = function() { clearChatSession(); } 
+        window.targetLanguageChanged = function() { clearChatSession(); }
+        
+        // 🚨 이 부분이 톱니바퀴 '저장 안 됨' 에러를 해결하는 핵심 코드입니다 (tempGender 변수 바인딩 복구)
+        window.selectGender = function(g) { 
+            tempGender = g; 
+            updateGenderUI(g, false); 
+        }
+        window.toggleSettingsModal = function(show = true) { 
+            let m = document.getElementById('settingsModal');
+            if (show) {
+                document.getElementById('fontSizeSlider').value = localStorage.getItem('chat_font_size') || 14;
+                tempGender = currentVoiceGender; // 켤 때 현재 성별로 세팅
+                updateGenderUI(tempGender, false);
+                m.classList.remove('hidden');
+            } else {
+                m.classList.add('hidden');
+            }
+        }
+        window.saveSettings = function() { 
+            localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); 
+            localStorage.setItem('explanation_language', document.getElementById('explanationLanguage').value);
+            currentVoiceGender = tempGender; 
+            localStorage.setItem('voice_gender', currentVoiceGender);
+            updateGenderUI(currentVoiceGender, true); 
+            document.documentElement.style.setProperty('--chat-font-size', (localStorage.getItem('chat_font_size') || 14) + 'px');
+            window.toggleSettingsModal(false); 
+        }
 
         // =======================================================
         // 🚀 유니버셜 스와이프 엔진 (방 4개 통합 관리)
@@ -787,7 +827,7 @@
                 const fb = document.getElementById(`feedback-${index}-line-${i}`); if(fb) fb.innerHTML = "";
                 const div = document.getElementById(`script-${index}-line-${i}`); if(div) div.classList.remove('bg-yellow-50', 'border-yellow-200');
             }
-            processNextTestLine();
+            window.processNextTestLine();
         };
 
         window.processNextTestLine = function() {
@@ -799,7 +839,7 @@
             if(lineDiv) { lineDiv.classList.add('bg-yellow-50', 'border-yellow-200'); lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
             if (line.role === 'ai') {
                 const utt = new SpeechSynthesisUtterance(line.en); utt.lang = scriptItem.langCode; utt.pitch = 1.2;
-                utt.onend = () => { activeTestLineIdx++; setTimeout(processNextTestLine, 500); }; synthesis.speak(utt);
+                utt.onend = () => { activeTestLineIdx++; setTimeout(window.processNextTestLine, 500); }; synthesis.speak(utt);
             } else {
                 document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 하단 마이크 버튼을 누르세요</span>`;
             }
@@ -827,10 +867,10 @@
             roleplayRec.onend = roleplayRec.onerror = () => { 
                 isRpListening = false; btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); document.getElementById("roleplayMicIcon").classList.replace("fa-ear-listen", "fa-microphone");
                 document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="${score>80?'text-emerald-600 bg-emerald-50':'text-amber-600 bg-amber-50'} px-2 py-1 rounded-md border inline-block mt-1">일치율: ${score}% (${recognizedText||'인식 실패'})</span>`;
-                setTimeout(() => { activeTestLineIdx++; processNextTestLine(); }, 1500); 
+                setTimeout(() => { activeTestLineIdx++; window.processNextTestLine(); }, 1500); 
             };
         };
-        renderScripts();
+        window.renderScripts();
 
         // =======================================================
         // 📝 3번 방: 단어장(Vocab) 엔진 (3D 플래시카드 & 4개 그리드)
@@ -863,7 +903,7 @@
                 html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed my-5">`;
                 listArea.insertAdjacentHTML('beforeend', html);
             }
-            if(currentVocabSetIdx === -1) showFlashcard(savedVocabs.length - 1, 0);
+            if(currentVocabSetIdx === -1) window.showFlashcard(savedVocabs.length - 1, 0);
         };
 
         window.showFlashcard = function(setIdx, wordIdx) {
@@ -873,11 +913,11 @@
             document.getElementById("vocabFlashcard").classList.remove('rotate-y-180'); 
             document.getElementById("vcCount").innerText = `${savedVocabs[setIdx].theme} (${wordIdx + 1}/10)`;
             document.getElementById("vcWord").innerText = v.word; document.getElementById("vcPron").innerText = `[${v.pronunciation}]`; document.getElementById("vcPhonetic").innerText = v.phonetic; document.getElementById("vcMeaning").innerText = v.meaning; document.getElementById("vcExEn").innerText = `"${v.example_en}"`; document.getElementById("vcExKo").innerText = v.example_ko;
-            document.getElementById("vocabScrollArea").scrollTop = 0; renderVocabs(); 
+            document.getElementById("vocabScrollArea").scrollTop = 0; window.renderVocabs(); 
         };
 
-        window.nextVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx < savedVocabs[currentVocabSetIdx].vocabData.length - 1) showFlashcard(currentVocabSetIdx, currentVocabWordIdx + 1); };
-        window.prevVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx > 0) showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1); };
+        window.nextVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx < savedVocabs[currentVocabSetIdx].vocabData.length - 1) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx + 1); };
+        window.prevVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx > 0) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1); };
 
         window.playVocabAudio = function() {
             if(currentVocabSetIdx === -1) return; synthesis.cancel();
@@ -897,10 +937,10 @@
                 const data = await res.json(); 
                 if (savedVocabs.length >= 5) savedVocabs.shift(); 
                 savedVocabs.push({ theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
-                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); showFlashcard(savedVocabs.length - 1, 0);
+                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); window.showFlashcard(savedVocabs.length - 1, 0);
             } catch (err) { alert("단어장 생성에 실패했습니다."); } finally { btn.innerHTML = "✨ AI 단어장 생성하기"; btn.disabled = false; }
         };
-        renderVocabs();
+        window.renderVocabs();
     </script>
 </body>
 </html>
