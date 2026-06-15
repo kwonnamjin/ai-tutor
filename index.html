@@ -988,9 +988,25 @@
         window.prevVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx > 0) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1); };
 
         window.playVocabAudio = function() {
-            if(currentVocabSetIdx === -1) return; synthesis.cancel();
-            const utt = new SpeechSynthesisUtterance(savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx].word);
-            utt.lang = savedVocabs[currentVocabSetIdx].langCode; synthesis.speak(utt);
+            if(currentVocabSetIdx === -1) return; 
+            window.speechSynthesis.cancel();
+            
+            const vocab = savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx];
+            const flashcard = document.getElementById('vocabFlashcard');
+            
+            // 🌟 카드가 뒤집혀 있는지(뒷면인지) 확인합니다. ('rotate-y-180' 클래스가 있으면 뒷면)
+            const isBackSide = flashcard.classList.contains('rotate-y-180');
+            
+            // 🚨 뒷면이면 예문(example_en)을, 앞면이면 단어(word)를 선택합니다.
+            const textToSpeak = isBackSide ? vocab.example_en : vocab.word;
+            
+            const utt = new SpeechSynthesisUtterance(textToSpeak);
+            utt.lang = savedVocabs[currentVocabSetIdx].langCode; 
+            
+            // 🌟 예문을 읽을 때는 조금 더 자연스럽게 들리도록 속도를 살짝 조절합니다.
+            utt.rate = isBackSide ? 0.9 : 1.0; 
+            
+            window.speechSynthesis.speak(utt);
         };
 
         window.generateVocab = async function() {
