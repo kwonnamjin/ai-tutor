@@ -343,28 +343,65 @@
             </div>
         </div>
                 
-                <!-- 컨트롤 버튼 -->
-                <div class="flex gap-3 w-full max-w-sm mt-8">
-                    <button class="w-14 h-14 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-left"></i></button>
-                    
-                    <button class="flex-1 bg-white text-indigo-600 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center gap-1 hover:bg-indigo-50 transition-colors">
-                        <i class="fa-solid fa-volume-high text-lg"></i>
-                        <span class="text-[10px] font-bold">발음 듣기</span>
-                    </button>
-                    
-                    <button class="flex-1 bg-indigo-600 text-white rounded-2xl shadow-md flex flex-col items-center justify-center gap-1 hover:bg-indigo-700 transition-colors">
-                        <i class="fa-solid fa-microphone text-lg"></i>
-                        <span class="text-[10px] font-bold">말하기 연습</span>
-                    </button>
+                <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-3xl" style="padding-bottom: calc(env(safe-area-inset-bottom) + 20px);">
+                <button onclick="startShadowing()" id="roleplayMicBtn" class="w-full h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-[1.02]">
+                    <i class="fa-solid fa-microphone text-xl" id="roleplayMicIcon"></i> <span id="roleplayMicText">말하기 시작 (마이크)</span>
+                </button>
+            </div>
+        </div> <div id="screen-vocab" class="absolute top-0 left-0 w-full h-full flex flex-col z-30 bg-[#f8fafc] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
+            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
+                <h1 class="text-lg font-bold text-gray-800">📝 필수 단어장</h1>
+                <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
+                    <span id="disp-vocabLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
+                </button>
+            </div>
 
-                    <button class="w-14 h-14 bg-white text-slate-600 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-right"></i></button>
+            <div class="flex-none bg-white px-4 py-3 border-b border-gray-100 shadow-sm z-10">
+                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                    <button class="vocab-theme-btn shrink-0 bg-indigo-50 border border-indigo-500 text-indigo-700 text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition-all" onclick="setVocabTheme(this)">✈️ 여행 필수</button>
+                    <button class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">💼 비즈니스</button>
+                    <button class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">❤️ 연애/감정</button>
+                    <button class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">🍽️ 식당/카페</button>
                 </div>
+                <button id="generateVocabBtn" class="w-full mt-1 bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all" onclick="generateVocab()">
+                    ✨ AI 단어장 생성하기
+                </button>
+            </div>
+
+            <div id="vocabScrollArea" class="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar pb-24 perspective-1000">
+                
+                <div id="mainFlashcardArea" class="hidden flex-col items-center">
+                    <div id="vocabFlashcard" class="w-full max-w-sm h-[320px] relative transform-style-3d cursor-pointer shadow-xl rounded-3xl" onclick="this.classList.toggle('rotate-y-180')">
+                        <div class="absolute w-full h-full bg-white rounded-3xl border-[3px] border-indigo-100 backface-hidden flex flex-col items-center justify-center p-6 text-center">
+                            <div class="absolute top-4 left-0 w-full flex justify-center">
+                                <span id="vcCount" class="text-[10px] text-indigo-500 font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">단어를 선택하세요</span>
+                            </div>
+                            <h2 id="vcWord" class="text-4xl sm:text-5xl font-black text-slate-800 mb-2 tracking-tight"></h2>
+                            <p id="vcPron" class="text-lg text-indigo-500 font-extrabold"></p>
+                            <p id="vcPhonetic" class="text-sm text-slate-400 font-semibold mt-1"></p>
+                            <p class="absolute bottom-5 text-[10px] text-slate-400 font-medium animate-pulse"><i class="fa-solid fa-hand-pointer"></i> 터치해서 뒤집기</p>
+                        </div>
+                        <div class="absolute w-full h-full bg-indigo-600 rounded-3xl border-[3px] border-indigo-700 backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 text-center text-white">
+                            <h3 id="vcMeaning" class="text-3xl font-black mb-4"></h3>
+                            <div class="w-full h-px bg-indigo-400/50 mb-4"></div>
+                            <p id="vcExEn" class="text-sm font-medium text-indigo-100 mb-2"></p>
+                            <p id="vcExKo" class="text-xs text-indigo-200"></p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 w-full max-w-sm mt-4">
+                        <button onclick="prevVocab()" class="w-12 h-12 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button onclick="playVocabAudio()" class="flex-1 bg-white text-indigo-600 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center gap-0.5 hover:bg-indigo-50 transition-colors"><i class="fa-solid fa-volume-high"></i><span class="text-[10px] font-bold">듣기</span></button>
+                        <button onclick="nextVocab()" class="w-12 h-12 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div id="vocabListArea" class="space-y-6">
+                    <div class="text-center text-slate-400 text-sm mt-10 font-bold">위 버튼을 눌러 첫 단어장을 생성해 보세요!</div>
+                </div>
+
             </div>
         </div>
 
-        <!-- ======================================================= -->
-        <!-- 🔤 4번 방: 왕초보 자모음 (알파벳) 화면 -->
-        <!-- ======================================================= -->
         <div id="screen-alphabet" class="absolute top-0 left-0 w-full h-full flex flex-col z-40 bg-[#f0fdf4] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
                 <h1 class="text-lg font-bold text-gray-800">🔤 왕초보 기초 발음</h1>
@@ -380,7 +417,6 @@
                 </div>
 
                 <div class="grid grid-cols-3 gap-3">
-                    <!-- 예쁜 알파벳 카드들 -->
                     <button class="aspect-square bg-white border-[2px] border-slate-100 rounded-2xl flex flex-col items-center justify-center shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md transition-all group">
                         <span class="text-4xl font-black text-slate-800 group-hover:text-emerald-600 transition-colors">A</span>
                         <span class="text-xs text-slate-400 font-bold mt-2 bg-slate-100 px-2 py-0.5 rounded-md group-hover:bg-white transition-colors">에이</span>
@@ -393,26 +429,24 @@
                         <span class="text-4xl font-black text-slate-800 group-hover:text-emerald-600 transition-colors">C</span>
                         <span class="text-xs text-slate-400 font-bold mt-2 bg-slate-100 px-2 py-0.5 rounded-md group-hover:bg-white transition-colors">씨</span>
                     </button>
-                    <!-- ... 필요한 만큼 카드가 추가될 자리 ... -->
                 </div>
             </div>
         </div>
 
-
-        <!-- 🌟 새롭게 추가된 커스텀 언어 팝업 (바텀 시트) -->
-            <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
-                <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
-                    <div class="flex justify-between items-center mb-5">
-                        <h3 id="customLangTitle" class="text-xl font-extrabold text-slate-800">언어 선택</h3>
-                        <button onclick="closeCustomLangPicker()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                    <div id="customLangList" class="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto no-scrollbar">
-                    </div>
+        <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
+            <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 id="customLangTitle" class="text-xl font-extrabold text-slate-800">언어 선택</h3>
+                    <button onclick="closeCustomLangPicker()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div id="customLangList" class="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto no-scrollbar">
                 </div>
             </div>
-    </div>
+        </div>
+
+    </div> 
 
     <!-- ======================================================= -->
     <!-- 🚀 자바스크립트 통합 영역 (100% 원상복구 완료) -->
