@@ -228,15 +228,49 @@
                 <h1 class="text-lg font-bold text-gray-800">🎬 실전 롤플레잉</h1>
             </div>
 
-            <div id="scrollArea" class="flex-1 overflow-y-auto p-5 space-y-6 no-scrollbar pb-24">
+            <div id="scrollArea" class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
+                
+                <!-- 1. 레벨 선택 (크기 축소 및 간격 조절) -->
                 <section id="levelSection">
-                    <h2 class="text-sm font-bold text-gray-500 mb-3"><i class="fa-solid fa-layer-group text-blue-500"></i> 1. 나의 레벨을 선택하세요</h2>
-                    <div class="grid grid-cols-4 gap-2">
-                        <button class="level-btn py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all selected-card">입문</button>
-                        <button class="level-btn py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">초급</button>
-                        <button class="level-btn py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">중급</button>
-                        <button class="level-btn py-2 rounded-xl border-2 border-gray-100 bg-white text-xs font-bold text-gray-600 transition-all">원어민</button>
+                    <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-layer-group text-blue-500 mr-1"></i> 1. 레벨 선택</h2>
+                    <div class="grid grid-cols-4 gap-1.5">
+                        <button class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all selected-card">입문</button>
+                        <button class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all">초급</button>
+                        <button class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all">중급</button>
+                        <button class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all">원어민</button>
                     </div>
+                </section>
+
+                <!-- 2. 상황 선택 (카드 크기 대폭 축소, 아기자기하게 변경) -->
+                <section id="situationSection">
+                    <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-masks-theater text-purple-500 mr-1"></i> 2. 상황 선택</h2>
+                    <div class="flex overflow-x-auto gap-2 pb-1 snap-x no-scrollbar">
+                        <div class="sit-card shrink-0 w-20 p-2 rounded-xl border-[1.5px] border-slate-100 bg-white text-center cursor-pointer transition-all selected-card snap-center"><span class="text-2xl block mb-1">☕</span><span class="font-bold text-[11px] text-slate-800 whitespace-nowrap">카페 주문</span></div>
+                        <div class="sit-card shrink-0 w-20 p-2 rounded-xl border-[1.5px] border-slate-100 bg-white text-center cursor-pointer transition-all snap-center"><span class="text-2xl block mb-1">🛂</span><span class="font-bold text-[11px] text-slate-800 whitespace-nowrap">입국 심사</span></div>
+                        <div class="sit-card shrink-0 w-20 p-2 rounded-xl border-[1.5px] border-slate-100 bg-white text-center cursor-pointer transition-all snap-center"><span class="text-2xl block mb-1">🛍️</span><span class="font-bold text-[11px] text-slate-800 whitespace-nowrap">옷 쇼핑</span></div>
+                        <div class="sit-card shrink-0 w-20 p-2 rounded-xl border-[1.5px] border-slate-100 bg-white text-center cursor-pointer transition-all snap-center"><span class="text-2xl block mb-1">🚕</span><span class="font-bold text-[11px] text-slate-800 whitespace-nowrap">택시 탑승</span></div>
+                    </div>
+                    
+                    <!-- 대본 생성 버튼 (날렵하게 축소) -->
+                    <button id="generateBtn" class="w-full mt-3 bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
+                        ✨ AI 대본 생성하기
+                    </button>
+                </section>
+
+                <hr class="border-slate-200 border-dashed border-t-2 my-3">
+
+                <!-- 3. 대본 나오는 곳 (상단 공간이 줄어든 만큼 자동으로 넓어짐!) -->
+                <section id="scriptPlayer">
+                    <div class="bg-blue-50 rounded-xl p-3 mb-3 border border-blue-100">
+                        <p class="text-[11px] text-blue-600 font-bold mb-0.5" id="statusBoxTitle">상황 설명</p>
+                        <p class="text-xs text-slate-700 font-medium leading-relaxed" id="statusBoxText">레벨과 상황을 선택한 후 [AI 대본 생성하기]를 눌러주세요!</p>
+                    </div>
+                    <div class="space-y-3" id="scriptList">
+                        <!-- 대본이 여기에 쭈욱 생성됩니다 -->
+                    </div>
+                </section>
+                
+            </div>
                 </section>
 
                 <section id="situationSection">
