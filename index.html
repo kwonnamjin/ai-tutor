@@ -100,20 +100,33 @@
             </div>
 
                 <div class="flex flex-col space-y-1">
-                    <div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md shadow-blue-900/5 self-start" id="welcomeMessage">
-                        <p class="chat-text-dynamic text-slate-800 font-extrabold mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><i class="fa-solid fa-robot text-blue-500"></i> 당신의 AI 튜터입니다.</p>
-                        <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
-                            <div class="flex items-start gap-2">
-                                <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 border border-blue-100"><i class="fa-solid fa-microphone text-[10px]"></i></div>
-                                <div><p class="font-bold text-slate-800 mb-0.5">실시간 음성 대화</p><p class="text-slate-500">하단의 파란 마이크를 눌러 말해보세요.</p></div>
+                <div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md shadow-blue-900/5 self-start" id="welcomeMessage">
+                    <p class="chat-text-dynamic text-slate-800 font-extrabold mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><i class="fa-solid fa-robot text-blue-500"></i> 당신의 AI 튜터입니다.</p>
+                    <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
+                        <div class="flex items-start gap-2">
+                            <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 border border-blue-100"><i class="fa-solid fa-microphone text-[10px]"></i></div>
+                            <div>
+                                <p class="font-bold text-slate-800 mb-0.5">실시간 음성 대화</p>
+                                <p class="text-slate-500">하단의 파란 마이크를 눌러 말해보세요. <b>대화형 튜터</b>와 <b>통번역</b> 모드를 지원합니다.</p>
                             </div>
-                            <div class="flex items-start gap-2">
-                                <div class="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5 border border-amber-100"><i class="fa-solid fa-hand-pointer text-[10px]"></i></div>
-                                <div><p class="font-bold text-slate-800 mb-0.5">스마트 단어 선택</p><p class="text-slate-500">말풍선 텍스트를 터치하여 구간을 선택하세요.</p></div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5 border border-amber-100"><i class="fa-solid fa-hand-pointer text-[10px]"></i></div>
+                            <div>
+                                <p class="font-bold text-slate-800 mb-0.5">스마트 단어 선택</p>
+                                <p class="text-slate-500">말풍선 속 텍스트를 터치하여 구간을 선택하면 숨겨진 메뉴가 나타납니다.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <div class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-100"><i class="fa-solid fa-graduation-cap text-[10px]"></i></div>
+                            <div>
+                                <p class="font-bold text-slate-800 mb-0.5">원어민 발음 & 맞춤 해설</p>
+                                <p class="text-slate-500">선택한 단어만 원어민 발음으로 <b>다시 듣기(🔊)</b> 하거나, <b>집중 해설(💡)</b>을 받을 수 있습니다.</p>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
                 
                 <div id="selectionTooltip" class="hidden absolute z-50 bg-slate-800 text-white rounded-lg shadow-xl flex items-center px-1 py-1 tooltip-arrow transition-opacity duration-200 opacity-0 pointer-events-none border border-slate-700" style="transform: translate(-50%, -100%); margin-top: -8px;">
                     <button onclick="readSelectedText()" class="hover:bg-slate-700 p-2 rounded-md transition-colors flex items-center justify-center text-blue-400" title="읽기"><i class="fa-solid fa-volume-high text-sm"></i></button>
@@ -275,7 +288,8 @@
             { code: "th-TH", name: "태국어", flag: "🇹🇭" }, { code: "vi-VN", name: "베트남어", flag: "🇻🇳" },
             { code: "ko-KR", name: "한국어", flag: "🇰🇷" }, { code: "ar-SA", name: "아랍어", flag: "🇸🇦" },
             { code: "fr-FR", name: "프랑스어", flag: "🇫🇷" }, { code: "ru-RU", name: "러시아어", flag: "🇷🇺" },
-            { code: "hi-IN", name: "힌디어", flag: "🇮🇳" }
+            { code: "hi-IN", name: "힌디어", flag: "🇮🇳" }, { code: "la", name: "라틴어", flag: "🏛️" },
+            { code: "he-IL", name: "히브리어", flag: "🇮🇱" }
         ];
 
         function renderLanguageSelects() {
