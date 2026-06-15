@@ -48,22 +48,32 @@
         
         <div id="screen-main" class="absolute top-0 left-0 w-full h-full flex flex-col z-10 bg-white overflow-hidden sm:rounded-3xl" style="transform: translateX(0%); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
-            <div class="flex-none bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center z-10 shadow-lg border-b border-blue-800">
-                <div>
-                    <h1 class="text-xl font-extrabold tracking-tight">TalkAI Tutor</h1>
-                    <p class="text-[10px] text-blue-200 uppercase tracking-widest font-semibold mt-0.5">Smart Language Partner</p>
+            <div class="flex-none bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center gap-2 z-10 shadow-lg border-b border-blue-800">
+                <!-- 🌟 왼쪽 제목 구역: 남는 공간을 다 쓰되, 뚫고 나가지 못하게 방어 (flex-1 min-w-0) -->
+                <div class="flex-1 min-w-0">
+                    <!-- 글자가 길어지면 자르기 (truncate) -->
+                    <h1 class="text-xl font-extrabold tracking-tight truncate">TalkAI Tutor</h1>
+                    <p class="text-[10px] text-blue-200 uppercase tracking-widest font-semibold mt-0.5 truncate">Smart Language Partner</p>
                 </div>
-                <div class="flex items-center gap-2">
-                    <div id="usageBadge" class="bg-blue-950/50 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg border border-blue-500 shadow-inner flex items-center gap-1 backdrop-blur-sm">
+                
+                <!-- 🌟 우측 버튼 구역: 절대 찌그러지지 않게 묶어두기 (shrink-0) -->
+                <div class="flex items-center gap-2 shrink-0">
+                    <!-- 번개(크레딧) 배지 -->
+                    <div id="usageBadge" class="shrink-0 bg-blue-950/50 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg border border-blue-500 shadow-inner flex items-center gap-1 backdrop-blur-sm">
                         <i class="fa-solid fa-bolt text-yellow-400"></i> <span id="remainCountText">50/50</span>
                     </div>
                     
+                    <!-- 언어 선택 버튼: 최대 너비 제한(max-w-[100px]) 및 찌그러짐 방지(shrink-0) -->
                     <select id="targetLanguage" class="hidden" onchange="targetLanguageChanged()"></select>
-                    <button id="btnTargetLanguage" class="bg-blue-800/80 text-white text-xs rounded-lg border border-blue-500 p-2 flex items-center gap-1.5 backdrop-blur-sm font-medium outline-none hover:bg-blue-700 transition-colors" onclick="openCustomLangPicker('targetLanguage')">
-                        <span id="disp-targetLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
+                    <button id="btnTargetLanguage" class="shrink-0 max-w-[100px] bg-blue-800/80 text-white text-xs rounded-lg border border-blue-500 p-2 flex items-center gap-1.5 backdrop-blur-sm font-medium outline-none hover:bg-blue-700 transition-colors" onclick="openCustomLangPicker('targetLanguage')">
+                        <!-- 언어 이름이 길면 ...으로 자르기 (truncate) -->
+                        <span id="disp-targetLanguage" class="truncate">🇺🇸 영어</span> 
+                        <!-- 화살표 아이콘 찌그러짐 방지 (shrink-0) -->
+                        <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70 shrink-0"></i>
                     </button>
                     
-                    <button class="w-10 h-10 rounded-lg bg-blue-800/80 hover:bg-blue-700 flex items-center justify-center transition-colors border border-blue-500 shadow-sm backdrop-blur-sm" onclick="toggleSettingsModal(true)">
+                    <!-- 톱니바퀴 설정 버튼: 동그란 모양 유지 (shrink-0) -->
+                    <button class="shrink-0 w-10 h-10 rounded-lg bg-blue-800/80 hover:bg-blue-700 flex items-center justify-center transition-colors border border-blue-500 shadow-sm backdrop-blur-sm" onclick="toggleSettingsModal(true)">
                         <i class="fa-solid fa-gear text-lg text-blue-100"></i>
                     </button>
                 </div>
