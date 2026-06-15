@@ -268,11 +268,10 @@
             </div>
 
             <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-3xl" style="padding-bottom: calc(env(safe-area-inset-bottom) + 20px);">
-                <div class="flex justify-between items-center gap-3">
-                    <button onclick="playAudiobook()" class="flex flex-col items-center justify-center w-16 h-14 rounded-2xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"><i class="fa-solid fa-repeat text-lg mb-1"></i><span class="text-[10px] font-bold">전체 듣기</span></button>
-                    <button onclick="startShadowing()" id="roleplayMicBtn" class="flex-1 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-105"><i class="fa-solid fa-microphone text-xl" id="roleplayMicIcon"></i> <span id="roleplayMicText">말하기 시작</span></button>
-                    <button onclick="startQuizMode()" class="flex flex-col items-center justify-center w-16 h-14 rounded-2xl bg-yellow-50 text-yellow-600 border border-yellow-200 hover:bg-yellow-100 transition-colors"><i class="fa-solid fa-gamepad text-lg mb-1"></i><span class="text-[10px] font-bold text-yellow-700">빈칸 퀴즈</span></button>
-                </div>
+                <button onclick="startShadowing()" id="roleplayMicBtn" class="w-full h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-[1.02]">
+                    <i class="fa-solid fa-microphone text-xl" id="roleplayMicIcon"></i> <span id="roleplayMicText">말하기 시작 (마이크)</span>
+                </button>
+            </div>
             </div>
         </div>
         <!-- 🌟 새롭게 추가된 커스텀 언어 팝업 (바텀 시트) -->
@@ -1044,7 +1043,7 @@
         let activeTestLineIdx = -1;
         let isInteractiveTestActive = false;
 
-        // 🌟 화면에 저장된 대본들을 예쁘게 그려주는 함수 (역순 + 테스트 버튼 추가)
+        // 🌟 화면에 저장된 대본들을 예쁘게 그려주는 함수
         function renderScripts() {
             const playerArea = document.getElementById("scriptList");
             playerArea.innerHTML = "";
@@ -1065,6 +1064,9 @@
                             <button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 transition-all flex items-center justify-center" title="실전 대화 테스트 시작">
                                 <i class="fa-solid fa-gamepad text-xs"></i>
                             </button>
+                            <button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm hover:bg-amber-50 transition-all flex items-center justify-center" title="빈칸 퀴즈 모드">
+                                <i class="fa-solid fa-puzzle-piece text-xs"></i>
+                            </button>
                         </div>
                     </div>
                     <div class="space-y-3">`;
@@ -1075,7 +1077,7 @@
                         <div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div>
                         <div class="flex-1">
                             <p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi?'AI 상대방':'나 (사용자)'}</p>
-                            <p class="text-sm font-bold text-gray-800">${line.en}</p>
+                            <p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all duration-300">${line.en}</p>
                             <p class="text-xs text-gray-500 mt-1">${line.ko}</p>
                             <div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div>
                         </div>
@@ -1091,6 +1093,54 @@
             const scrollArea = document.getElementById("scrollArea");
             if(scrollArea) scrollArea.scrollTop = 0;
         }
+
+        // ==========================================
+        // 🧩 5. 빈칸 퀴즈 시스템 (터치하면 보이는 마법!)
+        // ==========================================
+        window.toggleQuizMode = function(index) {
+            const btn = document.getElementById(`quiz-btn-${index}`);
+            const isQuizOn = btn.classList.contains('bg-amber-500');
+            const scriptData = savedScripts[index].scriptData;
+
+            if (!isQuizOn) {
+                // 퀴즈 켜기 (주황색 활성화)
+                btn.classList.replace('bg-white', 'bg-amber-500');
+                btn.classList.replace('text-amber-500', 'text-white');
+                
+                scriptData.forEach((line, lineIdx) => {
+                    const pTag = document.getElementById(`en-text-${index}-line-${lineIdx}`);
+                    if(!pTag) return;
+                    
+                    const words = line.en.split(" ");
+                    // 문장 길이에 따라 30% 정도의 단어를 랜덤으로 뽑음
+                    const numBlanks = Math.max(1, Math.floor(words.length * 0.3)); 
+                    let blankIndices = [];
+                    while(blankIndices.length < numBlanks && blankIndices.length < words.length) {
+                        let r = Math.floor(Math.random() * words.length);
+                        if(!blankIndices.includes(r)) blankIndices.push(r);
+                    }
+                    
+                    const newHtml = words.map((w, i) => {
+                        if(blankIndices.includes(i)) {
+                            // 회색 블록 처리 -> 터치 시 파란 글씨로 정답 공개!
+                            return `<span class="bg-slate-300 text-transparent rounded px-2 cursor-pointer transition-all hover:bg-slate-400 border border-slate-300 select-none" onclick="this.classList.remove('text-transparent', 'bg-slate-300', 'hover:bg-slate-400', 'border-slate-300'); this.classList.add('text-blue-600', 'bg-blue-50', 'font-extrabold', 'border-blue-200');">${w}</span>`;
+                        }
+                        return w;
+                    }).join(" ");
+                    
+                    pTag.innerHTML = newHtml;
+                });
+            } else {
+                // 퀴즈 끄기 (원래대로 글씨 싹 다 보이기)
+                btn.classList.replace('bg-amber-500', 'bg-white');
+                btn.classList.replace('text-white', 'text-amber-500');
+                
+                scriptData.forEach((line, lineIdx) => {
+                    const pTag = document.getElementById(`en-text-${index}-line-${lineIdx}`);
+                    if(pTag) pTag.innerHTML = line.en; 
+                });
+            }
+        };
 
         // ==========================================
         // 🎮 1. 실전 테스트 엔진
@@ -1319,6 +1369,22 @@
 
         // 앱이 켜질 때 초기화
         renderScripts();
+        // ==========================================
+        // 🎛️ 롤플레잉 메뉴(레벨/상황) 클릭 선택 복구
+        // ==========================================
+        document.querySelectorAll('.level-btn').forEach(btn => {
+            btn.onclick = (e) => { 
+                document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); 
+                e.currentTarget.classList.add('selected-card'); 
+            };
+        });
+
+        document.querySelectorAll('.sit-card').forEach(card => {
+            card.onclick = (e) => { 
+                document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); 
+                e.currentTarget.classList.add('selected-card'); 
+            };
+        });
 
     </script>
 </body>
