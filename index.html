@@ -203,20 +203,6 @@
                 </div>
             </div>
 
-            <!-- 🌟 새롭게 추가된 커스텀 언어 팝업 (바텀 시트) -->
-            <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
-                <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100" style="padding-bottom: calc(env(safe-area-inset-bottom) + 20px);">
-                    <div class="flex justify-between items-center mb-5">
-                        <h3 id="customLangTitle" class="text-xl font-extrabold text-slate-800">언어 선택</h3>
-                        <button onclick="closeCustomLangPicker()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                    <div id="customLangList" class="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto no-scrollbar">
-                    </div>
-                </div>
-            </div>
-
         </div>
 
         <!-- ======================================================= -->
@@ -285,7 +271,19 @@
                 </div>
             </div>
         </div>
-
+        <!-- 🌟 새롭게 추가된 커스텀 언어 팝업 (바텀 시트) -->
+            <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
+                <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
+                    <div class="flex justify-between items-center mb-5">
+                        <h3 id="customLangTitle" class="text-xl font-extrabold text-slate-800">언어 선택</h3>
+                        <button onclick="closeCustomLangPicker()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div id="customLangList" class="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto no-scrollbar">
+                    </div>
+                </div>
+            </div>
     </div>
 
     <!-- ======================================================= -->
@@ -345,7 +343,7 @@
                 rpDisp.innerHTML = `${langData.flag} ${langData.name}`;
             }
         };
-        
+
         // 앱 시작 시 버튼 글씨 맞추기
         updateLangDisplays();
 
