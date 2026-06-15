@@ -32,10 +32,8 @@
         
         .tooltip-arrow::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1f2937 transparent transparent transparent; }
         
-        /* 롤플레잉 및 단어장 UI 요소 스타일 */
         .selected-card { border-color: #3b82f6 !important; background-color: #eff6ff !important; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3) !important; transform: scale(1.02); }
 
-        /* 🌟 플래시 카드 3D 뒤집기 애니메이션 */
         .perspective-1000 { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
         .backface-hidden { backface-visibility: hidden; }
@@ -109,7 +107,7 @@
                             <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 border border-blue-100"><i class="fa-solid fa-microphone text-[10px]"></i></div>
                             <div>
                                 <p id="welcome_f1_title" class="font-bold text-slate-800 mb-0.5">실시간 음성 대화</p>
-                                <p id="welcome_f1_desc" class="text-slate-500">하단의 파란 마이크를 눌러 말해보세요. <b>대화형 튜터</b>와 <b>통번역</b> 모드를 지원합니다.</p>
+                                <p id="welcome_f1_desc" class="text-slate-500">하단의 파란 마이크를 눌러 말해보세요. 대화형 튜터와 통번역 모드를 지원합니다.</p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2">
@@ -123,7 +121,7 @@
                             <div class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-100"><i class="fa-solid fa-graduation-cap text-[10px]"></i></div>
                             <div>
                                 <p id="welcome_f3_title" class="font-bold text-slate-800 mb-0.5">원어민 발음 & 맞춤 해설</p>
-                                <p id="welcome_f3_desc" class="text-slate-500">선택한 단어만 원어민 발음으로 <b>다시 듣기(🔊)</b> 하거나, <b>집중 해설(💡)</b>을 받을 수 있습니다.</p>
+                                <p id="welcome_f3_desc" class="text-slate-500">선택한 단어만 원어민 발음으로 다시 듣기(🔊) 하거나, 집중 해설(💡)을 받을 수 있습니다.</p>
                             </div>
                         </div>
                     </div>
@@ -177,7 +175,7 @@
                 <div class="bg-white w-full max-w-[360px] rounded-3xl p-6 shadow-2xl relative transition-all border border-slate-100">
                     <h3 class="text-xl font-extrabold text-slate-800 mb-5 border-b border-slate-100 pb-3 flex items-center gap-2"><i class="fa-solid fa-gear text-slate-400"></i> <span id="settings_title_text">상세 설정</span></h3>
                     <div class="mb-6"><label id="set_font_size" class="block text-sm font-bold text-slate-700 mb-3">채팅 글자 크기</label><input type="range" id="fontSizeSlider" min="12" max="22" step="1" value="14" class="w-full accent-blue-600" oninput="document.documentElement.style.setProperty('--chat-font-size', this.value + 'px')"></div>
-                    <div class="mb-6"><label id="set_voice_gender" class="block text-sm font-bold text-slate-700 mb-3">AI 목소리 성별</label>
+                    <div class="mb-6"><label id="set_voice_gender" class="block text-sm font-bold text-slate-700 mb-3">AI 목소 성별</label>
                         <div class="flex bg-slate-100 p-1 rounded-xl">
                             <button id="genderFemaleBtn" class="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm" onclick="selectGender('female')">👩 <span id="gender_f_text">여성</span></button>
                             <button id="genderMaleBtn" class="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded-lg" onclick="selectGender('male')">👨 <span id="gender_m_text">남성</span></button>
@@ -373,10 +371,7 @@
     </div>
 
     <script type="module">
-        ['settingsModal', 'paywallModal', 'screen-roleplay', 'screen-vocab', 'screen-alphabet'].forEach(id => {
-            const elements = document.querySelectorAll('#' + id);
-            for (let i = 1; i < elements.length; i++) elements[i].remove(); 
-        });
+        // 지원하는 언어 목록
         const SUPPORTED_LANGUAGES = [
             { code: "ko-KR", name: "한국어", flag: "🇰🇷" }, { code: "en-US", name: "영어", flag: "🇺🇸" }, { code: "es-ES", name: "스페인어", flag: "🇪🇸" },
             { code: "ja-JP", name: "일본어", flag: "🇯🇵" }, { code: "zh-CN", name: "중국어", flag: "🇨🇳" }, { code: "th-TH", name: "태국어", flag: "🇹🇭" },
@@ -386,6 +381,254 @@
             { code: "de-DE", name: "독일어", flag: "🇩🇪" }, { code: "mn-MN", name: "몽골어", flag: "🇲🇳" }, { code: "bo-CN", name: "티베트어", flag: "🏔️" },
             { code: "pl-PL", name: "폴란드어", flag: "🇵🇱" }, { code: "sw-KE", name: "케냐어(스와힐리)", flag: "🇰🇪" }
         ];
+
+        // 🌐 글로벌 다국어 변환 사전
+        const UI_DICTIONARY = {
+            "ko": {
+                "main_subtitle": "Smart Language Partner",
+                "mic_warning_text": "브라우저 마이크 제한. '다른 브라우저로 열기'를 선택해 주세요.",
+                "ai_engine_label": "AI Engine",
+                "premium_title": "프리미엄 무제한 구독",
+                "premium_desc": "월 4,500원(VAT 포함)으로 무제한 학습하세요!",
+                "welcome_title": "당신의 AI 튜터입니다.",
+                "welcome_f1_title": "실시간 음성 대화",
+                "welcome_f1_desc": "하단의 파란 마이크를 눌러 말해보세요. 대화형 튜터와 통번역 모드를 지원합니다.",
+                "welcome_f2_title": "스마트 단어 선택",
+                "welcome_f2_desc": "말풍선 속 텍스트를 터치하여 구간을 선택하면 숨겨진 메뉴가 나타납니다.",
+                "welcome_f3_title": "원어민 발음 & 맞춤 해설",
+                "welcome_f3_desc": "선택한 단어만 원어민 발음으로 다시 듣기(🔊) 하거나, 집중 해설(💡)을 받을 수 있습니다.",
+                "appMode_tutor": "🎓 대화형 튜터",
+                "appMode_translate": "🌐 통번역 모드",
+                "textInputPlaceholder": "마이크가 안 될 때는 직접 입력해 보세요...",
+                "expGlobalBtnText": "과외 해설",
+                "header_room2": "🎬 상황별 롤플레잉",
+                "rp_level_text": "1. 레벨 선택",
+                "rp_lv1": "입문", "rp_lv2": "초급", "rp_lv3": "중급", "rp_lv4": "원어민",
+                "rp_sit_text": "2. 상황 선택",
+                "rp_sit1": "🎲 일상 랜덤", "rp_sit2": "☕ 카페 주문", "rp_sit3": "🍽️ 음식점",
+                "rp_sit4": "🛂 입국 심사", "rp_sit5": "🛍️ 옷 쇼핑", "rp_sit6": "🚕 택시 탑승",
+                "generateBtn": "✨ AI 대본 생성하기",
+                "statusBoxTitle": "상황 설명",
+                "statusBoxText": "레벨과 상황을 선택한 후 [AI 대본 생성하기]를 눌러주세요!",
+                "roleplayMicText": "말하기 시작 (마이크)",
+                "rp_save_count": "현재 {n}개의 대본이 보관되어 있습니다.",
+                "rp_ai": "AI 상대방", "rp_user": "나",
+                "header_room3": "📝 나만의 단어장",
+                "vc_theme1": "✈️ 여행 필수", "vc_theme2": "💼 비즈니스",
+                "vc_theme3": "❤️ 연애/감정", "vc_theme4": "🍽️ 식당/카페",
+                "generateVocabBtn": "✨ AI 단어장 생성하기",
+                "vc_select": "단어를 선택하세요",
+                "vc_flip_hint": "터치해서 뒤집기",
+                "vc_listen_btn": "원어민 듣기",
+                "vc_empty_text": "위 버튼을 눌러 첫 단어장을 생성해 보세요!",
+                "header_room4": "🔤 왕초보 기초 발음",
+                "generateAlphaBtn": "✨ 선택한 언어의 AI 파닉스 가져오기",
+                "alpha_desc": "언어의 뼈대가 되는 기본 글자와 발음을 익혀보세요! 글자를 누르면 원어민 소리가 납니다.",
+                "alpha_empty_text": "위 버튼을 눌러 기초 글자를 가져와 보세요!",
+                "alpha_fetching": "AI가 전체 문자와 파닉스 단어를 매칭하고 있습니다...",
+                "settings_title_text": "상세 설정",
+                "set_font_size": "채팅 글자 크기",
+                "set_voice_gender": "AI 목소리 성별",
+                "gender_f_text": "여성", "gender_m_text": "남성",
+                "set_exp_lang": "과외 해설 언어",
+                "settings_close": "닫기", "settings_save": "저장",
+                "pw_title": "튜터링 종료",
+                "paywallReasonText": "무료 튜터링 대화를 모두 소진하셨습니다.",
+                "pw_upgrade_text": "프리미엄 결제하기",
+                "picker_target": "학습할 언어 선택",
+                "picker_stt": "내 음성 언어 선택",
+                "picker_exp": "해설 언어 선택"
+            },
+            "en": {
+                "main_subtitle": "Smart Language Partner",
+                "mic_warning_text": "Mic restricted by browser. Please select 'Open in another browser'.",
+                "ai_engine_label": "AI Engine",
+                "premium_title": "Premium Unlimited Subscription",
+                "premium_desc": "Learn unlimited for $4.99/month!",
+                "welcome_title": "I am your AI Tutor.",
+                "welcome_f1_title": "Live Voice Chat",
+                "welcome_f1_desc": "Tap the mic icon below to speak. We support Chat Tutor and Translate Mode.",
+                "welcome_f2_title": "Smart Word Selection",
+                "welcome_f2_desc": "Tap text in the speech bubbles to select words and open hidden menus.",
+                "welcome_f3_title": "Native Pronunciation & Explanation",
+                "welcome_f3_desc": "Listen to the selected words in native pronunciation (🔊) or get detailed explanations (💡).",
+                "appMode_tutor": "🎓 Chat Tutor",
+                "appMode_translate": "🌐 Translate Mode",
+                "textInputPlaceholder": "Type a message here...",
+                "expGlobalBtnText": "Tutor Explain",
+                "header_room2": "🎬 Situational Roleplay",
+                "rp_level_text": "1. Select Level",
+                "rp_lv1": "Beginner", "rp_lv2": "Basic", "rp_lv3": "Intermediate", "rp_lv4": "Native",
+                "rp_sit_text": "2. Select Situation",
+                "rp_sit1": "🎲 Random Daily", "rp_sit2": "☕ Cafe Order", "rp_sit3": "🍽️ Restaurant",
+                "rp_sit4": "🛂 Immigration", "rp_sit5": "🛍️ Clothes Shop", "rp_sit6": "🚕 Take a Taxi",
+                "generateBtn": "✨ Generate AI Script",
+                "statusBoxTitle": "Situation Info",
+                "statusBoxText": "Please select a level and situation, then press [Generate AI Script]!",
+                "roleplayMicText": "Start Speaking (Mic)",
+                "rp_save_count": "{n} scripts are currently saved.",
+                "rp_ai": "AI Partner", "rp_user": "Me",
+                "header_room3": "📝 My Vocabulary",
+                "vc_theme1": "✈️ Travel", "vc_theme2": "💼 Business",
+                "vc_theme3": "❤️ Romance", "vc_theme4": "🍽️ Dining/Cafe",
+                "generateVocabBtn": "✨ Generate AI Vocab",
+                "vc_select": "Select a word",
+                "vc_flip_hint": "Tap to flip",
+                "vc_listen_btn": "Native Audio",
+                "vc_empty_text": "Tap the button above to generate your first vocab list!",
+                "header_room4": "🔤 Basic Phonics",
+                "generateAlphaBtn": "✨ Get AI Phonics",
+                "alpha_desc": "Learn the foundational letters and sounds! Tap the letters to hear native pronunciation.",
+                "alpha_empty_text": "Tap the button above to fetch basic phonics!",
+                "alpha_fetching": "AI is fetching letters and phonics...",
+                "settings_title_text": "Settings",
+                "set_font_size": "Chat Font Size",
+                "set_voice_gender": "AI Voice Gender",
+                "gender_f_text": "Female", "gender_m_text": "Male",
+                "set_exp_lang": "Tutor Language",
+                "settings_close": "Close", "settings_save": "Save",
+                "pw_title": "Tutoring Ended",
+                "paywallReasonText": "You have exhausted your free tutoring conversations.",
+                "pw_upgrade_text": "Upgrade to Premium",
+                "picker_target": "Select Target Language",
+                "picker_stt": "Select Voice Input Language",
+                "picker_exp": "Select Tutor Language"
+            },
+            "ja": {
+                "main_subtitle": "Smart Language Partner",
+                "mic_warning_text": "マイクが制限されています。「別のブラウザで開く」を選択してください。",
+                "ai_engine_label": "AI Engine",
+                "premium_title": "プレミアム無制限購読",
+                "premium_desc": "月額4,500円(税込)で無制限に学習！",
+                "welcome_title": "あなたのAIチューターです。",
+                "welcome_f1_title": "リアルタイム音声会話",
+                "welcome_f1_desc": "下のマイクを押して話してください。対話型チューターと通翻訳モードをサポートします。",
+                "welcome_f2_title": "スマート単語選択",
+                "welcome_f2_desc": "吹き出しのテキストをタッチして区間を選択すると、隠しメニューが現れます。",
+                "welcome_f3_title": "ネイティブ発音＆カスタム解説",
+                "welcome_f3_desc": "選択した単語だけをネイティブ発音で再度聞く(🔊)か、集中解説(💡)を受けることができます。",
+                "appMode_tutor": "🎓 対話型チューター",
+                "appMode_translate": "🌐 通翻訳モード",
+                "textInputPlaceholder": "直接入力してください...",
+                "expGlobalBtnText": "家庭教師の解説",
+                "header_room2": "🎬 状況別ロールプレイ",
+                "rp_level_text": "1. レベル選択",
+                "rp_lv1": "入門", "rp_lv2": "初級", "rp_lv3": "中級", "rp_lv4": "ネイティブ",
+                "rp_sit_text": "2. 状況選択",
+                "rp_sit1": "🎲 日常ランダム", "rp_sit2": "☕ カフェ注文", "rp_sit3": "🍽️ レストラン",
+                "rp_sit4": "🛂 入国審査", "rp_sit5": "🛍️ 服の買い物", "rp_sit6": "🚕 タクシー乗車",
+                "generateBtn": "✨ AI台本を作成",
+                "statusBoxTitle": "状況説明",
+                "statusBoxText": "レベルと状況を選択し、[AI台本を作成]を押してください！",
+                "roleplayMicText": "話す (マイク)",
+                "rp_save_count": "現在 {n} 個の台本が保存されています。",
+                "rp_ai": "AI 相手", "rp_user": "私",
+                "header_room3": "📝 私の単語帳",
+                "vc_theme1": "✈️ 旅行必須", "vc_theme2": "💼 ビジネス",
+                "vc_theme3": "❤️ 恋愛/感情", "vc_theme4": "🍽️ 食堂/カフェ",
+                "generateVocabBtn": "✨ AI単語帳を作成",
+                "vc_select": "単語を選択",
+                "vc_flip_hint": "タッチして裏返す",
+                "vc_listen_btn": "ネイティブ音声",
+                "vc_empty_text": "上のボタンを押して単語帳を作成してください！",
+                "header_room4": "🔤 超初心者発音",
+                "generateAlphaBtn": "✨ AIフォニックス取得",
+                "alpha_desc": "言語の骨組みとなる基本文字と発音を学びましょう！文字を押すとネイティブの音が鳴ります。",
+                "alpha_empty_text": "上のボタンを押して文字データを取得してください！",
+                "alpha_fetching": "AIが文字とフォニックスをマッチングしています...",
+                "settings_title_text": "環境設定",
+                "set_font_size": "チャット文字サイズ",
+                "set_voice_gender": "AI音声の性別",
+                "gender_f_text": "女性", "gender_m_text": "男性",
+                "set_exp_lang": "解説言語",
+                "settings_close": "閉じる", "settings_save": "保存",
+                "pw_title": "チュータリング終了",
+                "paywallReasonText": "無料会話回数をすべて使い切りました。",
+                "pw_upgrade_text": "プレミアム決済",
+                "picker_target": "学習する言語を選択",
+                "picker_stt": "音声入力言語を選択",
+                "picker_exp": "解説言語を選択"
+            },
+            "zh": {
+                "main_subtitle": "Smart Language Partner",
+                "mic_warning_text": "浏览器麦克风受限，请选择“在其他浏览器中打开”。",
+                "ai_engine_label": "AI Engine",
+                "premium_title": "高级无限制订阅",
+                "premium_desc": "每月享受无限制学习！",
+                "welcome_title": "我是你的AI导师。",
+                "welcome_f1_title": "实时语音对话",
+                "welcome_f1_desc": "点击底部的蓝色麦克风开始说话。支持对话导师和同声传译模式。",
+                "welcome_f2_title": "智能单词选择",
+                "welcome_f2_desc": "触摸气泡中的文本选择词句，即可显示隐藏菜单。",
+                "welcome_f3_title": "母语发音与深度解析",
+                "welcome_f3_desc": "你可以通过母语发音重听所选单词(🔊)，或获取详细解析(💡)。",
+                "appMode_tutor": "🎓 对话导师",
+                "appMode_translate": "🌐 同传翻译",
+                "textInputPlaceholder": "请在这里输入...",
+                "expGlobalBtnText": "家教解析",
+                "header_room2": "🎬 情景角色扮演",
+                "rp_level_text": "1. 选择等级",
+                "rp_lv1": "入门", "rp_lv2": "初级", "rp_lv3": "中级", "rp_lv4": "母语",
+                "rp_sit_text": "2. 选择情景",
+                "rp_sit1": "🎲 日常随机", "rp_sit2": "☕ 咖啡馆点单", "rp_sit3": "🍽️ 餐厅",
+                "rp_sit4": "🛂 入境审查", "rp_sit5": "🛍️ 买衣服", "rp_sit6": "🚕 乘出租车",
+                "generateBtn": "✨ 生成 AI 剧本",
+                "statusBoxTitle": "情景说明",
+                "statusBoxText": "选择等级和情景后，请点击 [生成 AI 剧本]！",
+                "roleplayMicText": "开始说话 (麦克风)",
+                "rp_save_count": "当前已保存 {n} 个剧本。",
+                "rp_ai": "AI 对方", "rp_user": "我",
+                "header_room3": "📝 我的单词本",
+                "vc_theme1": "✈️ 旅游必备", "vc_theme2": "💼 商务",
+                "vc_theme3": "❤️ 恋爱/情感", "vc_theme4": "🍽️ 餐厅/咖啡馆",
+                "generateVocabBtn": "✨ 生成 AI 单词本",
+                "vc_select": "请选择单词",
+                "vc_flip_hint": "点击翻转",
+                "vc_listen_btn": "母语发音",
+                "vc_empty_text": "点击上方按钮生成第一个单词本！",
+                "header_room4": "🔤 零基础发音",
+                "generateAlphaBtn": "✨ 获取 AI 发音",
+                "alpha_desc": "学习语言的基础字母和发音！点击字母即可听到母语发音。",
+                "alpha_empty_text": "点击上方按钮获取基础字母数据！",
+                "alpha_fetching": "AI正在匹配字母和发音...",
+                "settings_title_text": "详细设置",
+                "set_font_size": "聊天字体大小",
+                "set_voice_gender": "AI 语音性别",
+                "gender_f_text": "女性", "gender_m_text": "男性",
+                "set_exp_lang": "家教解析语言",
+                "settings_close": "关闭", "settings_save": "保存",
+                "pw_title": "辅导结束",
+                "paywallReasonText": "您的免费对话次数已用完。",
+                "pw_upgrade_text": "升级到高级版",
+                "picker_target": "选择学习语言",
+                "picker_stt": "选择语音输入语言",
+                "picker_exp": "选择解析语言"
+            }
+        };
+
+        window.changeUILanguage = function(langCode) {
+            const baseLang = langCode.split('-')[0];
+            const currentDict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+            
+            for (const [id, text] of Object.entries(currentDict)) {
+                const element = document.getElementById(id);
+                if (element) {
+                    if (id === "textInputPlaceholder") {
+                        document.getElementById("textInput").placeholder = text;
+                    } else {
+                        element.innerText = text;
+                    }
+                }
+            }
+
+            const tutorOpt = document.querySelector("#appMode option[value='tutor']");
+            const transOpt = document.querySelector("#appMode option[value='translate']");
+            if (tutorOpt) tutorOpt.text = currentDict["appMode_tutor"];
+            if (transOpt) transOpt.text = currentDict["appMode_translate"];
+
+            window.renderScripts();
+            window.renderVocabs();
+        };
 
         function renderLanguageSelects() {
             const optionsHtml = SUPPORTED_LANGUAGES.map(lang => `<option value="${lang.code}" data-lang-name="${lang.name}">${lang.flag} ${lang.name}</option>`).join('');
@@ -1142,253 +1385,6 @@
             utt.pitch = 1.1; 
             utt.rate = 0.85; 
             window.speechSynthesis.speak(utt);
-        };
-
-        const UI_DICTIONARY = {
-            "ko": {
-                "main_subtitle": "Smart Language Partner",
-                "mic_warning_text": "브라우저 마이크 제한. '다른 브라우저로 열기'를 선택해 주세요.",
-                "ai_engine_label": "AI Engine",
-                "premium_title": "프리미엄 무제한 구독",
-                "premium_desc": "월 4,500원(VAT 포함)으로 무제한 학습하세요!",
-                "welcome_title": "당신의 AI 튜터입니다.",
-                "welcome_f1_title": "실시간 음성 대화",
-                "welcome_f1_desc": "하단의 파란 마이크를 눌러 말해보세요. 대화형 튜터와 통번역 모드를 지원합니다.",
-                "welcome_f2_title": "스마트 단어 선택",
-                "welcome_f2_desc": "말풍선 속 텍스트를 터치하여 구간을 선택하면 숨겨진 메뉴가 나타납니다.",
-                "welcome_f3_title": "원어민 발음 & 맞춤 해설",
-                "welcome_f3_desc": "선택한 단어만 원어민 발음으로 다시 듣기(🔊) 하거나, 집중 해설(💡)을 받을 수 있습니다.",
-                "appMode_tutor": "🎓 대화형 튜터",
-                "appMode_translate": "🌐 통번역 모드",
-                "textInputPlaceholder": "마이크가 안 될 때는 직접 입력해 보세요...",
-                "expGlobalBtnText": "과외 해설",
-                "header_room2": "🎬 상황별 롤플레잉",
-                "rp_level_text": "1. 레벨 선택",
-                "rp_lv1": "입문", "rp_lv2": "초급", "rp_lv3": "중급", "rp_lv4": "원어민",
-                "rp_sit_text": "2. 상황 선택",
-                "rp_sit1": "🎲 일상 랜덤", "rp_sit2": "☕ 카페 주문", "rp_sit3": "🍽️ 음식점",
-                "rp_sit4": "🛂 입국 심사", "rp_sit5": "🛍️ 옷 쇼핑", "rp_sit6": "🚕 택시 탑승",
-                "generateBtn": "✨ AI 대본 생성하기",
-                "statusBoxTitle": "상황 설명",
-                "statusBoxText": "레벨과 상황을 선택한 후 [AI 대본 생성하기]를 눌러주세요!",
-                "roleplayMicText": "말하기 시작 (마이크)",
-                "rp_save_count": "현재 {n}개의 대본이 보관되어 있습니다.",
-                "rp_ai": "AI 상대방", "rp_user": "나",
-                "header_room3": "📝 나만의 단어장",
-                "vc_theme1": "✈️ 여행 필수", "vc_theme2": "💼 비즈니스",
-                "vc_theme3": "❤️ 연애/감정", "vc_theme4": "🍽️ 식당/카페",
-                "generateVocabBtn": "✨ AI 단어장 생성하기",
-                "vc_select": "단어를 선택하세요",
-                "vc_flip_hint": "터치해서 뒤집기",
-                "vc_listen_btn": "원어민 듣기",
-                "vc_empty_text": "위 버튼을 눌러 첫 단어장을 생성해 보세요!",
-                "header_room4": "🔤 왕초보 기초 발음",
-                "generateAlphaBtn": "✨ 선택한 언어의 AI 파닉스 가져오기",
-                "alpha_desc": "언어의 뼈대가 되는 기본 글자와 발음을 익혀보세요! 글자를 누르면 원어민 소리가 납니다.",
-                "alpha_empty_text": "위 버튼을 눌러 기초 글자를 가져와 보세요!",
-                "alpha_fetching": "AI가 전체 문자와 파닉스 단어를 매칭하고 있습니다...",
-                "settings_title_text": "상세 설정",
-                "set_font_size": "채팅 글자 크기",
-                "set_voice_gender": "AI 목소리 성별",
-                "gender_f_text": "여성", "gender_m_text": "남성",
-                "set_exp_lang": "과외 해설 언어",
-                "settings_close": "닫기", "settings_save": "저장",
-                "pw_title": "튜터링 종료",
-                "paywallReasonText": "무료 튜터링 대화를 모두 소진하셨습니다.",
-                "pw_upgrade_text": "프리미엄 결제하기",
-                "picker_target": "학습할 언어 선택",
-                "picker_stt": "내 음성 언어 선택",
-                "picker_exp": "해설 언어 선택"
-            },
-            "en": {
-                "main_subtitle": "Smart Language Partner",
-                "mic_warning_text": "Mic restricted by browser. Please select 'Open in another browser'.",
-                "ai_engine_label": "AI Engine",
-                "premium_title": "Premium Unlimited Subscription",
-                "premium_desc": "Learn unlimited for $4.99/month!",
-                "welcome_title": "I am your AI Tutor.",
-                "welcome_f1_title": "Live Voice Chat",
-                "welcome_f1_desc": "Tap the mic icon below to speak. We support Chat Tutor and Translate Mode.",
-                "welcome_f2_title": "Smart Word Selection",
-                "welcome_f2_desc": "Tap text in the speech bubbles to select words and open hidden menus.",
-                "welcome_f3_title": "Native Pronunciation & Explanation",
-                "welcome_f3_desc": "Listen to the selected words in native pronunciation (🔊) or get detailed explanations (💡).",
-                "appMode_tutor": "🎓 Chat Tutor",
-                "appMode_translate": "🌐 Translate Mode",
-                "textInputPlaceholder": "Type a message here...",
-                "expGlobalBtnText": "Tutor Explain",
-                "header_room2": "🎬 Situational Roleplay",
-                "rp_level_text": "1. Select Level",
-                "rp_lv1": "Beginner", "rp_lv2": "Basic", "rp_lv3": "Intermediate", "rp_lv4": "Native",
-                "rp_sit_text": "2. Select Situation",
-                "rp_sit1": "🎲 Random Daily", "rp_sit2": "☕ Cafe Order", "rp_sit3": "🍽️ Restaurant",
-                "rp_sit4": "🛂 Immigration", "rp_sit5": "🛍️ Clothes Shop", "rp_sit6": "🚕 Take a Taxi",
-                "generateBtn": "✨ Generate AI Script",
-                "statusBoxTitle": "Situation Info",
-                "statusBoxText": "Please select a level and situation, then press [Generate AI Script]!",
-                "roleplayMicText": "Start Speaking (Mic)",
-                "rp_save_count": "{n} scripts are currently saved.",
-                "rp_ai": "AI Partner", "rp_user": "Me",
-                "header_room3": "📝 My Vocabulary",
-                "vc_theme1": "✈️ Travel", "vc_theme2": "💼 Business",
-                "vc_theme3": "❤️ Romance", "vc_theme4": "🍽️ Dining/Cafe",
-                "generateVocabBtn": "✨ Generate AI Vocab",
-                "vc_select": "Select a word",
-                "vc_flip_hint": "Tap to flip",
-                "vc_listen_btn": "Native Audio",
-                "vc_empty_text": "Tap the button above to generate your first vocab list!",
-                "header_room4": "🔤 Basic Phonics",
-                "generateAlphaBtn": "✨ Get AI Phonics",
-                "alpha_desc": "Learn the foundational letters and sounds! Tap the letters to hear native pronunciation.",
-                "alpha_empty_text": "Tap the button above to fetch basic phonics!",
-                "alpha_fetching": "AI is fetching letters and phonics...",
-                "settings_title_text": "Settings",
-                "set_font_size": "Chat Font Size",
-                "set_voice_gender": "AI Voice Gender",
-                "gender_f_text": "Female", "gender_m_text": "Male",
-                "set_exp_lang": "Tutor Language",
-                "settings_close": "Close", "settings_save": "Save",
-                "pw_title": "Tutoring Ended",
-                "paywallReasonText": "You have exhausted your free tutoring conversations.",
-                "pw_upgrade_text": "Upgrade to Premium",
-                "picker_target": "Select Target Language",
-                "picker_stt": "Select Voice Input Language",
-                "picker_exp": "Select Tutor Language"
-            },
-            "ja": {
-                "main_subtitle": "Smart Language Partner",
-                "mic_warning_text": "マイクが制限されています。「別のブラウザで開く」を選択してください。",
-                "ai_engine_label": "AI Engine",
-                "premium_title": "プレミアム無制限購読",
-                "premium_desc": "月額4,500円(税込)で無制限に学習！",
-                "welcome_title": "あなたのAIチューターです。",
-                "welcome_f1_title": "リアルタイム音声会話",
-                "welcome_f1_desc": "下のマイクを押して話してください。対話型チューターと通翻訳モードをサポートします。",
-                "welcome_f2_title": "スマート単語選択",
-                "welcome_f2_desc": "吹き出しのテキストをタッチして区間を選択すると、隠しメニューが現れます。",
-                "welcome_f3_title": "ネイティブ発音＆カスタム解説",
-                "welcome_f3_desc": "選択した単語だけをネイティブ発音で再度聞く(🔊)か、集中解説(💡)を受けることができます。",
-                "appMode_tutor": "🎓 対話型チューター",
-                "appMode_translate": "🌐 通翻訳モード",
-                "textInputPlaceholder": "直接入力してください...",
-                "expGlobalBtnText": "家庭教師の解説",
-                "header_room2": "🎬 状況別ロールプレイ",
-                "rp_level_text": "1. レベル選択",
-                "rp_lv1": "入門", "rp_lv2": "初級", "rp_lv3": "中級", "rp_lv4": "ネイティブ",
-                "rp_sit_text": "2. 状況選択",
-                "rp_sit1": "🎲 日常ランダム", "rp_sit2": "☕ カフェ注文", "rp_sit3": "🍽️ レストラン",
-                "rp_sit4": "🛂 入国審査", "rp_sit5": "🛍️ 服の買い物", "rp_sit6": "🚕 タクシー乗車",
-                "generateBtn": "✨ AI台本を作成",
-                "statusBoxTitle": "状況説明",
-                "statusBoxText": "レベルと状況を選択し、[AI台本を作成]を押してください！",
-                "roleplayMicText": "話す (マイク)",
-                "rp_save_count": "現在 {n} 個の台本が保存されています。",
-                "rp_ai": "AI 相手", "rp_user": "私",
-                "header_room3": "📝 私の単語帳",
-                "vc_theme1": "✈️ 旅行必須", "vc_theme2": "💼 ビジネス",
-                "vc_theme3": "❤️ 恋愛/感情", "vc_theme4": "🍽️ 食堂/カフェ",
-                "generateVocabBtn": "✨ AI単語帳を作成",
-                "vc_select": "単語を選択",
-                "vc_flip_hint": "タッチして裏返す",
-                "vc_listen_btn": "ネイティブ音声",
-                "vc_empty_text": "上のボタンを押して単語帳を作成してください！",
-                "header_room4": "🔤 超初心者発音",
-                "generateAlphaBtn": "✨ AIフォニックス取得",
-                "alpha_desc": "言語の骨組みとなる基本文字と発音を学びましょう！文字を押すとネイティブの音が鳴ります。",
-                "alpha_empty_text": "上のボタンを押して文字データを取得してください！",
-                "alpha_fetching": "AIが文字とフォニックスをマッチングしています...",
-                "settings_title_text": "環境設定",
-                "set_font_size": "チャット文字サイズ",
-                "set_voice_gender": "AI音声の性別",
-                "gender_f_text": "女性", "gender_m_text": "男性",
-                "set_exp_lang": "解説言語",
-                "settings_close": "閉じる", "settings_save": "保存",
-                "pw_title": "チュータリング終了",
-                "paywallReasonText": "無料会話回数をすべて使い切りました。",
-                "pw_upgrade_text": "プレミアム決済",
-                "picker_target": "学習する言語を選択",
-                "picker_stt": "音声入力言語を選択",
-                "picker_exp": "解説言語を選択"
-            },
-            "zh": {
-                "main_subtitle": "Smart Language Partner",
-                "mic_warning_text": "浏览器麦克风受限，请选择“在其他浏览器中打开”。",
-                "ai_engine_label": "AI Engine",
-                "premium_title": "高级无限制订阅",
-                "premium_desc": "每月享受无限制学习！",
-                "welcome_title": "我是你的AI导师。",
-                "welcome_f1_title": "实时语音对话",
-                "welcome_f1_desc": "点击底部的蓝色麦克风开始说话。支持对话导师和同声传译模式。",
-                "welcome_f2_title": "智能单词选择",
-                "welcome_f2_desc": "触摸气泡中的文本选择词句，即可显示隐藏菜单。",
-                "welcome_f3_title": "母语发音与深度解析",
-                "welcome_f3_desc": "你可以通过母语发音重听所选单词(🔊)，或获取详细解析(💡)。",
-                "appMode_tutor": "🎓 对话导师",
-                "appMode_translate": "🌐 同传翻译",
-                "textInputPlaceholder": "请在这里输入...",
-                "expGlobalBtnText": "家教解析",
-                "header_room2": "🎬 情景角色扮演",
-                "rp_level_text": "1. 选择等级",
-                "rp_lv1": "入门", "rp_lv2": "初级", "rp_lv3": "中级", "rp_lv4": "母语",
-                "rp_sit_text": "2. 选择情景",
-                "rp_sit1": "🎲 日常随机", "rp_sit2": "☕ 咖啡馆点单", "rp_sit3": "🍽️ 餐厅",
-                "rp_sit4": "🛂 入境审查", "rp_sit5": "🛍️ 买衣服", "rp_sit6": "🚕 乘出租车",
-                "generateBtn": "✨ 生成 AI 剧本",
-                "statusBoxTitle": "情景说明",
-                "statusBoxText": "选择等级和情景后，请点击 [生成 AI 剧本]！",
-                "roleplayMicText": "开始说话 (麦克风)",
-                "rp_save_count": "当前已保存 {n} 个剧本。",
-                "rp_ai": "AI 对方", "rp_user": "我",
-                "header_room3": "📝 我的单词本",
-                "vc_theme1": "✈️ 旅游必备", "vc_theme2": "💼 商务",
-                "vc_theme3": "❤️ 恋爱/情感", "vc_theme4": "🍽️ 餐厅/咖啡馆",
-                "generateVocabBtn": "✨ 生成 AI 单词本",
-                "vc_select": "请选择单词",
-                "vc_flip_hint": "点击翻转",
-                "vc_listen_btn": "母语发音",
-                "vc_empty_text": "点击上方按钮生成第一个单词本！",
-                "header_room4": "🔤 零基础发音",
-                "generateAlphaBtn": "✨ 获取 AI 发音",
-                "alpha_desc": "学习语言的基础字母和发音！点击字母即可听到母语发音。",
-                "alpha_empty_text": "点击上方按钮获取基础字母数据！",
-                "alpha_fetching": "AI正在匹配字母和发音...",
-                "settings_title_text": "详细设置",
-                "set_font_size": "聊天字体大小",
-                "set_voice_gender": "AI 语音性别",
-                "gender_f_text": "女性", "gender_m_text": "男性",
-                "set_exp_lang": "家教解析语言",
-                "settings_close": "关闭", "settings_save": "保存",
-                "pw_title": "辅导结束",
-                "paywallReasonText": "您的免费对话次数已用完。",
-                "pw_upgrade_text": "升级到高级版",
-                "picker_target": "选择学习语言",
-                "picker_stt": "选择语音输入语言",
-                "picker_exp": "选择解析语言"
-            }
-        };
-
-        window.changeUILanguage = function(langCode) {
-            const baseLang = langCode.split('-')[0];
-            const currentDict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-            
-            for (const [id, text] of Object.entries(currentDict)) {
-                const element = document.getElementById(id);
-                if (element) {
-                    if (id === "textInputPlaceholder") {
-                        document.getElementById("textInput").placeholder = text;
-                    } else {
-                        element.innerText = text;
-                    }
-                }
-            }
-
-            const tutorOpt = document.querySelector("#appMode option[value='tutor']");
-            const transOpt = document.querySelector("#appMode option[value='translate']");
-            if (tutorOpt) tutorOpt.text = currentDict["appMode_tutor"];
-            if (transOpt) transOpt.text = currentDict["appMode_translate"];
-
-            window.renderScripts();
-            window.renderVocabs();
         };
 
         window.addEventListener('DOMContentLoaded', () => {
