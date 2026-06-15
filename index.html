@@ -1039,14 +1039,18 @@
         let currentPlayingIndex = 0, isPlayMode = false;
         let roleplayRec = null, isRpListening = false;
 
-        // 🌟 화면에 저장된 대본들을 예쁘게 그려주는 함수 (최신 대본이 맨 위로!)
+        // 🌟 실전 테스트 모드를 관리하는 변수들
+        let activeTestScriptIdx = -1;
+        let activeTestLineIdx = -1;
+        let isInteractiveTestActive = false;
+
+        // 🌟 화면에 저장된 대본들을 예쁘게 그려주는 함수 (역순 + 테스트 버튼 추가)
         function renderScripts() {
             const playerArea = document.getElementById("scriptList");
             playerArea.innerHTML = "";
             
             if(savedScripts.length === 0) return;
 
-            // 💡 핵심 마법: 배열의 맨 끝(최신)부터 시작해서 거꾸로 화면에 그려줍니다!
             for (let i = savedScripts.length - 1; i >= 0; i--) {
                 const scriptItem = savedScripts[i];
                 let html = `<div class="mb-5">
@@ -1054,35 +1058,116 @@
                         <p class="text-[11px] font-extrabold text-indigo-700">
                             📚 ${i + 1}번 대본: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})
                         </p>
-                        <button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm hover:bg-indigo-100 transition-all flex items-center justify-center">
-                            <i class="fa-solid fa-volume-high text-xs"></i>
-                        </button>
+                        <div class="flex gap-1.5">
+                            <button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm hover:bg-indigo-100 transition-all flex items-center justify-center" title="전체 듣기">
+                                <i class="fa-solid fa-volume-high text-xs"></i>
+                            </button>
+                            <button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 transition-all flex items-center justify-center" title="실전 대화 테스트 시작">
+                                <i class="fa-solid fa-gamepad text-xs"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="space-y-3">`;
 
-                scriptItem.scriptData.forEach(line => {
+                scriptItem.scriptData.forEach((line, lineIdx) => {
                     const isAi = line.role === 'ai';
-                    html += `<div class="flex gap-3 p-2 rounded-lg border border-transparent"><div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div><div><p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi?'AI 상대방':'나 (사용자)'}</p><p class="text-sm font-bold text-gray-800">${line.en}</p><p class="text-xs text-gray-500 mt-1">${line.ko}</p></div></div>`;
+                    html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all duration-300">
+                        <div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div>
+                        <div class="flex-1">
+                            <p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi?'AI 상대방':'나 (사용자)'}</p>
+                            <p class="text-sm font-bold text-gray-800">${line.en}</p>
+                            <p class="text-xs text-gray-500 mt-1">${line.ko}</p>
+                            <div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div>
+                        </div>
+                    </div>`;
                 });
                 
                 html += `</div></div>`;
-                
-                // 마지막 항목(제일 오래된 1번 대본) 밑에는 점선을 그리지 않게 조절
                 if(i > 0) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
-                
                 playerArea.insertAdjacentHTML('beforeend', html);
             }
             
             document.getElementById("statusBoxText").innerText = `현재 ${savedScripts.length}개의 대본이 보관되어 있습니다.`;
-            
-            // 🌟 새로운 대본이 생성되어 그려졌을 때, 화면 스크롤을 맨 위로 촥! 올려줍니다
             const scrollArea = document.getElementById("scrollArea");
             if(scrollArea) scrollArea.scrollTop = 0;
         }
 
-        // 🌟 특정 대본만 골라서 읽어주는 새로운 함수
+        // ==========================================
+        // 🎮 1. 실전 테스트 엔진
+        // ==========================================
+        window.startInteractiveTest = function(index) {
+            if (isPlayMode) { window.speechSynthesis.cancel(); isPlayMode = false; }
+            
+            activeTestScriptIdx = index;
+            activeTestLineIdx = 0;
+            isInteractiveTestActive = true;
+            
+            // 피드백 초기화 및 하이라이트 제거
+            const scriptData = savedScripts[index].scriptData;
+            for(let i=0; i<scriptData.length; i++) {
+                const fb = document.getElementById(`feedback-${index}-line-${i}`);
+                if(fb) fb.innerHTML = "";
+                const lineDiv = document.getElementById(`script-${index}-line-${i}`);
+                if(lineDiv) lineDiv.classList.remove('bg-yellow-50', 'border-yellow-200');
+            }
+            
+            document.getElementById("statusBoxText").innerText = "🎮 실전 테스트 시작! AI가 먼저 말을 겁니다.";
+            processNextTestLine();
+        };
+
+        window.processNextTestLine = function() {
+            if (!isInteractiveTestActive) return;
+            
+            const scriptItem = savedScripts[activeTestScriptIdx];
+            if (activeTestLineIdx >= scriptItem.scriptData.length) {
+                isInteractiveTestActive = false;
+                alert("🎉 실전 대화 테스트를 완벽하게 마쳤습니다!");
+                document.getElementById("statusBoxText").innerText = "테스트 완료! 다른 대본도 도전해보세요.";
+                return;
+            }
+
+            const line = scriptItem.scriptData[activeTestLineIdx];
+            const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
+            
+            // 이전 하이라이트 지우기
+            if(activeTestLineIdx > 0) {
+                const prevDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`);
+                if(prevDiv) prevDiv.classList.remove('bg-yellow-50', 'border-yellow-200');
+            }
+
+            // 현재 라인 하이라이트 및 자동 스크롤
+            if(lineDiv) {
+                lineDiv.classList.add('bg-yellow-50', 'border-yellow-200');
+                lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
+            if (line.role === 'ai') {
+                // AI 턴: 자동 읽기
+                document.getElementById("statusBoxText").innerText = "🗣️ 상대방(AI)이 말하고 있습니다...";
+                const utt = new SpeechSynthesisUtterance(line.en);
+                utt.lang = scriptItem.langCode;
+                utt.pitch = 1.2;
+                utt.onend = () => {
+                    activeTestLineIdx++;
+                    setTimeout(processNextTestLine, 500); // 0.5초 뒤 사용자 턴으로 넘김
+                };
+                window.speechSynthesis.speak(utt);
+            } else {
+                // 사용자 턴: 마이크 깜빡임 효과 표시
+                document.getElementById("statusBoxText").innerText = "🎤 내 차례입니다! 하단의 [말하기 시작] 버튼을 누르고 읽어주세요.";
+                const fb = document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
+                if(fb) {
+                    fb.innerHTML = `<span class="text-red-500 animate-pulse flex items-center gap-1.5 border border-red-200 bg-red-50 px-2 py-1 rounded-md inline-block"><i class="fa-solid fa-microphone"></i> 하단 마이크를 눌러 말하세요!</span>`;
+                }
+            }
+        };
+
+        // ==========================================
+        // 🎧 2. 듣기 모드 (특정 대본 & 최신 대본)
+        // ==========================================
         window.playSpecificScript = function(index) {
             if (isPlayMode) { window.speechSynthesis.cancel(); isPlayMode = false; }
+            isInteractiveTestActive = false; // 테스트 모드 중단
             
             const selectedScript = savedScripts[index];
             const scriptDataToPlay = selectedScript.scriptData;
@@ -1101,43 +1186,113 @@
             }; playNext();
         };
 
-        // 앱이 켜질 때 저장된 대본들을 화면에 뿌려줍니다!
-        renderScripts();
+        window.playAudiobook = function() {
+            if (savedScripts.length === 0) return alert("먼저 대본을 생성해주세요!");
+            isInteractiveTestActive = false; // 테스트 모드 중단
+            playSpecificScript(savedScripts.length - 1); // 가장 최신 대본 재생
+        };
 
-        document.querySelectorAll('.level-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
-        document.querySelectorAll('.sit-card').forEach(card => card.onclick = (e) => { document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            roleplayRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
+        }
 
-        // 🌟 1. 랜덤 상황 클릭 시 카드 색상 변경해주는 함수 추가
+        // ==========================================
+        // 🎤 3. 마이크 실전 채점 (섀도잉 기능 통합)
+        // ==========================================
+        window.startShadowing = function() {
+            if (savedScripts.length === 0) return alert("대본을 생성해주세요!");
+            if (!roleplayRec) return alert("마이크를 지원하지 않습니다.");
+
+            let targetScriptItem, userLine, targetLineIdx;
+
+            // 💡 현재 핑퐁(테스트) 모드인지, 아니면 그냥 단독 섀도잉인지 구분
+            if (isInteractiveTestActive) {
+                targetScriptItem = savedScripts[activeTestScriptIdx];
+                targetLineIdx = activeTestLineIdx;
+                userLine = targetScriptItem.scriptData[targetLineIdx];
+                if (userLine.role !== 'user') return alert("지금은 AI 상대방이 말하는 차례입니다! 기다려주세요.");
+            } else {
+                targetScriptItem = savedScripts[savedScripts.length - 1]; // 최신 대본
+                userLine = targetScriptItem.scriptData.find(d => d.role === 'user'); 
+                if(!userLine) return alert("읽을 대사가 없습니다.");
+            }
+
+            const btn = document.getElementById("roleplayMicBtn"), icon = document.getElementById("roleplayMicIcon"), text = document.getElementById("roleplayMicText");
+            if (isRpListening) { roleplayRec.stop(); return; }
+
+            btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); icon.classList.replace("fa-microphone", "fa-ear-listen"); text.innerText = "듣고 있습니다...";
+            
+            if (!isInteractiveTestActive) {
+                alert(`🎤 다음 문장을 소리 내어 읽어보세요!\n\n"${userLine.en}"`);
+            }
+            
+            try { 
+                roleplayRec.lang = targetScriptItem.langCode;
+                roleplayRec.start(); 
+                isRpListening = true; 
+            } catch(e) { }
+
+            let finalScore = 0;
+            let recognizedText = "";
+
+            roleplayRec.onresult = (e) => {
+                recognizedText = e.results[0][0].transcript.toLowerCase();
+                const targetText = userLine.en.toLowerCase().replace(/[.,!?¿¡]/g, ""); 
+                finalScore = Math.round((targetText.split(" ").filter(w => recognizedText.split(" ").includes(w)).length / targetText.split(" ").length) * 100);
+                
+                if (!isInteractiveTestActive) {
+                    alert(finalScore > 80 ? `🎉 완벽해요! (일치율 ${finalScore}%)\n인식됨: ${recognizedText}` : `💪 더 연습해 볼까요? (일치율 ${finalScore}%)\n인식됨: ${recognizedText}`);
+                }
+            };
+
+            roleplayRec.onend = roleplayRec.onerror = () => { 
+                isRpListening = false; 
+                btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); icon.classList.replace("fa-ear-listen", "fa-microphone"); text.innerText = "말하기 시작"; 
+
+                // 🌟 테스트 모드일 경우: 화면에 점수를 박아주고 1.5초 뒤 다음 대사로!
+                if (isInteractiveTestActive) {
+                    const fb = document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
+                    if(fb) {
+                        const colorClass = finalScore > 80 ? "text-emerald-600 bg-emerald-50 border-emerald-200" : "text-amber-600 bg-amber-50 border-amber-200";
+                        const iconClass = finalScore > 80 ? "fa-circle-check" : "fa-triangle-exclamation";
+                        fb.innerHTML = `<span class="${colorClass} px-2 py-1 rounded-md border inline-block mt-1"><i class="fa-solid ${iconClass}"></i> 일치율: ${finalScore}% (내 발음: ${recognizedText || '인식 못함'})</span>`;
+                    }
+                    
+                    setTimeout(() => {
+                        activeTestLineIdx++;
+                        processNextTestLine();
+                    }, 1500); // 점수 확인하게 1.5초 기다려줌
+                }
+            };
+        };
+
+        // ==========================================
+        // 🧩 4. 기타 함수들
+        // ==========================================
         window.setRandomSituation = function(element) {
             document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card'));
             element.classList.add('selected-card');
         };
-        
-        // 🌟 2. 대본 생성 버튼 로직 (5개 저장 기능 + 랜덤 상황 판단 기능 통합)
-        document.getElementById("generateBtn").onclick = async (e) => {
-            // 🚨 5개가 꽉 찼을 때 경고창 띄우기!
+
+        window.generateScript = async function() {
             if (savedScripts.length >= 5) {
                 if (!confirm("지금 새로운 대본을 생성하면 가장 오래된 1번 대본은 자동 삭제됩니다.\n계속하시겠습니까?")) return;
             }
 
-            const btn = e.currentTarget;
+            const btn = document.getElementById("generateBtn");
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
             const selectedSitCard = document.querySelector('.sit-card.selected-card');
-            
-            // 랜덤 상황인지 확인!
             let situation = selectedSitCard.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
-            const isRandom = situation === '일상 랜덤';
-            
+            const isRandom = (situation === '일상 랜덤');
+
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             const targetLangCode = tLang.value;
 
-            btn.innerText = "⏳ 딥시크가 작성 중입니다..."; btn.disabled = true;
+            btn.innerText = "⏳ 대본 생성 중..."; btn.disabled = true;
             document.getElementById("statusBoxTitle").innerText = `[${level}] ${situation} (${targetLangName})`; 
-            document.getElementById("statusBoxText").innerText = "잠시만 기다려주세요...";
-
+            
             try {
-                // 서버(워커)로 랜덤 여부(isRandom)를 같이 보냄
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
@@ -1150,92 +1305,20 @@
                 });
                 const data = await res.json(); 
                 
-                // 🌟 5개가 넘어가면 가장 옛날 것(1번)을 버림
                 if (savedScripts.length >= 5) savedScripts.shift(); 
-                
-                // 새 대본을 저장소에 추가
                 savedScripts.push({
-                    level: level,
-                    situation: situation,
-                    langName: targetLangName,
-                    langCode: targetLangCode,
-                    scriptData: data.scriptData
+                    level: level, situation: situation, langName: targetLangName,
+                    langCode: targetLangCode, scriptData: data.scriptData
                 });
-                
                 localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts));
-                
-                // 화면 업데이트
                 renderScripts();
-                document.getElementById("statusBoxText").innerText = "새로운 대본이 생성되었습니다!";
-
-            } catch (err) { 
-                alert("대본 생성에 실패했습니다."); 
-                document.getElementById("statusBoxText").innerText = "오류가 발생했습니다. 다시 시도해주세요.";
-            } finally { 
-                btn.innerHTML = "✨ AI 대본 생성하기"; btn.disabled = false; 
-            }
+            } catch (err) { alert("대본 생성 실패"); } finally { btn.innerText = "✨ AI 대본 생성하기"; btn.disabled = false; }
         };
+        document.getElementById("generateBtn").onclick = window.generateScript;
 
-        // 🌟 전체 듣기 (가장 최신 대본 기준)
-        window.playAudiobook = function() {
-            if (savedScripts.length === 0) return alert("먼저 대본을 생성해주세요!");
-            if (isPlayMode) { window.speechSynthesis.cancel(); isPlayMode = false; return; }
-            
-            const latestScript = savedScripts[savedScripts.length - 1]; // 제일 마지막 대본
-            const scriptDataToPlay = latestScript.scriptData;
-            
-            isPlayMode = true; currentPlayingIndex = 0;
-
-            const playNext = () => {
-                if (!isPlayMode || currentPlayingIndex >= scriptDataToPlay.length) { isPlayMode = false; return; }
-                const line = scriptDataToPlay[currentPlayingIndex];
-                const utt = new SpeechSynthesisUtterance(line.en); 
-                
-                utt.lang = latestScript.langCode; 
-                utt.pitch = line.role === 'ai' ? 1.2 : 0.8; 
-                utt.onend = () => { currentPlayingIndex++; setTimeout(playNext, 500); }; 
-                window.speechSynthesis.speak(utt);
-            }; playNext();
-        };
-
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-            roleplayRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
-        }
-
-        // 🌟 말하기 섀도잉 (가장 최신 대본 기준)
-        window.startShadowing = function() {
-            if (savedScripts.length === 0) return alert("대본을 생성해주세요!");
-            if (!roleplayRec) return alert("마이크를 지원하지 않습니다.");
-            
-            const latestScript = savedScripts[savedScripts.length - 1];
-            const scriptDataToPlay = latestScript.scriptData;
-            
-            const userLine = scriptDataToPlay.find(d => d.role === 'user'); if(!userLine) return alert("읽을 대사가 없습니다.");
-
-            const btn = document.getElementById("roleplayMicBtn"), icon = document.getElementById("roleplayMicIcon"), text = document.getElementById("roleplayMicText");
-            if (isRpListening) { roleplayRec.stop(); return; }
-
-            btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); icon.classList.replace("fa-microphone", "fa-ear-listen"); text.innerText = "듣고 있습니다...";
-            alert(`🎤 최신 대본의 다음 문장을 소리 내어 읽어보세요!\n\n"${userLine.en}"`);
-            
-            try { 
-                roleplayRec.lang = latestScript.langCode;
-                roleplayRec.start(); 
-                isRpListening = true; 
-            } catch(e) { }
-
-            roleplayRec.onresult = (e) => {
-                const spokenText = e.results[0][0].transcript.toLowerCase();
-                const targetText = userLine.en.toLowerCase().replace(/[.,!?¿¡]/g, ""); 
-                const score = Math.round((targetText.split(" ").filter(w => spokenText.split(" ").includes(w)).length / targetText.split(" ").length) * 100);
-                alert(score > 80 ? `🎉 완벽해요! (일치율 ${score}%)\n인식됨: ${spokenText}` : `💪 더 연습해 볼까요? (일치율 ${score}%)\n인식됨: ${spokenText}`);
-            };
-            roleplayRec.onend = roleplayRec.onerror = () => { isRpListening = false; btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); icon.classList.replace("fa-ear-listen", "fa-microphone"); text.innerText = "말하기 시작"; };
-        };
-
-        // 🌟 빈칸 퀴즈 (가장 최신 대본 기준)
         window.startQuizMode = function() {
             if (savedScripts.length === 0) return alert("대본을 생성해주세요!");
+            isInteractiveTestActive = false; // 테스트 모드 중단
             
             const latestScript = savedScripts[savedScripts.length - 1];
             const scriptDataToPlay = latestScript.scriptData;
@@ -1245,6 +1328,9 @@
             words[idx] = "______"; const input = prompt(`⏳ 최신 대본 빈칸 퀴즈!\n\n${words.join(" ")}`);
             if (input && input.toLowerCase() === ans.toLowerCase()) alert("정답입니다! 콤보 +1 🔥"); else alert(`앗, 틀렸습니다! 정답은 '${ans}' 입니다.`);
         };
+
+        // 앱이 켜질 때 초기화
+        renderScripts();
 
     </script>
 </body>
