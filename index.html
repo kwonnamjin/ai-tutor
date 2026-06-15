@@ -1039,21 +1039,22 @@
         let currentPlayingIndex = 0, isPlayMode = false;
         let roleplayRec = null, isRpListening = false;
 
-        // 🌟 화면에 저장된 대본들을 예쁘게 그려주는 함수
+        // 🌟 화면에 저장된 대본들을 예쁘게 그려주는 함수 (최신 대본이 맨 위로!)
         function renderScripts() {
             const playerArea = document.getElementById("scriptList");
             playerArea.innerHTML = "";
             
             if(savedScripts.length === 0) return;
 
-            savedScripts.forEach((scriptItem, index) => {
+            // 💡 핵심 마법: 배열의 맨 끝(최신)부터 시작해서 거꾸로 화면에 그려줍니다!
+            for (let i = savedScripts.length - 1; i >= 0; i--) {
+                const scriptItem = savedScripts[i];
                 let html = `<div class="mb-5">
                     <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm">
                         <p class="text-[11px] font-extrabold text-indigo-700">
-                            📚 ${index + 1}번 대본: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})
+                            📚 ${i + 1}번 대본: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})
                         </p>
-                        <!-- 🌟 개별 듣기 스피커 버튼 -->
-                        <button onclick="playSpecificScript(${index})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm hover:bg-indigo-100 transition-all flex items-center justify-center">
+                        <button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm hover:bg-indigo-100 transition-all flex items-center justify-center">
                             <i class="fa-solid fa-volume-high text-xs"></i>
                         </button>
                     </div>
@@ -1065,11 +1066,18 @@
                 });
                 
                 html += `</div></div>`;
-                if(index < savedScripts.length - 1) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
+                
+                // 마지막 항목(제일 오래된 1번 대본) 밑에는 점선을 그리지 않게 조절
+                if(i > 0) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
+                
                 playerArea.insertAdjacentHTML('beforeend', html);
-            });
+            }
             
             document.getElementById("statusBoxText").innerText = `현재 ${savedScripts.length}개의 대본이 보관되어 있습니다.`;
+            
+            // 🌟 새로운 대본이 생성되어 그려졌을 때, 화면 스크롤을 맨 위로 촥! 올려줍니다
+            const scrollArea = document.getElementById("scrollArea");
+            if(scrollArea) scrollArea.scrollTop = 0;
         }
 
         // 🌟 특정 대본만 골라서 읽어주는 새로운 함수
