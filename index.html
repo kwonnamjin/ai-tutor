@@ -269,8 +269,13 @@
             </div>
 
             <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-3xl" style="padding-bottom: calc(env(safe-area-inset-bottom) + 20px);">
-                <button onclick="startShadowing()" id="roleplayMicBtn" class="w-full h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-[1.02]">
-                    <i class="fa-solid fa-microphone text-xl" id="roleplayMicIcon"></i> <span id="roleplayMicText">말하기 시작 (마이크)</span>
+                
+                <button onclick="startShadowing()" id="roleplayMicBtn" class="w-full h-14 px-6 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-[1.02] min-w-0">
+                    
+                    <i class="fa-solid fa-microphone text-xl shrink-0" id="roleplayMicIcon"></i> 
+                    
+                    <span id="roleplayMicText" class="truncate min-w-0">말하기 시작 (마이크)</span>
+                    
                 </button>
             </div>
         </div>
