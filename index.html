@@ -1022,17 +1022,17 @@
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             const targetLangCode = tLang.value;
 
-            // 1. 스마트폰 보관함(캐시) 확인 (이미 한 번 분석한 언어인지 검사)
-            const cacheKey = 'alpha_cache_' + targetLangCode;
+            // 🚨 캐시 키를 v2로 바꿔서 이전에 잘린 알파벳 기록을 완전히 무시하고 새로 받아옵니다.
+            const cacheKey = 'alpha_cache_v2_' + targetLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
-                renderAlphabet(JSON.parse(cachedData), targetLangCode);
+                const parsed = JSON.parse(cachedData);
+                renderAlphabet(parsed.alphabetData, parsed.description, targetLangCode);
                 return;
             }
 
-            // 2. 캐시가 없으면 로딩 화면 띄우고 AI에게 최초 1회 요청!
-            listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>AI가 [${targetLangName}] 기초 글자를 정리하고 있습니다...<br><span class="text-xs font-normal mt-2 inline-block text-slate-400">(최초 1회만 약 5~10초 소요됩니다)</span></div>`;
+            listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>AI가 [${targetLangName}] 전체 문자를 분석하여 정리하고 있습니다...<br><span class="text-xs font-normal mt-2 inline-block text-slate-400">(최초 1회만 약 10초 정도 소요됩니다)</span></div>`;
 
             try {
                 const res = await fetch(`${WORKER_URL}generate-alphabet`, { 
@@ -1041,33 +1041,43 @@
                 });
                 const data = await res.json(); 
                 
-                // 3. 받아온 데이터를 보관함에 평생 영구 저장
-                localStorage.setItem(cacheKey, JSON.stringify(data.alphabetData));
+                // 설명(description)과 알파벳 데이터를 함께 저장
+                localStorage.setItem(cacheKey, JSON.stringify({
+                    alphabetData: data.alphabetData,
+                    description: data.description
+                }));
                 
-                // 4. 화면에 그리기
-                renderAlphabet(data.alphabetData, targetLangCode);
+                renderAlphabet(data.alphabetData, data.description, targetLangCode);
 
             } catch (err) { 
                 listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">데이터를 가져오는데 실패했습니다. 언어를 다시 선택해 보세요.</div>`;
             }
         };
 
-        window.renderAlphabet = function(alphabetData, langCode) {
+        window.renderAlphabet = function(alphabetData, description, langCode) {
             const listArea = document.getElementById("alphabetListArea");
             listArea.innerHTML = "";
 
-            // 🌟 자음, 모음 등 AI가 나눠준 카테고리별로 묶기
+            let html = "";
+            
+            // 🌟 아빠가 원하시던 AI의 친절한 요약 설명 박스
+            if(description) {
+                html += `
+                <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mb-5 shadow-sm">
+                    <p class="text-[13px] text-emerald-800 font-bold leading-relaxed whitespace-pre-wrap"><i class="fa-solid fa-circle-info mr-1"></i> ${description}</p>
+                </div>`;
+            }
+
             const grouped = alphabetData.reduce((acc, curr) => {
                 if (!acc[curr.category]) acc[curr.category] = [];
                 acc[curr.category].push(curr);
                 return acc;
             }, {});
 
-            let html = "";
             for (const [category, letters] of Object.entries(grouped)) {
                 html += `
-                <div>
-                    <h3 class="text-sm font-extrabold text-emerald-700 mb-3 border-b border-emerald-100 pb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-leaf text-emerald-400 text-xs"></i> ${category} 모아보기</h3>
+                <div class="mb-6">
+                    <h3 class="text-sm font-extrabold text-emerald-700 mb-3 border-b border-emerald-100 pb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-leaf text-emerald-400 text-xs"></i> ${category}</h3>
                     <div class="grid grid-cols-4 gap-2">
                 `;
                 
