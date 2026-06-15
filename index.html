@@ -308,8 +308,9 @@
             </div>
         </div>
 
-        // 4번 방
-
+        <!-- ======================================================= -->
+        <!-- 🔤 4번 방: 왕초보 기초 발음 화면 -->
+        <!-- ======================================================= -->
         <div id="screen-alphabet" class="absolute top-0 left-0 w-full h-full flex flex-col z-40 bg-[#f0fdf4] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
@@ -319,24 +320,26 @@
                 </button>
             </div>
 
+            <!-- 🌟 항상 고정되어 있는 '가져오기' 버튼 구역 추가! -->
+            <div class="flex-none bg-white px-4 py-3 border-b border-gray-100 shadow-sm z-10">
+                <button id="generateAlphaBtn" onclick="loadAlphabetData()" class="w-full bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
+                    ✨ 선택한 언어의 AI 파닉스 가져오기
+                </button>
+            </div>
+
             <div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
                 <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mb-2 flex items-center gap-3">
                     <div class="w-10 h-10 bg-emerald-200 rounded-full flex items-center justify-center text-emerald-700 text-xl shrink-0"><i class="fa-solid fa-seedling"></i></div>
                     <p class="text-xs text-emerald-800 font-medium">언어의 뼈대가 되는 기본 글자와 발음을 익혀보세요! 글자를 누르면 원어민 소리가 납니다.</p>
                 </div>
 
-                <!-- 🌟 AI가 가져온 데이터가 꽂힐 빈 공간 -->
                 <div id="alphabetListArea" class="space-y-6">
-                    <div class="text-center mt-20">
-                        <div class="w-20 h-20 bg-emerald-100 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-5 text-4xl shadow-inner border border-emerald-200 animate-bounce">
-                            <i class="fa-solid fa-hand-pointer"></i>
-                        </div>
-                        <h3 class="text-xl font-black text-slate-700 mb-2 tracking-tight">언어를 선택해 주세요!</h3>
-                        <p class="text-sm text-slate-500 font-medium leading-relaxed">우측 상단의 <span class="text-emerald-600 font-bold bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">언어 버튼</span>을 눌러<br>학습하고 싶은 언어를 콕 골라주세요!</p>
-                    </div>
+                    <div class="text-center text-slate-400 text-sm mt-10 font-bold">위 버튼을 눌러 기초 글자를 가져와 보세요!</div>
                 </div>
             </div>
         </div>
+
+        
 
         <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
             <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
@@ -397,54 +400,6 @@
             // 🚨 앱 시작 시 자동으로 4번 방 로딩기가 도는 것을 막기 위해 자동 실행 코드를 삭제했습니다!
         };
 
-        window.openCustomLangPicker = function(targetId) {
-            const titles = { 'targetLanguage': '학습할 언어 선택', 'sttInputLanguage': '내 음성 언어 선택', 'explanationLanguage': '해설 언어 선택' };
-            document.getElementById('customLangTitle').innerText = titles[targetId];
-            const listContainer = document.getElementById('customLangList'); listContainer.innerHTML = '';
-            const currentVal = document.getElementById(targetId).value;
-            
-            SUPPORTED_LANGUAGES.forEach(lang => {
-                const isSelected = lang.code === currentVal; const btn = document.createElement('button');
-                btn.className = `py-3 px-4 rounded-xl flex items-center justify-start gap-3 text-sm font-bold transition-all border-2 ${isSelected ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200'}`;
-                btn.innerHTML = `<span class="text-2xl drop-shadow-sm">${lang.flag}</span> <span>${lang.name}</span>`;
-                btn.onclick = () => { 
-                    document.getElementById(targetId).value = lang.code; 
-                    updateLangDisplays(); 
-                    closeCustomLangPicker(); 
-                    
-                    // 🌟 사용자가 언어를 '직접 콕' 눌렀을 때만 4번 방 AI가 움직이도록 여기에 연결했습니다!
-                    if (targetId === 'targetLanguage' && typeof window.loadAlphabetData === 'function') {
-                        window.loadAlphabetData();
-                    }
-                };
-                listContainer.appendChild(btn);
-            });
-            const modal = document.getElementById('customLangModal'); modal.classList.remove('hidden');
-            setTimeout(() => document.getElementById('customLangContent').style.transform = 'translateY(0)', 10);
-        };
-        updateLangDisplays();
-
-        window.openCustomLangPicker = function(targetId) {
-            const titles = { 'targetLanguage': '학습할 언어 선택', 'sttInputLanguage': '내 음성 언어 선택', 'explanationLanguage': '해설 언어 선택' };
-            document.getElementById('customLangTitle').innerText = titles[targetId];
-            const listContainer = document.getElementById('customLangList'); listContainer.innerHTML = '';
-            const currentVal = document.getElementById(targetId).value;
-            
-            SUPPORTED_LANGUAGES.forEach(lang => {
-                const isSelected = lang.code === currentVal; const btn = document.createElement('button');
-                btn.className = `py-3 px-4 rounded-xl flex items-center justify-start gap-3 text-sm font-bold transition-all border-2 ${isSelected ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200'}`;
-                btn.innerHTML = `<span class="text-2xl drop-shadow-sm">${lang.flag}</span> <span>${lang.name}</span>`;
-                btn.onclick = () => { document.getElementById(targetId).value = lang.code; updateLangDisplays(); closeCustomLangPicker(); };
-                listContainer.appendChild(btn);
-            });
-            const modal = document.getElementById('customLangModal'); modal.classList.remove('hidden');
-            setTimeout(() => document.getElementById('customLangContent').style.transform = 'translateY(0)', 10);
-        };
-
-        window.closeCustomLangPicker = function() {
-            document.getElementById('customLangContent').style.transform = 'translateY(100%)';
-            setTimeout(() => document.getElementById('customLangModal').classList.add('hidden'), 300);
-        };
 
         // =======================================================
         // 🌟 1번 방: 핵심 AI 튜터 통신 로직 및 변수 초기화
@@ -1042,16 +997,38 @@
             
         window.renderVocabs();
 
+        window.openCustomLangPicker = function(targetId) {
+            const titles = { 'targetLanguage': '학습할 언어 선택', 'sttInputLanguage': '내 음성 언어 선택', 'explanationLanguage': '해설 언어 선택' };
+            document.getElementById('customLangTitle').innerText = titles[targetId];
+            const listContainer = document.getElementById('customLangList'); listContainer.innerHTML = '';
+            const currentVal = document.getElementById(targetId).value;
+            
+            SUPPORTED_LANGUAGES.forEach(lang => {
+                const isSelected = lang.code === currentVal; const btn = document.createElement('button');
+                btn.className = `py-3 px-4 rounded-xl flex items-center justify-start gap-3 text-sm font-bold transition-all border-2 ${isSelected ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200'}`;
+                btn.innerHTML = `<span class="text-2xl drop-shadow-sm">${lang.flag}</span> <span>${lang.name}</span>`;
+                btn.onclick = () => { 
+                    document.getElementById(targetId).value = lang.code; 
+                    updateLangDisplays(); 
+                    closeCustomLangPicker(); 
+                    // 🚨 에러의 원인이었던 '자동 로딩' 기능을 뺐습니다. 이제 버튼으로만 작동합니다!
+                };
+                listContainer.appendChild(btn);
+            });
+            const modal = document.getElementById('customLangModal'); modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('customLangContent').style.transform = 'translateY(0)', 10);
+        };
+
         // =======================================================
         // 🔤 4번 방: 기초 알파벳/자모음 엔진 (스마트 캐싱)
         // =======================================================
         window.loadAlphabetData = async function() {
             const listArea = document.getElementById("alphabetListArea");
+            const btn = document.getElementById("generateAlphaBtn"); // 🌟 버튼 조작 추가
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             const targetLangCode = tLang.value;
 
-            // 🚨 파닉스 기능이 추가되었으므로 v3로 캐시 키를 변경하여 새로 받아옵니다.
             const cacheKey = 'alpha_cache_v3_' + targetLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
@@ -1061,6 +1038,8 @@
                 return;
             }
 
+            btn.innerText = "⏳ AI 가져오는 중..."; 
+            btn.disabled = true;
             listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>AI가 [${targetLangName}] 전체 문자와 파닉스 단어를<br>매칭하고 있습니다...<br><span class="text-xs font-normal mt-2 inline-block text-slate-400">(최초 1회만 약 10초 정도 소요됩니다)</span></div>`;
 
             try {
@@ -1079,6 +1058,9 @@
 
             } catch (err) { 
                 listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">데이터를 가져오는데 실패했습니다. 언어를 다시 선택해 보세요.</div>`;
+            } finally {
+                btn.innerText = "✨ 선택한 언어의 AI 파닉스 가져오기"; 
+                btn.disabled = false;
             }
         };
 
