@@ -271,6 +271,76 @@
             </div>
             </div>
         </div>
+
+        <!-- ======================================================= -->
+        <!-- 📝 3번 방: 필수 단어장 화면 -->
+        <!-- ======================================================= -->
+        <div id="screen-vocab" class="absolute top-0 left-0 w-full h-full flex flex-col z-30 bg-[#f8fafc] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
+            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
+                <h1 class="text-lg font-bold text-gray-800">📝 필수 단어장</h1>
+                <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
+                    <span id="disp-vocabLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-5 space-y-5 no-scrollbar pb-24 flex flex-col items-center justify-center relative">
+                <!-- 예쁜 플래시 카드 -->
+                <div class="w-full max-w-sm bg-white p-8 rounded-3xl shadow-xl border border-slate-100 text-center relative overflow-hidden transform transition-all hover:scale-[1.02]">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 to-indigo-500"></div>
+                    <p class="text-xs text-slate-400 font-bold mb-4 bg-slate-50 inline-block px-3 py-1 rounded-full border border-slate-100">오늘의 단어 1/100</p>
+                    <h2 class="text-4xl font-black text-slate-800 mb-2">Apple</h2>
+                    <p class="text-lg text-blue-600 font-extrabold mb-8">[애플]</p>
+                    <hr class="border-slate-100 border-dashed mb-8">
+                    <p class="text-xl text-slate-700 font-bold mb-6">사과</p>
+                    <button class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-full mx-auto flex items-center justify-center hover:bg-indigo-100 shadow-sm border border-indigo-100 text-xl transition-transform hover:scale-110">
+                        <i class="fa-solid fa-volume-high"></i>
+                    </button>
+                </div>
+                
+                <div class="flex gap-4 w-full max-w-sm mt-4">
+                    <button class="flex-1 bg-white border-2 border-slate-200 text-slate-500 font-bold py-3 rounded-2xl shadow-sm hover:bg-slate-50"><i class="fa-solid fa-arrow-left mr-1"></i> 이전</button>
+                    <button class="flex-1 bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-bold py-3 rounded-2xl shadow-md hover:opacity-90">다음 <i class="fa-solid fa-arrow-right ml-1"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ======================================================= -->
+        <!-- 🔤 4번 방: 왕초보 자모음 (알파벳) 화면 -->
+        <!-- ======================================================= -->
+        <div id="screen-alphabet" class="absolute top-0 left-0 w-full h-full flex flex-col z-40 bg-[#f0fdf4] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
+            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
+                <h1 class="text-lg font-bold text-gray-800">🔤 왕초보 기초 발음</h1>
+                <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
+                    <span id="disp-alphaLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
+                <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mb-2 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-200 rounded-full flex items-center justify-center text-emerald-700 text-xl shrink-0"><i class="fa-solid fa-seedling"></i></div>
+                    <p class="text-xs text-emerald-800 font-medium">언어의 뼈대가 되는 기본 글자와 발음을 익혀보세요! 글자를 누르면 원어민 소리가 납니다.</p>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <!-- 예쁜 알파벳 카드들 -->
+                    <button class="aspect-square bg-white border-[2px] border-slate-100 rounded-2xl flex flex-col items-center justify-center shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md transition-all group">
+                        <span class="text-4xl font-black text-slate-800 group-hover:text-emerald-600 transition-colors">A</span>
+                        <span class="text-xs text-slate-400 font-bold mt-2 bg-slate-100 px-2 py-0.5 rounded-md group-hover:bg-white transition-colors">에이</span>
+                    </button>
+                    <button class="aspect-square bg-white border-[2px] border-slate-100 rounded-2xl flex flex-col items-center justify-center shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md transition-all group">
+                        <span class="text-4xl font-black text-slate-800 group-hover:text-emerald-600 transition-colors">B</span>
+                        <span class="text-xs text-slate-400 font-bold mt-2 bg-slate-100 px-2 py-0.5 rounded-md group-hover:bg-white transition-colors">비</span>
+                    </button>
+                    <button class="aspect-square bg-white border-[2px] border-slate-100 rounded-2xl flex flex-col items-center justify-center shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md transition-all group">
+                        <span class="text-4xl font-black text-slate-800 group-hover:text-emerald-600 transition-colors">C</span>
+                        <span class="text-xs text-slate-400 font-bold mt-2 bg-slate-100 px-2 py-0.5 rounded-md group-hover:bg-white transition-colors">씨</span>
+                    </button>
+                    <!-- ... 필요한 만큼 카드가 추가될 자리 ... -->
+                </div>
+            </div>
+        </div>
+
+
         <!-- 🌟 새롭게 추가된 커스텀 언어 팝업 (바텀 시트) -->
             <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
                 <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
@@ -341,6 +411,14 @@
             if(targetSel && rpDisp && targetSel.options[targetSel.selectedIndex]) {
                 const langData = SUPPORTED_LANGUAGES.find(l => l.code === targetSel.value);
                 rpDisp.innerHTML = `${langData.flag} ${langData.name}`;
+            }
+            // 🌟 3번, 4번 방 언어 버튼도 동기화
+            const vocabDisp = document.getElementById('disp-vocabLanguage');
+            const alphaDisp = document.getElementById('disp-alphaLanguage');
+            if(targetSel && targetSel.options[targetSel.selectedIndex]) {
+                const langData = SUPPORTED_LANGUAGES.find(l => l.code === targetSel.value);
+                if(vocabDisp) vocabDisp.innerHTML = `${langData.flag} ${langData.name}`;
+                if(alphaDisp) alphaDisp.innerHTML = `${langData.flag} ${langData.name}`;
             }
         };
 
@@ -965,64 +1043,71 @@
         window.speechSynthesis.onvoiceschanged = () => {};
 
         // =======================================================
-        // 🚀 스와이프 로직 (메뉴 간섭 방지 기능 추가)
+        // 🚀 유니버셜 스와이프 엔진 (방 4개 통합 관리)
         // =======================================================
+        const appScreens = [
+            document.getElementById('screen-main'),
+            document.getElementById('screen-roleplay'),
+            document.getElementById('screen-vocab'),
+            document.getElementById('screen-alphabet')
+        ];
         let currentScreen = 0; 
         let isMenuScrolling = false; 
-        
-        window.goToRoleplay = function() {
-            document.getElementById('screen-main').style.transform = 'translateX(-30%)'; 
-            document.getElementById('screen-roleplay').style.transform = 'translateX(0%)'; 
-            currentScreen = 1;
-        };
-
-        window.goBackToMain = function() {
-            document.getElementById('screen-main').style.transform = 'translateX(0%)';
-            document.getElementById('screen-roleplay').style.transform = 'translateX(100%)';
-            currentScreen = 0;
-        };
-
         let startX = 0;
-        const screenMain = document.getElementById('screen-main');
-        const screenRoleplay = document.getElementById('screen-roleplay');
+
+        window.goToScreen = function(index) {
+            if (index < 0 || index >= appScreens.length) return;
+            currentScreen = index;
+            
+            appScreens.forEach((screen, i) => {
+                if (!screen) return;
+                screen.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+                if (i < currentScreen) {
+                    screen.style.transform = 'translateX(-30%)'; // 왼쪽으로 숨김
+                } else if (i === currentScreen) {
+                    screen.style.transform = 'translateX(0%)'; // 현재 화면
+                } else {
+                    screen.style.transform = 'translateX(100%)'; // 오른쪽으로 대기
+                }
+            });
+        };
 
         window.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.overflow-x-auto')) {
-                isMenuScrolling = true; 
-                return; 
+            if (e.target.closest('.overflow-x-auto') || e.target.closest('input')) {
+                isMenuScrolling = true; return; 
             }
             isMenuScrolling = false;
             startX = e.touches[0].clientX;
-            screenMain.style.transition = 'none'; 
-            screenRoleplay.style.transition = 'none';
+            appScreens.forEach(s => { if(s) s.style.transition = 'none'; });
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
             if (isMenuScrolling) return; 
-
             let moveX = e.touches[0].clientX - startX;
-            if (currentScreen === 0 && startX > window.innerWidth - 40 && moveX < 0) {
-                screenMain.style.transform = `translateX(${moveX * 0.3}px)`; 
-                screenRoleplay.style.transform = `translateX(calc(100% + ${moveX}px))`;
-            } else if (currentScreen === 1 && startX < 40 && moveX > 0) {
-                screenMain.style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`; 
-                screenRoleplay.style.transform = `translateX(${moveX}px)`;
+            
+            // 현재 화면 움직임
+            if(appScreens[currentScreen]) appScreens[currentScreen].style.transform = `translateX(${moveX}px)`;
+            
+            // 왼쪽 화면 당겨오기
+            if (moveX > 0 && currentScreen > 0 && appScreens[currentScreen - 1]) {
+                appScreens[currentScreen - 1].style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`;
+            }
+            // 오른쪽 화면 당겨오기
+            if (moveX < 0 && currentScreen < appScreens.length - 1 && appScreens[currentScreen + 1]) {
+                appScreens[currentScreen + 1].style.transform = `translateX(calc(100% + ${moveX}px))`;
             }
         }, { passive: true });
 
         window.addEventListener('touchend', (e) => {
             if (isMenuScrolling) return; 
-
             let moveX = e.changedTouches[0].clientX - startX;
-            screenMain.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)'; 
-            screenRoleplay.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
             
-            if (currentScreen === 0) { 
-                if (moveX < -70) goToRoleplay(); 
-                else goBackToMain(); 
-            } else if (currentScreen === 1) { 
-                if (moveX > 70) goBackToMain(); 
-                else goToRoleplay(); 
+            if (moveX < -70 && currentScreen < appScreens.length - 1) {
+                goToScreen(currentScreen + 1); // 다음 방으로
+            } else if (moveX > 70 && currentScreen > 0) {
+                goToScreen(currentScreen - 1); // 이전 방으로
+            } else {
+                goToScreen(currentScreen); // 제자리 복귀
             }
         }, { passive: true });
 
