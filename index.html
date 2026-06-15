@@ -722,10 +722,14 @@
         }
 
         // =======================================================
-        // 🚀 유니버셜 스와이프 엔진 (방 4개 통합 관리)
+        // 🚀 유니버셜 스와이프 엔진 (상하 스크롤 간섭 완벽 해결!)
         // =======================================================
         const appScreens = [ document.getElementById('screen-main'), document.getElementById('screen-roleplay'), document.getElementById('screen-vocab'), document.getElementById('screen-alphabet') ];
-        let currentScreen = 0; let isMenuScrolling = false; let startX = 0;
+        let currentScreen = 0; 
+        let isMenuScrolling = false; 
+        let startX = 0;
+        let startY = 0;               // 🌟 추가: 위아래 시작 좌표
+        let isVerticalScroll = false; // 🌟 추가: 수직 스크롤 중인지 확인하는 깃발
 
         window.goToScreen = function(index) {
             if (index < 0 || index >= appScreens.length) return;
@@ -740,22 +744,44 @@
 
         window.addEventListener('touchstart', (e) => {
             if (e.target.closest('.overflow-x-auto') || e.target.closest('input')) { isMenuScrolling = true; return; }
-            isMenuScrolling = false; startX = e.touches[0].clientX; appScreens.forEach(s => { if(s) s.style.transition = 'none'; });
+            isMenuScrolling = false; 
+            isVerticalScroll = false;      // 🌟 화면에 손을 댈 때 깃발 초기화
+            startX = e.touches[0].clientX; 
+            startY = e.touches[0].clientY; // 🌟 위아래 시작점 기록
+            appScreens.forEach(s => { if(s) s.style.transition = 'none'; });
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
-            if (isMenuScrolling) return; let moveX = e.touches[0].clientX - startX;
+            if (isMenuScrolling) return; 
+            
+            let moveX = e.touches[0].clientX - startX;
+            let moveY = e.touches[0].clientY - startY; // 🌟 위아래 움직인 거리 계산
+
+            // 🌟 핵심 로직: 좌우보다 위아래로 더 많이 움직였으면 "아, 스크롤 하려는구나!" 하고 스와이프를 무시함
+            if (!isVerticalScroll && Math.abs(moveY) > Math.abs(moveX)) {
+                isVerticalScroll = true;
+            }
+
+            if (isVerticalScroll) return; // 위아래 스크롤 중이면 화면 넘기기 애니메이션 작동 금지!
+
             if(appScreens[currentScreen]) appScreens[currentScreen].style.transform = `translateX(${moveX}px)`;
             if (moveX > 0 && currentScreen > 0 && appScreens[currentScreen - 1]) appScreens[currentScreen - 1].style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`;
             if (moveX < 0 && currentScreen < appScreens.length - 1 && appScreens[currentScreen + 1]) appScreens[currentScreen + 1].style.transform = `translateX(calc(100% + ${moveX}px))`;
         }, { passive: true });
 
         window.addEventListener('touchend', (e) => {
-            if (isMenuScrolling) return; let moveX = e.changedTouches[0].clientX - startX;
+            // 🌟 수직 스크롤 중이었다면 다음 방으로 넘어가지 말고 원래 화면으로 복귀
+            if (isMenuScrolling || isVerticalScroll) { 
+                goToScreen(currentScreen);
+                return; 
+            }
+            
+            let moveX = e.changedTouches[0].clientX - startX;
             if (moveX < -70 && currentScreen < appScreens.length - 1) goToScreen(currentScreen + 1);
-            else if (moveX > 70 && currentScreen > 0) goToScreen(currentScreen - 1); else goToScreen(currentScreen);
+            else if (moveX > 70 && currentScreen > 0) goToScreen(currentScreen - 1); 
+            else goToScreen(currentScreen);
         }, { passive: true });
-
+        
         // =======================================================
         // 🎬 2번 방: 실전 롤플레잉 엔진
         // =======================================================
