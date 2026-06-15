@@ -466,13 +466,13 @@
                 btn.onclick = () => { 
                     document.getElementById(targetId).value = lang.code; 
                     updateLangDisplays(); 
-                    closeCustomLangPicker();
+                    closeCustomLangPicker(); 
                     
-                    // 🌟 [추가] 사용자가 언어를 고르면 앱 전체 UI 언어도 그 나라 마법으로 싹 바꿉니다!
-                    if (targetId === 'targetLanguage' && typeof window.changeUILanguage === 'function') {
+                    // 🌟 [마법의 기준 변경!] 
+                    // 이제 상단 언어가 아니라, 설정창에서 '과외 해설 언어(explanationLanguage)'를 골랐을 때만 앱 전체 글자가 바뀝니다!
+                    if (targetId === 'explanationLanguage' && typeof window.changeUILanguage === 'function') {
                         window.changeUILanguage(lang.code);
                     }
-                
                 };
                 listContainer.appendChild(btn);
             });
