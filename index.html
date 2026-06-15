@@ -1142,13 +1142,14 @@ Expected JSON format:
             }
         }
         window.saveSettings = function() { 
+            // 1. 설정값들을 컴퓨터(로컬 스토리지)에 안전하게 저장합니다.
             localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); 
             localStorage.setItem('explanation_language', document.getElementById('explanationLanguage').value);
             currentVoiceGender = tempGender; 
             localStorage.setItem('voice_gender', currentVoiceGender);
-            updateGenderUI(currentVoiceGender, true); 
-            document.documentElement.style.setProperty('--chat-font-size', (localStorage.getItem('chat_font_size') || 14) + 'px');
-            window.toggleSettingsModal(false); 
+            
+            // 2. 🌟 [핵심 변경] 닫기나 자잘한 UI 변경 대신, 앱을 통째로 새로고침(리셋) 합니다!
+            window.location.reload(); 
         }
 
         const appScreens = [ document.getElementById('screen-main'), document.getElementById('screen-roleplay'), document.getElementById('screen-vocab'), document.getElementById('screen-alphabet') ];
