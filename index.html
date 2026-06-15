@@ -355,6 +355,11 @@
     </div>
 
     <script type="module">
+        // 🚨 [핵심 해결 1] 중복 생성된 유령 화면 싹 청소하기 (설정창 저장 먹통 원인)
+        ['settingsModal', 'paywallModal', 'screen-roleplay', 'screen-vocab', 'screen-alphabet'].forEach(id => {
+            const elements = document.querySelectorAll('#' + id);
+            for (let i = 1; i < elements.length; i++) elements[i].remove(); // 진짜 1개만 남기고 복제본은 다 삭제!
+        });
         const SUPPORTED_LANGUAGES = [
             { code: "ko-KR", name: "한국어", flag: "🇰🇷" }, { code: "en-US", name: "영어", flag: "🇺🇸" }, { code: "es-ES", name: "스페인어", flag: "🇪🇸" },
             { code: "ja-JP", name: "일본어", flag: "🇯🇵" }, { code: "zh-CN", name: "중국어", flag: "🇨🇳" }, { code: "th-TH", name: "태국어", flag: "🇹🇭" },
@@ -615,58 +620,73 @@
         }
 
         // 🚨 이 부분이 1번 방 AI 통신 불가 에러를 해결하는 핵심 코드입니다 (시스템 프롬프트 & JSON 요청 완벽 복구)
+        // 🌟 2. 1번 방 AI 통신 에러 해결 코드
+        // 🌟 [핵심 해결 2] 1번 방 AI 통신 에러 해결 (JSON 파싱 에러 방지)
         async function handleUserMessage(text) {
-            if(!text) return; 
-            addMessageToChat('user', text); 
-            window.updateStatus("생각하는 중..."); 
-            avatarWrap.style.borderColor = "#94a3b8"; 
+            if(!text) return;
+            addMessageToChat('user', text);
 
+            updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#94a3b8";
             const mode = document.getElementById('appMode').value;
-            const targetLang = document.getElementById('targetLanguage').value;
-            const targetName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
+            const tLang = document.getElementById('targetLanguage');
+            const targetLang = tLang.value, targetName = tLang.options[tLang.selectedIndex].dataset.langName;
             const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
 
+            // AI가 딴소리 못하게 강제 고정
             let sysPrompt = mode === 'translate' 
-                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 반드시 아래 JSON 포맷으로 응답해라: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}`
-                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 반드시 아래 JSON 포맷으로 응답해라: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
+                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}`
+                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
 
             try {
-                let ctx = mode === 'tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
+                let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
                 
-                if(mode === 'tutor') {
+                if(mode==='tutor') {
                     if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
                     ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
                     if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)];
                     conversationHistory = ctx; 
                     sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
                 }
-
-                let res = await fetchAPI(WORKER_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
-                    body: JSON.stringify({ model: "deepseek-chat", messages: ctx, response_format: { type: "json_object" } }) 
-                });
-                let data = await res.json(); 
-                let parsed = JSON.parse(data.choices[0].message.content);
                 
-                if (parsed.foreign_text === "LIMIT_REACHED") return enforcePaywall(parsed.korean_translation); 
+                let res = await fetchAPI(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: ctx,
+                        response_format: { type: "json_object" }
+                    })
+                });
+                
+                let data = await res.json();
+                
+                // 🚨 핵심 수정: AI가 ```json 이라는 불필요한 마크다운을 보내도 싹 지우고 해석하게 만듦
+                let cleanContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+                let parsed = JSON.parse(cleanContent);
+                
+                if (parsed.foreign_text === "LIMIT_REACHED") {
+                    enforcePaywall(parsed.korean_translation); 
+                    return;
+                }
+                
                 incrementLocalUsage();
                 
                 if(mode==='tutor') {
                     conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)});
-                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); 
                 }
-
-                if(parsed.foreign_text) { 
-                    addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang); 
-                    window.speakText(parsed.foreign_text, targetLang); 
+                
+                if(parsed.foreign_text) {
+                    addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang);
+                    speakText(parsed.foreign_text, targetLang);
                 }
             } catch(e) { 
                 console.error(e);
-                window.updateStatus("AI 서버 통신 에러"); 
+                updateStatus("AI 서버 통신 에러"); 
                 avatarWrap.style.borderColor="#f87171"; 
             }
         }
+        window.handleUserMessage = handleUserMessage;
 
         window.requestExplanationGlobal = async function() { window.updateStatus("해설 기능 준비중입니다."); }
         window.requestExplanationFromBubble = async function() { window.updateStatus("해설 기능 준비중입니다."); }
