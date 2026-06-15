@@ -781,7 +781,7 @@
             else if (moveX > 70 && currentScreen > 0) goToScreen(currentScreen - 1); 
             else goToScreen(currentScreen);
         }, { passive: true });
-
+        
         // =======================================================
         // 🎬 2번 방: 실전 롤플레잉 엔진
         // =======================================================
@@ -951,6 +951,25 @@
                 listArea.insertAdjacentHTML('beforeend', html);
             }
             if(currentVocabSetIdx === -1) window.showFlashcard(savedVocabs.length - 1, 0);
+        };
+
+        window.showFlashcard = function(setIdx, wordIdx) {
+            currentVocabSetIdx = setIdx; currentVocabWordIdx = wordIdx;
+            const v = savedVocabs[setIdx].vocabData[wordIdx];
+            document.getElementById("mainFlashcardArea").classList.remove("hidden");
+            document.getElementById("vocabFlashcard").classList.remove('rotate-y-180'); 
+            document.getElementById("vcCount").innerText = `${savedVocabs[setIdx].theme} (${wordIdx + 1}/10)`;
+            document.getElementById("vcWord").innerText = v.word; document.getElementById("vcPron").innerText = `[${v.pronunciation}]`; document.getElementById("vcPhonetic").innerText = v.phonetic; document.getElementById("vcMeaning").innerText = v.meaning; document.getElementById("vcExEn").innerText = `"${v.example_en}"`; document.getElementById("vcExKo").innerText = v.example_ko;
+            document.getElementById("vocabScrollArea").scrollTop = 0; window.renderVocabs(); 
+        };
+
+        window.nextVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx < savedVocabs[currentVocabSetIdx].vocabData.length - 1) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx + 1); };
+        window.prevVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx > 0) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1); };
+
+        window.playVocabAudio = function() {
+            if(currentVocabSetIdx === -1) return; synthesis.cancel();
+            const utt = new SpeechSynthesisUtterance(savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx].word);
+            utt.lang = savedVocabs[currentVocabSetIdx].langCode; synthesis.speak(utt);
         };
 
         window.generateVocab = async function() {
