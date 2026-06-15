@@ -236,6 +236,10 @@
                 <section id="situationSection">
                     <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-masks-theater text-purple-500 mr-1"></i> 2. 상황 선택</h2>
                     <div class="flex overflow-x-auto gap-2 pb-1 snap-x no-scrollbar">
+                        <div class="sit-card shrink-0 w-32 p-4 rounded-2xl border-2 border-slate-100 bg-slate-800 text-center cursor-pointer transition-all snap-center" onclick="setRandomSituation(this)">
+                           <span class="text-3xl block mb-2">🎲</span>
+                           <span class="font-bold text-sm text-white whitespace-nowrap">일상 랜덤</span>
+                       </div>
                         <div class="sit-card shrink-0 w-20 p-2 rounded-xl border-[1.5px] border-slate-100 bg-white text-center cursor-pointer transition-all selected-card snap-center"><span class="text-2xl block mb-1">☕</span><span class="font-bold text-[11px] text-slate-800 whitespace-nowrap">카페 주문</span></div>
                         <div class="sit-card shrink-0 w-20 p-2 rounded-xl border-[1.5px] border-slate-100 bg-white text-center cursor-pointer transition-all snap-center"><span class="text-2xl block mb-1">🛂</span><span class="font-bold text-[11px] text-slate-800 whitespace-nowrap">입국 심사</span></div>
                         <div class="sit-card shrink-0 w-20 p-2 rounded-xl border-[1.5px] border-slate-100 bg-white text-center cursor-pointer transition-all snap-center"><span class="text-2xl block mb-1">🛍️</span><span class="font-bold text-[11px] text-slate-800 whitespace-nowrap">옷 쇼핑</span></div>
@@ -1104,11 +1108,38 @@
 
             const btn = e.currentTarget;
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
-            const situation = document.querySelector('.sit-card.selected-card').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
-            
+            const selectedSitCard = document.querySelector('.sit-card.selected-card');
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             const targetLangCode = tLang.value;
+
+            // 랜덤 상황 판단 로직
+            let situation = selectedSitCard.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
+            const isRandom = situation === '일상 랜덤';
+
+            btn.innerText = "⏳ 대본 생성 중..."; btn.disabled = true;
+            document.getElementById("statusBoxTitle").innerText = `[${level}] ${situation}`; 
+            
+            try {
+                // 랜덤 모드라면 서버에 '랜덤'이라고 알려줌
+                const res = await fetch(`${WORKER_URL}generate-script`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ 
+                        level: level, 
+                        situation: isRandom ? "랜덤한 일상 대화" : situation, 
+                        language: document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName,
+                        isRandom: isRandom // 서버에서 판단하게 넘김
+                    }) 
+                });
+                const data = await res.json(); 
+                scriptData = data.scriptData; 
+                // ... (이후 대본 화면 렌더링 코드는 동일)
+                // ... (하단 renderScripts() 호출 코드 포함)
+                renderScripts();
+                document.getElementById("statusBoxText").innerText = "새로운 대본이 생성되었습니다!";
+            } catch (err) { alert("대본 생성 실패"); } finally { btn.innerHTML = "✨ AI 대본 생성하기"; btn.disabled = false; }
+        
 
             btn.innerText = "⏳ 딥시크가 작성 중입니다..."; btn.disabled = true;
             document.getElementById("statusBoxTitle").innerText = `[${level}] ${situation} (${targetLangName})`; 
@@ -1252,6 +1283,12 @@
             const idx = Math.floor(Math.random() * words.length), ans = words[idx].replace(/[.,!?¿¡]/g, ""); 
             words[idx] = "______"; const input = prompt(`⏳ 빈칸에 들어갈 단어는?\n\n${words.join(" ")}`);
             if (input && input.toLowerCase() === ans.toLowerCase()) alert("정답입니다! 콤보 +1 🔥"); else alert(`앗, 틀렸습니다! 정답은 '${ans}' 입니다.`);
+        };
+        // 1. 랜덤 상황 설정 함수 추가
+        window.setRandomSituation = function(element) {
+            // 다른 카드들 선택 해제
+            document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card'));
+            element.classList.add('selected-card');
         };
     </script>
 </body>
