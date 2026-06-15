@@ -560,8 +560,6 @@
             SUPPORTED_LANGUAGES.forEach(lang => {
                 const isSelected = lang.code === currentVal; const btn = document.createElement('button');
                 btn.className = `py-3 px-4 rounded-xl flex items-center justify-start gap-3 text-sm font-bold transition-all border-2 ${isSelected ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200'}`;
-                
-                // 번역된 언어 이름 삽입!
                 btn.innerHTML = `<span class="text-2xl drop-shadow-sm">${lang.flag}</span> <span>${getLangName(lang.code)}</span>`;
                 
                 btn.onclick = () => { 
@@ -569,8 +567,14 @@
                     updateLangDisplays(); 
                     closeCustomLangPicker(); 
                     
+                    // 1. 해설 언어(모국어)가 바뀌면 UI 전체 텍스트 변환
                     if (targetId === 'explanationLanguage' && typeof window.changeUILanguage === 'function') {
                         window.changeUILanguage(lang.code);
+                    }
+                    
+                    // 🌟 2. [추가된 버그 해결 코드!] 학습 언어가 바뀌면 이전 대화 기록을 싹 지우고 새 원어민 튜터로 뇌를 초기화!
+                    if (targetId === 'targetLanguage' && typeof window.targetLanguageChanged === 'function') {
+                        window.targetLanguageChanged();
                     }
                 };
                 listContainer.appendChild(btn);
