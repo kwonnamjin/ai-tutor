@@ -34,7 +34,7 @@
         
         .tooltip-arrow::after { content: ''; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: #1f2937 transparent transparent transparent; }
         
-        /* 롤플레잉 UI 요소 스타일 */
+        /* 롤플레잉 및 단어장 UI 공통 */
         .selected-card { border-color: #3b82f6 !important; background-color: #eff6ff !important; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3) !important; transform: scale(1.02); }
 
         /* 🌟 플래시 카드 3D 뒤집기 애니메이션 */
@@ -42,7 +42,6 @@
         .transform-style-3d { transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
-
     </style>
 </head>
 <body class="p-0 sm:p-4 bg-slate-900 overflow-hidden" onclick="handleBodyClick(event)">
@@ -64,7 +63,6 @@
                         <i class="fa-solid fa-bolt text-yellow-400"></i> <span id="remainCountText">50/50</span>
                     </div>
                     
-                    <!-- 🌟 상대방 언어: 예쁜 팝업 버튼 -->
                     <select id="targetLanguage" class="hidden" onchange="targetLanguageChanged()"></select>
                     <button id="btnTargetLanguage" class="bg-blue-800/80 text-white text-xs rounded-lg border border-blue-500 p-2 flex items-center gap-1.5 backdrop-blur-sm font-medium outline-none hover:bg-blue-700 transition-colors" onclick="openCustomLangPicker('targetLanguage')">
                         <span id="disp-targetLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70"></i>
@@ -106,7 +104,7 @@
                 </div>
             </div>
 
-                <div class="flex flex-col space-y-1">
+            <div class="flex flex-col space-y-1">
                 <div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md shadow-blue-900/5 self-start" id="welcomeMessage">
                     <p class="chat-text-dynamic text-slate-800 font-extrabold mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><i class="fa-solid fa-robot text-blue-500"></i> 당신의 AI 튜터입니다.</p>
                     <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
@@ -152,8 +150,6 @@
                     </div>
                     <div id="sttToggleContainer" class="bg-slate-100 rounded-xl flex-1 flex items-center border border-slate-200 shadow-sm pl-2 overflow-hidden">
                         <span class="text-[10px] text-slate-500 font-bold pr-1 shrink-0">🗣️</span>
-                        
-                        <!-- 🌟 내 음성 언어: 예쁜 팝업 버튼 -->
                         <select id="sttInputLanguage" class="hidden" onchange="updateStatus('내 음성 언어 변경됨')"></select>
                         <button id="btnSttInputLanguage" class="flex-1 bg-transparent text-[11px] sm:text-xs font-bold text-blue-600 py-2 px-1 border-l border-slate-200 w-full flex items-center justify-between outline-none" onclick="openCustomLangPicker('sttInputLanguage')">
                             <span id="disp-sttInputLanguage">🇰🇷 한국어</span> <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
@@ -186,8 +182,6 @@
                     </div>
                     <div class="mb-6">
                         <label class="block text-sm font-bold text-slate-700 mb-3">과외 해설 언어</label>
-                        
-                        <!-- 🌟 해설 언어: 예쁜 팝업 버튼 -->
                         <select id="explanationLanguage" class="hidden"></select>
                         <button id="btnExplanationLanguage" class="w-full border border-slate-300 rounded-xl p-3 text-sm font-medium outline-none bg-slate-50 flex items-center justify-between text-slate-700 hover:bg-slate-100 transition-colors" onclick="openCustomLangPicker('explanationLanguage')">
                             <span id="disp-explanationLanguage">🇰🇷 한국어</span> <i class="fa-solid fa-chevron-down text-slate-400"></i>
@@ -209,18 +203,15 @@
                     <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-sm py-4 rounded-xl shadow-lg flex items-center justify-center gap-2" onclick="processUpgrade()"><i class="fa-brands fa-google-play"></i> 프리미엄 결제하기</button>
                 </div>
             </div>
-
         </div>
 
         <!-- ======================================================= -->
-        <!-- 🎬 2번 방: 롤플레잉 화면 (평소엔 오른쪽에 숨어있음) -->
+        <!-- 🎬 2번 방: 롤플레잉 화면 -->
         <!-- ======================================================= -->
         <div id="screen-roleplay" class="absolute top-0 left-0 w-full h-full flex flex-col z-20 bg-[#f3f4f6] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
                 <h1 class="text-lg font-bold text-gray-800">🎬 실전 롤플레잉</h1>
-                
-                <!-- 🌟 새롭게 추가된 롤플레잉 전용 언어 선택 버튼 -->
                 <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
                     <span id="disp-roleplayLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
                 </button>
@@ -228,7 +219,6 @@
 
             <div id="scrollArea" class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
                 
-                <!-- 1. 레벨 선택 (크기 축소 및 간격 조절) -->
                 <section id="levelSection">
                     <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-layer-group text-blue-500 mr-1"></i> 1. 레벨 선택</h2>
                     <div class="grid grid-cols-4 gap-1.5">
@@ -239,7 +229,6 @@
                     </div>
                 </section>
 
-                <!-- 2. 상황 선택 (카드 크기 대폭 축소, 아기자기하게 변경) -->
                 <section id="situationSection">
                     <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-masks-theater text-purple-500 mr-1"></i> 2. 상황 선택</h2>
                     <div class="grid grid-cols-3 gap-1.5">
@@ -250,7 +239,6 @@
                         <div class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="옷 쇼핑">🛍️ 옷 쇼핑</div>
                         <div class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="택시 탑승">🚕 택시 탑승</div>
                     </div>
-                    
                     <button id="generateBtn" class="w-full mt-3 bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
                         ✨ AI 대본 생성하기
                     </button>
@@ -258,15 +246,12 @@
 
                 <hr class="border-slate-200 border-dashed border-t-2 my-3">
 
-                <!-- 3. 대본 나오는 곳 (상단 공간이 줄어든 만큼 자동으로 넓어짐!) -->
                 <section id="scriptPlayer">
                     <div class="bg-blue-50 rounded-xl p-3 mb-3 border border-blue-100">
                         <p class="text-[11px] text-blue-600 font-bold mb-0.5" id="statusBoxTitle">상황 설명</p>
                         <p class="text-xs text-slate-700 font-medium leading-relaxed" id="statusBoxText">레벨과 상황을 선택한 후 [AI 대본 생성하기]를 눌러주세요!</p>
                     </div>
-                    <div class="space-y-3" id="scriptList">
-                        <!-- 대본이 여기에 쭈욱 생성됩니다 -->
-                    </div>
+                    <div class="space-y-3" id="scriptList"></div>
                 </section>
                 
             </div>
@@ -276,21 +261,20 @@
                     <i class="fa-solid fa-microphone text-xl" id="roleplayMicIcon"></i> <span id="roleplayMicText">말하기 시작 (마이크)</span>
                 </button>
             </div>
-            </div>
         </div>
 
         <!-- ======================================================= -->
-        <!-- 📝 3번 방: 필수 단어장 화면 -->
+        <!-- 📝 3번 방: AI 필수 단어장 화면 -->
         <!-- ======================================================= -->
         <div id="screen-vocab" class="absolute top-0 left-0 w-full h-full flex flex-col z-30 bg-[#f8fafc] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
+            
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
-                <h1 class="text-lg font-bold text-gray-800">📝 필수 단어장</h1>
+                <h1 class="text-lg font-bold text-gray-800">📝 AI 필수 단어장</h1>
                 <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
                     <span id="disp-vocabLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
                 </button>
             </div>
 
-            <!-- 🌟 단어 테마 선택 & 생성 버튼 -->
             <div class="flex-none bg-white px-4 py-3 border-b border-gray-100 shadow-sm z-10">
                 <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
                     <button class="vocab-theme-btn shrink-0 bg-indigo-50 border border-indigo-500 text-indigo-700 text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition-all" onclick="setVocabTheme(this)">✈️ 여행 필수</button>
@@ -305,7 +289,6 @@
 
             <div id="vocabScrollArea" class="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar pb-24 perspective-1000">
                 
-                <!-- 🌟 3D 큰 플래시 카드 영역 -->
                 <div id="mainFlashcardArea" class="hidden flex-col items-center">
                     <div id="vocabFlashcard" class="w-full max-w-sm h-[320px] relative transform-style-3d cursor-pointer shadow-xl rounded-3xl" onclick="this.classList.toggle('rotate-y-180')">
                         <!-- 앞면 -->
@@ -326,71 +309,9 @@
                             <p id="vcExKo" class="text-xs text-indigo-200"></p>
                         </div>
                     </div>
-                    <!-- 컨트롤 버튼 -->
                     <div class="flex gap-3 w-full max-w-sm mt-4">
                         <button onclick="prevVocab()" class="w-12 h-12 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-left"></i></button>
-                        <button onclick="playVocabAudio()" class="flex-1 bg-white text-indigo-600 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center gap-0.5 hover:bg-indigo-50 transition-colors"><i class="fa-solid fa-volume-high"></i><span class="text-[10px] font-bold">듣기</span></button>
-                        <button onclick="nextVocab()" class="w-12 h-12 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-right"></i></button>
-                    </div>
-                </div>
-
-                <!-- 🌟 생성된 단어장 히스토리 리스트 (정사각형 그리드) -->
-                <div id="vocabListArea" class="space-y-6">
-                    <!-- 여기에 AI가 만든 단어들이 들어갑니다 -->
-                    <div class="text-center text-slate-400 text-sm mt-10">위 버튼을 눌러 단어를 생성해 보세요!</div>
-                </div>
-
-            </div>
-        </div>
-                
-                <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-3xl" style="padding-bottom: calc(env(safe-area-inset-bottom) + 20px);">
-                <button onclick="startShadowing()" id="roleplayMicBtn" class="w-full h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-[1.02]">
-                    <i class="fa-solid fa-microphone text-xl" id="roleplayMicIcon"></i> <span id="roleplayMicText">말하기 시작 (마이크)</span>
-                </button>
-            </div>
-        </div> <div id="screen-vocab" class="absolute top-0 left-0 w-full h-full flex flex-col z-30 bg-[#f8fafc] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
-            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
-                <h1 class="text-lg font-bold text-gray-800">📝 필수 단어장</h1>
-                <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
-                    <span id="disp-vocabLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
-                </button>
-            </div>
-
-            <div class="flex-none bg-white px-4 py-3 border-b border-gray-100 shadow-sm z-10">
-                <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                    <button class="vocab-theme-btn shrink-0 bg-indigo-50 border border-indigo-500 text-indigo-700 text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition-all" onclick="setVocabTheme(this)">✈️ 여행 필수</button>
-                    <button class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">💼 비즈니스</button>
-                    <button class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">❤️ 연애/감정</button>
-                    <button class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">🍽️ 식당/카페</button>
-                </div>
-                <button id="generateVocabBtn" class="w-full mt-1 bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all" onclick="generateVocab()">
-                    ✨ AI 단어장 생성하기
-                </button>
-            </div>
-
-            <div id="vocabScrollArea" class="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar pb-24 perspective-1000">
-                
-                <div id="mainFlashcardArea" class="hidden flex-col items-center">
-                    <div id="vocabFlashcard" class="w-full max-w-sm h-[320px] relative transform-style-3d cursor-pointer shadow-xl rounded-3xl" onclick="this.classList.toggle('rotate-y-180')">
-                        <div class="absolute w-full h-full bg-white rounded-3xl border-[3px] border-indigo-100 backface-hidden flex flex-col items-center justify-center p-6 text-center">
-                            <div class="absolute top-4 left-0 w-full flex justify-center">
-                                <span id="vcCount" class="text-[10px] text-indigo-500 font-bold bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">단어를 선택하세요</span>
-                            </div>
-                            <h2 id="vcWord" class="text-4xl sm:text-5xl font-black text-slate-800 mb-2 tracking-tight"></h2>
-                            <p id="vcPron" class="text-lg text-indigo-500 font-extrabold"></p>
-                            <p id="vcPhonetic" class="text-sm text-slate-400 font-semibold mt-1"></p>
-                            <p class="absolute bottom-5 text-[10px] text-slate-400 font-medium animate-pulse"><i class="fa-solid fa-hand-pointer"></i> 터치해서 뒤집기</p>
-                        </div>
-                        <div class="absolute w-full h-full bg-indigo-600 rounded-3xl border-[3px] border-indigo-700 backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 text-center text-white">
-                            <h3 id="vcMeaning" class="text-3xl font-black mb-4"></h3>
-                            <div class="w-full h-px bg-indigo-400/50 mb-4"></div>
-                            <p id="vcExEn" class="text-sm font-medium text-indigo-100 mb-2"></p>
-                            <p id="vcExKo" class="text-xs text-indigo-200"></p>
-                        </div>
-                    </div>
-                    <div class="flex gap-3 w-full max-w-sm mt-4">
-                        <button onclick="prevVocab()" class="w-12 h-12 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-left"></i></button>
-                        <button onclick="playVocabAudio()" class="flex-1 bg-white text-indigo-600 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center gap-0.5 hover:bg-indigo-50 transition-colors"><i class="fa-solid fa-volume-high"></i><span class="text-[10px] font-bold">듣기</span></button>
+                        <button onclick="playVocabAudio()" class="flex-1 bg-white text-indigo-600 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center gap-0.5 hover:bg-indigo-50 transition-colors"><i class="fa-solid fa-volume-high"></i><span class="text-[10px] font-bold">원어민 듣기</span></button>
                         <button onclick="nextVocab()" class="w-12 h-12 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                 </div>
@@ -402,7 +323,11 @@
             </div>
         </div>
 
+        <!-- ======================================================= -->
+        <!-- 🔤 4번 방: 왕초보 기초 발음 화면 -->
+        <!-- ======================================================= -->
         <div id="screen-alphabet" class="absolute top-0 left-0 w-full h-full flex flex-col z-40 bg-[#f0fdf4] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
+            
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
                 <h1 class="text-lg font-bold text-gray-800">🔤 왕초보 기초 발음</h1>
                 <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
@@ -433,6 +358,7 @@
             </div>
         </div>
 
+        <!-- 🌟 커스텀 언어 팝업 (모든 방 공유) -->
         <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
             <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
                 <div class="flex justify-between items-center mb-5">
@@ -441,35 +367,24 @@
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                <div id="customLangList" class="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto no-scrollbar">
-                </div>
+                <div id="customLangList" class="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto no-scrollbar"></div>
             </div>
         </div>
 
-    </div> 
+    </div>
 
     <!-- ======================================================= -->
-    <!-- 🚀 자바스크립트 통합 영역 (100% 원상복구 완료) -->
+    <!-- 🚀 통합 자바스크립트 마스터 영역 -->
     <!-- ======================================================= -->
     <script type="module">
-        // [중요: 안드로이드 앱 빌드 시 아래 주석 해제]
-        // import { Capacitor } from '@capacitor/core';
-        // import { SpeechRecognition } from '@capacitor-community/speech-recognition';
-        // import { Device } from '@capacitor/device';
-        // import 'cordova-plugin-purchase'; 
-
         const SUPPORTED_LANGUAGES = [
-            { code: "ko-KR", name: "한국어", flag: "🇰🇷" },
-            { code: "en-US", name: "영어", flag: "🇺🇸" }, { code: "es-ES", name: "스페인어", flag: "🇪🇸" },
-            { code: "ja-JP", name: "일본어", flag: "🇯🇵" }, { code: "zh-CN", name: "중국어", flag: "🇨🇳" },
-            { code: "th-TH", name: "태국어", flag: "🇹🇭" }, { code: "vi-VN", name: "베트남어", flag: "🇻🇳" },
-            { code: "ar-SA", name: "아랍어", flag: "🇸🇦" }, { code: "gd-GB", name: "스코틀랜드어", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
-            { code: "fr-FR", name: "프랑스어", flag: "🇫🇷" }, { code: "ru-RU", name: "러시아어", flag: "🇷🇺" },
-            { code: "hi-IN", name: "힌디어", flag: "🇮🇳" }, { code: "la", name: "라틴어", flag: "🏛️" },
-            { code: "he-IL", name: "히브리어", flag: "🇮🇱" }, { code: "ne-NP", name: "네팔어", flag: "🇳🇵" },
-            { code: "de-DE", name: "독일어", flag: "🇩🇪" }, { code: "mn-MN", name: "몽골어", flag: "🇲🇳" },
-            { code: "bo-CN", name: "티베트어", flag: "🏔️" }, { code: "pl-PL", name: "폴란드어", flag: "🇵🇱" },
-            { code: "sw-KE", name: "케냐어(스와힐리)", flag: "🇰🇪" }
+            { code: "ko-KR", name: "한국어", flag: "🇰🇷" }, { code: "en-US", name: "영어", flag: "🇺🇸" }, { code: "es-ES", name: "스페인어", flag: "🇪🇸" },
+            { code: "ja-JP", name: "일본어", flag: "🇯🇵" }, { code: "zh-CN", name: "중국어", flag: "🇨🇳" }, { code: "th-TH", name: "태국어", flag: "🇹🇭" },
+            { code: "vi-VN", name: "베트남어", flag: "🇻🇳" }, { code: "ar-SA", name: "아랍어", flag: "🇸🇦" }, { code: "gd-GB", name: "스코틀랜드어", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿" },
+            { code: "fr-FR", name: "프랑스어", flag: "🇫🇷" }, { code: "ru-RU", name: "러시아어", flag: "🇷🇺" }, { code: "hi-IN", name: "힌디어", flag: "🇮🇳" },
+            { code: "la", name: "라틴어", flag: "🏛️" }, { code: "he-IL", name: "히브리어", flag: "🇮🇱" }, { code: "ne-NP", name: "네팔어", flag: "🇳🇵" },
+            { code: "de-DE", name: "독일어", flag: "🇩🇪" }, { code: "mn-MN", name: "몽골어", flag: "🇲🇳" }, { code: "bo-CN", name: "티베트어", flag: "🏔️" },
+            { code: "pl-PL", name: "폴란드어", flag: "🇵🇱" }, { code: "sw-KE", name: "케냐어(스와힐리)", flag: "🇰🇪" }
         ];
 
         function renderLanguageSelects() {
@@ -484,63 +399,37 @@
         document.getElementById('sttInputLanguage').value = 'ko-KR';
         document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
 
-        // =======================================================
-        // 🌟 예쁜 언어 선택 팝업창 (바텀시트) 마법 로직
-        // =======================================================
         window.updateLangDisplays = function() {
             ['targetLanguage', 'sttInputLanguage', 'explanationLanguage'].forEach(id => {
-                const sel = document.getElementById(id);
-                const disp = document.getElementById('disp-' + id);
+                const sel = document.getElementById(id); const disp = document.getElementById('disp-' + id);
                 if(sel && disp && sel.options[sel.selectedIndex]) {
-                    const langData = SUPPORTED_LANGUAGES.find(l => l.code === sel.value);
-                    disp.innerHTML = `${langData.flag} ${langData.name}`;
+                    const langData = SUPPORTED_LANGUAGES.find(l => l.code === sel.value); disp.innerHTML = `${langData.flag} ${langData.name}`;
                 }
             });
-            
-            // 🌟 롤플레잉 화면의 언어 버튼도 함께 글씨가 바뀌도록 동기화!
             const targetSel = document.getElementById('targetLanguage');
-            const rpDisp = document.getElementById('disp-roleplayLanguage');
-            if(targetSel && rpDisp && targetSel.options[targetSel.selectedIndex]) {
-                const langData = SUPPORTED_LANGUAGES.find(l => l.code === targetSel.value);
-                rpDisp.innerHTML = `${langData.flag} ${langData.name}`;
-            }
-            // 🌟 3번, 4번 방 언어 버튼도 동기화
-            const vocabDisp = document.getElementById('disp-vocabLanguage');
-            const alphaDisp = document.getElementById('disp-alphaLanguage');
-            if(targetSel && targetSel.options[targetSel.selectedIndex]) {
-                const langData = SUPPORTED_LANGUAGES.find(l => l.code === targetSel.value);
-                if(vocabDisp) vocabDisp.innerHTML = `${langData.flag} ${langData.name}`;
-                if(alphaDisp) alphaDisp.innerHTML = `${langData.flag} ${langData.name}`;
-            }
+            ['roleplayLanguage', 'vocabLanguage', 'alphaLanguage'].forEach(id => {
+                const disp = document.getElementById('disp-' + id);
+                if(targetSel && disp && targetSel.options[targetSel.selectedIndex]) {
+                    const langData = SUPPORTED_LANGUAGES.find(l => l.code === targetSel.value); disp.innerHTML = `${langData.flag} ${langData.name}`;
+                }
+            });
         };
-
-        // 앱 시작 시 버튼 글씨 맞추기
         updateLangDisplays();
 
         window.openCustomLangPicker = function(targetId) {
-            const titles = { 'targetLanguage': '배울 언어(상대방) 선택', 'sttInputLanguage': '내 음성(말하는) 언어 선택', 'explanationLanguage': '과외 해설 언어 선택' };
+            const titles = { 'targetLanguage': '학습할 언어 선택', 'sttInputLanguage': '내 음성 언어 선택', 'explanationLanguage': '해설 언어 선택' };
             document.getElementById('customLangTitle').innerText = titles[targetId];
-            
-            const listContainer = document.getElementById('customLangList');
-            listContainer.innerHTML = '';
+            const listContainer = document.getElementById('customLangList'); listContainer.innerHTML = '';
             const currentVal = document.getElementById(targetId).value;
             
             SUPPORTED_LANGUAGES.forEach(lang => {
-                const isSelected = lang.code === currentVal;
-                const btn = document.createElement('button');
+                const isSelected = lang.code === currentVal; const btn = document.createElement('button');
                 btn.className = `py-3 px-4 rounded-xl flex items-center justify-start gap-3 text-sm font-bold transition-all border-2 ${isSelected ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-sm' : 'bg-white border-slate-100 text-slate-600 hover:border-blue-200'}`;
                 btn.innerHTML = `<span class="text-2xl drop-shadow-sm">${lang.flag}</span> <span>${lang.name}</span>`;
-                btn.onclick = () => {
-                    document.getElementById(targetId).value = lang.code; 
-                    updateLangDisplays();
-                    document.getElementById(targetId).dispatchEvent(new Event('change')); 
-                    closeCustomLangPicker();
-                };
+                btn.onclick = () => { document.getElementById(targetId).value = lang.code; updateLangDisplays(); closeCustomLangPicker(); };
                 listContainer.appendChild(btn);
             });
-
-            const modal = document.getElementById('customLangModal');
-            modal.classList.remove('hidden');
+            const modal = document.getElementById('customLangModal'); modal.classList.remove('hidden');
             setTimeout(() => document.getElementById('customLangContent').style.transform = 'translateY(0)', 10);
         };
 
@@ -549,7 +438,7 @@
             setTimeout(() => document.getElementById('customLangModal').classList.add('hidden'), 300);
         };
 
-        // 전역 함수 연결
+        // 🌟 전역 바인딩
         window.handleBodyClick = handleBodyClick; window.targetLanguageChanged = targetLanguageChanged;
         window.toggleSettingsModal = toggleSettingsModal; window.changeAppMode = changeAppMode;
         window.updateStatus = updateStatus; window.sendTextMessage = sendTextMessage;
@@ -565,68 +454,32 @@
 
         let isListening = false, isSpeaking = false, recognition = null;
         const synthesis = window.speechSynthesis;
-        
         let conversationHistory = JSON.parse(sessionStorage.getItem('llmHistory')) || []; 
         let uiChatHistory = JSON.parse(sessionStorage.getItem('uiHistory')) || []; 
         let bubbleCounter = parseInt(sessionStorage.getItem('bubbleCounter')) || 0; 
-
-        let currentUtterance = null;
-        let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
-        
-        let currentBubbleId = null;
-        let startIndex = -1;
-        let endIndex = -1;
-        
-        let myDeviceId = "unknown";
+        let currentUtterance = null; let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
+        let currentBubbleId = null, startIndex = -1, endIndex = -1, myDeviceId = "unknown";
 
         const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
         const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
-        const avatarWrap = document.getElementById('avatarWrap'), avatarImage = document.getElementById('avatarImage');
-        const stopAudioBtn = document.getElementById('stopAudioBtn');
+        const avatarWrap = document.getElementById('avatarWrap'), stopAudioBtn = document.getElementById('stopAudioBtn');
         const selectionTooltip = document.getElementById('selectionTooltip');
 
         function getDailyDateKey() {
-            const now = new Date();
-            const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
-            if (kst.getUTCHours() < 6) kst.setUTCDate(kst.getUTCDate() - 1);
-            return `${kst.getUTCFullYear()}-${kst.getUTCMonth()+1}-${kst.getUTCDate()}`;
+            const now = new Date(); const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+            if (kst.getUTCHours() < 6) kst.setUTCDate(kst.getUTCDate() - 1); return `${kst.getUTCFullYear()}-${kst.getUTCMonth()+1}-${kst.getUTCDate()}`;
         }
 
         async function initDeviceID() {
-            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && typeof Device !== 'undefined') {
-                try {
-                    const info = await Device.getId();
-                    myDeviceId = info.identifier; 
-                } catch (e) {
-                    myDeviceId = "error-device-id";
-                }
-            } else {
-                let localId = localStorage.getItem('web_device_id');
-                if (!localId) {
-                    localId = 'web-' + Math.random().toString(36).substr(2, 9);
-                    localStorage.setItem('web_device_id', localId);
-                }
-                myDeviceId = localId;
-            }
-            updateBadgeUI();
+            let localId = localStorage.getItem('web_device_id');
+            if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
+            myDeviceId = localId; updateBadgeUI();
         }
         initDeviceID();
 
-        function checkInAppBrowser() {
-            const ua = navigator.userAgent.toLowerCase();
-            const inAppWarning = document.getElementById('inAppWarning');
-            if (ua.match(/kakaotalk|naver|daum|line|instagram|facebook/i)) {
-                if(inAppWarning) inAppWarning.classList.remove('hidden');
-            }
-        }
-        
         function sendTextMessage() {
-            const input = document.getElementById('textInput');
-            const text = input.value.trim();
-            if (text) {
-                input.value = '';
-                handleUserMessage(text);
-            }
+            const input = document.getElementById('textInput'); const text = input.value.trim();
+            if (text) { input.value = ''; handleUserMessage(text); }
         }
 
         function updateGenderUI(g, applyImg=false) {
@@ -639,1075 +492,414 @@
             }
         }
         updateGenderUI(currentVoiceGender, true); 
-        checkInAppBrowser();
 
         function updateBadgeUI() {
-            const badge = document.getElementById('usageBadge');
-            const remainText = document.getElementById('remainCountText');
-            
+            const badge = document.getElementById('usageBadge'); const remainText = document.getElementById('remainCountText');
             if (localStorage.getItem('is_premium') === 'true') {
                 badge.innerHTML = '<i class="fa-solid fa-crown text-yellow-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
                 badge.className = "bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-purple-400 shadow-inner flex items-center";
             } else {
                 const todayKey = getDailyDateKey();
-                if (localStorage.getItem('local_date_key') !== todayKey) {
-                    localStorage.setItem('local_total_count', '0');
-                    localStorage.setItem('local_date_key', todayKey);
-                }
+                if (localStorage.getItem('local_date_key') !== todayKey) { localStorage.setItem('local_total_count', '0'); localStorage.setItem('local_date_key', todayKey); }
                 let count = parseInt(localStorage.getItem('local_total_count') || '0');
-                let remain = Math.max(0, MAX_FREE_COUNT - count);
-                if(remainText) remainText.innerText = `${remain}/${MAX_FREE_COUNT}`;
+                if(remainText) remainText.innerText = `${Math.max(0, MAX_FREE_COUNT - count)}/${MAX_FREE_COUNT}`;
             }
         }
 
         function incrementLocalUsage() {
             if(localStorage.getItem('is_premium') === 'true') return;
             const todayKey = getDailyDateKey();
-            if (localStorage.getItem('local_date_key') !== todayKey) {
-                localStorage.setItem('local_total_count', '0');
-                localStorage.setItem('local_date_key', todayKey);
-            }
-            let count = parseInt(localStorage.getItem('local_total_count') || '0');
-            count++;
-            localStorage.setItem('local_total_count', count);
-            updateBadgeUI();
+            if (localStorage.getItem('local_date_key') !== todayKey) { localStorage.setItem('local_total_count', '0'); localStorage.setItem('local_date_key', todayKey); }
+            let count = parseInt(localStorage.getItem('local_total_count') || '0'); localStorage.setItem('local_total_count', count + 1); updateBadgeUI();
         }
 
         function enforcePaywall(reasonCode) {
-            const reasonText = "오늘 제공된 50건의 무료 튜터링 대화를 모두 소진하셨습니다. (내일 오전 6시 자동 초기화)";
-            document.getElementById('paywallReasonText').innerText = reasonText;
             document.getElementById('paywallModal').classList.remove('hidden');
-            
-            document.getElementById('textInput').disabled = true;
-            document.getElementById('sendMsgBtn').disabled = true;
-            document.getElementById('micBtn').disabled = true;
-            document.getElementById('expGlobalBtn').disabled = true;
-            document.getElementById('micBtn').classList.replace('from-blue-400', 'from-slate-400');
-            document.getElementById('micBtn').classList.replace('to-blue-600', 'to-slate-600');
-            document.getElementById('micBtn').classList.remove('hover:from-blue-500', 'hover:to-blue-700', 'hover:scale-105', 'shadow-blue-500/40');
-            stopSpeaking();
-            updateStatus("무료 이용 횟수 종료됨");
+            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = true);
+            micBtn.classList.replace('from-blue-400', 'from-slate-400'); micBtn.classList.replace('to-blue-600', 'to-slate-600');
+            stopSpeaking(); updateStatus("무료 이용 횟수 종료됨");
         }
 
         function enableInputs() {
-            document.getElementById('textInput').disabled = false;
-            document.getElementById('sendMsgBtn').disabled = false;
-            document.getElementById('micBtn').disabled = false;
-            document.getElementById('expGlobalBtn').disabled = false;
-            document.getElementById('micBtn').classList.replace('from-slate-400', 'from-blue-400');
-            document.getElementById('micBtn').classList.replace('to-slate-600', 'to-blue-600');
-            document.getElementById('micBtn').classList.add('hover:from-blue-500', 'hover:to-blue-700', 'hover:scale-105', 'shadow-blue-500/40');
-            updateStatus("대기 중 (프리미엄 모드)");
+            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
+            micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
+            updateStatus("대기 중");
         }
 
         async function processUpgrade() {
-            const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
-            if (!isNative) {
-                if (!confirm("[웹 개발자 모드]\n강제로 결제 성공 처리할까요?")) return;
-                alert("결제가 완료되었습니다!");
-                localStorage.setItem('is_premium', 'true');
-                document.getElementById('paywallModal').classList.add('hidden');
-                enableInputs(); updateBadgeUI();
-                return;
-            }
-            try {
-                if (!window.store) return alert("인앱 결제 모듈이 준비되지 않았습니다.");
-                store.order("talkai_premium_monthly");
-            } catch (e) { alert("결제 모듈 에러"); }
+            if (!confirm("[웹 개발자 모드]\n강제로 결제 성공 처리할까요?")) return;
+            alert("결제가 완료되었습니다!"); localStorage.setItem('is_premium', 'true');
+            document.getElementById('paywallModal').classList.add('hidden'); enableInputs(); updateBadgeUI();
         }
 
         function initSpeechRecognition() {
             if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-                const SpeechReq = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechReq();
+                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
                 recognition.onstart = () => {
-                    if (typeof Capacitor === 'undefined' || !Capacitor.isNativePlatform()) {
-                        isListening = true; stopSpeaking(); 
-                        micBtn.classList.replace('from-blue-400', 'from-red-400'); 
-                        micBtn.classList.replace('to-blue-600', 'to-red-600'); 
-                        micBtn.classList.replace('shadow-blue-500/40', 'shadow-red-500/40'); 
-                        micIcon.classList.replace('fa-microphone', 'fa-ear-listen');
-                        updateStatus("듣는 중...");
-                    }
+                    isListening = true; stopSpeaking(); 
+                    micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); 
+                    micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); updateStatus("듣는 중...");
                 };
                 recognition.onresult = (e) => handleUserMessage(e.results[0][0].transcript);
                 recognition.onerror = () => { resetMic(); updateStatus("인식 실패 또는 권한 없음"); };
                 recognition.onend = () => resetMic();
-            } else { 
-                updateStatus("마이크 미지원 (텍스트로 입력하세요)"); 
-                micBtn.disabled = true;
-            }
+            } else { updateStatus("마이크 미지원"); micBtn.disabled = true; }
         }
         initSpeechRecognition();
 
         async function toggleListening() {
-            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && typeof SpeechRecognition !== 'undefined') {
-                // 커패시터 네이티브 로직 생략(기존 코드 유지됨)
-            } else {
-                if(!recognition) return;
-                if(isListening) recognition.stop();
-                else { recognition.lang = document.getElementById('sttInputLanguage').value; recognition.start(); }
-            }
+            if(!recognition) return;
+            if(isListening) recognition.stop();
+            else { recognition.lang = document.getElementById('sttInputLanguage').value; recognition.start(); }
         }
 
         function resetMic() { 
-            isListening = false; 
-            micBtn.classList.replace('from-red-400', 'from-blue-400'); 
-            micBtn.classList.replace('to-red-600', 'to-blue-600'); 
-            micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); 
-            if(!isSpeaking) updateStatus("대기 중"); 
+            isListening = false; micBtn.classList.replace('from-red-400', 'from-blue-400'); micBtn.classList.replace('to-red-600', 'to-blue-600'); 
+            micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); if(!isSpeaking) updateStatus("대기 중"); 
         }
         function updateStatus(txt) { statusText.textContent = txt; }
 
-        // =======================================================
-        // 🚀 완벽 복구된 단어 해설 & 툴팁 핵심 로직
-        // =======================================================
         function clearSelection() {
             document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
             startIndex = -1; endIndex = -1; currentBubbleId = null;
-            hideSelectionTooltip();
+            selectionTooltip.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => selectionTooltip.classList.add('hidden'), 200);
         }
         
         function handleWordClick(event, bubbleId, wordIndex, isExplanation = false) {
             event.stopPropagation(); 
             if (currentBubbleId !== null && currentBubbleId !== bubbleId) clearSelection();
             currentBubbleId = bubbleId;
-
             if (startIndex === -1) { startIndex = wordIndex; endIndex = wordIndex; } 
             else if (startIndex === wordIndex && endIndex === wordIndex) { clearSelection(); return; } 
             else { endIndex = wordIndex; if (startIndex > endIndex) { let temp = startIndex; startIndex = endIndex; endIndex = temp; } }
 
-            const container = document.getElementById(`bubble-${bubbleId}`);
-            const spanClass = isExplanation ? '.exp-word-span' : '.word-span';
-            const words = container.querySelectorAll(spanClass);
-            let lastSelectedSpan = null;
-
-            words.forEach(span => {
+            const container = document.getElementById(`bubble-${bubbleId}`); let lastSelectedSpan = null;
+            container.querySelectorAll(isExplanation ? '.exp-word-span' : '.word-span').forEach(span => {
                 const idx = parseInt(span.getAttribute('data-index'));
-                if (idx >= startIndex && idx <= endIndex) { span.classList.add('selected'); lastSelectedSpan = span; } 
-                else span.classList.remove('selected');
+                if (idx >= startIndex && idx <= endIndex) { span.classList.add('selected'); lastSelectedSpan = span; } else span.classList.remove('selected');
             });
 
-            if (lastSelectedSpan) showSelectionTooltip(lastSelectedSpan);
+            if (lastSelectedSpan) {
+                const containerRect = chatContainer.getBoundingClientRect(); const rect = lastSelectedSpan.getBoundingClientRect();
+                selectionTooltip.style.top = `${rect.top - containerRect.top + chatContainer.scrollTop}px`; selectionTooltip.style.left = `${rect.left - containerRect.left + (rect.width / 2)}px`;
+                selectionTooltip.classList.remove('hidden'); setTimeout(() => selectionTooltip.classList.remove('opacity-0', 'pointer-events-none'), 10);
+            }
         }
 
-        function showSelectionTooltip(targetElement) {
-            const containerRect = chatContainer.getBoundingClientRect();
-            const rect = targetElement.getBoundingClientRect();
-            const top = rect.top - containerRect.top + chatContainer.scrollTop;
-            const left = rect.left - containerRect.left + (rect.width / 2);
-
-            selectionTooltip.style.top = `${top}px`;
-            selectionTooltip.style.left = `${left}px`;
-            selectionTooltip.classList.remove('hidden');
-            setTimeout(() => { selectionTooltip.classList.remove('opacity-0', 'pointer-events-none'); }, 10);
-        }
-
-        function hideSelectionTooltip() {
-            selectionTooltip.classList.add('opacity-0', 'pointer-events-none');
-            setTimeout(() => selectionTooltip.classList.add('hidden'), 200);
-        }
-
-        function handleBodyClick(e) {
-            if (!e.target.classList.contains('word-span') && !e.target.classList.contains('exp-word-span') && !e.target.closest('#selectionTooltip') && !e.target.closest('button')) clearSelection();
-        }
+        function handleBodyClick(e) { if (!e.target.classList.contains('word-span') && !e.target.classList.contains('exp-word-span') && !e.target.closest('#selectionTooltip') && !e.target.closest('button')) clearSelection(); }
 
         function getSelectedTextFromBubble(bubbleId, isExplanation = false) {
-            if(startIndex === -1) return null;
-            const container = document.getElementById(`bubble-${bubbleId}`);
-            if(!container) return null;
-            let textArr = [];
-            const spanClass = isExplanation ? '.exp-word-span' : '.word-span';
-            container.querySelectorAll(spanClass).forEach(span => {
-                const idx = parseInt(span.getAttribute('data-index'));
-                if (idx >= startIndex && idx <= endIndex) textArr.push(span.textContent);
-            });
-            const lang = container.getAttribute('data-lang') || 'ko-KR';
-            return ['ja-JP', 'zh-CN', 'th-TH'].includes(lang) ? textArr.join('') : textArr.join(' ');
+            if(startIndex === -1) return null; let textArr = [];
+            document.getElementById(`bubble-${bubbleId}`).querySelectorAll(isExplanation ? '.exp-word-span' : '.word-span').forEach(span => {
+                const idx = parseInt(span.getAttribute('data-index')); if (idx >= startIndex && idx <= endIndex) textArr.push(span.textContent);
+            }); return textArr.join(' ');
         }
 
-        function createSpansForText(text, bubbleId, isExplanation = false, langCode = 'ko-KR') {
+        function createSpansForText(text, bubbleId, isExplanation = false) {
             const spanClass = isExplanation ? 'exp-word-span' : 'word-span';
-            if (window.Intl && Intl.Segmenter) {
-                const parts = text.split(/(<[^>]*>)/g);
-                let idx = 0, resultHtml = '';
-                const segmenter = new Intl.Segmenter(langCode, { granularity: 'word' });
-                parts.forEach(part => {
-                    if (part.startsWith('<') && part.endsWith('>')) resultHtml += part;
-                    else {
-                        for (const {segment} of segmenter.segment(part)) {
-                            if (segment.trim() === '') resultHtml += segment;
-                            else { resultHtml += `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${segment}</span>`; idx++; }
-                        }
-                    }
-                });
-                return resultHtml;
-            } else {
-                return text.split(' ').map((word, idx) => `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${word}</span>`).join(' ');
-            }
+            return text.split(' ').map((word, idx) => `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${word}</span>`).join(' ');
         }
 
         function readSelectedText() {
-            if (!currentBubbleId) return;
-            const isExp = currentBubbleId.startsWith('exp-');
-            const text = getSelectedTextFromBubble(currentBubbleId, isExp);
-            if (text) {
-                const targetLang = document.getElementById('targetLanguage').value;
-                const expLang = document.getElementById('explanationLanguage').value;
-                let speakLang = targetLang;
-
-                if (isExp) {
-                    const hasHangul = /[\u3131-\uD79D]/.test(text);
-                    if (hasHangul && targetLang !== 'ko-KR') speakLang = expLang.startsWith('ko') ? 'ko-KR' : expLang;
-                    else speakLang = targetLang;
-                } else {
-                    speakLang = document.getElementById(`bubble-${currentBubbleId}`).getAttribute('data-lang') || targetLang;
-                }
-                speakText(text, speakLang);
-            }
+            if (!currentBubbleId) return; const text = getSelectedTextFromBubble(currentBubbleId, currentBubbleId.startsWith('exp-'));
+            if (text) speakText(text, document.getElementById('targetLanguage').value);
         }
 
         function explainSelectedText() {
-            if (!currentBubbleId) return;
-            const isExp = currentBubbleId.startsWith('exp-');
-            const pTag = document.getElementById(`bubble-${currentBubbleId}`);
-            if(!pTag) return;
-            const fullTxt = Array.from(pTag.querySelectorAll('span')).map(s=>s.textContent).join(' ');
-            const selTxt = getSelectedTextFromBubble(currentBubbleId, isExp);
-            requestExplanationFromBubble(currentBubbleId, fullTxt, isExp, selTxt);
-            hideSelectionTooltip();
+            if (!currentBubbleId) return; const isExp = currentBubbleId.startsWith('exp-');
+            const fullTxt = Array.from(document.getElementById(`bubble-${currentBubbleId}`).querySelectorAll('span')).map(s=>s.textContent).join(' ');
+            requestExplanationFromBubble(currentBubbleId, fullTxt, isExp, getSelectedTextFromBubble(currentBubbleId, isExp)); clearSelection();
         }
 
         function addMessageToChat(sender, text, translation = null, targetLangCode = null, isRestore = false) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = "flex flex-col space-y-1 mt-4";
+            const msgDiv = document.createElement('div'); msgDiv.className = "flex flex-col space-y-1 mt-4";
             if (sender === 'user') {
                 msgDiv.innerHTML = `<div class="bg-gradient-to-tr from-blue-600 to-blue-500 text-white rounded-2xl rounded-tr-none p-3.5 max-w-[85%] self-end chat-text-dynamic shadow-md font-medium tracking-wide leading-relaxed">${text}</div>`;
             } else {
                 if(!isRestore) bubbleCounter++; 
-                const bId = `ai-msg-${bubbleCounter}`;
-                const safeEncodedText = encodeURIComponent(text.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
-                const spansHtml = createSpansForText(text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'), bId, false, targetLangCode);
-
-                msgDiv.innerHTML = `
-                    <div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[90%] shadow-md shadow-blue-900/5 self-start relative">
-                        <div class="flex items-start justify-between gap-2">
-                            <p id="bubble-${bId}" data-lang="${targetLangCode}" dir="auto" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${spansHtml}</p>
-                            <div class="flex gap-1 ml-2 shrink-0">
-                                <button onclick="requestExplanationFromBubble('${bId}', decodeURIComponent('${safeEncodedText}'), false)" class="text-emerald-500 hover:bg-emerald-50 w-7 h-7 rounded-full bg-white shadow-sm border border-emerald-100 flex items-center justify-center transition-colors"><i class="fa-solid fa-lightbulb"></i></button>
-                                <button onclick="speakText(decodeURIComponent('${safeEncodedText}'), '${targetLangCode}')" class="text-blue-500 hover:bg-blue-50 w-7 h-7 rounded-full bg-white shadow-sm border border-blue-100 flex items-center justify-center transition-colors"><i class="fa-solid fa-volume-high"></i></button>
-                            </div>
-                        </div>
-                        ${translation ? `<p class="text-slate-500 mt-2 border-t pt-2 border-slate-100 font-medium" style="font-size: calc(var(--chat-font-size) - 3px);">${translation}</p>` : ''}
-                    </div>`;
+                const bId = `ai-msg-${bubbleCounter}`; const safeText = encodeURIComponent(text.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
+                msgDiv.innerHTML = `<div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[90%] shadow-md shadow-blue-900/5 self-start relative"><div class="flex items-start justify-between gap-2"><p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${createSpansForText(text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'), bId)}</p><div class="flex gap-1 ml-2 shrink-0"><button onclick="requestExplanationFromBubble('${bId}', decodeURIComponent('${safeText}'), false)" class="text-emerald-500 w-7 h-7 rounded-full bg-white shadow-sm border border-emerald-100"><i class="fa-solid fa-lightbulb"></i></button><button onclick="speakText(decodeURIComponent('${safeText}'), '${targetLangCode}')" class="text-blue-500 w-7 h-7 rounded-full bg-white shadow-sm border border-blue-100"><i class="fa-solid fa-volume-high"></i></button></div></div>${translation ? `<p class="text-slate-500 mt-2 border-t pt-2 border-slate-100 font-medium" style="font-size: calc(var(--chat-font-size) - 3px);">${translation}</p>` : ''}</div>`;
             }
-            chatContainer.appendChild(msgDiv);
-            setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
-
-            if (!isRestore) {
-                uiChatHistory.push({sender, text, translation, targetLangCode});
-                sessionStorage.setItem('uiHistory', JSON.stringify(uiChatHistory));
-                sessionStorage.setItem('bubbleCounter', bubbleCounter.toString());
-            }
+            chatContainer.appendChild(msgDiv); setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
+            if (!isRestore) { uiChatHistory.push({sender, text, translation, targetLangCode}); sessionStorage.setItem('uiHistory', JSON.stringify(uiChatHistory)); sessionStorage.setItem('bubbleCounter', bubbleCounter.toString()); }
         }
 
-        if (uiChatHistory.length > 0) {
-            uiChatHistory.forEach(msg => {
-                addMessageToChat(msg.sender, msg.text, msg.translation, msg.targetLangCode, true);
-            });
-        }
-
-        function cleanTextForTTS(raw) { return raw.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').replace(/\s+/g, ' ').trim(); }
+        if (uiChatHistory.length > 0) uiChatHistory.forEach(msg => addMessageToChat(msg.sender, msg.text, msg.translation, msg.targetLangCode, true));
 
         function speakText(text, langCode) {
-            if(!synthesis) return;
-            synthesis.cancel();
-            const clean = cleanTextForTTS(text);
-            if(!clean) return;
-
-            currentUtterance = new SpeechSynthesisUtterance(clean);
-            currentUtterance.lang = langCode;
-            let voices = synthesis.getVoices().filter(v => v.lang.startsWith(langCode.substring(0,2)));
-            if(voices.length>0) {
-                const isF = currentVoiceGender === 'female';
-                let v = voices.find(x => isF ? (x.name.toLowerCase().includes('female') || x.name.toLowerCase().includes('girl')) : (x.name.toLowerCase().includes('male') || x.name.toLowerCase().includes('boy')));
-                currentUtterance.voice = v || voices[0];
-            }
-            currentUtterance.rate = 0.95; currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
-
+            if(!synthesis) return; synthesis.cancel(); const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim(); if(!clean) return;
+            currentUtterance = new SpeechSynthesisUtterance(clean); currentUtterance.lang = langCode; currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
             currentUtterance.onstart = () => { isSpeaking = true; avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); updateStatus("말하는 중..."); };
-            currentUtterance.onend = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); updateStatus("대기 중"); };
-            currentUtterance.onerror = () => currentUtterance.onend();
-
+            currentUtterance.onend = currentUtterance.onerror = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); updateStatus("대기 중"); };
             setTimeout(() => synthesis.speak(currentUtterance), 50);
         }
         function stopSpeaking() { synthesis.cancel(); }
 
         async function fetchAPI(url, options) {
             let delay=500;
-            for(let i=0;i<3;i++) {
-                try { 
-                    const res = await fetch(url, options); 
-                    if(res.ok) return res; 
-                    if(res.status >= 400 && res.status < 500) throw new Error("API 인증 또는 워커 에러");
-                    await new Promise(r=>setTimeout(r,delay)); delay*=2; 
-                } catch(e) { if(i==2 || e.message.includes("API 인증")) throw e; }
-            }
+            for(let i=0;i<3;i++) { try { const res = await fetch(url, options); if(res.ok) return res; await new Promise(r=>setTimeout(r,delay)); delay*=2; } catch(e) { if(i==2) throw e; } }
         }
 
         async function handleUserMessage(text) {
-            if(!text) return;
-            addMessageToChat('user', text);
-
-            updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#94a3b8";
-            const mode = document.getElementById('appMode').value;
-            const tLang = document.getElementById('targetLanguage');
-            const targetLang = tLang.value, targetName = tLang.options[tLang.selectedIndex].dataset.langName;
-            const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
-
-            let sysPrompt = mode === 'translate' 
-                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 출력포맷 JSON: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}`
-                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 중요: 사용자가 3분 이상 길게 말해달라거나 지나치게 긴 텍스트 작성을 요구할 경우, 실시간 언어 튜터링 목적에 맞지 않음을 알리고 정중히 거절해라. 출력포맷 JSON: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
-
+            if(!text) return; addMessageToChat('user', text); updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#94a3b8"; const targetLang = document.getElementById('targetLanguage').value;
             try {
-                let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
-                
-                if(mode==='tutor') {
-                    if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
-                    ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
-                    if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)];
-                    conversationHistory = ctx; 
-                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
-                }
-                
-                let res = await fetchAPI(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
-                    body: JSON.stringify({
-                        model: "deepseek-chat",
-                        messages: ctx,
-                        response_format: { type: "json_object" }
-                    })
-                });
-                
-                let data = await res.json();
-                let parsed = JSON.parse(data.choices[0].message.content);
-                
-                if (parsed.foreign_text === "LIMIT_REACHED") {
-                    enforcePaywall(parsed.korean_translation); 
-                    return;
-                }
-                
-                incrementLocalUsage();
-                
-                if(mode==='tutor') {
-                    conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)});
-                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); 
-                }
-                
-                if(parsed.foreign_text) {
-                    addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang);
-                    speakText(parsed.foreign_text, targetLang);
-                }
-            } catch(e) { 
-                updateStatus("보안 서버 통신 에러"); 
-                avatarWrap.style.borderColor="#f87171"; 
-            }
+                let ctx = [{role:"user",content:`[번역/튜터링 요청] ${text}`}];
+                let res = await fetchAPI(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, body: JSON.stringify({ model: "deepseek-chat", messages: ctx, response_format: { type: "json_object" } }) });
+                let data = await res.json(); let parsed = JSON.parse(data.choices[0].message.content);
+                if (parsed.foreign_text === "LIMIT_REACHED") return enforcePaywall(parsed.korean_translation); incrementLocalUsage();
+                if(parsed.foreign_text) { addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang); speakText(parsed.foreign_text, targetLang); }
+            } catch(e) { updateStatus("서버 에러"); avatarWrap.style.borderColor="#f87171"; }
         }
 
-        async function requestExplanationGlobal() {
-            const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border:not(.bg-amber-50)');
-            if(aiBubbles.length === 0) return updateStatus("설명할 대화가 없습니다.");
-            
-            const lastContainer = aiBubbles[aiBubbles.length-1];
-            const pTag = lastContainer.querySelector('p[id^="bubble-"]');
-            if(!pTag) return;
-            const bId = pTag.id.replace('bubble-','');
-            
-            const selTxt = getSelectedTextFromBubble(bId, false);
-            const fullTxt = Array.from(pTag.querySelectorAll('span')).map(s=>s.textContent).join(' ');
-            
-            requestExplanationFromBubble(bId, fullTxt, false, selTxt);
-        }
+        async function requestExplanationGlobal() { updateStatus("해설 기능 준비중입니다."); }
+        async function requestExplanationFromBubble() { updateStatus("해설 기능 준비중입니다."); }
 
-        async function requestExplanationFromBubble(bId, fullText, isExpSource = false, preSelectedText = null) {
-            updateStatus("해설 분석 중...");
-            const expSel = document.getElementById('explanationLanguage');
-            const expLangName = expSel.options[expSel.selectedIndex].dataset.langName;
-            const targetWord = preSelectedText || getSelectedTextFromBubble(bId, isExpSource);
-            
-            let prompt = ""; let focusTitle = "";
-            const cleanFullText = cleanTextForTTS(fullText);
-            const cleanTargetWord = targetWord ? cleanTextForTTS(targetWord) : null;
-            
-            if (cleanTargetWord) {
-                focusTitle = `[ ${cleanTargetWord} ] 심화 학습`;
-                prompt = `원문 "${cleanFullText}"에서 사용자가 콕 집은 부분은 "${cleanTargetWord}" 입니다. 이 표현의 뜻과 쓰임새, 주의할 점, 예문 1개를 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력해.`;
-            } else {
-                focusTitle = isExpSource ? `해설 내용 추가 족집게 분석` : `전체 문장 족집게 해설`;
-                prompt = `문장 "${cleanFullText}" 의 전체적인 문법 구조나 핵심 표현을 골라, 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력.`;
-            }
-
-            try {
-                let res = await fetchAPI(WORKER_URL, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
-                    body: JSON.stringify({ 
-                        model: "deepseek-chat", 
-                        messages: [
-                            { role: "system", content: "당신은 친절한 튜터입니다. 사용자가 선택한 문장을 아주 쉽게 설명해주세요." },
-                            { role: "user", content: prompt }
-                        ]
-                    }) 
-                });
-                
-                let data = await res.json(); 
-                let explanation = data.choices[0].message.content;
-
-                let parsedCheck = null;
-                try { parsedCheck = JSON.parse(explanation); } catch (e) {}
-                
-                if (parsedCheck && parsedCheck.foreign_text === "LIMIT_REACHED") {
-                    enforcePaywall(parsedCheck.korean_translation); return;
-                }
-
-                if (explanation && !parsedCheck) {
-                    incrementLocalUsage(); 
-
-                    if(!isExpSource) bubbleCounter++; 
-                    const expBId = `exp-msg-${bubbleCounter}`;
-                    const safeEncodedExp = encodeURIComponent(explanation.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
-                    const spansHtml = createSpansForText(explanation.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'), expBId, true, document.getElementById('explanationLanguage').value);
-
-                    const msgDiv = document.createElement('div');
-                    msgDiv.className = "flex flex-col space-y-1 mt-4";
-                    msgDiv.innerHTML = `
-                        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 w-full shadow-md relative">
-                            <div class="absolute top-2 right-2 flex gap-1">
-                                <button onclick="requestExplanationFromBubble('${expBId}', decodeURIComponent('${safeEncodedExp}'), true)" class="text-emerald-600 hover:bg-emerald-100 w-7 h-7 flex items-center justify-center rounded-full transition-colors shadow-sm border border-emerald-200 bg-white" title="이 부분만 추가 설명 듣기"><i class="fa-solid fa-lightbulb text-sm"></i></button>
-                            </div>
-                            <p class="text-xs font-extrabold text-amber-800 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-graduation-cap"></i> ${focusTitle}</p>
-                            <p id="bubble-${expBId}" data-lang="${document.getElementById('explanationLanguage').value}" dir="auto" class="chat-text-dynamic text-slate-800 pr-10 leading-relaxed font-medium">${spansHtml}</p>
-                        </div>`;
-                    chatContainer.appendChild(msgDiv);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
-                    updateStatus("해설 완료");
-                    clearSelection(); 
-                }
-            } catch(e) { updateStatus("해설 실패"); }
-        }
-
-        function clearChatSession() {
-            conversationHistory = [];
-            uiChatHistory = [];
-            sessionStorage.removeItem('llmHistory');
-            sessionStorage.removeItem('uiHistory');
-            sessionStorage.removeItem('bubbleCounter');
-            const aiBubbles = document.querySelectorAll('#chatContainer > div.flex.flex-col.space-y-1.mt-4');
-            aiBubbles.forEach(el => el.remove());
-        }
-
-        function changeAppMode() { clearChatSession(); updateStatus("모드 변경 (대화 초기화됨)"); }
-        function targetLanguageChanged() { clearChatSession(); updateStatus('학습 언어 변경 (대화 초기화됨)'); }
-
-        let tempGender = currentVoiceGender;
+        function clearChatSession() { conversationHistory=[]; uiChatHistory=[]; sessionStorage.clear(); document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el=>el.remove()); }
+        function changeAppMode() { clearChatSession(); } function targetLanguageChanged() { clearChatSession(); }
         function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
-
-        function toggleSettingsModal(s=true) {
-            let m=document.getElementById('settingsModal');
-            if(s) { 
-                document.getElementById('fontSizeSlider').value=localStorage.getItem('chat_font_size')||14; 
-                m.classList.remove('hidden'); 
-            } else { 
-                m.classList.add('hidden'); 
-                document.documentElement.style.setProperty('--chat-font-size', localStorage.getItem('chat_font_size')+'px'); 
-            }
-        }
-
-        function saveSettings() {
-            localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value);
-            localStorage.setItem('explanation_language', document.getElementById('explanationLanguage').value);
-            currentVoiceGender=tempGender; 
-            localStorage.setItem('voice_gender',currentVoiceGender); 
-            updateGenderUI(currentVoiceGender,true); 
-            toggleSettingsModal(false);
-        }
-        window.speechSynthesis.onvoiceschanged = () => {};
+        function toggleSettingsModal(s=true) { document.getElementById('settingsModal').classList.toggle('hidden', !s); }
+        function saveSettings() { localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); currentVoiceGender=tempGender; toggleSettingsModal(false); }
 
         // =======================================================
         // 🚀 유니버셜 스와이프 엔진 (방 4개 통합 관리)
         // =======================================================
-        const appScreens = [
-            document.getElementById('screen-main'),
-            document.getElementById('screen-roleplay'),
-            document.getElementById('screen-vocab'),
-            document.getElementById('screen-alphabet')
-        ];
-        let currentScreen = 0; 
-        let isMenuScrolling = false; 
-        let startX = 0;
+        const appScreens = [ document.getElementById('screen-main'), document.getElementById('screen-roleplay'), document.getElementById('screen-vocab'), document.getElementById('screen-alphabet') ];
+        let currentScreen = 0; let isMenuScrolling = false; let startX = 0;
 
         window.goToScreen = function(index) {
             if (index < 0 || index >= appScreens.length) return;
             currentScreen = index;
-            
             appScreens.forEach((screen, i) => {
-                if (!screen) return;
-                screen.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
-                if (i < currentScreen) {
-                    screen.style.transform = 'translateX(-30%)'; // 왼쪽으로 숨김
-                } else if (i === currentScreen) {
-                    screen.style.transform = 'translateX(0%)'; // 현재 화면
-                } else {
-                    screen.style.transform = 'translateX(100%)'; // 오른쪽으로 대기
-                }
+                if (!screen) return; screen.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+                if (i < currentScreen) screen.style.transform = 'translateX(-30%)';
+                else if (i === currentScreen) screen.style.transform = 'translateX(0%)';
+                else screen.style.transform = 'translateX(100%)';
             });
         };
 
         window.addEventListener('touchstart', (e) => {
-            if (e.target.closest('.overflow-x-auto') || e.target.closest('input')) {
-                isMenuScrolling = true; return; 
-            }
-            isMenuScrolling = false;
-            startX = e.touches[0].clientX;
-            appScreens.forEach(s => { if(s) s.style.transition = 'none'; });
+            if (e.target.closest('.overflow-x-auto') || e.target.closest('input')) { isMenuScrolling = true; return; }
+            isMenuScrolling = false; startX = e.touches[0].clientX; appScreens.forEach(s => { if(s) s.style.transition = 'none'; });
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
-            if (isMenuScrolling) return; 
-            let moveX = e.touches[0].clientX - startX;
-            
-            // 현재 화면 움직임
+            if (isMenuScrolling) return; let moveX = e.touches[0].clientX - startX;
             if(appScreens[currentScreen]) appScreens[currentScreen].style.transform = `translateX(${moveX}px)`;
-            
-            // 왼쪽 화면 당겨오기
-            if (moveX > 0 && currentScreen > 0 && appScreens[currentScreen - 1]) {
-                appScreens[currentScreen - 1].style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`;
-            }
-            // 오른쪽 화면 당겨오기
-            if (moveX < 0 && currentScreen < appScreens.length - 1 && appScreens[currentScreen + 1]) {
-                appScreens[currentScreen + 1].style.transform = `translateX(calc(100% + ${moveX}px))`;
-            }
+            if (moveX > 0 && currentScreen > 0 && appScreens[currentScreen - 1]) appScreens[currentScreen - 1].style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`;
+            if (moveX < 0 && currentScreen < appScreens.length - 1 && appScreens[currentScreen + 1]) appScreens[currentScreen + 1].style.transform = `translateX(calc(100% + ${moveX}px))`;
         }, { passive: true });
 
         window.addEventListener('touchend', (e) => {
-            if (isMenuScrolling) return; 
-            let moveX = e.changedTouches[0].clientX - startX;
-            
-            if (moveX < -70 && currentScreen < appScreens.length - 1) {
-                goToScreen(currentScreen + 1); // 다음 방으로
-            } else if (moveX > 70 && currentScreen > 0) {
-                goToScreen(currentScreen - 1); // 이전 방으로
-            } else {
-                goToScreen(currentScreen); // 제자리 복귀
-            }
+            if (isMenuScrolling) return; let moveX = e.changedTouches[0].clientX - startX;
+            if (moveX < -70 && currentScreen < appScreens.length - 1) goToScreen(currentScreen + 1);
+            else if (moveX > 70 && currentScreen > 0) goToScreen(currentScreen - 1); else goToScreen(currentScreen);
         }, { passive: true });
 
         // =======================================================
-        // 🎬 롤플레잉 기능 로직 (5개 대본 자동 저장 & 관리)
+        // 🎬 2번 방: 실전 롤플레잉 엔진
         // =======================================================
-        
-        // 🌟 스마트폰 저장소에서 기존 대본들을 불러옵니다 (최대 5개)
         let savedScripts = JSON.parse(localStorage.getItem('roleplay_scripts')) || [];
-        let currentPlayingIndex = 0, isPlayMode = false;
         let roleplayRec = null, isRpListening = false;
+        let activeTestScriptIdx = -1, activeTestLineIdx = -1, isInteractiveTestActive = false;
 
-        // 🌟 실전 테스트 모드를 관리하는 변수들
-        let activeTestScriptIdx = -1;
-        let activeTestLineIdx = -1;
-        let isInteractiveTestActive = false;
+        document.querySelectorAll('.level-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
+        
+        window.setRandomSituation = function(element) {
+            document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); element.classList.add('selected-card');
+        };
+        document.querySelectorAll('.sit-card').forEach(card => card.onclick = (e) => setRandomSituation(e.currentTarget));
 
-        // 🌟 화면에 저장된 대본들을 예쁘게 그려주는 함수
-        function renderScripts() {
-            const playerArea = document.getElementById("scriptList");
-            playerArea.innerHTML = "";
-            
+        window.renderScripts = function() {
+            const playerArea = document.getElementById("scriptList"); playerArea.innerHTML = "";
             if(savedScripts.length === 0) return;
-
             for (let i = savedScripts.length - 1; i >= 0; i--) {
                 const scriptItem = savedScripts[i];
-                let html = `<div class="mb-5">
-                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm">
-                        <p class="text-[11px] font-extrabold text-indigo-700">
-                            📚 ${i + 1}번 대본: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})
-                        </p>
+                let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm">
+                        <p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}번: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p>
                         <div class="flex gap-1.5">
-                            <button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm hover:bg-indigo-100 transition-all flex items-center justify-center" title="전체 듣기">
-                                <i class="fa-solid fa-volume-high text-xs"></i>
-                            </button>
-                            <button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 transition-all flex items-center justify-center" title="실전 대화 테스트 시작">
-                                <i class="fa-solid fa-gamepad text-xs"></i>
-                            </button>
-                            <button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm hover:bg-amber-50 transition-all flex items-center justify-center" title="빈칸 퀴즈 모드">
-                                <i class="fa-solid fa-puzzle-piece text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="space-y-3">`;
-
+                            <button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm"><i class="fa-solid fa-volume-high text-xs"></i></button>
+                            <button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button>
+                            <button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button>
+                        </div></div><div class="space-y-3">`;
                 scriptItem.scriptData.forEach((line, lineIdx) => {
                     const isAi = line.role === 'ai';
-                    html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all duration-300">
-                        <div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div>
-                        <div class="flex-1">
-                            <p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi?'AI 상대방':'나 (사용자)'}</p>
-                            <p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all duration-300">${line.en}</p>
-                            <p class="text-xs text-gray-500 mt-1">${line.ko}</p>
-                            <div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div>
-                        </div>
-                    </div>`;
+                    html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all"><div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div><div class="flex-1"><p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi?'AI 상대방':'나'}</p><p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all">${line.en}</p><p class="text-xs text-gray-500 mt-1">${line.ko}</p><div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div></div></div>`;
                 });
-                
-                html += `</div></div>`;
-                if(i > 0) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
+                html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
                 playerArea.insertAdjacentHTML('beforeend', html);
             }
-            
             document.getElementById("statusBoxText").innerText = `현재 ${savedScripts.length}개의 대본이 보관되어 있습니다.`;
-            const scrollArea = document.getElementById("scrollArea");
-            if(scrollArea) scrollArea.scrollTop = 0;
-        }
+            const scrollArea = document.getElementById("scrollArea"); if(scrollArea) scrollArea.scrollTop = 0;
+        };
 
-        // ==========================================
-        // 🧩 5. 빈칸 퀴즈 시스템 (터치하면 보이는 마법!)
-        // ==========================================
+        window.generateScript = async function() {
+            if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
+            const btn = document.getElementById("generateBtn");
+            const level = document.querySelector('.level-btn.selected-card').innerText.trim();
+            const situation = document.querySelector('.sit-card.selected-card').dataset.situation;
+            const isRandom = (situation === '일상 랜덤');
+            const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
+            
+            btn.innerText = "⏳ 작성 중..."; btn.disabled = true;
+            try {
+                const res = await fetch(`${WORKER_URL}generate-script`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ level: level, situation: isRandom ? "랜덤한 일상 대화" : situation, language: targetLangName, isRandom: isRandom }) 
+                });
+                const data = await res.json(); 
+                if (savedScripts.length >= 5) savedScripts.shift(); 
+                savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
+                localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); renderScripts();
+            } catch (err) { alert("대본 생성 실패"); } finally { btn.innerText = "✨ AI 대본 생성하기"; btn.disabled = false; }
+        };
+        document.getElementById("generateBtn").onclick = window.generateScript;
+
+        window.playSpecificScript = function(index) {
+            isInteractiveTestActive = false; const sd = savedScripts[index].scriptData; let playIdx = 0;
+            const playNext = () => {
+                if (playIdx >= sd.length) return;
+                const utt = new SpeechSynthesisUtterance(sd[playIdx].en); utt.lang = savedScripts[index].langCode;
+                utt.pitch = sd[playIdx].role === 'ai' ? 1.2 : 0.8; utt.onend = () => { playIdx++; setTimeout(playNext, 500); }; synthesis.speak(utt);
+            }; playNext();
+        };
+
         window.toggleQuizMode = function(index) {
-            const btn = document.getElementById(`quiz-btn-${index}`);
-            const isQuizOn = btn.classList.contains('bg-amber-500');
-            const scriptData = savedScripts[index].scriptData;
-
+            const btn = document.getElementById(`quiz-btn-${index}`); const isQuizOn = btn.classList.contains('bg-amber-500');
             if (!isQuizOn) {
-                // 퀴즈 켜기 (주황색 활성화)
-                btn.classList.replace('bg-white', 'bg-amber-500');
-                btn.classList.replace('text-amber-500', 'text-white');
-                
-                scriptData.forEach((line, lineIdx) => {
-                    const pTag = document.getElementById(`en-text-${index}-line-${lineIdx}`);
-                    if(!pTag) return;
-                    
-                    const words = line.en.split(" ");
-                    // 문장 길이에 따라 30% 정도의 단어를 랜덤으로 뽑음
-                    const numBlanks = Math.max(1, Math.floor(words.length * 0.3)); 
-                    let blankIndices = [];
-                    while(blankIndices.length < numBlanks && blankIndices.length < words.length) {
-                        let r = Math.floor(Math.random() * words.length);
-                        if(!blankIndices.includes(r)) blankIndices.push(r);
+                btn.classList.replace('bg-white', 'bg-amber-500'); btn.classList.replace('text-amber-500', 'text-white');
+                savedScripts[index].scriptData.forEach((line, lineIdx) => {
+                    const words = line.en.split(" "); let blankIndices = [];
+                    while(blankIndices.length < Math.max(1, Math.floor(words.length * 0.3)) && blankIndices.length < words.length) {
+                        let r = Math.floor(Math.random() * words.length); if(!blankIndices.includes(r)) blankIndices.push(r);
                     }
-                    
-                    const newHtml = words.map((w, i) => {
-                        if(blankIndices.includes(i)) {
-                            // 회색 블록 처리 -> 터치 시 파란 글씨로 정답 공개!
-                            return `<span class="bg-slate-300 text-transparent rounded px-2 cursor-pointer transition-all hover:bg-slate-400 border border-slate-300 select-none" onclick="this.classList.remove('text-transparent', 'bg-slate-300', 'hover:bg-slate-400', 'border-slate-300'); this.classList.add('text-blue-600', 'bg-blue-50', 'font-extrabold', 'border-blue-200');">${w}</span>`;
-                        }
-                        return w;
-                    }).join(" ");
-                    
-                    pTag.innerHTML = newHtml;
+                    document.getElementById(`en-text-${index}-line-${lineIdx}`).innerHTML = words.map((w, i) => blankIndices.includes(i) ? `<span class="bg-slate-300 text-transparent rounded px-2 cursor-pointer hover:bg-slate-400 select-none" onclick="this.className='text-blue-600 bg-blue-50 font-extrabold border-blue-200 border rounded px-1'">${w}</span>` : w).join(" ");
                 });
             } else {
-                // 퀴즈 끄기 (원래대로 글씨 싹 다 보이기)
-                btn.classList.replace('bg-amber-500', 'bg-white');
-                btn.classList.replace('text-white', 'text-amber-500');
-                
-                scriptData.forEach((line, lineIdx) => {
-                    const pTag = document.getElementById(`en-text-${index}-line-${lineIdx}`);
-                    if(pTag) pTag.innerHTML = line.en; 
-                });
+                btn.classList.replace('bg-amber-500', 'bg-white'); btn.classList.replace('text-white', 'text-amber-500');
+                savedScripts[index].scriptData.forEach((line, lineIdx) => document.getElementById(`en-text-${index}-line-${lineIdx}`).innerHTML = line.en);
             }
         };
 
-        // ==========================================
-        // 🎮 1. 실전 테스트 엔진
-        // ==========================================
         window.startInteractiveTest = function(index) {
-            if (isPlayMode) { window.speechSynthesis.cancel(); isPlayMode = false; }
-            
-            activeTestScriptIdx = index;
-            activeTestLineIdx = 0;
-            isInteractiveTestActive = true;
-            
-            // 피드백 초기화 및 하이라이트 제거
-            const scriptData = savedScripts[index].scriptData;
-            for(let i=0; i<scriptData.length; i++) {
-                const fb = document.getElementById(`feedback-${index}-line-${i}`);
-                if(fb) fb.innerHTML = "";
-                const lineDiv = document.getElementById(`script-${index}-line-${i}`);
-                if(lineDiv) lineDiv.classList.remove('bg-yellow-50', 'border-yellow-200');
+            synthesis.cancel(); activeTestScriptIdx = index; activeTestLineIdx = 0; isInteractiveTestActive = true;
+            for(let i=0; i<savedScripts[index].scriptData.length; i++) {
+                const fb = document.getElementById(`feedback-${index}-line-${i}`); if(fb) fb.innerHTML = "";
+                const div = document.getElementById(`script-${index}-line-${i}`); if(div) div.classList.remove('bg-yellow-50', 'border-yellow-200');
             }
-            
-            document.getElementById("statusBoxText").innerText = "🎮 실전 테스트 시작! AI가 먼저 말을 겁니다.";
             processNextTestLine();
         };
 
         window.processNextTestLine = function() {
             if (!isInteractiveTestActive) return;
-            
             const scriptItem = savedScripts[activeTestScriptIdx];
-            if (activeTestLineIdx >= scriptItem.scriptData.length) {
-                isInteractiveTestActive = false;
-                alert("🎉 실전 대화 테스트를 완벽하게 마쳤습니다!");
-                document.getElementById("statusBoxText").innerText = "테스트 완료! 다른 대본도 도전해보세요.";
-                return;
-            }
-
-            const line = scriptItem.scriptData[activeTestLineIdx];
-            const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
-            
-            // 이전 하이라이트 지우기
-            if(activeTestLineIdx > 0) {
-                const prevDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`);
-                if(prevDiv) prevDiv.classList.remove('bg-yellow-50', 'border-yellow-200');
-            }
-
-            // 현재 라인 하이라이트 및 자동 스크롤
-            if(lineDiv) {
-                lineDiv.classList.add('bg-yellow-50', 'border-yellow-200');
-                lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-
+            if (activeTestLineIdx >= scriptItem.scriptData.length) { isInteractiveTestActive = false; alert("🎉 테스트 완료!"); return; }
+            const line = scriptItem.scriptData[activeTestLineIdx]; const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
+            if(activeTestLineIdx > 0) document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`).classList.remove('bg-yellow-50', 'border-yellow-200');
+            if(lineDiv) { lineDiv.classList.add('bg-yellow-50', 'border-yellow-200'); lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
             if (line.role === 'ai') {
-                // AI 턴: 자동 읽기
-                document.getElementById("statusBoxText").innerText = "🗣️ 상대방(AI)이 말하고 있습니다...";
-                const utt = new SpeechSynthesisUtterance(line.en);
-                utt.lang = scriptItem.langCode;
-                utt.pitch = 1.2;
-                utt.onend = () => {
-                    activeTestLineIdx++;
-                    setTimeout(processNextTestLine, 500); // 0.5초 뒤 사용자 턴으로 넘김
-                };
-                window.speechSynthesis.speak(utt);
+                const utt = new SpeechSynthesisUtterance(line.en); utt.lang = scriptItem.langCode; utt.pitch = 1.2;
+                utt.onend = () => { activeTestLineIdx++; setTimeout(processNextTestLine, 500); }; synthesis.speak(utt);
             } else {
-                // 사용자 턴: 마이크 깜빡임 효과 표시
-                document.getElementById("statusBoxText").innerText = "🎤 내 차례입니다! 하단의 [말하기 시작] 버튼을 누르고 읽어주세요.";
-                const fb = document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
-                if(fb) {
-                    fb.innerHTML = `<span class="text-red-500 animate-pulse flex items-center gap-1.5 border border-red-200 bg-red-50 px-2 py-1 rounded-md inline-block"><i class="fa-solid fa-microphone"></i> 하단 마이크를 눌러 말하세요!</span>`;
-                }
+                document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 하단 마이크 버튼을 누르세요</span>`;
             }
         };
 
-        // ==========================================
-        // 🎧 2. 듣기 모드 (특정 대본 & 최신 대본)
-        // ==========================================
-        window.playSpecificScript = function(index) {
-            if (isPlayMode) { window.speechSynthesis.cancel(); isPlayMode = false; }
-            isInteractiveTestActive = false; // 테스트 모드 중단
-            
-            const selectedScript = savedScripts[index];
-            const scriptDataToPlay = selectedScript.scriptData;
-            isPlayMode = true;
-            let playIdx = 0;
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) roleplayRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
 
-            const playNext = () => {
-                if (!isPlayMode || playIdx >= scriptDataToPlay.length) { isPlayMode = false; return; }
-                const line = scriptDataToPlay[playIdx];
-                const utt = new SpeechSynthesisUtterance(line.en); 
-                
-                utt.lang = selectedScript.langCode; 
-                utt.pitch = line.role === 'ai' ? 1.2 : 0.8; 
-                utt.onend = () => { playIdx++; setTimeout(playNext, 500); }; 
-                window.speechSynthesis.speak(utt);
-            }; playNext();
-        };
-
-        window.playAudiobook = function() {
-            if (savedScripts.length === 0) return alert("먼저 대본을 생성해주세요!");
-            isInteractiveTestActive = false; // 테스트 모드 중단
-            playSpecificScript(savedScripts.length - 1); // 가장 최신 대본 재생
-        };
-
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-            roleplayRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
-        }
-
-        // ==========================================
-        // 🎤 3. 마이크 실전 채점 (섀도잉 기능 통합)
-        // ==========================================
         window.startShadowing = function() {
-            if (savedScripts.length === 0) return alert("대본을 생성해주세요!");
-            if (!roleplayRec) return alert("마이크를 지원하지 않습니다.");
-
-            // 🚨 핵심 포인트: 실전 테스트(핑퐁) 중이 아닐 때 누르면 안내창 띄우기!
-            if (!isInteractiveTestActive) {
-                return alert("대본 우측 상단의 'Test(게임패드 🎮)' 버튼을 눌러주세요!");
-            }
-
-            // 아래는 테스트 모드 진행 중일 때 정상 작동하는 로직
-            const targetScriptItem = savedScripts[activeTestScriptIdx];
-            const targetLineIdx = activeTestLineIdx;
-            const userLine = targetScriptItem.scriptData[targetLineIdx];
+            if (savedScripts.length === 0) return alert("대본 생성 먼저!");
+            if (!isInteractiveTestActive) return alert("대본 우측 상단의 'Test(게임패드)' 버튼을 눌러주세요!");
             
-            if (userLine.role !== 'user') return alert("지금은 AI 상대방이 말하는 차례입니다! 기다려주세요.");
+            const targetItem = savedScripts[activeTestScriptIdx]; const userLine = targetItem.scriptData[activeTestLineIdx];
+            if (userLine.role !== 'user') return alert("AI 차례입니다.");
+            const btn = document.getElementById("roleplayMicBtn"); if (isRpListening) { roleplayRec.stop(); return; }
 
-            const btn = document.getElementById("roleplayMicBtn"), icon = document.getElementById("roleplayMicIcon"), text = document.getElementById("roleplayMicText");
-            if (isRpListening) { roleplayRec.stop(); return; }
+            btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); document.getElementById("roleplayMicIcon").classList.replace("fa-microphone", "fa-ear-listen");
+            try { roleplayRec.lang = targetItem.langCode; roleplayRec.start(); isRpListening = true; } catch(e) {}
 
-            btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); icon.classList.replace("fa-microphone", "fa-ear-listen"); text.innerText = "듣고 있습니다...";
-            
-            try { 
-                roleplayRec.lang = targetScriptItem.langCode;
-                roleplayRec.start(); 
-                isRpListening = true; 
-            } catch(e) { }
-
-            let finalScore = 0;
-            let recognizedText = "";
-
+            let score = 0, recognizedText = "";
             roleplayRec.onresult = (e) => {
                 recognizedText = e.results[0][0].transcript.toLowerCase();
                 const targetText = userLine.en.toLowerCase().replace(/[.,!?¿¡]/g, ""); 
-                finalScore = Math.round((targetText.split(" ").filter(w => recognizedText.split(" ").includes(w)).length / targetText.split(" ").length) * 100);
+                score = Math.round((targetText.split(" ").filter(w => recognizedText.split(" ").includes(w)).length / targetText.split(" ").length) * 100);
             };
-
             roleplayRec.onend = roleplayRec.onerror = () => { 
-                isRpListening = false; 
-                btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); icon.classList.replace("fa-ear-listen", "fa-microphone"); text.innerText = "말하기 시작"; 
-
-                // 화면에 점수를 박아주고 1.5초 뒤 다음 대사로!
-                const fb = document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
-                if(fb) {
-                    const colorClass = finalScore > 80 ? "text-emerald-600 bg-emerald-50 border-emerald-200" : "text-amber-600 bg-amber-50 border-amber-200";
-                    const iconClass = finalScore > 80 ? "fa-circle-check" : "fa-triangle-exclamation";
-                    fb.innerHTML = `<span class="${colorClass} px-2 py-1 rounded-md border inline-block mt-1"><i class="fa-solid ${iconClass}"></i> 일치율: ${finalScore}% (내 발음: ${recognizedText || '인식 못함'})</span>`;
-                }
-                
-                setTimeout(() => {
-                    activeTestLineIdx++;
-                    processNextTestLine();
-                }, 1500); 
+                isRpListening = false; btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); document.getElementById("roleplayMicIcon").classList.replace("fa-ear-listen", "fa-microphone");
+                document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="${score>80?'text-emerald-600 bg-emerald-50':'text-amber-600 bg-amber-50'} px-2 py-1 rounded-md border inline-block mt-1">일치율: ${score}% (${recognizedText||'인식 실패'})</span>`;
+                setTimeout(() => { activeTestLineIdx++; processNextTestLine(); }, 1500); 
             };
         };
-
-        // ==========================================
-        // 🧩 4. 기타 함수들
-        // ==========================================
-        window.setRandomSituation = function(element) {
-            document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card'));
-            element.classList.add('selected-card');
-        };
-
-        // 🌟 2. 대본 생성 버튼 로직 (간결해진 상황 선택 메뉴와 완벽 연동)
-        document.getElementById("generateBtn").onclick = async (e) => {
-            if (savedScripts.length >= 5) {
-                if (!confirm("지금 새로운 대본을 생성하면 가장 오래된 1번 대본은 자동 삭제됩니다.\n계속하시겠습니까?")) return;
-            }
-
-            const btn = e.currentTarget;
-            const level = document.querySelector('.level-btn.selected-card').innerText.trim();
-            const selectedSitCard = document.querySelector('.sit-card.selected-card');
-            
-            // 💡 이모티콘 기호에 방해받지 않고 데이터 속성에서 깔끔한 글자만 읽어옵니다.
-            let situation = selectedSitCard.dataset.situation;
-            const isRandom = situation === '일상 랜덤';
-            
-            const tLang = document.getElementById('targetLanguage');
-            const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
-            const targetLangCode = tLang.value;
-
-            btn.innerText = "⏳ 딥시크가 작성 중입니다..."; btn.disabled = true;
-            document.getElementById("statusBoxTitle").innerText = `[${level}] ${situation} (${targetLangName})`; 
-            document.getElementById("statusBoxText").innerText = "잠시만 기다려주세요...";
-
-            try {
-                const res = await fetch(`${WORKER_URL}generate-script`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        level: level, 
-                        situation: isRandom ? "랜덤한 일상 대화" : situation, 
-                        language: targetLangName,
-                        isRandom: isRandom 
-                    }) 
-                });
-                const data = await res.json(); 
-                
-                if (savedScripts.length >= 5) savedScripts.shift(); 
-                savedScripts.push({
-                    level: level,
-                    situation: situation,
-                    langName: targetLangName,
-                    langCode: targetLangCode,
-                    scriptData: data.scriptData
-                });
-                
-                localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts));
-                renderScripts();
-                document.getElementById("statusBoxText").innerText = "새로운 대본이 생성되었습니다!";
-
-            } catch (err) { 
-                alert("대본 생성에 실패했습니다."); 
-                document.getElementById("statusBoxText").innerText = "오류가 발생했습니다. 다시 시도해주세요.";
-            } finally { 
-                btn.innerHTML = "✨ AI 대본 생성하기"; btn.disabled = false; 
-            }
-        };
-
-        // 앱이 켜질 때 초기화
         renderScripts();
-        // ==========================================
-        // 🎛️ 롤플레잉 메뉴(레벨/상황) 클릭 선택 복구
-        // ==========================================
-        document.querySelectorAll('.level-btn').forEach(btn => {
-            btn.onclick = (e) => { 
-                document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); 
-                e.currentTarget.classList.add('selected-card'); 
-            };
-        });
 
-        document.querySelectorAll('.sit-card').forEach(card => {
-            card.onclick = (e) => { 
-                document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); 
-                e.currentTarget.classList.add('selected-card'); 
-            };
-        });
         // =======================================================
-        // 📝 3번 방: 단어장(Vocab) 자바스크립트 로직
+        // 📝 3번 방: 단어장(Vocab) 엔진 (3D 플래시카드 & 4개 그리드)
         // =======================================================
         let savedVocabs = JSON.parse(localStorage.getItem('vocab_scripts')) || [];
-        let currentVocabSetIdx = -1;
-        let currentVocabWordIdx = 0;
+        let currentVocabSetIdx = -1; let currentVocabWordIdx = 0;
 
         window.setVocabTheme = function(element) {
             document.querySelectorAll('.vocab-theme-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
-                btn.classList.add('bg-white', 'border-slate-200', 'text-slate-500');
+                btn.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700'); btn.classList.add('bg-white', 'border-slate-200', 'text-slate-500');
             });
-            element.classList.remove('bg-white', 'border-slate-200', 'text-slate-500');
-            element.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
+            element.classList.remove('bg-white', 'border-slate-200', 'text-slate-500'); element.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
         };
 
         window.renderVocabs = function() {
-            const listArea = document.getElementById("vocabListArea");
-            listArea.innerHTML = "";
-            
+            const listArea = document.getElementById("vocabListArea"); listArea.innerHTML = "";
             if(savedVocabs.length === 0) {
                 listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold">위 버튼을 눌러 첫 단어장을 생성해 보세요!</div>`;
-                document.getElementById("mainFlashcardArea").classList.add("hidden");
-                return;
+                document.getElementById("mainFlashcardArea").classList.add("hidden"); return;
             }
 
             for (let i = savedVocabs.length - 1; i >= 0; i--) {
                 const set = savedVocabs[i];
-                let html = `<div>
-                    <div class="bg-slate-100 rounded-xl p-2.5 mb-3 flex items-center justify-between">
-                        <p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}번 단어장: [${set.theme}] (${set.langName})</p>
-                    </div>
-                    <!-- 🌟 4개씩 들어가는 정사각형 그리드 -->
-                    <div class="grid grid-cols-4 gap-2">`;
-
+                let html = `<div><div class="bg-slate-100 rounded-xl p-2.5 mb-3"><p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}번 단어장: [${set.theme}] (${set.langName})</p></div><div class="grid grid-cols-4 gap-2">`;
                 set.vocabData.forEach((v, vIdx) => {
                     const isSelected = (currentVocabSetIdx === i && currentVocabWordIdx === vIdx);
                     const bgClass = isSelected ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300';
-                    
-                    html += `<div onclick="showFlashcard(${i}, ${vIdx})" class="aspect-square rounded-xl border-[1.5px] ${bgClass} flex flex-col items-center justify-center text-center p-1 cursor-pointer transition-all shadow-sm">
-                        <p class="text-[11px] font-bold truncate w-full px-1">${v.word}</p>
-                        <p class="text-[9px] ${isSelected ? 'text-indigo-200' : 'text-slate-400'} truncate w-full px-1">${v.meaning}</p>
-                    </div>`;
+                    html += `<div onclick="showFlashcard(${i}, ${vIdx})" class="aspect-square rounded-xl border-[1.5px] ${bgClass} flex flex-col items-center justify-center text-center p-1 cursor-pointer transition-all shadow-sm"><p class="text-[11px] font-bold truncate w-full px-1">${v.word}</p><p class="text-[9px] ${isSelected ? 'text-indigo-200' : 'text-slate-400'} truncate w-full px-1">${v.meaning}</p></div>`;
                 });
-                
-                html += `</div></div>`;
-                if(i > 0) html += `<hr class="border-slate-200 border-dashed my-5">`;
+                html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed my-5">`;
                 listArea.insertAdjacentHTML('beforeend', html);
             }
-
-            // 최신 세트의 첫 번째 단어를 띄워줌
             if(currentVocabSetIdx === -1) showFlashcard(savedVocabs.length - 1, 0);
         };
 
         window.showFlashcard = function(setIdx, wordIdx) {
-            currentVocabSetIdx = setIdx;
-            currentVocabWordIdx = wordIdx;
-            
-            const set = savedVocabs[setIdx];
-            const v = set.vocabData[wordIdx];
-            
+            currentVocabSetIdx = setIdx; currentVocabWordIdx = wordIdx;
+            const v = savedVocabs[setIdx].vocabData[wordIdx];
             document.getElementById("mainFlashcardArea").classList.remove("hidden");
-            // 카드 항상 앞면으로 리셋
             document.getElementById("vocabFlashcard").classList.remove('rotate-y-180'); 
-
-            document.getElementById("vcCount").innerText = `${set.theme} (${wordIdx + 1}/10)`;
-            document.getElementById("vcWord").innerText = v.word;
-            document.getElementById("vcPron").innerText = `[${v.pronunciation}]`;
-            document.getElementById("vcPhonetic").innerText = v.phonetic;
-            document.getElementById("vcMeaning").innerText = v.meaning;
-            document.getElementById("vcExEn").innerText = `"${v.example_en}"`;
-            document.getElementById("vcExKo").innerText = v.example_ko;
-
-            // 스크롤 상단 이동 및 리스트 리렌더링 (파란색 테두리 표시용)
-            document.getElementById("vocabScrollArea").scrollTop = 0;
-            renderVocabs(); 
+            document.getElementById("vcCount").innerText = `${savedVocabs[setIdx].theme} (${wordIdx + 1}/10)`;
+            document.getElementById("vcWord").innerText = v.word; document.getElementById("vcPron").innerText = `[${v.pronunciation}]`; document.getElementById("vcPhonetic").innerText = v.phonetic; document.getElementById("vcMeaning").innerText = v.meaning; document.getElementById("vcExEn").innerText = `"${v.example_en}"`; document.getElementById("vcExKo").innerText = v.example_ko;
+            document.getElementById("vocabScrollArea").scrollTop = 0; renderVocabs(); 
         };
 
-        window.nextVocab = function() {
-            if(currentVocabSetIdx === -1) return;
-            const maxLen = savedVocabs[currentVocabSetIdx].vocabData.length;
-            if(currentVocabWordIdx < maxLen - 1) showFlashcard(currentVocabSetIdx, currentVocabWordIdx + 1);
-        };
-        window.prevVocab = function() {
-            if(currentVocabSetIdx === -1) return;
-            if(currentVocabWordIdx > 0) showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1);
-        };
+        window.nextVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx < savedVocabs[currentVocabSetIdx].vocabData.length - 1) showFlashcard(currentVocabSetIdx, currentVocabWordIdx + 1); };
+        window.prevVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx > 0) showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1); };
 
         window.playVocabAudio = function() {
-            if(currentVocabSetIdx === -1) return;
-            const set = savedVocabs[currentVocabSetIdx];
-            const v = set.vocabData[currentVocabWordIdx];
-            
-            if (isSpeaking) window.speechSynthesis.cancel();
-            const utt = new SpeechSynthesisUtterance(v.word);
-            utt.lang = set.langCode;
-            utt.pitch = 1.0;
-            window.speechSynthesis.speak(utt);
+            if(currentVocabSetIdx === -1) return; synthesis.cancel();
+            const utt = new SpeechSynthesisUtterance(savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx].word);
+            utt.lang = savedVocabs[currentVocabSetIdx].langCode; synthesis.speak(utt);
         };
 
         window.generateVocab = async function() {
-            if (savedVocabs.length >= 5) {
-                if (!confirm("지금 새로운 단어장을 생성하면 가장 오래된 1번 단어장은 자동 삭제됩니다.\n계속하시겠습니까?")) return;
-            }
-
+            if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 1번 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
             const btn = document.getElementById("generateVocabBtn");
-            // 선택된 테마 이름 가져오기 (이모티콘 제거)
-            const activeThemeBtn = document.querySelector('.vocab-theme-btn.bg-indigo-50');
-            const theme = activeThemeBtn.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
-
-            const tLang = document.getElementById('targetLanguage');
-            const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
-            const targetLangCode = tLang.value;
-
-            btn.innerText = "⏳ AI가 단어 분석 중..."; btn.disabled = true;
-
+            const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
+            const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
+            
+            btn.innerText = "⏳ AI 단어 분석 중..."; btn.disabled = true;
             try {
-                const res = await fetch(`${WORKER_URL}generate-vocab`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ theme: theme, language: targetLangName }) 
-                });
+                const res = await fetch(`${WORKER_URL}generate-vocab`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: theme, language: targetLangName }) });
                 const data = await res.json(); 
-                
                 if (savedVocabs.length >= 5) savedVocabs.shift(); 
-                
-                savedVocabs.push({
-                    theme: theme,
-                    langName: targetLangName,
-                    langCode: targetLangCode,
-                    vocabData: data.vocabData
-                });
-                
-                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs));
-                
-                // 생성 완료 시 방금 만든 최신(마지막) 세트의 1번 단어 보여주기
-                showFlashcard(savedVocabs.length - 1, 0);
-
-            } catch (err) { 
-                alert("단어장 생성에 실패했습니다."); 
-            } finally { 
-                btn.innerHTML = "✨ AI 단어장 생성하기"; btn.disabled = false; 
-            }
+                savedVocabs.push({ theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
+                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); showFlashcard(savedVocabs.length - 1, 0);
+            } catch (err) { alert("단어장 생성에 실패했습니다."); } finally { btn.innerHTML = "✨ AI 단어장 생성하기"; btn.disabled = false; }
         };
-
-        // 앱 시작 시 초기 렌더링
         renderVocabs();
-
     </script>
 </body>
 </html>
