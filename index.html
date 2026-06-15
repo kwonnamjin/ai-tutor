@@ -1101,6 +1101,7 @@
 
         // 🌟 대본 생성 버튼 로직
         document.getElementById("generateBtn").onclick = async (e) => {
+            
             // 🚨 5개가 꽉 찼을 때 경고창 띄우기!
             if (savedScripts.length >= 5) {
                 if (!confirm("지금 새로운 대본을 생성하면 가장 오래된 1번 대본은 자동 삭제됩니다.\n계속하시겠습니까?")) return;
@@ -1108,38 +1109,11 @@
 
             const btn = e.currentTarget;
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
-            const selectedSitCard = document.querySelector('.sit-card.selected-card');
+            const situation = document.querySelector('.sit-card.selected-card').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
+            
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             const targetLangCode = tLang.value;
-
-            // 랜덤 상황 판단 로직
-            let situation = selectedSitCard.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
-            const isRandom = situation === '일상 랜덤';
-
-            btn.innerText = "⏳ 대본 생성 중..."; btn.disabled = true;
-            document.getElementById("statusBoxTitle").innerText = `[${level}] ${situation}`; 
-            
-            try {
-                // 랜덤 모드라면 서버에 '랜덤'이라고 알려줌
-                const res = await fetch(`${WORKER_URL}generate-script`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        level: level, 
-                        situation: isRandom ? "랜덤한 일상 대화" : situation, 
-                        language: document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName,
-                        isRandom: isRandom // 서버에서 판단하게 넘김
-                    }) 
-                });
-                const data = await res.json(); 
-                scriptData = data.scriptData; 
-                // ... (이후 대본 화면 렌더링 코드는 동일)
-                // ... (하단 renderScripts() 호출 코드 포함)
-                renderScripts();
-                document.getElementById("statusBoxText").innerText = "새로운 대본이 생성되었습니다!";
-            } catch (err) { alert("대본 생성 실패"); } finally { btn.innerHTML = "✨ AI 대본 생성하기"; btn.disabled = false; }
-        
 
             btn.innerText = "⏳ 딥시크가 작성 중입니다..."; btn.disabled = true;
             document.getElementById("statusBoxTitle").innerText = `[${level}] ${situation} (${targetLangName})`; 
@@ -1284,12 +1258,7 @@
             words[idx] = "______"; const input = prompt(`⏳ 빈칸에 들어갈 단어는?\n\n${words.join(" ")}`);
             if (input && input.toLowerCase() === ans.toLowerCase()) alert("정답입니다! 콤보 +1 🔥"); else alert(`앗, 틀렸습니다! 정답은 '${ans}' 입니다.`);
         };
-        // 1. 랜덤 상황 설정 함수 추가
-        window.setRandomSituation = function(element) {
-            // 다른 카드들 선택 해제
-            document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card'));
-            element.classList.add('selected-card');
-        };
+        
     </script>
 </body>
 </html>
