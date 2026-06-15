@@ -781,7 +781,7 @@
             else if (moveX > 70 && currentScreen > 0) goToScreen(currentScreen - 1); 
             else goToScreen(currentScreen);
         }, { passive: true });
-        
+
         // =======================================================
         // 🎬 2번 방: 실전 롤플레잉 엔진
         // =======================================================
@@ -940,6 +940,7 @@
 
             for (let i = savedVocabs.length - 1; i >= 0; i--) {
                 const set = savedVocabs[i];
+                // 🚨 롤플레잉과 똑같이 i + 1 을 사용해서 1~5번이 순서대로 예쁘게 표시됩니다.
                 let html = `<div><div class="bg-slate-100 rounded-xl p-2.5 mb-3"><p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}번 단어장: [${set.theme}] (${set.langName})</p></div><div class="grid grid-cols-4 gap-2">`;
                 set.vocabData.forEach((v, vIdx) => {
                     const isSelected = (currentVocabSetIdx === i && currentVocabWordIdx === vIdx);
@@ -952,27 +953,10 @@
             if(currentVocabSetIdx === -1) window.showFlashcard(savedVocabs.length - 1, 0);
         };
 
-        window.showFlashcard = function(setIdx, wordIdx) {
-            currentVocabSetIdx = setIdx; currentVocabWordIdx = wordIdx;
-            const v = savedVocabs[setIdx].vocabData[wordIdx];
-            document.getElementById("mainFlashcardArea").classList.remove("hidden");
-            document.getElementById("vocabFlashcard").classList.remove('rotate-y-180'); 
-            document.getElementById("vcCount").innerText = `${savedVocabs[setIdx].theme} (${wordIdx + 1}/10)`;
-            document.getElementById("vcWord").innerText = v.word; document.getElementById("vcPron").innerText = `[${v.pronunciation}]`; document.getElementById("vcPhonetic").innerText = v.phonetic; document.getElementById("vcMeaning").innerText = v.meaning; document.getElementById("vcExEn").innerText = `"${v.example_en}"`; document.getElementById("vcExKo").innerText = v.example_ko;
-            document.getElementById("vocabScrollArea").scrollTop = 0; window.renderVocabs(); 
-        };
-
-        window.nextVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx < savedVocabs[currentVocabSetIdx].vocabData.length - 1) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx + 1); };
-        window.prevVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx > 0) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1); };
-
-        window.playVocabAudio = function() {
-            if(currentVocabSetIdx === -1) return; synthesis.cancel();
-            const utt = new SpeechSynthesisUtterance(savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx].word);
-            utt.lang = savedVocabs[currentVocabSetIdx].langCode; synthesis.speak(utt);
-        };
-
         window.generateVocab = async function() {
-            if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 1번 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
+            if (savedVocabs.length >= 5) { 
+                if (!confirm("지금 새로운 단어장을 생성하면 가장 오래된 1번 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; 
+            }
             const btn = document.getElementById("generateVocabBtn");
             const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
@@ -981,10 +965,20 @@
             try {
                 const res = await fetch(`${WORKER_URL}generate-vocab`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: theme, language: targetLangName }) });
                 const data = await res.json(); 
+                
+                // 🚨 롤플레잉 대본과 완벽하게 동일한 로직! (5개가 넘으면 1번 삭제 후 앞으로 밀어내기)
                 if (savedVocabs.length >= 5) savedVocabs.shift(); 
+                
                 savedVocabs.push({ theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
-                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); window.showFlashcard(savedVocabs.length - 1, 0);
-            } catch (err) { alert("단어장 생성에 실패했습니다."); } finally { btn.innerHTML = "✨ AI 단어장 생성하기"; btn.disabled = false; }
+                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); 
+                
+                // 새 단어장이 5번(마지막)으로 들어왔으니 5번을 화면에 띄웁니다.
+                window.showFlashcard(savedVocabs.length - 1, 0);
+            } catch (err) { 
+                alert("단어장 생성에 실패했습니다."); 
+            } finally { 
+                btn.innerHTML = "✨ AI 단어장 생성하기"; btn.disabled = false; 
+            }
         };
         window.renderVocabs();
     </script>
