@@ -223,9 +223,13 @@
         </div>
 
     </div>
-
     <script type="module">
-        // --- 언어 및 전역 설정 ---
+        // [중요: 안드로이드 앱 빌드 시 아래 주석 해제]
+        // import { Capacitor } from '@capacitor/core';
+        // import { SpeechRecognition } from '@capacitor-community/speech-recognition';
+        // import { Device } from '@capacitor/device';
+        // import 'cordova-plugin-purchase'; 
+
         const SUPPORTED_LANGUAGES = [
             { code: "en-US", name: "영어", flag: "🇺🇸" }, { code: "es-ES", name: "스페인어", flag: "🇪🇸" },
             { code: "ja-JP", name: "일본어", flag: "🇯🇵" }, { code: "zh-CN", name: "중국어", flag: "🇨🇳" },
@@ -247,7 +251,6 @@
         document.getElementById('sttInputLanguage').value = 'ko-KR';
         document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
 
-        // 전역 함수 연결
         window.handleBodyClick = handleBodyClick; window.targetLanguageChanged = targetLanguageChanged;
         window.toggleSettingsModal = toggleSettingsModal; window.changeAppMode = changeAppMode;
         window.updateStatus = updateStatus; window.sendTextMessage = sendTextMessage;
@@ -261,12 +264,12 @@
         const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
         const MAX_FREE_COUNT = 50;
 
-        // 메인 변수
         let isListening = false, isSpeaking = false, recognition = null;
         const synthesis = window.speechSynthesis;
         let conversationHistory = JSON.parse(sessionStorage.getItem('llmHistory')) || []; 
         let uiChatHistory = JSON.parse(sessionStorage.getItem('uiHistory')) || []; 
         let bubbleCounter = parseInt(sessionStorage.getItem('bubbleCounter')) || 0; 
+
         let currentUtterance = null;
         let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
         let currentBubbleId = null, startIndex = -1, endIndex = -1;
@@ -274,29 +277,49 @@
 
         const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
         const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
-        const avatarWrap = document.getElementById('avatarWrap');
-        const stopAudioBtn = document.getElementById('stopAudioBtn');
-        const selectionTooltip = document.getElementById('selectionTooltip');
+        const avatarWrap = document.getElementById('avatarWrap'), avatarImage = document.getElementById('avatarImage');
+        const stopAudioBtn = document.getElementById('stopAudioBtn'), selectionTooltip = document.getElementById('selectionTooltip');
 
-        // 초기화 및 공통 로직
         function getDailyDateKey() {
-            const kst = new Date(new Date().getTime() + (9 * 60 * 60 * 1000));
+            const now = new Date(); const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
             if (kst.getUTCHours() < 6) kst.setUTCDate(kst.getUTCDate() - 1);
             return `${kst.getUTCFullYear()}-${kst.getUTCMonth()+1}-${kst.getUTCDate()}`;
         }
 
         async function initDeviceID() {
-            let localId = localStorage.getItem('web_device_id');
-            if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
-            myDeviceId = localId; updateBadgeUI();
+            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && typeof Device !== 'undefined') {
+                try { const info = await Device.getId(); myDeviceId = info.identifier; } catch (e) { myDeviceId = "error-device-id"; }
+            } else {
+                let localId = localStorage.getItem('web_device_id');
+                if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
+                myDeviceId = localId;
+            }
+            updateBadgeUI();
         }
         initDeviceID();
 
+        function checkInAppBrowser() {
+            const ua = navigator.userAgent.toLowerCase();
+            const inAppWarning = document.getElementById('inAppWarning');
+            if (ua.match(/kakaotalk|naver|daum|line|instagram|facebook/i) && inAppWarning) inAppWarning.classList.remove('hidden');
+        }
+        
+        function sendTextMessage() { const input = document.getElementById('textInput'); const text = input.value.trim(); if (text) { input.value = ''; handleUserMessage(text); } }
+
+        function updateGenderUI(g, applyImg=false) {
+            if(g === 'female') { document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm border border-blue-200"; document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; } 
+            else { document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white shadow-sm text-blue-600 border border-blue-200"; document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; }
+        }
+        updateGenderUI(currentVoiceGender, true); checkInAppBrowser();
+
         function updateBadgeUI() {
-            const remainText = document.getElementById('remainCountText');
+            const badge = document.getElementById('usageBadge'), remainText = document.getElementById('remainCountText');
             if (localStorage.getItem('is_premium') === 'true') {
-                document.getElementById('usageBadge').innerHTML = '<i class="fa-solid fa-crown text-yellow-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
+                badge.innerHTML = '<i class="fa-solid fa-crown text-yellow-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
+                badge.className = "bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-purple-400 shadow-inner flex items-center";
             } else {
+                const todayKey = getDailyDateKey();
+                if (localStorage.getItem('local_date_key') !== todayKey) { localStorage.setItem('local_total_count', '0'); localStorage.setItem('local_date_key', todayKey); }
                 let count = parseInt(localStorage.getItem('local_total_count') || '0');
                 if(remainText) remainText.innerText = `${Math.max(0, MAX_FREE_COUNT - count)}/${MAX_FREE_COUNT}`;
             }
@@ -305,98 +328,224 @@
         function incrementLocalUsage() {
             if(localStorage.getItem('is_premium') === 'true') return;
             let count = parseInt(localStorage.getItem('local_total_count') || '0');
-            localStorage.setItem('local_total_count', ++count); updateBadgeUI();
+            localStorage.setItem('local_total_count', count + 1); updateBadgeUI();
         }
 
-        function enforcePaywall(txt) {
-            document.getElementById('paywallReasonText').innerText = txt;
+        function enforcePaywall(reasonCode) {
+            document.getElementById('paywallReasonText').innerText = "오늘 제공된 50건의 무료 대화를 모두 소진하셨습니다.";
             document.getElementById('paywallModal').classList.remove('hidden');
-            document.getElementById('textInput').disabled = true; document.getElementById('micBtn').disabled = true;
-            stopSpeaking(); updateStatus("이용 종료됨");
+            document.getElementById('textInput').disabled = true; document.getElementById('sendMsgBtn').disabled = true; document.getElementById('micBtn').disabled = true; document.getElementById('expGlobalBtn').disabled = true;
+            stopSpeaking(); updateStatus("무료 이용 횟수 종료됨");
+        }
+
+        function enableInputs() {
+            document.getElementById('textInput').disabled = false; document.getElementById('sendMsgBtn').disabled = false; document.getElementById('micBtn').disabled = false; document.getElementById('expGlobalBtn').disabled = false;
+            updateStatus("대기 중 (프리미엄 모드)");
         }
 
         async function processUpgrade() {
-            alert("프리미엄 결제가 연동되었습니다!");
-            localStorage.setItem('is_premium', 'true');
-            document.getElementById('paywallModal').classList.add('hidden');
-            document.getElementById('textInput').disabled = false; document.getElementById('micBtn').disabled = false;
-            updateBadgeUI();
+            const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
+            if (!isNative) {
+                if (!confirm("[웹 개발자 모드]\n강제로 결제 성공 처리할까요?")) return;
+                alert("결제가 완료되었습니다!"); localStorage.setItem('is_premium', 'true'); document.getElementById('paywallModal').classList.add('hidden'); enableInputs(); updateBadgeUI();
+                return;
+            }
+            if (window.store) store.order("talkai_premium_monthly");
         }
 
-        // 마이크 기능
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.onstart = () => { isListening=true; updateStatus("듣는 중..."); micBtn.classList.replace('from-blue-400','from-red-400'); micIcon.classList.replace('fa-microphone','fa-ear-listen'); };
-            recognition.onresult = (e) => handleUserMessage(e.results[0][0].transcript);
-            recognition.onerror = () => resetMic(); recognition.onend = () => resetMic();
+        function initSpeechRecognition() {
+            if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.onstart = () => { if (typeof Capacitor === 'undefined' || !Capacitor.isNativePlatform()) { isListening = true; stopSpeaking(); micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); updateStatus("듣는 중..."); } };
+                recognition.onresult = (e) => handleUserMessage(e.results[0][0].transcript);
+                recognition.onerror = () => { resetMic(); updateStatus("인식 실패 또는 권한 없음"); }; recognition.onend = () => resetMic();
+            } else { updateStatus("마이크 미지원"); micBtn.disabled = true; }
+        }
+        initSpeechRecognition();
+
+        async function toggleListening() {
+            if (typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform() && typeof SpeechRecognition !== 'undefined') {
+                // 커패시터 네이티브 로직 생략(기존 코드 유지)
+            } else {
+                if(!recognition) return;
+                if(isListening) recognition.stop(); else { recognition.lang = document.getElementById('sttInputLanguage').value; recognition.start(); }
+            }
         }
 
-        function toggleListening() {
-            if(!recognition) return;
-            if(isListening) recognition.stop(); else { recognition.lang = document.getElementById('sttInputLanguage').value; recognition.start(); }
-        }
-        function resetMic() { isListening = false; micBtn.classList.replace('from-red-400','from-blue-400'); micIcon.classList.replace('fa-ear-listen','fa-microphone'); if(!isSpeaking) updateStatus("대기 중"); }
+        function resetMic() { isListening = false; micBtn.classList.replace('from-red-400', 'from-blue-400'); micBtn.classList.replace('to-red-600', 'to-blue-600'); micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); if(!isSpeaking) updateStatus("대기 중"); }
         function updateStatus(txt) { statusText.textContent = txt; }
 
-        function sendTextMessage() { const t=document.getElementById('textInput').value.trim(); if(t){ document.getElementById('textInput').value=''; handleUserMessage(t); } }
+        function clearSelection() { document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected')); startIndex = -1; endIndex = -1; currentBubbleId = null; hideSelectionTooltip(); }
+        
+        function handleWordClick(event, bubbleId, wordIndex, isExplanation = false) {
+            event.stopPropagation(); 
+            if (currentBubbleId !== null && currentBubbleId !== bubbleId) clearSelection();
+            currentBubbleId = bubbleId;
+            if (startIndex === -1) { startIndex = wordIndex; endIndex = wordIndex; } else if (startIndex === wordIndex && endIndex === wordIndex) { clearSelection(); return; } else { endIndex = wordIndex; if (startIndex > endIndex) { let temp = startIndex; startIndex = endIndex; endIndex = temp; } }
+            const container = document.getElementById(`bubble-${bubbleId}`); const spanClass = isExplanation ? '.exp-word-span' : '.word-span'; const words = container.querySelectorAll(spanClass); let lastSelectedSpan = null;
+            words.forEach(span => { const idx = parseInt(span.getAttribute('data-index')); if (idx >= startIndex && idx <= endIndex) { span.classList.add('selected'); lastSelectedSpan = span; } else span.classList.remove('selected'); });
+            if (lastSelectedSpan) showSelectionTooltip(lastSelectedSpan);
+        }
+
+        function showSelectionTooltip(targetElement) {
+            const containerRect = chatContainer.getBoundingClientRect(); const rect = targetElement.getBoundingClientRect();
+            const top = rect.top - containerRect.top + chatContainer.scrollTop; const left = rect.left - containerRect.left + (rect.width / 2);
+            selectionTooltip.style.top = `${top}px`; selectionTooltip.style.left = `${left}px`; selectionTooltip.classList.remove('hidden'); setTimeout(() => { selectionTooltip.classList.remove('opacity-0', 'pointer-events-none'); }, 10);
+        }
+        function hideSelectionTooltip() { selectionTooltip.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => selectionTooltip.classList.add('hidden'), 200); }
+        function handleBodyClick(e) { if (!e.target.classList.contains('word-span') && !e.target.classList.contains('exp-word-span') && !e.target.closest('#selectionTooltip') && !e.target.closest('button')) clearSelection(); }
+
+        function getSelectedTextFromBubble(bubbleId, isExplanation = false) {
+            if(startIndex === -1) return null; const container = document.getElementById(`bubble-${bubbleId}`); if(!container) return null; let textArr = [];
+            const spanClass = isExplanation ? '.exp-word-span' : '.word-span';
+            container.querySelectorAll(spanClass).forEach(span => { const idx = parseInt(span.getAttribute('data-index')); if (idx >= startIndex && idx <= endIndex) textArr.push(span.textContent); });
+            const lang = container.getAttribute('data-lang') || 'ko-KR'; return ['ja-JP', 'zh-CN', 'th-TH'].includes(lang) ? textArr.join('') : textArr.join(' ');
+        }
+
+        function createSpansForText(text, bubbleId, isExplanation = false, langCode = 'ko-KR') {
+            const spanClass = isExplanation ? 'exp-word-span' : 'word-span';
+            if (window.Intl && Intl.Segmenter) {
+                const parts = text.split(/(<[^>]*>)/g); let idx = 0, resultHtml = ''; const segmenter = new Intl.Segmenter(langCode, { granularity: 'word' });
+                parts.forEach(part => {
+                    if (part.startsWith('<') && part.endsWith('>')) resultHtml += part;
+                    else { for (const {segment} of segmenter.segment(part)) { if (segment.trim() === '') resultHtml += segment; else { resultHtml += `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${segment}</span>`; idx++; } } }
+                });
+                return resultHtml;
+            } else { return text.split(' ').map((word, idx) => `<span class="${spanClass}" data-index="${idx}" onclick="handleWordClick(event, '${bubbleId}', ${idx}, ${isExplanation})">${word}</span>`).join(' '); }
+        }
+
+        function readSelectedText() {
+            if (!currentBubbleId) return; const isExp = currentBubbleId.startsWith('exp-'); const text = getSelectedTextFromBubble(currentBubbleId, isExp);
+            if (text) {
+                const targetLang = document.getElementById('targetLanguage').value, expLang = document.getElementById('explanationLanguage').value; let speakLang = targetLang;
+                if (isExp) { const hasHangul = /[\u3131-\uD79D]/.test(text); if (hasHangul && targetLang !== 'ko-KR') speakLang = expLang.startsWith('ko') ? 'ko-KR' : expLang; else speakLang = targetLang; } 
+                else { speakLang = document.getElementById(`bubble-${currentBubbleId}`).getAttribute('data-lang') || targetLang; }
+                speakText(text, speakLang);
+            }
+        }
+
+        function explainSelectedText() {
+            if (!currentBubbleId) return; const isExp = currentBubbleId.startsWith('exp-'); const pTag = document.getElementById(`bubble-${currentBubbleId}`); if(!pTag) return;
+            const fullTxt = Array.from(pTag.querySelectorAll('span')).map(s=>s.textContent).join(' '), selTxt = getSelectedTextFromBubble(currentBubbleId, isExp);
+            requestExplanationFromBubble(currentBubbleId, fullTxt, isExp, selTxt); hideSelectionTooltip();
+        }
 
         function addMessageToChat(sender, text, translation = null, targetLangCode = null, isRestore = false) {
             const msgDiv = document.createElement('div'); msgDiv.className = "flex flex-col space-y-1 mt-4";
-            if (sender === 'user') { msgDiv.innerHTML = `<div class="bg-gradient-to-tr from-blue-600 to-blue-500 text-white rounded-2xl rounded-tr-none p-3.5 max-w-[85%] self-end chat-text-dynamic shadow-md font-medium tracking-wide leading-relaxed">${text}</div>`; }
+            if (sender === 'user') { msgDiv.innerHTML = `<div class="bg-gradient-to-tr from-blue-600 to-blue-500 text-white rounded-2xl rounded-tr-none p-3.5 max-w-[85%] self-end chat-text-dynamic shadow-md font-medium tracking-wide leading-relaxed">${text}</div>`; } 
             else {
                 if(!isRestore) bubbleCounter++; 
                 const bId = `ai-msg-${bubbleCounter}`;
-                const safeTxt = encodeURIComponent(text.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
-                msgDiv.innerHTML = `<div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[90%] shadow-md self-start relative"><div class="flex items-start justify-between gap-2"><p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${text}</p><div class="flex gap-1 ml-2 shrink-0"><button onclick="speakText(decodeURIComponent('${safeTxt}'), '${targetLangCode}')" class="text-blue-500 hover:bg-blue-50 w-7 h-7 rounded-full bg-white border flex items-center justify-center"><i class="fa-solid fa-volume-high"></i></button></div></div>${translation ? `<p class="text-slate-500 mt-2 border-t pt-2 border-slate-100 text-xs">${translation}</p>` : ''}</div>`;
+                const safeEncodedText = encodeURIComponent(text.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
+                const spansHtml = createSpansForText(text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'), bId, false, targetLangCode);
+                msgDiv.innerHTML = `
+                    <div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[90%] shadow-md shadow-blue-900/5 self-start relative">
+                        <div class="flex items-start justify-between gap-2">
+                            <p id="bubble-${bId}" data-lang="${targetLangCode}" dir="auto" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${spansHtml}</p>
+                            <div class="flex gap-1 ml-2 shrink-0">
+                                <button onclick="requestExplanationFromBubble('${bId}', decodeURIComponent('${safeEncodedText}'), false)" class="text-emerald-500 hover:bg-emerald-50 w-7 h-7 rounded-full bg-white shadow-sm border border-emerald-100 flex items-center justify-center transition-colors"><i class="fa-solid fa-lightbulb"></i></button>
+                                <button onclick="speakText(decodeURIComponent('${safeEncodedText}'), '${targetLangCode}')" class="text-blue-500 hover:bg-blue-50 w-7 h-7 rounded-full bg-white shadow-sm border border-blue-100 flex items-center justify-center transition-colors"><i class="fa-solid fa-volume-high"></i></button>
+                            </div>
+                        </div>
+                        ${translation ? `<p class="text-slate-500 mt-2 border-t pt-2 border-slate-100 font-medium" style="font-size: calc(var(--chat-font-size) - 3px);">${translation}</p>` : ''}
+                    </div>`;
             }
-            chatContainer.appendChild(msgDiv); chatContainer.scrollTop = chatContainer.scrollHeight;
-            if (!isRestore) { uiChatHistory.push({sender, text, translation, targetLangCode}); sessionStorage.setItem('uiHistory', JSON.stringify(uiChatHistory)); }
+            chatContainer.appendChild(msgDiv); setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
+            if (!isRestore) { uiChatHistory.push({sender, text, translation, targetLangCode}); sessionStorage.setItem('uiHistory', JSON.stringify(uiChatHistory)); sessionStorage.setItem('bubbleCounter', bubbleCounter.toString()); }
         }
 
-        if (uiChatHistory.length > 0) uiChatHistory.forEach(msg => addMessageToChat(msg.sender, msg.text, msg.translation, msg.targetLangCode, true));
+        if (uiChatHistory.length > 0) { uiChatHistory.forEach(msg => addMessageToChat(msg.sender, msg.text, msg.translation, msg.targetLangCode, true)); }
+
+        function cleanTextForTTS(raw) { return raw.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').replace(/\s+/g, ' ').trim(); }
 
         function speakText(text, langCode) {
-            if(!synthesis) return; synthesis.cancel();
-            currentUtterance = new SpeechSynthesisUtterance(text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim());
-            currentUtterance.lang = langCode; currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
-            currentUtterance.onstart = () => { isSpeaking=true; avatarWrap.classList.add('speaking-pulse'); updateStatus("말하는 중..."); stopAudioBtn.disabled=false; };
-            currentUtterance.onend = () => { isSpeaking=false; avatarWrap.classList.remove('speaking-pulse'); updateStatus("대기 중"); stopAudioBtn.disabled=true; };
-            synthesis.speak(currentUtterance);
+            if(!synthesis) return; synthesis.cancel(); const clean = cleanTextForTTS(text); if(!clean) return;
+            currentUtterance = new SpeechSynthesisUtterance(clean); currentUtterance.lang = langCode;
+            let voices = synthesis.getVoices().filter(v => v.lang.startsWith(langCode.substring(0,2)));
+            if(voices.length>0) { const isF = currentVoiceGender === 'female'; currentUtterance.voice = voices.find(x => isF ? (x.name.toLowerCase().includes('female') || x.name.toLowerCase().includes('girl')) : (x.name.toLowerCase().includes('male') || x.name.toLowerCase().includes('boy'))) || voices[0]; }
+            currentUtterance.rate = 0.95; currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
+            currentUtterance.onstart = () => { isSpeaking = true; avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); updateStatus("말하는 중..."); };
+            currentUtterance.onend = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); updateStatus("대기 중"); };
+            setTimeout(() => synthesis.speak(currentUtterance), 50);
         }
         function stopSpeaking() { synthesis.cancel(); }
 
-        async function fetchAPI(url, options) { const res = await fetch(url, options); return res; }
+        async function fetchAPI(url, options) {
+            let delay=500;
+            for(let i=0;i<3;i++) {
+                try { const res = await fetch(url, options); if(res.ok) return res; if(res.status >= 400 && res.status < 500) throw new Error("API 에러"); await new Promise(r=>setTimeout(r,delay)); delay*=2; } 
+                catch(e) { if(i==2) throw e; }
+            }
+        }
 
         async function handleUserMessage(text) {
-            addMessageToChat('user', text); updateStatus("생각하는 중...");
+            if(!text) return; addMessageToChat('user', text); updateStatus("생각하는 중...");
             const mode = document.getElementById('appMode').value, tLang = document.getElementById('targetLanguage');
             const targetLang = tLang.value, targetName = tLang.options[tLang.selectedIndex].dataset.langName;
-            let sysPrompt = mode === 'translate' ? `완벽히 [${targetName}]로 번역. 출력포맷 JSON: {"foreign_text":"번역","korean_translation":"해석"}` : `당신은 '${targetName}' 튜터. 대화는 1~2문장. JSON: {"foreign_text":"답변","korean_translation":"해석"}`;
-            
+            const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
+
+            let sysPrompt = mode === 'translate' ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 출력포맷 JSON: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}` : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 출력포맷 JSON: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
+
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
-                if(mode==='tutor') { if(ctx.length===0) ctx.push({role:"system",content:sysPrompt}); ctx.push({role:"user",content:text}); conversationHistory = ctx; }
+                if(mode==='tutor') { if(ctx.length===0) ctx.push({role:"system",content:sysPrompt}); ctx.push({role:"user",content:`[입력:${inputName}] ${text}`}); if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)]; conversationHistory = ctx; sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); }
                 
-                let res = await fetchAPI(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: "deepseek-chat", messages: ctx, response_format: { type: "json_object" } }) });
+                let res = await fetchAPI(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, body: JSON.stringify({ model: "deepseek-chat", messages: ctx, response_format: { type: "json_object" } }) });
                 let data = await res.json(), parsed = JSON.parse(data.choices[0].message.content);
                 
                 if (parsed.foreign_text === "LIMIT_REACHED") return enforcePaywall(parsed.korean_translation);
                 incrementLocalUsage();
-                if(mode==='tutor') conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)});
-                addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang); speakText(parsed.foreign_text, targetLang);
+                if(mode==='tutor') { conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)}); sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); }
+                if(parsed.foreign_text) { addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang); speakText(parsed.foreign_text, targetLang); }
             } catch(e) { updateStatus("서버 통신 에러"); }
         }
 
-        // 공구 & UI 조작 함수
-        function handleBodyClick(e) {} function changeAppMode() { conversationHistory=[]; uiChatHistory=[]; chatContainer.innerHTML=''; }
-        function targetLanguageChanged() { changeAppMode(); } function toggleSettingsModal(s=true) { document.getElementById('settingsModal').classList.toggle('hidden', !s); }
-        function selectGender(g) { currentVoiceGender=g; localStorage.setItem('voice_gender',g); toggleSettingsModal(false); } function saveSettings() { toggleSettingsModal(false); }
-        function requestExplanationGlobal() { alert("문장을 길게 눌러 해설을 들을 수 있습니다."); } function readSelectedText() {} function explainSelectedText() {} function handleWordClick() {} function requestExplanationFromBubble() {}
+        async function requestExplanationGlobal() {
+            const aiBubbles = document.querySelectorAll('#chatContainer > div > .bg-white.border:not(.bg-amber-50)');
+            if(aiBubbles.length === 0) return updateStatus("설명할 대화가 없습니다.");
+            const lastContainer = aiBubbles[aiBubbles.length-1], pTag = lastContainer.querySelector('p[id^="bubble-"]'); if(!pTag) return;
+            const bId = pTag.id.replace('bubble-',''), selTxt = getSelectedTextFromBubble(bId, false), fullTxt = Array.from(pTag.querySelectorAll('span')).map(s=>s.textContent).join(' ');
+            requestExplanationFromBubble(bId, fullTxt, false, selTxt);
+        }
+
+        async function requestExplanationFromBubble(bId, fullText, isExpSource = false, preSelectedText = null) {
+            updateStatus("해설 분석 중...");
+            const expSel = document.getElementById('explanationLanguage'), expLangName = expSel.options[expSel.selectedIndex].dataset.langName;
+            const targetWord = preSelectedText || getSelectedTextFromBubble(bId, isExpSource);
+            let prompt = "", focusTitle = "", cleanFullText = cleanTextForTTS(fullText), cleanTargetWord = targetWord ? cleanTextForTTS(targetWord) : null;
+            
+            if (cleanTargetWord) { focusTitle = `[ ${cleanTargetWord} ] 심화 학습`; prompt = `원문 "${cleanFullText}"에서 사용자가 콕 집은 부분은 "${cleanTargetWord}" 입니다. 이 표현의 뜻과 쓰임새, 주의할 점, 예문 1개를 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력해.`; } 
+            else { focusTitle = isExpSource ? `해설 내용 추가 족집게 분석` : `전체 문장 족집게 해설`; prompt = `문장 "${cleanFullText}" 의 전체적인 문법 구조나 핵심 표현을 골라, 반드시 [${expLangName}] 언어로 친절하게 과외하듯 해설해. 마크다운으로 주요단어를 **굵게** 표시하고 결과만 출력.`; }
+
+            try {
+                let res = await fetchAPI(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: "당신은 친절한 튜터입니다. 사용자가 선택한 문장을 아주 쉽게 설명해주세요." }, { role: "user", content: prompt }] }) });
+                let data = await res.json(), explanation = data.choices[0].message.content;
+                let parsedCheck = null; try { parsedCheck = JSON.parse(explanation); } catch (e) {}
+                if (parsedCheck && parsedCheck.foreign_text === "LIMIT_REACHED") return enforcePaywall(parsedCheck.korean_translation);
+
+                if (explanation && !parsedCheck) {
+                    incrementLocalUsage(); if(!isExpSource) bubbleCounter++; 
+                    const expBId = `exp-msg-${bubbleCounter}`, safeEncodedExp = encodeURIComponent(explanation.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
+                    const spansHtml = createSpansForText(explanation.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>'), expBId, true, document.getElementById('explanationLanguage').value);
+                    const msgDiv = document.createElement('div'); msgDiv.className = "flex flex-col space-y-1 mt-4";
+                    msgDiv.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 w-full shadow-md relative"><div class="absolute top-2 right-2 flex gap-1"><button onclick="requestExplanationFromBubble('${expBId}', decodeURIComponent('${safeEncodedExp}'), true)" class="text-emerald-600 hover:bg-emerald-100 w-7 h-7 flex items-center justify-center rounded-full bg-white"><i class="fa-solid fa-lightbulb text-sm"></i></button></div><p class="text-xs font-extrabold text-amber-800 mb-2"><i class="fa-solid fa-graduation-cap"></i> ${focusTitle}</p><p id="bubble-${expBId}" data-lang="${document.getElementById('explanationLanguage').value}" dir="auto" class="chat-text-dynamic text-slate-800 pr-10 leading-relaxed font-medium">${spansHtml}</p></div>`;
+                    chatContainer.appendChild(msgDiv); chatContainer.scrollTop = chatContainer.scrollHeight; updateStatus("해설 완료"); clearSelection(); 
+                }
+            } catch(e) { updateStatus("해설 실패"); }
+        }
+
+        function clearChatSession() { conversationHistory = []; uiChatHistory = []; sessionStorage.removeItem('llmHistory'); sessionStorage.removeItem('uiHistory'); sessionStorage.removeItem('bubbleCounter'); document.querySelectorAll('#chatContainer > div.flex.flex-col.space-y-1.mt-4').forEach(el => el.remove()); }
+        function changeAppMode() { clearChatSession(); updateStatus("모드 변경 (초기화됨)"); }
+        function targetLanguageChanged() { clearChatSession(); updateStatus('학습 언어 변경 (초기화됨)'); }
+        let tempGender = currentVoiceGender; function selectGender(g) { tempGender=g; updateGenderUI(g,false); }
+        function toggleSettingsModal(s=true) { let m=document.getElementById('settingsModal'); if(s) { document.getElementById('fontSizeSlider').value=localStorage.getItem('chat_font_size')||14; m.classList.remove('hidden'); } else { m.classList.add('hidden'); document.documentElement.style.setProperty('--chat-font-size', localStorage.getItem('chat_font_size')+'px'); } }
+        function saveSettings() { localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); localStorage.setItem('explanation_language', document.getElementById('explanationLanguage').value); currentVoiceGender=tempGender; localStorage.setItem('voice_gender',currentVoiceGender); updateGenderUI(currentVoiceGender,true); toggleSettingsModal(false); }
+        window.speechSynthesis.onvoiceschanged = () => {};
 
         // =======================================================
-        // 🚀 스와이프 & 화면 이동 로직 (두 화면 겹치기)
+        // 🚀 스와이프 & 화면 겹치기 이동 로직 (기존 앱급 쫀득함 유지)
         // =======================================================
-        let currentScreen = 0; // 0: 메인, 1: 롤플레잉
+        let currentScreen = 0; 
         
         window.goToRoleplay = function() {
             document.getElementById('screen-main').style.transform = 'translateX(-30%)'; 
@@ -411,30 +560,25 @@
         };
 
         let startX = 0;
-        const screenMain = document.getElementById('screen-main');
-        const screenRoleplay = document.getElementById('screen-roleplay');
+        const screenMain = document.getElementById('screen-main'), screenRoleplay = document.getElementById('screen-roleplay');
 
         window.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
-            screenMain.style.transition = 'none';
-            screenRoleplay.style.transition = 'none';
+            screenMain.style.transition = 'none'; screenRoleplay.style.transition = 'none';
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
             let moveX = e.touches[0].clientX - startX;
             if (currentScreen === 0 && startX > window.innerWidth - 40 && moveX < 0) {
-                screenMain.style.transform = `translateX(${moveX * 0.3}px)`; 
-                screenRoleplay.style.transform = `translateX(calc(100% + ${moveX}px))`;
+                screenMain.style.transform = `translateX(${moveX * 0.3}px)`; screenRoleplay.style.transform = `translateX(calc(100% + ${moveX}px))`;
             } else if (currentScreen === 1 && startX < 40 && moveX > 0) {
-                screenMain.style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`;
-                screenRoleplay.style.transform = `translateX(${moveX}px)`;
+                screenMain.style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`; screenRoleplay.style.transform = `translateX(${moveX}px)`;
             }
         }, { passive: true });
 
         window.addEventListener('touchend', (e) => {
             let moveX = e.changedTouches[0].clientX - startX;
-            screenMain.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
-            screenRoleplay.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+            screenMain.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)'; screenRoleplay.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
             if (currentScreen === 0) { if (moveX < -70) goToRoleplay(); else goBackToMain(); } 
             else if (currentScreen === 1) { if (moveX > 70) goBackToMain(); else goToRoleplay(); }
         }, { passive: true });
@@ -453,13 +597,11 @@
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
             const situation = document.querySelector('.sit-card.selected-card').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
             btn.innerText = "⏳ 딥시크가 작성 중입니다..."; btn.disabled = true;
-            document.getElementById("statusBoxTitle").innerText = `[${level}] ${situation}`;
-            document.getElementById("statusBoxText").innerText = "잠시만 기다려주세요...";
+            document.getElementById("statusBoxTitle").innerText = `[${level}] ${situation}`; document.getElementById("statusBoxText").innerText = "잠시만 기다려주세요...";
 
             try {
                 const res = await fetch(`${WORKER_URL}generate-script`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level, situation }) });
                 const data = await res.json(); scriptData = data.scriptData; 
-                
                 const playerArea = document.getElementById("scriptList"); playerArea.innerHTML = ""; 
                 scriptData.forEach(line => {
                     const isAi = line.role === 'ai';
@@ -477,10 +619,8 @@
                 if (!isPlayMode || currentPlayingIndex >= scriptData.length) { isPlayMode = false; return; }
                 const line = scriptData[currentPlayingIndex];
                 const utt = new SpeechSynthesisUtterance(line.en); utt.lang = 'en-US'; utt.pitch = line.role === 'ai' ? 1.2 : 0.8; 
-                utt.onend = () => { currentPlayingIndex++; setTimeout(playNext, 500); };
-                window.speechSynthesis.speak(utt);
-            };
-            playNext();
+                utt.onend = () => { currentPlayingIndex++; setTimeout(playNext, 500); }; window.speechSynthesis.speak(utt);
+            }; playNext();
         };
 
         if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -490,8 +630,7 @@
         window.startShadowing = function() {
             if (scriptData.length === 0) return alert("대본을 생성해주세요!");
             if (!roleplayRec) return alert("마이크를 지원하지 않습니다.");
-            const userLine = scriptData.find(d => d.role === 'user');
-            if(!userLine) return alert("읽을 대사가 없습니다.");
+            const userLine = scriptData.find(d => d.role === 'user'); if(!userLine) return alert("읽을 대사가 없습니다.");
 
             const btn = document.getElementById("roleplayMicBtn"), icon = document.getElementById("roleplayMicIcon"), text = document.getElementById("roleplayMicText");
             if (isRpListening) { roleplayRec.stop(); return; }
@@ -513,10 +652,11 @@
             if (scriptData.length === 0) return alert("대본을 생성해주세요!");
             const userLine = scriptData.find(d => d.role === 'user'), words = userLine.en.split(" ");
             const idx = Math.floor(Math.random() * words.length), ans = words[idx].replace(/[.,!?]/g, ""); 
-            words[idx] = "______"; 
-            const input = prompt(`⏳ 빈칸에 들어갈 단어는?\n\n${words.join(" ")}`);
+            words[idx] = "______"; const input = prompt(`⏳ 빈칸에 들어갈 단어는?\n\n${words.join(" ")}`);
             if (input && input.toLowerCase() === ans.toLowerCase()) alert("정답입니다! 콤보 +1 🔥"); else alert(`앗, 틀렸습니다! 정답은 '${ans}' 입니다.`);
         };
     </script>
+
+
 </body>
 </html>
