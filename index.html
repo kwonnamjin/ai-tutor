@@ -552,9 +552,10 @@
         window.speechSynthesis.onvoiceschanged = () => {};
 
         // =======================================================
-        // 🚀 스와이프 & 화면 겹치기 이동 로직 (기존 앱급 쫀득함 유지)
+        // 🚀 스와이프 & 화면 겹치기 이동 로직 (기존 앱급 쫀득함 유지 + 메뉴 간섭 방지)
         // =======================================================
         let currentScreen = 0; 
+        let isMenuScrolling = false; // 💡 메뉴를 스크롤 중인지 기억하는 변수 추가
         
         window.goToRoleplay = function() {
             document.getElementById('screen-main').style.transform = 'translateX(-30%)'; 
@@ -572,17 +573,35 @@
         const screenMain = document.getElementById('screen-main'), screenRoleplay = document.getElementById('screen-roleplay');
 
         window.addEventListener('touchstart', (e) => {
+            // 🌟 핵심 마법: 터치한 곳이 '가로 스크롤 메뉴(.overflow-x-auto)' 안쪽이라면?
+            if (e.target.closest('.overflow-x-auto')) {
+                isMenuScrolling = true; // 메뉴 스크롤 모드 ON!
+                return; // 여기서 멈추고 전체 화면 스와이프는 무시합니다.
+            }
+            isMenuScrolling = false;
+
             startX = e.touches[0].clientX;
             screenMain.style.transition = 'none'; screenRoleplay.style.transition = 'none';
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
+            if (isMenuScrolling) return; // 🌟 메뉴 스크롤 중이면 전체 화면 안 움직임!
+
             let moveX = e.touches[0].clientX - startX;
             if (currentScreen === 0 && startX > window.innerWidth - 40 && moveX < 0) {
                 screenMain.style.transform = `translateX(${moveX * 0.3}px)`; screenRoleplay.style.transform = `translateX(calc(100% + ${moveX}px))`;
             } else if (currentScreen === 1 && startX < 40 && moveX > 0) {
                 screenMain.style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`; screenRoleplay.style.transform = `translateX(${moveX}px)`;
             }
+        }, { passive: true });
+
+        window.addEventListener('touchend', (e) => {
+            if (isMenuScrolling) return; // 🌟 메뉴 스크롤 중이었으면 복구 애니메이션도 무시!
+
+            let moveX = e.changedTouches[0].clientX - startX;
+            screenMain.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)'; screenRoleplay.style.transition = 'transform 0.3s cubic-bezier(0.25, 1, 0.5, 1)';
+            if (currentScreen === 0) { if (moveX < -70) goToRoleplay(); else goBackToMain(); } 
+            else if (currentScreen === 1) { if (moveX > 70) goBackToMain(); else goToRoleplay(); }
         }, { passive: true });
 
         window.addEventListener('touchend', (e) => {
