@@ -136,31 +136,38 @@
             </div>
 
             <div class="flex-none bg-white border-t border-slate-200 pt-3 px-4 flex flex-col z-20 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]" style="padding-bottom: calc(env(safe-area-inset-bottom) + 15px);">
+                
                 <div class="flex justify-between items-center gap-2 mb-3">
-                    <div class="bg-slate-100 rounded-xl flex-1 border border-slate-200 shadow-sm overflow-hidden">
-                        <select id="appMode" class="w-full bg-transparent text-[11px] sm:text-xs font-bold text-slate-700 text-center py-2 outline-none cursor-pointer" onchange="changeAppMode()">
+                    <div class="bg-slate-100 rounded-xl flex-1 min-w-0 border border-slate-200 shadow-sm overflow-hidden">
+                        <select id="appMode" class="w-full bg-transparent text-[11px] sm:text-xs font-bold text-slate-700 text-center py-2 px-1 outline-none cursor-pointer truncate" onchange="changeAppMode()">
                             <option value="tutor">🎓 대화형 튜터</option>
                             <option value="translate">🌐 통번역 모드</option>
                         </select>
                     </div>
-                    <div id="sttToggleContainer" class="bg-slate-100 rounded-xl flex-1 flex items-center border border-slate-200 shadow-sm pl-2 overflow-hidden">
+                    <div id="sttToggleContainer" class="bg-slate-100 rounded-xl flex-1 min-w-0 flex items-center border border-slate-200 shadow-sm pl-2 overflow-hidden">
                         <span class="text-[10px] text-slate-500 font-bold pr-1 shrink-0">🗣️</span>
                         <select id="sttInputLanguage" class="hidden" onchange="updateStatus('내 음성 언어 변경됨')"></select>
-                        <button id="btnSttInputLanguage" class="flex-1 bg-transparent text-[11px] sm:text-xs font-bold text-blue-600 py-2 px-1 border-l border-slate-200 w-full flex items-center justify-between outline-none" onclick="openCustomLangPicker('sttInputLanguage')">
-                            <span id="disp-sttInputLanguage">🇰🇷 한국어</span> <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                        <button id="btnSttInputLanguage" class="flex-1 min-w-0 bg-transparent text-[11px] sm:text-xs font-bold text-blue-600 py-2 px-1 border-l border-slate-200 w-full flex items-center justify-between gap-1 outline-none" onclick="openCustomLangPicker('sttInputLanguage')">
+                            <span id="disp-sttInputLanguage" class="truncate">🇰🇷 한국어</span> 
+                            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 shrink-0"></i>
                         </button>
                     </div>
                 </div>
 
                 <div class="flex gap-2 mb-3">
-                    <input type="text" id="textInput" placeholder="마이크가 안 될 때는 직접 입력해 보세요..." class="flex-1 h-10 rounded-xl bg-slate-50 border border-slate-300 px-4 text-[11px] sm:text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner" onkeypress="if(event.key==='Enter') sendTextMessage()">
+                    <input type="text" id="textInput" placeholder="마이크가 안 될 때는 직접 입력해 보세요..." class="flex-1 min-w-0 h-10 rounded-xl bg-slate-50 border border-slate-300 px-4 text-[11px] sm:text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner" onkeypress="if(event.key==='Enter') sendTextMessage()">
                     <button id="sendMsgBtn" class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white flex items-center justify-center hover:from-blue-700 shadow-md outline-none" onclick="sendTextMessage()"><i class="fa-solid fa-paper-plane text-xs"></i></button>
                 </div>
 
-                <div class="flex justify-center items-center gap-4">
-                    <button id="stopAudioBtn" class="flex-1 max-w-[80px] h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200" onclick="stopSpeaking()" disabled><i class="fa-solid fa-volume-xmark text-lg"></i></button>
+                <div class="flex justify-center items-center gap-2">
+                    <button id="stopAudioBtn" class="flex-1 min-w-0 max-w-[80px] h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200 shrink-0" onclick="stopSpeaking()" disabled><i class="fa-solid fa-volume-xmark text-lg"></i></button>
+                    
                     <button id="micBtn" class="w-16 h-16 shrink-0 rounded-full bg-gradient-to-b from-blue-400 to-blue-600 text-white flex items-center justify-center text-2xl hover:from-blue-500 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/40 outline-none border-4 border-white" onclick="toggleListening()"><i id="micIcon" class="fa-solid fa-microphone drop-shadow-md"></i></button>
-                    <button id="expGlobalBtn" class="flex-1 max-w-[100px] h-12 rounded-xl bg-amber-50 text-amber-700 font-bold text-[11px] flex items-center justify-center gap-1.5 hover:bg-amber-100 transition-colors shadow-sm outline-none border border-amber-200" onclick="requestExplanationGlobal()"><i class="fa-solid fa-lightbulb text-amber-500 text-sm"></i> 과외 해설</button>
+                    
+                    <button id="expGlobalBtn" class="flex-1 min-w-0 max-w-[100px] h-12 rounded-xl bg-amber-50 text-amber-700 font-bold text-[11px] flex items-center justify-center gap-1.5 hover:bg-amber-100 transition-colors shadow-sm outline-none border border-amber-200" onclick="requestExplanationGlobal()">
+                        <i class="fa-solid fa-lightbulb text-amber-500 text-sm shrink-0"></i> 
+                        <span class="truncate">과외 해설</span>
+                    </button>
                 </div>
             </div>
             
@@ -200,11 +207,16 @@
 
         <div id="screen-roleplay" class="absolute top-0 left-0 w-full h-full flex flex-col z-20 bg-[#f3f4f6] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
-            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
-                <h1 class="text-lg font-bold text-gray-800">🎬 실전 롤플레잉</h1>
-                <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
-                    <span id="disp-roleplayLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
-                </button>
+            <!-- 2번 방 상단 헤더 -->
+            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative gap-2">
+                <h1 class="text-lg font-bold text-gray-800 truncate flex-1 min-w-0">🎬 상황별 롤플레잉</h1>
+                
+                <div class="flex items-center shrink-0">
+                    <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm max-w-[110px]" onclick="openCustomLangPicker('targetLanguage')">
+                        <span id="disp-roleplayLanguage" class="truncate">🇺🇸 영어</span> 
+                        <i class="fa-solid fa-chevron-down text-[9px] opacity-70 shrink-0"></i>
+                    </button>
+                </div>
             </div>
 
             <div id="scrollArea" class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
@@ -255,11 +267,16 @@
 
         <div id="screen-vocab" class="absolute top-0 left-0 w-full h-full flex flex-col z-30 bg-[#f8fafc] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
-            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
-                <h1 class="text-lg font-bold text-gray-800">📝 AI 필수 단어장</h1>
-                <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
-                    <span id="disp-vocabLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
-                </button>
+            <!-- 3번 방 상단 헤더 -->
+            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative gap-2">
+                <h1 class="text-lg font-bold text-gray-800 truncate flex-1 min-w-0">📝 나만의 단어장</h1>
+                
+                <div class="flex items-center shrink-0">
+                    <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm max-w-[110px]" onclick="openCustomLangPicker('targetLanguage')">
+                        <span id="disp-vocabLanguage" class="truncate">🇺🇸 영어</span> 
+                        <i class="fa-solid fa-chevron-down text-[9px] opacity-70 shrink-0"></i>
+                    </button>
+                </div>
             </div>
 
             <div class="flex-none bg-white px-4 py-3 border-b border-gray-100 shadow-sm z-10">
@@ -313,11 +330,16 @@
         <!-- ======================================================= -->
         <div id="screen-alphabet" class="absolute top-0 left-0 w-full h-full flex flex-col z-40 bg-[#f0fdf4] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
-            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative">
-                <h1 class="text-lg font-bold text-gray-800">🔤 왕초보 기초 발음</h1>
-                <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm" onclick="openCustomLangPicker('targetLanguage')">
-                    <span id="disp-alphaLanguage">🇺🇸 영어</span> <i class="fa-solid fa-chevron-down text-[9px] opacity-70"></i>
-                </button>
+            <!-- 4번 방 상단 헤더 -->
+            <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative gap-2">
+                <h1 class="text-lg font-bold text-gray-800 truncate flex-1 min-w-0">🔤 왕초보 기초 발음</h1>
+                
+                <div class="flex items-center shrink-0">
+                    <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm max-w-[110px]" onclick="openCustomLangPicker('targetLanguage')">
+                        <span id="disp-alphaLanguage" class="truncate">🇺🇸 영어</span> 
+                        <i class="fa-solid fa-chevron-down text-[9px] opacity-70 shrink-0"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- 🌟 항상 고정되어 있는 '가져오기' 버튼 구역 추가! -->
