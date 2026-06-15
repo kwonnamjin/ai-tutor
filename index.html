@@ -1250,8 +1250,11 @@
 
         // 🪄 화면의 글자들을 1초만에 싹 바꿔치기하는 마법의 함수
         window.changeUILanguage = function(langCode) {
-            // 전 세계 언어 코드가 들어오더라도 사전이 없으면 기본적으로 영어('en')를 보여주도록 안전장치
-            const currentDict = UI_DICTIONARY[langCode] || UI_DICTIONARY["en"];
+            // 🌟 [핵심 해결책] 'ja-JP', 'en-US' 같은 코드에서 짝대기(-) 앞부분만 쏙 잘라냅니다!
+            const baseLang = langCode.split('-')[0];
+            
+            // 잘라낸 앞부분(baseLang)으로 사전을 찾고, 없으면 기본값 영어('en')를 씁니다.
+            const currentDict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
             
             // 1. 일반 버튼 및 텍스트 바꿔치기
             for (const [id, text] of Object.entries(currentDict)) {
