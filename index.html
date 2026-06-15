@@ -49,30 +49,22 @@
         <div id="screen-main" class="absolute top-0 left-0 w-full h-full flex flex-col z-10 bg-white overflow-hidden sm:rounded-3xl" style="transform: translateX(0%); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
             <div class="flex-none bg-gradient-to-r from-blue-900 to-blue-700 text-white p-4 flex justify-between items-center gap-2 z-10 shadow-lg border-b border-blue-800">
-                <!-- 🌟 왼쪽 제목 구역: 남는 공간을 다 쓰되, 뚫고 나가지 못하게 방어 (flex-1 min-w-0) -->
                 <div class="flex-1 min-w-0">
-                    <!-- 글자가 길어지면 자르기 (truncate) -->
                     <h1 class="text-xl font-extrabold tracking-tight truncate">TalkAI Tutor</h1>
-                    <p class="text-[10px] text-blue-200 uppercase tracking-widest font-semibold mt-0.5 truncate">Smart Language Partner</p>
+                    <p id="main_subtitle" class="text-[10px] text-blue-200 uppercase tracking-widest font-semibold mt-0.5 truncate">Smart Language Partner</p>
                 </div>
                 
-                <!-- 🌟 우측 버튼 구역: 절대 찌그러지지 않게 묶어두기 (shrink-0) -->
                 <div class="flex items-center gap-2 shrink-0">
-                    <!-- 번개(크레딧) 배지 -->
                     <div id="usageBadge" class="shrink-0 bg-blue-950/50 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg border border-blue-500 shadow-inner flex items-center gap-1 backdrop-blur-sm">
                         <i class="fa-solid fa-bolt text-yellow-400"></i> <span id="remainCountText">50/50</span>
                     </div>
                     
-                    <!-- 언어 선택 버튼: 최대 너비 제한(max-w-[100px]) 및 찌그러짐 방지(shrink-0) -->
                     <select id="targetLanguage" class="hidden" onchange="targetLanguageChanged()"></select>
                     <button id="btnTargetLanguage" class="shrink-0 max-w-[100px] bg-blue-800/80 text-white text-xs rounded-lg border border-blue-500 p-2 flex items-center gap-1.5 backdrop-blur-sm font-medium outline-none hover:bg-blue-700 transition-colors" onclick="openCustomLangPicker('targetLanguage')">
-                        <!-- 언어 이름이 길면 ...으로 자르기 (truncate) -->
                         <span id="disp-targetLanguage" class="truncate">🇺🇸 영어</span> 
-                        <!-- 화살표 아이콘 찌그러짐 방지 (shrink-0) -->
                         <i class="fa-solid fa-chevron-down text-[10px] ml-0.5 opacity-70 shrink-0"></i>
                     </button>
                     
-                    <!-- 톱니바퀴 설정 버튼: 동그란 모양 유지 (shrink-0) -->
                     <button class="shrink-0 w-10 h-10 rounded-lg bg-blue-800/80 hover:bg-blue-700 flex items-center justify-center transition-colors border border-blue-500 shadow-sm backdrop-blur-sm" onclick="toggleSettingsModal(true)">
                         <i class="fa-solid fa-gear text-lg text-blue-100"></i>
                     </button>
@@ -80,12 +72,12 @@
             </div>
 
             <div id="inAppWarning" class="hidden flex-none bg-red-100 text-red-700 px-4 py-2 text-[11px] font-bold flex items-center justify-between z-10 border-b border-red-200 shadow-inner">
-                <span class="flex-1"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-500"></i> 브라우저 마이크 제한. '다른 브라우저로 열기'를 선택해 주세요.</span>
+                <span class="flex-1"><i class="fa-solid fa-triangle-exclamation mr-1 text-red-500"></i> <span id="mic_warning_text">브라우저 마이크 제한. '다른 브라우저로 열기'를 선택해 주세요.</span></span>
                 <button onclick="document.getElementById('inAppWarning').style.display='none'" class="ml-2 px-2 py-1 text-red-500 hover:text-red-800"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
             <div class="flex-none bg-slate-50/50 px-4 py-1.5 flex justify-between items-center border-b border-slate-300 text-[11px]">
-                <span class="text-slate-500 font-semibold text-[10px] uppercase tracking-wider">AI Engine</span>
+                <span id="ai_engine_label" class="text-slate-500 font-semibold text-[10px] uppercase tracking-wider">AI Engine</span>
                 <span id="activeEngineText" class="font-bold text-blue-600 text-[10px] bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200"><i class="fa-solid fa-shield-halved mr-0.5"></i> DeepSeek Secure</span>
             </div>
 
@@ -103,35 +95,35 @@
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-yellow-300 border border-white/30 shrink-0"><i class="fa-solid fa-crown"></i></div>
                     <div>
-                        <p class="text-white font-black text-sm">프리미엄 무제한 구독</p>
-                        <p class="text-blue-100 text-[11px] mt-0.5">월 4,500원(VAT 포함)으로 무제한 학습하세요!</p>
+                        <p id="premium_title" class="text-white font-black text-sm">프리미엄 무제한 구독</p>
+                        <p id="premium_desc" class="text-blue-100 text-[11px] mt-0.5">월 4,500원(VAT 포함)으로 무제한 학습하세요!</p>
                     </div>
                 </div>
             </div>
 
                 <div class="flex flex-col space-y-1">
                 <div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md shadow-blue-900/5 self-start" id="welcomeMessage">
-                    <p class="chat-text-dynamic text-slate-800 font-extrabold mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><i class="fa-solid fa-robot text-blue-500"></i> 당신의 AI 튜터입니다.</p>
+                    <p class="chat-text-dynamic text-slate-800 font-extrabold mb-3 border-b border-slate-100 pb-2 flex items-center gap-2"><i class="fa-solid fa-robot text-blue-500"></i> <span id="welcome_title">당신의 AI 튜터입니다.</span></p>
                     <div class="space-y-3 text-xs text-slate-600 leading-relaxed">
                         <div class="flex items-start gap-2">
                             <div class="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 border border-blue-100"><i class="fa-solid fa-microphone text-[10px]"></i></div>
                             <div>
-                                <p class="font-bold text-slate-800 mb-0.5">실시간 음성 대화</p>
-                                <p class="text-slate-500">하단의 파란 마이크를 눌러 말해보세요. <b>대화형 튜터</b>와 <b>통번역</b> 모드를 지원합니다.</p>
+                                <p id="welcome_f1_title" class="font-bold text-slate-800 mb-0.5">실시간 음성 대화</p>
+                                <p id="welcome_f1_desc" class="text-slate-500">하단의 파란 마이크를 눌러 말해보세요. <b>대화형 튜터</b>와 <b>통번역</b> 모드를 지원합니다.</p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2">
                             <div class="w-6 h-6 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5 border border-amber-100"><i class="fa-solid fa-hand-pointer text-[10px]"></i></div>
                             <div>
-                                <p class="font-bold text-slate-800 mb-0.5">스마트 단어 선택</p>
-                                <p class="text-slate-500">말풍선 속 텍스트를 터치하여 구간을 선택하면 숨겨진 메뉴가 나타납니다.</p>
+                                <p id="welcome_f2_title" class="font-bold text-slate-800 mb-0.5">스마트 단어 선택</p>
+                                <p id="welcome_f2_desc" class="text-slate-500">말풍선 속 텍스트를 터치하여 구간을 선택하면 숨겨진 메뉴가 나타납니다.</p>
                             </div>
                         </div>
                         <div class="flex items-start gap-2">
                             <div class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 border border-emerald-100"><i class="fa-solid fa-graduation-cap text-[10px]"></i></div>
                             <div>
-                                <p class="font-bold text-slate-800 mb-0.5">원어민 발음 & 맞춤 해설</p>
-                                <p class="text-slate-500">선택한 단어만 원어민 발음으로 <b>다시 듣기(🔊)</b> 하거나, <b>집중 해설(💡)</b>을 받을 수 있습니다.</p>
+                                <p id="welcome_f3_title" class="font-bold text-slate-800 mb-0.5">원어민 발음 & 맞춤 해설</p>
+                                <p id="welcome_f3_desc" class="text-slate-500">선택한 단어만 원어민 발음으로 <b>다시 듣기(🔊)</b> 하거나, <b>집중 해설(💡)</b>을 받을 수 있습니다.</p>
                             </div>
                         </div>
                     </div>
@@ -139,7 +131,7 @@
             </div>
                 
                 <div id="selectionTooltip" class="hidden absolute z-50 bg-slate-800 text-white rounded-lg shadow-xl flex items-center px-1 py-1 tooltip-arrow transition-opacity duration-200 opacity-0 pointer-events-none border border-slate-700" style="transform: translate(-50%, -100%); margin-top: -8px;">
-                    <button onclick="readSelectedText()" class="hover:bg-slate-700 p-2 rounded-md transition-colors flex items-center justify-center text-blue-400" title="읽기"><i class="fa-solid fa-volume-high text-sm"></i></button>
+                    <button onclick="readSelectedText()" class="hover:bg-slate-700 p-2 rounded-md transition-colors flex items-center justify-center text-blue-400" title="듣기"><i class="fa-solid fa-volume-high text-sm"></i></button>
                     <div class="w-px h-5 bg-slate-600 mx-1"></div>
                     <button onclick="explainSelectedText()" class="hover:bg-slate-700 p-2 rounded-md transition-colors flex items-center justify-center text-yellow-400" title="해설"><i class="fa-solid fa-lightbulb text-sm"></i></button>
                 </div>
@@ -183,24 +175,24 @@
             
             <div id="settingsModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
                 <div class="bg-white w-full max-w-[360px] rounded-3xl p-6 shadow-2xl relative transition-all border border-slate-100">
-                    <h3 class="text-xl font-extrabold text-slate-800 mb-5 border-b border-slate-100 pb-3 flex items-center gap-2"><i class="fa-solid fa-gear text-slate-400"></i> 상세 설정</h3>
-                    <div class="mb-6"><label class="block text-sm font-bold text-slate-700 mb-3">채팅 글자 크기</label><input type="range" id="fontSizeSlider" min="12" max="22" step="1" value="14" class="w-full accent-blue-600" oninput="document.documentElement.style.setProperty('--chat-font-size', this.value + 'px')"></div>
-                    <div class="mb-6"><label class="block text-sm font-bold text-slate-700 mb-3">AI 목소리 성별</label>
+                    <h3 class="text-xl font-extrabold text-slate-800 mb-5 border-b border-slate-100 pb-3 flex items-center gap-2"><i class="fa-solid fa-gear text-slate-400"></i> <span id="settings_title_text">상세 설정</span></h3>
+                    <div class="mb-6"><label id="set_font_size" class="block text-sm font-bold text-slate-700 mb-3">채팅 글자 크기</label><input type="range" id="fontSizeSlider" min="12" max="22" step="1" value="14" class="w-full accent-blue-600" oninput="document.documentElement.style.setProperty('--chat-font-size', this.value + 'px')"></div>
+                    <div class="mb-6"><label id="set_voice_gender" class="block text-sm font-bold text-slate-700 mb-3">AI 목소리 성별</label>
                         <div class="flex bg-slate-100 p-1 rounded-xl">
-                            <button id="genderFemaleBtn" class="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm" onclick="selectGender('female')">👩 여성 </button>
-                            <button id="genderMaleBtn" class="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded-lg" onclick="selectGender('male')">👨 남성 </button>
+                            <button id="genderFemaleBtn" class="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm" onclick="selectGender('female')">👩 <span id="gender_f_text">여성</span></button>
+                            <button id="genderMaleBtn" class="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 rounded-lg" onclick="selectGender('male')">👨 <span id="gender_m_text">남성</span></button>
                         </div>
                     </div>
                     <div class="mb-6">
-                        <label class="block text-sm font-bold text-slate-700 mb-3">과외 해설 언어</label>
+                        <label id="set_exp_lang" class="block text-sm font-bold text-slate-700 mb-3">과외 해설 언어</label>
                         <select id="explanationLanguage" class="hidden"></select>
                         <button id="btnExplanationLanguage" class="w-full border border-slate-300 rounded-xl p-3 text-sm font-medium outline-none bg-slate-50 flex items-center justify-between text-slate-700 hover:bg-slate-100 transition-colors" onclick="openCustomLangPicker('explanationLanguage')">
                             <span id="disp-explanationLanguage">🇰🇷 한국어</span> <i class="fa-solid fa-chevron-down text-slate-400"></i>
                         </button>
                     </div>
                     <div class="flex gap-3 mt-8 pt-4 border-t border-slate-100">
-                        <button class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl text-sm hover:bg-slate-200 transition-colors" onclick="toggleSettingsModal(false)">닫기</button>
-                        <button class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-3 rounded-xl text-sm hover:opacity-90 shadow-md" onclick="saveSettings()">저장</button>
+                        <button id="settings_close" class="flex-1 bg-slate-100 text-slate-700 font-bold py-3 rounded-xl text-sm hover:bg-slate-200 transition-colors" onclick="toggleSettingsModal(false)">닫기</button>
+                        <button id="settings_save" class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold py-3 rounded-xl text-sm hover:opacity-90 shadow-md" onclick="saveSettings()">저장</button>
                     </div>
                 </div>
             </div>
@@ -208,18 +200,17 @@
             <div id="paywallModal" class="hidden absolute inset-0 bg-slate-900/80 flex items-center justify-center z-[100] p-4 backdrop-blur-md">
                 <div class="bg-white w-full max-w-[320px] rounded-[2rem] p-8 shadow-2xl text-center relative overflow-hidden">
                     <div class="w-20 h-20 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-5 text-4xl shadow-inner border border-slate-100"><i class="fa-solid fa-lock"></i></div>
-                    <h3 class="text-2xl font-black text-slate-800 mb-2 tracking-tight">튜터링 종료</h3>
+                    <h3 id="pw_title" class="text-2xl font-black text-slate-800 mb-2 tracking-tight">튜터링 종료</h3>
                     <p id="paywallReasonText" class="text-sm font-medium text-slate-500 mb-6">무료 튜터링 대화를 모두 소진하셨습니다.</p>
-                    <button class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-sm py-4 rounded-xl shadow-lg flex items-center justify-center gap-2" onclick="processUpgrade()"><i class="fa-brands fa-google-play"></i> 프리미엄 결제하기</button>
+                    <button id="pw_upgrade_btn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-sm py-4 rounded-xl shadow-lg flex items-center justify-center gap-2" onclick="processUpgrade()"><i class="fa-brands fa-google-play"></i> <span id="pw_upgrade_text">프리미엄 결제하기</span></button>
                 </div>
             </div>
         </div>
 
         <div id="screen-roleplay" class="absolute top-0 left-0 w-full h-full flex flex-col z-20 bg-[#f3f4f6] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
-            <!-- 2번 방 상단 헤더 -->
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative gap-2">
-                <h1 class="text-lg font-bold text-gray-800 truncate flex-1 min-w-0">🎬 상황별 롤플레잉</h1>
+                <h1 id="header_room2" class="text-lg font-bold text-gray-800 truncate flex-1 min-w-0">🎬 상황별 롤플레잉</h1>
                 
                 <div class="flex items-center shrink-0">
                     <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm max-w-[110px]" onclick="openCustomLangPicker('targetLanguage')">
@@ -232,24 +223,24 @@
             <div id="scrollArea" class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
                 
                 <section id="levelSection">
-                    <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-layer-group text-blue-500 mr-1"></i> 1. 레벨 선택</h2>
+                    <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-layer-group text-blue-500 mr-1"></i> <span id="rp_level_text">1. 레벨 선택</span></h2>
                     <div class="grid grid-cols-4 gap-1.5">
-                        <button class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all selected-card">입문</button>
-                        <button class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all">초급</button>
-                        <button class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all">중급</button>
-                        <button class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all">원어민</button>
+                        <button id="rp_lv1" class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all selected-card">입문</button>
+                        <button id="rp_lv2" class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all">초급</button>
+                        <button id="rp_lv3" class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all">중급</button>
+                        <button id="rp_lv4" class="level-btn py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all">원어민</button>
                     </div>
                 </section>
 
                 <section id="situationSection">
-                    <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-masks-theater text-purple-500 mr-1"></i> 2. 상황 선택</h2>
+                    <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-masks-theater text-purple-500 mr-1"></i> <span id="rp_sit_text">2. 상황 선택</span></h2>
                     <div class="grid grid-cols-3 gap-1.5">
-                        <div class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="일상 랜덤">🎲 일상 랜덤</div>
-                        <div class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer selected-card" data-situation="카페 주문">☕ 카페 주문</div>
-                        <div class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="음식점">🍽️ 음식점</div>
-                        <div class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="입국 심사">🛂 입국 심사</div>
-                        <div class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="옷 쇼핑">🛍️ 옷 쇼핑</div>
-                        <div class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="택시 탑승">🚕 택시 탑승</div>
+                        <div id="rp_sit1" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="일상 랜덤">🎲 일상 랜덤</div>
+                        <div id="rp_sit2" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer selected-card" data-situation="카페 주문">☕ 카페 주문</div>
+                        <div id="rp_sit3" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="음식점">🍽️ 음식점</div>
+                        <div id="rp_sit4" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="입국 심사">🛂 입국 심사</div>
+                        <div id="rp_sit5" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="옷 쇼핑">🛍️ 옷 쇼핑</div>
+                        <div id="rp_sit6" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="택시 탑승">🚕 택시 탑승</div>
                     </div>
                     <button id="generateBtn" class="w-full mt-3 bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
                         ✨ AI 대본 생성하기
@@ -271,20 +262,16 @@
             <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-3xl" style="padding-bottom: calc(env(safe-area-inset-bottom) + 20px);">
                 
                 <button onclick="startShadowing()" id="roleplayMicBtn" class="w-full h-14 px-6 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-[1.02] min-w-0">
-                    
                     <i class="fa-solid fa-microphone text-xl shrink-0" id="roleplayMicIcon"></i> 
-                    
                     <span id="roleplayMicText" class="truncate min-w-0">말하기 시작 (마이크)</span>
-                    
                 </button>
             </div>
         </div>
 
         <div id="screen-vocab" class="absolute top-0 left-0 w-full h-full flex flex-col z-30 bg-[#f8fafc] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
-            <!-- 3번 방 상단 헤더 -->
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative gap-2">
-                <h1 class="text-lg font-bold text-gray-800 truncate flex-1 min-w-0">📝 나만의 단어장</h1>
+                <h1 id="header_room3" class="text-lg font-bold text-gray-800 truncate flex-1 min-w-0">📝 나만의 단어장</h1>
                 
                 <div class="flex items-center shrink-0">
                     <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm max-w-[110px]" onclick="openCustomLangPicker('targetLanguage')">
@@ -296,10 +283,10 @@
 
             <div class="flex-none bg-white px-4 py-3 border-b border-gray-100 shadow-sm z-10">
                 <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                    <button class="vocab-theme-btn shrink-0 bg-indigo-50 border border-indigo-500 text-indigo-700 text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition-all" onclick="setVocabTheme(this)">✈️ 여행 필수</button>
-                    <button class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">💼 비즈니스</button>
-                    <button class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">❤️ 연애/감정</button>
-                    <button class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">🍽️ 식당/카페</button>
+                    <button id="vc_theme1" class="vocab-theme-btn shrink-0 bg-indigo-50 border border-indigo-500 text-indigo-700 text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition-all" onclick="setVocabTheme(this)">✈️ 여행 필수</button>
+                    <button id="vc_theme2" class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">💼 비즈니스</button>
+                    <button id="vc_theme3" class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">❤️ 연애/감정</button>
+                    <button id="vc_theme4" class="vocab-theme-btn shrink-0 bg-white border border-slate-200 text-slate-500 text-xs font-bold px-4 py-2 rounded-xl hover:bg-slate-50 transition-all" onclick="setVocabTheme(this)">🍽️ 식당/카페</button>
                 </div>
                 <button id="generateVocabBtn" class="w-full mt-1 bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all" onclick="generateVocab()">
                     ✨ AI 단어장 생성하기
@@ -317,7 +304,7 @@
                             <h2 id="vcWord" class="text-4xl sm:text-5xl font-black text-slate-800 mb-2 tracking-tight"></h2>
                             <p id="vcPron" class="text-lg text-indigo-500 font-extrabold"></p>
                             <p id="vcPhonetic" class="text-sm text-slate-400 font-semibold mt-1"></p>
-                            <p class="absolute bottom-5 text-[10px] text-slate-400 font-medium animate-pulse"><i class="fa-solid fa-hand-pointer"></i> 터치해서 뒤집기</p>
+                            <p class="absolute bottom-5 text-[10px] text-slate-400 font-medium animate-pulse"><i class="fa-solid fa-hand-pointer"></i> <span id="vc_flip_hint">터치해서 뒤집기</span></p>
                         </div>
                         <div class="absolute w-full h-full bg-indigo-600 rounded-3xl border-[3px] border-indigo-700 backface-hidden rotate-y-180 flex flex-col items-center justify-center p-6 text-center text-white">
                             <h3 id="vcMeaning" class="text-3xl font-black mb-4"></h3>
@@ -328,26 +315,22 @@
                     </div>
                     <div class="flex gap-3 w-full max-w-sm mt-4">
                         <button onclick="prevVocab()" class="w-12 h-12 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-left"></i></button>
-                        <button onclick="playVocabAudio()" class="flex-1 bg-white text-indigo-600 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center gap-0.5 hover:bg-indigo-50 transition-colors"><i class="fa-solid fa-volume-high"></i><span class="text-[10px] font-bold">원어민 듣기</span></button>
+                        <button onclick="playVocabAudio()" class="flex-1 bg-white text-indigo-600 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center gap-0.5 hover:bg-indigo-50 transition-colors"><i class="fa-solid fa-volume-high"></i><span id="vc_listen_btn" class="text-[10px] font-bold">원어민 듣기</span></button>
                         <button onclick="nextVocab()" class="w-12 h-12 bg-white text-slate-400 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-lg hover:bg-slate-50"><i class="fa-solid fa-chevron-right"></i></button>
                     </div>
                 </div>
 
                 <div id="vocabListArea" class="space-y-6">
-                    <div class="text-center text-slate-400 text-sm mt-10 font-bold">위 버튼을 눌러 첫 단어장을 생성해 보세요!</div>
+                    <div id="vc_empty_text" class="text-center text-slate-400 text-sm mt-10 font-bold">위 버튼을 눌러 첫 단어장을 생성해 보세요!</div>
                 </div>
 
             </div>
         </div>
 
-        <!-- ======================================================= -->
-        <!-- 🔤 4번 방: 왕초보 기초 발음 화면 -->
-        <!-- ======================================================= -->
         <div id="screen-alphabet" class="absolute top-0 left-0 w-full h-full flex flex-col z-40 bg-[#f0fdf4] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
             
-            <!-- 4번 방 상단 헤더 -->
             <div class="flex-none bg-white border-b border-gray-100 p-4 flex items-center justify-between z-10 shadow-sm relative gap-2">
-                <h1 class="text-lg font-bold text-gray-800 truncate flex-1 min-w-0">🔤 왕초보 기초 발음</h1>
+                <h1 id="header_room4" class="text-lg font-bold text-gray-800 truncate flex-1 min-w-0">🔤 왕초보 기초 발음</h1>
                 
                 <div class="flex items-center shrink-0">
                     <button class="bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 px-2.5 py-1.5 flex items-center gap-1.5 outline-none hover:bg-blue-100 transition-colors shadow-sm max-w-[110px]" onclick="openCustomLangPicker('targetLanguage')">
@@ -357,7 +340,6 @@
                 </div>
             </div>
 
-            <!-- 🌟 항상 고정되어 있는 '가져오기' 버튼 구역 추가! -->
             <div class="flex-none bg-white px-4 py-3 border-b border-gray-100 shadow-sm z-10">
                 <button id="generateAlphaBtn" onclick="loadAlphabetData()" class="w-full bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
                     ✨ 선택한 언어의 AI 파닉스 가져오기
@@ -367,16 +349,15 @@
             <div class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar pb-24">
                 <div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mb-2 flex items-center gap-3">
                     <div class="w-10 h-10 bg-emerald-200 rounded-full flex items-center justify-center text-emerald-700 text-xl shrink-0"><i class="fa-solid fa-seedling"></i></div>
-                    <p class="text-xs text-emerald-800 font-medium">언어의 뼈대가 되는 기본 글자와 발음을 익혀보세요! 글자를 누르면 원어민 소리가 납니다.</p>
+                    <p id="alpha_desc" class="text-xs text-emerald-800 font-medium">언어의 뼈대가 되는 기본 글자와 발음을 익혀보세요! 글자를 누르면 원어민 소리가 납니다.</p>
                 </div>
 
                 <div id="alphabetListArea" class="space-y-6">
-                    <div class="text-center text-slate-400 text-sm mt-10 font-bold">위 버튼을 눌러 기초 글자를 가져와 보세요!</div>
+                    <div id="alpha_empty_text" class="text-center text-slate-400 text-sm mt-10 font-bold">위 버튼을 눌러 기초 글자를 가져와 보세요!</div>
                 </div>
             </div>
         </div>
         
-
         <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
             <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
                 <div class="flex justify-between items-center mb-5">
@@ -392,10 +373,9 @@
     </div>
 
     <script type="module">
-        // 🚨 [핵심 해결 1] 중복 생성된 유령 화면 싹 청소하기 (설정창 저장 먹통 원인)
         ['settingsModal', 'paywallModal', 'screen-roleplay', 'screen-vocab', 'screen-alphabet'].forEach(id => {
             const elements = document.querySelectorAll('#' + id);
-            for (let i = 1; i < elements.length; i++) elements[i].remove(); // 진짜 1개만 남기고 복제본은 다 삭제!
+            for (let i = 1; i < elements.length; i++) elements[i].remove(); 
         });
         const SUPPORTED_LANGUAGES = [
             { code: "ko-KR", name: "한국어", flag: "🇰🇷" }, { code: "en-US", name: "영어", flag: "🇺🇸" }, { code: "es-ES", name: "스페인어", flag: "🇪🇸" },
@@ -433,28 +413,14 @@
                     const langData = SUPPORTED_LANGUAGES.find(l => l.code === targetSel.value); disp.innerHTML = `${langData.flag} ${langData.name}`;
                 }
             });
-            // 🚨 앱 시작 시 자동으로 4번 방 로딩기가 도는 것을 막기 위해 자동 실행 코드를 삭제했습니다!
-        };
-
-        window.updateLangDisplays = function() {
-            ['targetLanguage', 'sttInputLanguage', 'explanationLanguage'].forEach(id => {
-                const sel = document.getElementById(id); const disp = document.getElementById('disp-' + id);
-                if(sel && disp && sel.options[sel.selectedIndex]) {
-                    const langData = SUPPORTED_LANGUAGES.find(l => l.code === sel.value); disp.innerHTML = `${langData.flag} ${langData.name}`;
-                }
-            });
-            const targetSel = document.getElementById('targetLanguage');
-            ['roleplayLanguage', 'vocabLanguage', 'alphaLanguage'].forEach(id => {
-                const disp = document.getElementById('disp-' + id);
-                if(targetSel && disp && targetSel.options[targetSel.selectedIndex]) {
-                    const langData = SUPPORTED_LANGUAGES.find(l => l.code === targetSel.value); disp.innerHTML = `${langData.flag} ${langData.name}`;
-                }
-            });
         };
         updateLangDisplays();
 
         window.openCustomLangPicker = function(targetId) {
-            const titles = { 'targetLanguage': '학습할 언어 선택', 'sttInputLanguage': '내 음성 언어 선택', 'explanationLanguage': '해설 언어 선택' };
+            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+            const currentDict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+            const titles = { 'targetLanguage': currentDict.picker_target, 'sttInputLanguage': currentDict.picker_stt, 'explanationLanguage': currentDict.picker_exp };
+            
             document.getElementById('customLangTitle').innerText = titles[targetId];
             const listContainer = document.getElementById('customLangList'); listContainer.innerHTML = '';
             const currentVal = document.getElementById(targetId).value;
@@ -468,8 +434,6 @@
                     updateLangDisplays(); 
                     closeCustomLangPicker(); 
                     
-                    // 🌟 [마법의 기준 변경!] 
-                    // 이제 상단 언어가 아니라, 설정창에서 '과외 해설 언어(explanationLanguage)'를 골랐을 때만 앱 전체 글자가 바뀝니다!
                     if (targetId === 'explanationLanguage' && typeof window.changeUILanguage === 'function') {
                         window.changeUILanguage(lang.code);
                     }
@@ -485,9 +449,6 @@
             setTimeout(() => document.getElementById('customLangModal').classList.add('hidden'), 300);
         };
 
-        // =======================================================
-        // 🌟 1번 방: 핵심 AI 튜터 통신 로직 및 변수 초기화
-        // =======================================================
         const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
         const MAX_FREE_COUNT = 50;
 
@@ -499,7 +460,7 @@
         
         let currentUtterance = null; 
         let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
-        let tempGender = currentVoiceGender; // 🚨 '저장 안 됨' 오류 해결을 위한 핵심 변수!
+        let tempGender = currentVoiceGender; 
 
         let currentBubbleId = null, startIndex = -1, endIndex = -1, myDeviceId = "unknown";
 
@@ -683,9 +644,6 @@
             for(let i=0;i<3;i++) { try { const res = await fetch(url, options); if(res.ok) return res; await new Promise(r=>setTimeout(r,delay)); delay*=2; } catch(e) { if(i==2) throw e; } }
         }
 
-        // 🚨 이 부분이 1번 방 AI 통신 불가 에러를 해결하는 핵심 코드입니다 (시스템 프롬프트 & JSON 요청 완벽 복구)
-        // 🌟 2. 1번 방 AI 통신 에러 해결 코드
-        // 🌟 [핵심 해결 2] 1번 방 AI 통신 에러 해결 (JSON 파싱 에러 방지)
         async function handleUserMessage(text) {
             if(!text) return;
             addMessageToChat('user', text);
@@ -696,7 +654,6 @@
             const targetLang = tLang.value, targetName = tLang.options[tLang.selectedIndex].dataset.langName;
             const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
 
-            // AI가 딴소리 못하게 강제 고정
             let sysPrompt = mode === 'translate' 
                 ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}`
                 : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
@@ -724,7 +681,6 @@
                 
                 let data = await res.json();
                 
-                // 🚨 핵심 수정: AI가 ```json 이라는 불필요한 마크다운을 보내도 싹 지우고 해석하게 만듦
                 let cleanContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
                 let parsed = JSON.parse(cleanContent);
                 
@@ -759,7 +715,6 @@
         window.changeAppMode = function() { clearChatSession(); } 
         window.targetLanguageChanged = function() { clearChatSession(); }
         
-        // 🚨 이 부분이 톱니바퀴 '저장 안 됨' 에러를 해결하는 핵심 코드입니다 (tempGender 변수 바인딩 복구)
         window.selectGender = function(g) { 
             tempGender = g; 
             updateGenderUI(g, false); 
@@ -768,7 +723,7 @@
             let m = document.getElementById('settingsModal');
             if (show) {
                 document.getElementById('fontSizeSlider').value = localStorage.getItem('chat_font_size') || 14;
-                tempGender = currentVoiceGender; // 켤 때 현재 성별로 세팅
+                tempGender = currentVoiceGender; 
                 updateGenderUI(tempGender, false);
                 m.classList.remove('hidden');
             } else {
@@ -785,15 +740,12 @@
             window.toggleSettingsModal(false); 
         }
 
-        // =======================================================
-        // 🚀 유니버셜 스와이프 엔진 (상하 스크롤 간섭 완벽 해결!)
-        // =======================================================
         const appScreens = [ document.getElementById('screen-main'), document.getElementById('screen-roleplay'), document.getElementById('screen-vocab'), document.getElementById('screen-alphabet') ];
         let currentScreen = 0; 
         let isMenuScrolling = false; 
         let startX = 0;
-        let startY = 0;               // 🌟 추가: 위아래 시작 좌표
-        let isVerticalScroll = false; // 🌟 추가: 수직 스크롤 중인지 확인하는 깃발
+        let startY = 0;               
+        let isVerticalScroll = false; 
 
         window.goToScreen = function(index) {
             if (index < 0 || index >= appScreens.length) return;
@@ -809,9 +761,9 @@
         window.addEventListener('touchstart', (e) => {
             if (e.target.closest('.overflow-x-auto') || e.target.closest('input')) { isMenuScrolling = true; return; }
             isMenuScrolling = false; 
-            isVerticalScroll = false;      // 🌟 화면에 손을 댈 때 깃발 초기화
+            isVerticalScroll = false;      
             startX = e.touches[0].clientX; 
-            startY = e.touches[0].clientY; // 🌟 위아래 시작점 기록
+            startY = e.touches[0].clientY; 
             appScreens.forEach(s => { if(s) s.style.transition = 'none'; });
         }, { passive: true });
 
@@ -819,14 +771,13 @@
             if (isMenuScrolling) return; 
             
             let moveX = e.touches[0].clientX - startX;
-            let moveY = e.touches[0].clientY - startY; // 🌟 위아래 움직인 거리 계산
+            let moveY = e.touches[0].clientY - startY; 
 
-            // 🌟 핵심 로직: 좌우보다 위아래로 더 많이 움직였으면 "아, 스크롤 하려는구나!" 하고 스와이프를 무시함
             if (!isVerticalScroll && Math.abs(moveY) > Math.abs(moveX)) {
                 isVerticalScroll = true;
             }
 
-            if (isVerticalScroll) return; // 위아래 스크롤 중이면 화면 넘기기 애니메이션 작동 금지!
+            if (isVerticalScroll) return; 
 
             if(appScreens[currentScreen]) appScreens[currentScreen].style.transform = `translateX(${moveX}px)`;
             if (moveX > 0 && currentScreen > 0 && appScreens[currentScreen - 1]) appScreens[currentScreen - 1].style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`;
@@ -834,7 +785,6 @@
         }, { passive: true });
 
         window.addEventListener('touchend', (e) => {
-            // 🌟 수직 스크롤 중이었다면 다음 방으로 넘어가지 말고 원래 화면으로 복귀
             if (isMenuScrolling || isVerticalScroll) { 
                 goToScreen(currentScreen);
                 return; 
@@ -846,9 +796,6 @@
             else goToScreen(currentScreen);
         }, { passive: true });
         
-        // =======================================================
-        // 🎬 2번 방: 실전 롤플레잉 엔진
-        // =======================================================
         let savedScripts = JSON.parse(localStorage.getItem('roleplay_scripts')) || [];
         let roleplayRec = null, isRpListening = false;
         let activeTestScriptIdx = -1, activeTestLineIdx = -1, isInteractiveTestActive = false;
@@ -862,11 +809,15 @@
 
         window.renderScripts = function() {
             const playerArea = document.getElementById("scriptList"); playerArea.innerHTML = "";
+            
+            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+
             if(savedScripts.length === 0) return;
             for (let i = savedScripts.length - 1; i >= 0; i--) {
                 const scriptItem = savedScripts[i];
                 let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm">
-                        <p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}번: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p>
+                        <p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p>
                         <div class="flex gap-1.5">
                             <button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm"><i class="fa-solid fa-volume-high text-xs"></i></button>
                             <button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button>
@@ -874,12 +825,15 @@
                         </div></div><div class="space-y-3">`;
                 scriptItem.scriptData.forEach((line, lineIdx) => {
                     const isAi = line.role === 'ai';
-                    html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all"><div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div><div class="flex-1"><p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi?'AI 상대방':'나'}</p><p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all">${line.en}</p><p class="text-xs text-gray-500 mt-1">${line.ko}</p><div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div></div></div>`;
+                    html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all"><div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div><div class="flex-1"><p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi? (dict.rp_ai || 'AI') : (dict.rp_user || 'Me')}</p><p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all">${line.en}</p><p class="text-xs text-gray-500 mt-1">${line.ko}</p><div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div></div></div>`;
                 });
                 html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
                 playerArea.insertAdjacentHTML('beforeend', html);
             }
-            document.getElementById("statusBoxText").innerText = `현재 ${savedScripts.length}개의 대본이 보관되어 있습니다.`;
+            const statusBoxText = document.getElementById("statusBoxText");
+            if(statusBoxText && dict.rp_save_count) {
+                statusBoxText.innerText = dict.rp_save_count.replace('{n}', savedScripts.length);
+            }
             const scrollArea = document.getElementById("scrollArea"); if(scrollArea) scrollArea.scrollTop = 0;
         };
 
@@ -891,7 +845,7 @@
             const isRandom = (situation === '일상 랜덤');
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
-            btn.innerText = "⏳ 작성 중..."; btn.disabled = true;
+            btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, 
@@ -901,7 +855,11 @@
                 if (savedScripts.length >= 5) savedScripts.shift(); 
                 savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
                 localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); renderScripts();
-            } catch (err) { alert("대본 생성 실패"); } finally { btn.innerText = "✨ AI 대본 생성하기"; btn.disabled = false; }
+            } catch (err) { alert("대본 생성 실패"); } finally { 
+                const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+                btn.innerText = UI_DICTIONARY[baseLang]?.generateBtn || "✨ AI 대본 생성하기"; 
+                btn.disabled = false; 
+            }
         };
         document.getElementById("generateBtn").onclick = window.generateScript;
 
@@ -943,7 +901,7 @@
         window.processNextTestLine = function() {
             if (!isInteractiveTestActive) return;
             const scriptItem = savedScripts[activeTestScriptIdx];
-            if (activeTestLineIdx >= scriptItem.scriptData.length) { isInteractiveTestActive = false; alert("🎉 테스트 완료!"); return; }
+            if (activeTestLineIdx >= scriptItem.scriptData.length) { isInteractiveTestActive = false; alert("🎉 완료!"); return; }
             const line = scriptItem.scriptData[activeTestLineIdx]; const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
             if(activeTestLineIdx > 0) document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`).classList.remove('bg-yellow-50', 'border-yellow-200');
             if(lineDiv) { lineDiv.classList.add('bg-yellow-50', 'border-yellow-200'); lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
@@ -951,18 +909,18 @@
                 const utt = new SpeechSynthesisUtterance(line.en); utt.lang = scriptItem.langCode; utt.pitch = 1.2;
                 utt.onend = () => { activeTestLineIdx++; setTimeout(window.processNextTestLine, 500); }; synthesis.speak(utt);
             } else {
-                document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 하단 마이크 버튼을 누르세요</span>`;
+                document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 🎤</span>`;
             }
         };
 
         if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) roleplayRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
 
         window.startShadowing = function() {
-            if (savedScripts.length === 0) return alert("대본 생성 먼저!");
-            if (!isInteractiveTestActive) return alert("대본 우측 상단의 'Test(게임패드)' 버튼을 눌러주세요!");
+            if (savedScripts.length === 0) return alert("Error");
+            if (!isInteractiveTestActive) return alert("Test First!");
             
             const targetItem = savedScripts[activeTestScriptIdx]; const userLine = targetItem.scriptData[activeTestLineIdx];
-            if (userLine.role !== 'user') return alert("AI 차례입니다.");
+            if (userLine.role !== 'user') return alert("AI Turn.");
             const btn = document.getElementById("roleplayMicBtn"); if (isRpListening) { roleplayRec.stop(); return; }
 
             btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); document.getElementById("roleplayMicIcon").classList.replace("fa-microphone", "fa-ear-listen");
@@ -976,15 +934,12 @@
             };
             roleplayRec.onend = roleplayRec.onerror = () => { 
                 isRpListening = false; btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); document.getElementById("roleplayMicIcon").classList.replace("fa-ear-listen", "fa-microphone");
-                document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="${score>80?'text-emerald-600 bg-emerald-50':'text-amber-600 bg-amber-50'} px-2 py-1 rounded-md border inline-block mt-1">일치율: ${score}% (${recognizedText||'인식 실패'})</span>`;
+                document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="${score>80?'text-emerald-600 bg-emerald-50':'text-amber-600 bg-amber-50'} px-2 py-1 rounded-md border inline-block mt-1">${score}% (${recognizedText||'Fail'})</span>`;
                 setTimeout(() => { activeTestLineIdx++; window.processNextTestLine(); }, 1500); 
             };
         };
         window.renderScripts();
 
-        // =======================================================
-        // 📝 3번 방: 단어장(Vocab) 엔진 (3D 플래시카드 & 4개 그리드)
-        // =======================================================
         let savedVocabs = JSON.parse(localStorage.getItem('vocab_scripts')) || [];
         let currentVocabSetIdx = -1; let currentVocabWordIdx = 0;
 
@@ -997,15 +952,17 @@
 
         window.renderVocabs = function() {
             const listArea = document.getElementById("vocabListArea"); listArea.innerHTML = "";
+            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+
             if(savedVocabs.length === 0) {
-                listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold">위 버튼을 눌러 첫 단어장을 생성해 보세요!</div>`;
+                listArea.innerHTML = `<div id="vc_empty_text" class="text-center text-slate-400 text-sm mt-10 font-bold">${dict.vc_empty_text || "위 버튼을 눌러 첫 단어장을 생성해 보세요!"}</div>`;
                 document.getElementById("mainFlashcardArea").classList.add("hidden"); return;
             }
 
             for (let i = savedVocabs.length - 1; i >= 0; i--) {
                 const set = savedVocabs[i];
-                // 🚨 롤플레잉과 똑같이 i + 1 을 사용해서 1~5번이 순서대로 예쁘게 표시됩니다.
-                let html = `<div><div class="bg-slate-100 rounded-xl p-2.5 mb-3"><p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}번 단어장: [${set.theme}] (${set.langName})</p></div><div class="grid grid-cols-4 gap-2">`;
+                let html = `<div><div class="bg-slate-100 rounded-xl p-2.5 mb-3"><p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}: [${set.theme}] (${set.langName})</p></div><div class="grid grid-cols-4 gap-2">`;
                 set.vocabData.forEach((v, vIdx) => {
                     const isSelected = (currentVocabSetIdx === i && currentVocabWordIdx === vIdx);
                     const bgClass = isSelected ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300';
@@ -1037,18 +994,12 @@
             const vocab = savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx];
             const flashcard = document.getElementById('vocabFlashcard');
             
-            // 🌟 카드가 뒤집혀 있는지(뒷면인지) 확인합니다. ('rotate-y-180' 클래스가 있으면 뒷면)
             const isBackSide = flashcard.classList.contains('rotate-y-180');
-            
-            // 🚨 뒷면이면 예문(example_en)을, 앞면이면 단어(word)를 선택합니다.
             const textToSpeak = isBackSide ? vocab.example_en : vocab.word;
             
             const utt = new SpeechSynthesisUtterance(textToSpeak);
             utt.lang = savedVocabs[currentVocabSetIdx].langCode; 
-            
-            // 🌟 예문을 읽을 때는 조금 더 자연스럽게 들리도록 속도를 살짝 조절합니다.
             utt.rate = isBackSide ? 0.9 : 1.0; 
-            
             window.speechSynthesis.speak(utt);
         };
 
@@ -1060,53 +1011,46 @@
             const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
-            // 🚨 [추가된 부분] 현재 보관함에 있는 모든 단어들을 싹 다 긁어모읍니다.
             let myExistingWords = [];
             savedVocabs.forEach(set => {
-                if (set.langName === targetLangName) { // 같은 언어일 때만 중복 검사
+                if (set.langName === targetLangName) {
                     set.vocabData.forEach(v => myExistingWords.push(v.word));
                 }
             });
 
-            btn.innerText = "⏳ AI 단어 분석 중..."; btn.disabled = true;
+            btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
-                // 🚨 서버로 theme, language와 함께 기존 단어 목록(existingWords)도 보냅니다.
                 const res = await fetch(`${WORKER_URL}generate-vocab`, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        theme: theme, 
-                        language: targetLangName,
-                        existingWords: myExistingWords 
-                    }) 
+                    body: JSON.stringify({ theme: theme, language: targetLangName, existingWords: myExistingWords }) 
                 });
                 const data = await res.json(); 
-                
                 let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
-
                 if (savedVocabs.length >= 5) savedVocabs.shift(); 
                 savedVocabs.push({ id: newId, theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
                 localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); 
                 window.showFlashcard(savedVocabs.length - 1, 0);
             } catch (err) { 
-                alert("단어장 생성에 실패했습니다."); 
+                alert("Fail"); 
             } finally { 
-                btn.innerHTML = "✨ AI 단어장 생성하기"; btn.disabled = false; 
+                const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+                btn.innerHTML = UI_DICTIONARY[baseLang]?.generateVocabBtn || "✨ AI 단어장 생성하기"; 
+                btn.disabled = false; 
             }
         };
             
         window.renderVocabs();
 
-
-        // =======================================================
-        // 🔤 4번 방: 기초 알파벳/자모음 엔진 (스마트 캐싱)
-        // =======================================================
         window.loadAlphabetData = async function() {
             const listArea = document.getElementById("alphabetListArea");
-            const btn = document.getElementById("generateAlphaBtn"); // 🌟 버튼 조작 추가
+            const btn = document.getElementById("generateAlphaBtn");
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             const targetLangCode = tLang.value;
+            
+            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
             const cacheKey = 'alpha_cache_v3_' + targetLangCode;
             const cachedData = localStorage.getItem(cacheKey);
@@ -1117,9 +1061,9 @@
                 return;
             }
 
-            btn.innerText = "⏳ AI 가져오는 중..."; 
+            btn.innerText = "⏳ ..."; 
             btn.disabled = true;
-            listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>AI가 [${targetLangName}] 전체 문자와 파닉스 단어를<br>매칭하고 있습니다...<br><span class="text-xs font-normal mt-2 inline-block text-slate-400">(최초 1회만 약 10초 정도 소요됩니다)</span></div>`;
+            listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "Loading..."}</div>`;
 
             try {
                 const res = await fetch(`${WORKER_URL}generate-alphabet`, { 
@@ -1136,9 +1080,9 @@
                 renderAlphabet(data.alphabetData, data.description, targetLangCode);
 
             } catch (err) { 
-                listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">데이터를 가져오는데 실패했습니다. 언어를 다시 선택해 보세요.</div>`;
+                listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">Fail</div>`;
             } finally {
-                btn.innerText = "✨ 선택한 언어의 AI 파닉스 가져오기"; 
+                btn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기"; 
                 btn.disabled = false;
             }
         };
@@ -1162,7 +1106,6 @@
             }, {});
 
             for (const [category, letters] of Object.entries(grouped)) {
-                // 🚨 글자와 단어가 잘 보이도록 grid-cols-3 으로 넓게 공간을 확보했습니다.
                 html += `
                 <div class="mb-6">
                     <h3 class="text-sm font-extrabold text-emerald-700 mb-3 border-b border-emerald-100 pb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-leaf text-emerald-400 text-xs"></i> ${category}</h3>
@@ -1173,7 +1116,6 @@
                     const safeLetter = item.letter ? item.letter.replace(/'/g, "\\'") : "";
                     const safeWord = item.exampleWord ? item.exampleWord.replace(/'/g, "\\'") : "";
                     
-                    // 🚨 터치 시 AI가 글자와 단어를 이어서 읽어줍니다 (예: "A. Apple")
                     const speakText = `${safeLetter}. ${safeWord}`;
                     
                     html += `
@@ -1198,106 +1140,240 @@
             const utt = new SpeechSynthesisUtterance(textToSpeak);
             utt.lang = langCode;
             utt.pitch = 1.1; 
-            utt.rate = 0.85; // 또박또박 들리도록 속도를 살짝 늦췄습니다.
+            utt.rate = 0.85; 
             window.speechSynthesis.speak(utt);
         };
 
-        // =======================================================
-        // 🌐 글로벌 다국어 UI 변환 사전 (대규모 업데이트)
-        // =======================================================
         const UI_DICTIONARY = {
-            // 🇰🇷 한국어
             "ko": {
-                "roleplayMicText": "말하기 시작 (마이크)",
-                "generateAlphaBtn": "✨ 선택한 언어의 AI 파닉스 가져오기",
-                "generateVocabBtn": "✨ AI 단어장 생성하기",
-                "expGlobalBtnText": "과외 해설",
-                "textInputPlaceholder": "마이크가 안 될 때는 직접 입력해 보세요...",
+                "main_subtitle": "Smart Language Partner",
+                "mic_warning_text": "브라우저 마이크 제한. '다른 브라우저로 열기'를 선택해 주세요.",
+                "ai_engine_label": "AI Engine",
+                "premium_title": "프리미엄 무제한 구독",
+                "premium_desc": "월 4,500원(VAT 포함)으로 무제한 학습하세요!",
+                "welcome_title": "당신의 AI 튜터입니다.",
+                "welcome_f1_title": "실시간 음성 대화",
+                "welcome_f1_desc": "하단의 파란 마이크를 눌러 말해보세요. 대화형 튜터와 통번역 모드를 지원합니다.",
+                "welcome_f2_title": "스마트 단어 선택",
+                "welcome_f2_desc": "말풍선 속 텍스트를 터치하여 구간을 선택하면 숨겨진 메뉴가 나타납니다.",
+                "welcome_f3_title": "원어민 발음 & 맞춤 해설",
+                "welcome_f3_desc": "선택한 단어만 원어민 발음으로 다시 듣기(🔊) 하거나, 집중 해설(💡)을 받을 수 있습니다.",
                 "appMode_tutor": "🎓 대화형 튜터",
                 "appMode_translate": "🌐 통번역 모드",
-                // 🌟 신규 추가 데이터
-                "tab1_text": "실시간 대화",
-                "tab2_text": "롤플레잉",
-                "tab3_text": "단어장",
-                "tab4_text": "기초 발음",
+                "textInputPlaceholder": "마이크가 안 될 때는 직접 입력해 보세요...",
+                "expGlobalBtnText": "과외 해설",
                 "header_room2": "🎬 상황별 롤플레잉",
+                "rp_level_text": "1. 레벨 선택",
+                "rp_lv1": "입문", "rp_lv2": "초급", "rp_lv3": "중급", "rp_lv4": "원어민",
+                "rp_sit_text": "2. 상황 선택",
+                "rp_sit1": "🎲 일상 랜덤", "rp_sit2": "☕ 카페 주문", "rp_sit3": "🍽️ 음식점",
+                "rp_sit4": "🛂 입국 심사", "rp_sit5": "🛍️ 옷 쇼핑", "rp_sit6": "🚕 택시 탑승",
+                "generateBtn": "✨ AI 대본 생성하기",
+                "statusBoxTitle": "상황 설명",
+                "statusBoxText": "레벨과 상황을 선택한 후 [AI 대본 생성하기]를 눌러주세요!",
+                "roleplayMicText": "말하기 시작 (마이크)",
+                "rp_save_count": "현재 {n}개의 대본이 보관되어 있습니다.",
+                "rp_ai": "AI 상대방", "rp_user": "나",
                 "header_room3": "📝 나만의 단어장",
+                "vc_theme1": "✈️ 여행 필수", "vc_theme2": "💼 비즈니스",
+                "vc_theme3": "❤️ 연애/감정", "vc_theme4": "🍽️ 식당/카페",
+                "generateVocabBtn": "✨ AI 단어장 생성하기",
+                "vc_select": "단어를 선택하세요",
+                "vc_flip_hint": "터치해서 뒤집기",
+                "vc_listen_btn": "원어민 듣기",
+                "vc_empty_text": "위 버튼을 눌러 첫 단어장을 생성해 보세요!",
                 "header_room4": "🔤 왕초보 기초 발음",
-                "settings_title": "⚙️ 환경 설정",
-                "settings_close": "닫기"
+                "generateAlphaBtn": "✨ 선택한 언어의 AI 파닉스 가져오기",
+                "alpha_desc": "언어의 뼈대가 되는 기본 글자와 발음을 익혀보세요! 글자를 누르면 원어민 소리가 납니다.",
+                "alpha_empty_text": "위 버튼을 눌러 기초 글자를 가져와 보세요!",
+                "alpha_fetching": "AI가 전체 문자와 파닉스 단어를 매칭하고 있습니다...",
+                "settings_title_text": "상세 설정",
+                "set_font_size": "채팅 글자 크기",
+                "set_voice_gender": "AI 목소리 성별",
+                "gender_f_text": "여성", "gender_m_text": "남성",
+                "set_exp_lang": "과외 해설 언어",
+                "settings_close": "닫기", "settings_save": "저장",
+                "pw_title": "튜터링 종료",
+                "paywallReasonText": "무료 튜터링 대화를 모두 소진하셨습니다.",
+                "pw_upgrade_text": "프리미엄 결제하기",
+                "picker_target": "학습할 언어 선택",
+                "picker_stt": "내 음성 언어 선택",
+                "picker_exp": "해설 언어 선택"
             },
-            // 🇺🇸 영어
             "en": {
-                "roleplayMicText": "Start Speaking (Mic)",
-                "generateAlphaBtn": "✨ Get AI Phonics",
-                "generateVocabBtn": "✨ Generate AI Vocab",
-                "expGlobalBtnText": "Tutor Explain",
-                "textInputPlaceholder": "Type a message here...",
+                "main_subtitle": "Smart Language Partner",
+                "mic_warning_text": "Mic restricted by browser. Please select 'Open in another browser'.",
+                "ai_engine_label": "AI Engine",
+                "premium_title": "Premium Unlimited Subscription",
+                "premium_desc": "Learn unlimited for $4.99/month!",
+                "welcome_title": "I am your AI Tutor.",
+                "welcome_f1_title": "Live Voice Chat",
+                "welcome_f1_desc": "Tap the mic icon below to speak. We support Chat Tutor and Translate Mode.",
+                "welcome_f2_title": "Smart Word Selection",
+                "welcome_f2_desc": "Tap text in the speech bubbles to select words and open hidden menus.",
+                "welcome_f3_title": "Native Pronunciation & Explanation",
+                "welcome_f3_desc": "Listen to the selected words in native pronunciation (🔊) or get detailed explanations (💡).",
                 "appMode_tutor": "🎓 Chat Tutor",
                 "appMode_translate": "🌐 Translate Mode",
-                "tab1_text": "Live Chat",
-                "tab2_text": "Roleplay",
-                "tab3_text": "Vocab",
-                "tab4_text": "Phonics",
+                "textInputPlaceholder": "Type a message here...",
+                "expGlobalBtnText": "Tutor Explain",
                 "header_room2": "🎬 Situational Roleplay",
+                "rp_level_text": "1. Select Level",
+                "rp_lv1": "Beginner", "rp_lv2": "Basic", "rp_lv3": "Intermediate", "rp_lv4": "Native",
+                "rp_sit_text": "2. Select Situation",
+                "rp_sit1": "🎲 Random Daily", "rp_sit2": "☕ Cafe Order", "rp_sit3": "🍽️ Restaurant",
+                "rp_sit4": "🛂 Immigration", "rp_sit5": "🛍️ Clothes Shop", "rp_sit6": "🚕 Take a Taxi",
+                "generateBtn": "✨ Generate AI Script",
+                "statusBoxTitle": "Situation Info",
+                "statusBoxText": "Please select a level and situation, then press [Generate AI Script]!",
+                "roleplayMicText": "Start Speaking (Mic)",
+                "rp_save_count": "{n} scripts are currently saved.",
+                "rp_ai": "AI Partner", "rp_user": "Me",
                 "header_room3": "📝 My Vocabulary",
+                "vc_theme1": "✈️ Travel", "vc_theme2": "💼 Business",
+                "vc_theme3": "❤️ Romance", "vc_theme4": "🍽️ Dining/Cafe",
+                "generateVocabBtn": "✨ Generate AI Vocab",
+                "vc_select": "Select a word",
+                "vc_flip_hint": "Tap to flip",
+                "vc_listen_btn": "Native Audio",
+                "vc_empty_text": "Tap the button above to generate your first vocab list!",
                 "header_room4": "🔤 Basic Phonics",
-                "settings_title": "⚙️ Settings",
-                "settings_close": "Close"
+                "generateAlphaBtn": "✨ Get AI Phonics",
+                "alpha_desc": "Learn the foundational letters and sounds! Tap the letters to hear native pronunciation.",
+                "alpha_empty_text": "Tap the button above to fetch basic phonics!",
+                "alpha_fetching": "AI is fetching letters and phonics...",
+                "settings_title_text": "Settings",
+                "set_font_size": "Chat Font Size",
+                "set_voice_gender": "AI Voice Gender",
+                "gender_f_text": "Female", "gender_m_text": "Male",
+                "set_exp_lang": "Tutor Language",
+                "settings_close": "Close", "settings_save": "Save",
+                "pw_title": "Tutoring Ended",
+                "paywallReasonText": "You have exhausted your free tutoring conversations.",
+                "pw_upgrade_text": "Upgrade to Premium",
+                "picker_target": "Select Target Language",
+                "picker_stt": "Select Voice Input Language",
+                "picker_exp": "Select Tutor Language"
             },
-            // 🇯🇵 일본어
             "ja": {
-                "roleplayMicText": "話す (マイク)",
-                "generateAlphaBtn": "✨ AIフォニックス取得",
-                "generateVocabBtn": "✨ AI単語帳作成",
-                "expGlobalBtnText": "家庭教師の解説",
-                "textInputPlaceholder": "直接入力してください...",
+                "main_subtitle": "Smart Language Partner",
+                "mic_warning_text": "マイクが制限されています。「別のブラウザで開く」を選択してください。",
+                "ai_engine_label": "AI Engine",
+                "premium_title": "プレミアム無制限購読",
+                "premium_desc": "月額4,500円(税込)で無制限に学習！",
+                "welcome_title": "あなたのAIチューターです。",
+                "welcome_f1_title": "リアルタイム音声会話",
+                "welcome_f1_desc": "下のマイクを押して話してください。対話型チューターと通翻訳モードをサポートします。",
+                "welcome_f2_title": "スマート単語選択",
+                "welcome_f2_desc": "吹き出しのテキストをタッチして区間を選択すると、隠しメニューが現れます。",
+                "welcome_f3_title": "ネイティブ発音＆カスタム解説",
+                "welcome_f3_desc": "選択した単語だけをネイティブ発音で再度聞く(🔊)か、集中解説(💡)を受けることができます。",
                 "appMode_tutor": "🎓 対話型チューター",
                 "appMode_translate": "🌐 通翻訳モード",
-                "tab1_text": "リアルタイム",
-                "tab2_text": "ロールプレイ",
-                "tab3_text": "単語帳",
-                "tab4_text": "基礎発音",
+                "textInputPlaceholder": "直接入力してください...",
+                "expGlobalBtnText": "家庭教師の解説",
                 "header_room2": "🎬 状況別ロールプレイ",
+                "rp_level_text": "1. レベル選択",
+                "rp_lv1": "入門", "rp_lv2": "初級", "rp_lv3": "中級", "rp_lv4": "ネイティブ",
+                "rp_sit_text": "2. 状況選択",
+                "rp_sit1": "🎲 日常ランダム", "rp_sit2": "☕ カフェ注文", "rp_sit3": "🍽️ レストラン",
+                "rp_sit4": "🛂 入国審査", "rp_sit5": "🛍️ 服の買い物", "rp_sit6": "🚕 タクシー乗車",
+                "generateBtn": "✨ AI台本を作成",
+                "statusBoxTitle": "状況説明",
+                "statusBoxText": "レベルと状況を選択し、[AI台本を作成]を押してください！",
+                "roleplayMicText": "話す (マイク)",
+                "rp_save_count": "現在 {n} 個の台本が保存されています。",
+                "rp_ai": "AI 相手", "rp_user": "私",
                 "header_room3": "📝 私の単語帳",
+                "vc_theme1": "✈️ 旅行必須", "vc_theme2": "💼 ビジネス",
+                "vc_theme3": "❤️ 恋愛/感情", "vc_theme4": "🍽️ 食堂/カフェ",
+                "generateVocabBtn": "✨ AI単語帳を作成",
+                "vc_select": "単語を選択",
+                "vc_flip_hint": "タッチして裏返す",
+                "vc_listen_btn": "ネイティブ音声",
+                "vc_empty_text": "上のボタンを押して単語帳を作成してください！",
                 "header_room4": "🔤 超初心者発音",
-                "settings_title": "⚙️ 環境設定",
-                "settings_close": "閉じる"
+                "generateAlphaBtn": "✨ AIフォニックス取得",
+                "alpha_desc": "言語の骨組みとなる基本文字と発音を学びましょう！文字を押すとネイティブの音が鳴ります。",
+                "alpha_empty_text": "上のボタンを押して文字データを取得してください！",
+                "alpha_fetching": "AIが文字とフォニックスをマッチングしています...",
+                "settings_title_text": "環境設定",
+                "set_font_size": "チャット文字サイズ",
+                "set_voice_gender": "AI音声の性別",
+                "gender_f_text": "女性", "gender_m_text": "男性",
+                "set_exp_lang": "解説言語",
+                "settings_close": "閉じる", "settings_save": "保存",
+                "pw_title": "チュータリング終了",
+                "paywallReasonText": "無料会話回数をすべて使い切りました。",
+                "pw_upgrade_text": "プレミアム決済",
+                "picker_target": "学習する言語を選択",
+                "picker_stt": "音声入力言語を選択",
+                "picker_exp": "解説言語を選択"
             },
-            // 🇨🇳 중국어
             "zh": {
-                "roleplayMicText": "开始说话 (麦克风)",
-                "generateAlphaBtn": "✨ 获取 AI 发音",
-                "generateVocabBtn": "✨ 生成单词本",
-                "expGlobalBtnText": "家教解析",
-                "textInputPlaceholder": "请在这里输入...",
+                "main_subtitle": "Smart Language Partner",
+                "mic_warning_text": "浏览器麦克风受限，请选择“在其他浏览器中打开”。",
+                "ai_engine_label": "AI Engine",
+                "premium_title": "高级无限制订阅",
+                "premium_desc": "每月享受无限制学习！",
+                "welcome_title": "我是你的AI导师。",
+                "welcome_f1_title": "实时语音对话",
+                "welcome_f1_desc": "点击底部的蓝色麦克风开始说话。支持对话导师和同声传译模式。",
+                "welcome_f2_title": "智能单词选择",
+                "welcome_f2_desc": "触摸气泡中的文本选择词句，即可显示隐藏菜单。",
+                "welcome_f3_title": "母语发音与深度解析",
+                "welcome_f3_desc": "你可以通过母语发音重听所选单词(🔊)，或获取详细解析(💡)。",
                 "appMode_tutor": "🎓 对话导师",
-                "appMode_translate": "🌐 翻译模式",
-                "tab1_text": "实时对话",
-                "tab2_text": "角色扮演",
-                "tab3_text": "单词本",
-                "tab4_text": "基础发音",
+                "appMode_translate": "🌐 同传翻译",
+                "textInputPlaceholder": "请在这里输入...",
+                "expGlobalBtnText": "家教解析",
                 "header_room2": "🎬 情景角色扮演",
+                "rp_level_text": "1. 选择等级",
+                "rp_lv1": "入门", "rp_lv2": "初级", "rp_lv3": "中级", "rp_lv4": "母语",
+                "rp_sit_text": "2. 选择情景",
+                "rp_sit1": "🎲 日常随机", "rp_sit2": "☕ 咖啡馆点单", "rp_sit3": "🍽️ 餐厅",
+                "rp_sit4": "🛂 入境审查", "rp_sit5": "🛍️ 买衣服", "rp_sit6": "🚕 乘出租车",
+                "generateBtn": "✨ 生成 AI 剧本",
+                "statusBoxTitle": "情景说明",
+                "statusBoxText": "选择等级和情景后，请点击 [生成 AI 剧本]！",
+                "roleplayMicText": "开始说话 (麦克风)",
+                "rp_save_count": "当前已保存 {n} 个剧本。",
+                "rp_ai": "AI 对方", "rp_user": "我",
                 "header_room3": "📝 我的单词本",
+                "vc_theme1": "✈️ 旅游必备", "vc_theme2": "💼 商务",
+                "vc_theme3": "❤️ 恋爱/情感", "vc_theme4": "🍽️ 餐厅/咖啡馆",
+                "generateVocabBtn": "✨ 生成 AI 单词本",
+                "vc_select": "请选择单词",
+                "vc_flip_hint": "点击翻转",
+                "vc_listen_btn": "母语发音",
+                "vc_empty_text": "点击上方按钮生成第一个单词本！",
                 "header_room4": "🔤 零基础发音",
-                "settings_title": "⚙️ 设置",
-                "settings_close": "关闭"
+                "generateAlphaBtn": "✨ 获取 AI 发音",
+                "alpha_desc": "学习语言的基础字母和发音！点击字母即可听到母语发音。",
+                "alpha_empty_text": "点击上方按钮获取基础字母数据！",
+                "alpha_fetching": "AI正在匹配字母和发音...",
+                "settings_title_text": "详细设置",
+                "set_font_size": "聊天字体大小",
+                "set_voice_gender": "AI 语音性别",
+                "gender_f_text": "女性", "gender_m_text": "男性",
+                "set_exp_lang": "家教解析语言",
+                "settings_close": "关闭", "settings_save": "保存",
+                "pw_title": "辅导结束",
+                "paywallReasonText": "您的免费对话次数已用完。",
+                "pw_upgrade_text": "升级到高级版",
+                "picker_target": "选择学习语言",
+                "picker_stt": "选择语音输入语言",
+                "picker_exp": "选择解析语言"
             }
         };
 
-        // 🪄 화면의 글자들을 1초만에 싹 바꿔치기하는 마법의 함수
         window.changeUILanguage = function(langCode) {
-            // 🌟 [핵심 해결책] 'ja-JP', 'en-US' 같은 코드에서 짝대기(-) 앞부분만 쏙 잘라냅니다!
             const baseLang = langCode.split('-')[0];
-            
-            // 잘라낸 앞부분(baseLang)으로 사전을 찾고, 없으면 기본값 영어('en')를 씁니다.
             const currentDict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
             
-            // 1. 일반 버튼 및 텍스트 바꿔치기
             for (const [id, text] of Object.entries(currentDict)) {
                 const element = document.getElementById(id);
                 if (element) {
-                    // input 창의 힌트글(placeholder)인 경우
                     if (id === "textInputPlaceholder") {
                         document.getElementById("textInput").placeholder = text;
                     } else {
@@ -1306,12 +1382,21 @@
                 }
             }
 
-            // 2. 1번 방 하단 select 박스(셀렉트 메뉴) 안의 글자들도 따로 바꿔치기
             const tutorOpt = document.querySelector("#appMode option[value='tutor']");
             const transOpt = document.querySelector("#appMode option[value='translate']");
             if (tutorOpt) tutorOpt.text = currentDict["appMode_tutor"];
             if (transOpt) transOpt.text = currentDict["appMode_translate"];
+
+            window.renderScripts();
+            window.renderVocabs();
         };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('explanation_language') || 'ko-KR';
+            if (typeof window.changeUILanguage === 'function') {
+                window.changeUILanguage(savedLang);
+            }
+        });
 
     </script>
 </body>
