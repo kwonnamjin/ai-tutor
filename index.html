@@ -974,24 +974,39 @@
 
         window.generateVocab = async function() {
             if (savedVocabs.length >= 5) { 
-                if (!confirm("지금 새로운 단어장을 생성하면 가장 오래된 1번 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; 
+                if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; 
             }
             const btn = document.getElementById("generateVocabBtn");
             const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
+            // 🚨 [추가된 부분] 현재 보관함에 있는 모든 단어들을 싹 다 긁어모읍니다.
+            let myExistingWords = [];
+            savedVocabs.forEach(set => {
+                if (set.langName === targetLangName) { // 같은 언어일 때만 중복 검사
+                    set.vocabData.forEach(v => myExistingWords.push(v.word));
+                }
+            });
+
             btn.innerText = "⏳ AI 단어 분석 중..."; btn.disabled = true;
             try {
-                const res = await fetch(`${WORKER_URL}generate-vocab`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: theme, language: targetLangName }) });
+                // 🚨 서버로 theme, language와 함께 기존 단어 목록(existingWords)도 보냅니다.
+                const res = await fetch(`${WORKER_URL}generate-vocab`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ 
+                        theme: theme, 
+                        language: targetLangName,
+                        existingWords: myExistingWords 
+                    }) 
+                });
                 const data = await res.json(); 
                 
-                // 🚨 롤플레잉 대본과 완벽하게 동일한 로직! (5개가 넘으면 1번 삭제 후 앞으로 밀어내기)
+                let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
+
                 if (savedVocabs.length >= 5) savedVocabs.shift(); 
-                
-                savedVocabs.push({ theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
+                savedVocabs.push({ id: newId, theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
                 localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); 
-                
-                // 새 단어장이 5번(마지막)으로 들어왔으니 5번을 화면에 띄웁니다.
                 window.showFlashcard(savedVocabs.length - 1, 0);
             } catch (err) { 
                 alert("단어장 생성에 실패했습니다."); 
@@ -999,6 +1014,7 @@
                 btn.innerHTML = "✨ AI 단어장 생성하기"; btn.disabled = false; 
             }
         };
+            
         window.renderVocabs();
     </script>
 </body>
