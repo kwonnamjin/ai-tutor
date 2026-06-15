@@ -939,6 +939,7 @@
         };
 
         // 2. 단어를 터치해서 툴팁의 [전구 모양💡]을 눌렀을 때 (선택 구간 집중 해설)
+        // 2. 단어를 터치해서 툴팁의 [전구 모양💡]을 눌렀을 때 (선택 구간 집중 해설)
         window.requestExplanationFromBubble = async function(bubbleId, fullText, isExp, selectedText) { 
             const targetText = selectedText || fullText;
             if(!targetText) return;
@@ -946,26 +947,28 @@
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             
-            // 설정창에서 고른 내 모국어(해설 언어) 코드와 번역된 이름 가져오기
+            // 설정창에서 고른 내 모국어(해설 언어) 코드 가져오기 (예: ja-JP, en-US)
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const expLangName = typeof getLangName === 'function' ? getLangName(expLangCode) : (SUPPORTED_LANGUAGES.find(l => l.code === expLangCode)?.name || '한국어');
             
             window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); 
             document.getElementById('avatarWrap').style.borderColor = "#f59e0b"; 
 
-            // 🌟 [핵심 해결책] AI가 딴소리 못 하도록, 명령어를 영문으로 작성하고 강력하게 통제합니다!
-            const prompt = `You are a professional language tutor. Analyze the following text.
-- Language being learned: ${targetLangName}
-- Full Context: "${fullText}"
+            // 🌟 [핵심 방어막 1] 시스템(System) 권한으로 AI의 뇌 구조에 절대 규칙을 박아버립니다!
+            const systemPrompt = `You are an expert language tutor. 
+CRITICAL RULE: Your ENTIRE response MUST be written in the language corresponding to the ISO code [${expLangCode}]. 
+For example, if the code is 'ja-JP', you MUST write entirely in Japanese. If 'en-US', in English.
+Do NOT use Korean unless the code is 'ko-KR'.
+Output ONLY a valid JSON object without markdown formatting.`;
+
+            // 🌟 [핵심 방어막 2] 사용자 요청 사항은 깔끔하게 분리합니다.
+            const userPrompt = `Analyze the following text:
+- Learning Language: ${targetLangName}
+- Context: "${fullText}"
 - Part to explain: "${targetText}"
 
-⚠️ STRICT INSTRUCTIONS:
-1. Explain the meaning, grammatical features, and provide 1-2 practical examples of the "Part to explain".
-2. Your ENTIRE explanation MUST be written exactly in the user's native language: [${expLangName} (${expLangCode})]. Do NOT use Korean unless the user's language is Korean.
-3. Output ONLY a valid JSON object without markdown formatting.
-
+Provide the meaning, grammatical features, and 1-2 practical examples for the "Part to explain". 
 Expected JSON format:
-{"explanation": "Your detailed explanation written entirely in ${expLangName} here"}`;
+{"explanation": "Your detailed explanation written entirely in ${expLangCode} language"}`;
 
             try {
                 let res = await fetchAPI(WORKER_URL, {
@@ -973,7 +976,11 @@ Expected JSON format:
                     headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
                     body: JSON.stringify({
                         model: "deepseek-chat",
-                        messages: [{role: "user", content: prompt}],
+                        // 🌟 [핵심 방어막 3] 시스템 명령과 사용자 명령을 나누어서 전송합니다!
+                        messages: [
+                            {role: "system", content: systemPrompt},
+                            {role: "user", content: userPrompt}
+                        ],
                         response_format: { type: "json_object" }
                     })
                 });
@@ -1001,7 +1008,7 @@ Expected JSON format:
                 
                 let explanationText = parsed.explanation;
 
-                // 일본어, 중국어 등 띄어쓰기가 없는 언어일 경우 형태소 단위로 완벽하게 쪼개줍니다
+                // 일본어, 중국어 등 띄어쓰기가 없는 언어일 경우 형태소 단위로 쪼개기
                 if (window.Intl && Intl.Segmenter && (expLangCode.startsWith('ja') || expLangCode.startsWith('zh') || expLangCode.startsWith('th'))) {
                     const segmenter = new Intl.Segmenter(expLangCode, { granularity: 'word' });
                     explanationText = Array.from(segmenter.segment(explanationText)).map(seg => seg.segment).join(' ');
