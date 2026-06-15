@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>TalkAI - 실시간 언어 튜터 & 롤플레잉</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -10,7 +10,7 @@
     
     <style>
         :root { --chat-font-size: 14px; }
-        html, body { background-color: #0f172a; margin: 0; height: 100vh; overflow: hidden; touch-action: pan-y; font-family: 'Inter', sans-serif; }
+        html, body { background-color: #0f172a; margin: 0; height: 100dvh; overflow: hidden; touch-action: pan-y; font-family: 'Inter', sans-serif; }
         body { display: flex; align-items: center; justify-content: center; }
         
         .chat-text-dynamic { font-size: var(--chat-font-size); line-height: 1.5; }
@@ -135,7 +135,7 @@
                 </div>
             </div>
 
-            <div class="flex-none bg-white border-t border-slate-200 pt-3 pb-5 sm:pb-4 px-4 flex flex-col z-20 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+            <div class="flex-none bg-white border-t border-slate-200 pt-3 px-4 flex flex-col z-20 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]" style="padding-bottom: calc(env(safe-area-inset-bottom) + 15px);">
                 <div class="flex justify-between items-center gap-2 mb-3">
                     <div class="bg-slate-100 rounded-xl flex-1 border border-slate-200 shadow-sm overflow-hidden">
                         <select id="appMode" class="w-full bg-transparent text-[11px] sm:text-xs font-bold text-slate-700 text-center py-2 outline-none cursor-pointer" onchange="changeAppMode()">
@@ -205,7 +205,7 @@
 
             <!-- 🌟 새롭게 추가된 커스텀 언어 팝업 (바텀 시트) -->
             <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
-                <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
+                <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100" style="padding-bottom: calc(env(safe-area-inset-bottom) + 20px);">
                     <div class="flex justify-between items-center mb-5">
                         <h3 id="customLangTitle" class="text-xl font-extrabold text-slate-800">언어 선택</h3>
                         <button onclick="closeCustomLangPicker()" class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
@@ -261,7 +261,7 @@
                 </section>
             </div>
 
-            <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 pb-6 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-3xl">
+            <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-4 py-4 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)] rounded-b-3xl" style="padding-bottom: calc(env(safe-area-inset-bottom) + 20px);">
                 <div class="flex justify-between items-center gap-3">
                     <button onclick="playAudiobook()" class="flex flex-col items-center justify-center w-16 h-14 rounded-2xl bg-gray-50 text-gray-600 hover:bg-gray-100 transition-colors"><i class="fa-solid fa-repeat text-lg mb-1"></i><span class="text-[10px] font-bold">전체 듣기</span></button>
                     <button onclick="startShadowing()" id="roleplayMicBtn" class="flex-1 h-14 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold shadow-lg shadow-blue-200 flex items-center justify-center gap-2 transform transition-transform hover:scale-105"><i class="fa-solid fa-microphone text-xl" id="roleplayMicIcon"></i> <span id="roleplayMicText">말하기 시작</span></button>
