@@ -783,6 +783,7 @@
             for(let i=0;i<3;i++) { try { const res = await fetch(url, options); if(res.ok) return res; await new Promise(r=>setTimeout(r,delay)); delay*=2; } catch(e) { if(i==2) throw e; } }
         }
 
+        // 👇 여기서부터 복사해서 덮어쓰세요!
         async function handleUserMessage(text) {
             if(!text) return;
             addMessageToChat('user', text);
@@ -793,9 +794,14 @@
             const targetLang = tLang.value, targetName = tLang.options[tLang.selectedIndex].dataset.langName;
             const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
 
+            // 🌟 설정창에서 고른 '과외 해설 언어(모국어)' 가져오기
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const expLangName = SUPPORTED_LANGUAGES.find(l => l.code === expLangCode)?.name || '한국어';
+
+            // 🌟 프롬프트 수정: 해석 언어를 'expLangName'에 맞추고 JSON 키를 'translation'으로 통일
             let sysPrompt = mode === 'translate' 
-                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"번역결과","korean_translation":"번역결과의 한글 해석"}`
-                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","korean_translation":"답변의 정확한 한글 해석 및 사용자 문법 교정"}`;
+                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"번역결과","translation":"번역결과의 ${expLangName} 해석"}`
+                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","translation":"답변의 정확한 ${expLangName} 해석 및 사용자 문법 교정"}`;
 
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
@@ -820,11 +826,25 @@
                 
                 let data = await res.json();
                 
-                let cleanContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
-                let parsed = JSON.parse(cleanContent);
+                // 🌟 무적의 JSON 추출기 적용 (오류 방어)
+                let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+                const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+                
+                let parsed;
+                if (jsonMatch) {
+                    try {
+                        parsed = JSON.parse(jsonMatch[0]);
+                    } catch (parseError) {
+                        console.error("JSON 파싱 에러:", jsonMatch[0]);
+                        throw parseError; 
+                    }
+                } else {
+                    console.error("JSON 형식을 찾을 수 없음:", rawContent);
+                    throw new Error("JSON_NOT_FOUND");
+                }
                 
                 if (parsed.foreign_text === "LIMIT_REACHED") {
-                    enforcePaywall(parsed.korean_translation); 
+                    enforcePaywall(parsed.translation || parsed.korean_translation); 
                     return;
                 }
                 
@@ -836,7 +856,7 @@
                 }
                 
                 if(parsed.foreign_text) {
-                    addMessageToChat('ai', parsed.foreign_text, parsed.korean_translation, targetLang);
+                    addMessageToChat('ai', parsed.foreign_text, parsed.translation || parsed.korean_translation, targetLang);
                     speakText(parsed.foreign_text, targetLang);
                 }
             } catch(e) { 
@@ -845,6 +865,95 @@
                 avatarWrap.style.borderColor="#f87171"; 
             }
         }
+        window.handleUserMessage = handleUserMessage;
+
+        // =======================================================
+        // 💡 실시간 대화방: 스마트 과외 해설 기능 (다국어 지원)
+        // =======================================================
+        
+        // 1. 하단 [과외 해설] 버튼을 눌렀을 때 (마지막 AI 대화 전체 해설)
+        window.requestExplanationGlobal = async function() { 
+            let lastAiMsg = "";
+            for(let i = uiChatHistory.length - 1; i >= 0; i--) {
+                if(uiChatHistory[i].sender === 'ai') {
+                    lastAiMsg = uiChatHistory[i].text;
+                    break;
+                }
+            }
+            if(!lastAiMsg) {
+                alert("해설할 AI 대화 내역이 없습니다.");
+                return;
+            }
+            window.requestExplanationFromBubble(`global`, lastAiMsg, false, lastAiMsg);
+        };
+
+        // 2. 단어를 터치해서 툴팁의 [전구 모양💡]을 눌렀을 때 (선택 구간 집중 해설)
+        window.requestExplanationFromBubble = async function(bubbleId, fullText, isExp, selectedText) { 
+            const targetText = selectedText || fullText;
+            if(!targetText) return;
+
+            const tLang = document.getElementById('targetLanguage');
+            const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
+            
+            // 설정창에서 고른 내 모국어(해설 언어) 가져오기
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const expLangName = SUPPORTED_LANGUAGES.find(l => l.code === expLangCode)?.name || '한국어';
+            
+            window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); 
+            document.getElementById('avatarWrap').style.borderColor = "#f59e0b"; // 튜터링 중에는 테두리가 호박색으로 변함!
+
+            // 🌟 AI에게 해설을 요청하는 스마트 프롬프트
+            const prompt = `당신은 친절하고 전문적인 어학 튜터입니다. 다음 내용에 대해 [${expLangName}]로 상세히 해설해주세요.학습 언어: ${targetLangName}체 문맥: "${fullText}"궁금한 부분: "${targetText}"위 '궁금한 부분'에 대한 단어 뜻, 문법적 특징, 실생활 예문 1~2개를 포함하여 친절하게 설명해주세요. 마크다운 기호(*** 등) 없이 평문으로 작성하되, 순수 JSON 형식으로 응답하세요: {"explanation": "해설 내용 전체"}`;
+
+            try {
+                let res = await fetchAPI(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: [{role: "user", content: prompt}],
+                        response_format: { type: "json_object" }
+                    })
+                });
+                
+                let data = await res.json();
+                
+                // 🚨 줄바꿈(엔터)이 들어가서 에러가 나던 부분을 한 줄로 수정했습니다!
+                let cleanContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+                let parsed = JSON.parse(cleanContent);
+                
+                if (parsed.explanation === "LIMIT_REACHED") {
+                    enforcePaywall("무료 횟수 초과"); 
+                    return;
+                }
+                incrementLocalUsage();
+                
+                // 해설 말풍선(노란색)을 채팅창에 렌더링
+                const msgDiv = document.createElement('div'); 
+                msgDiv.className = "flex flex-col space-y-1 mt-4";
+                bubbleCounter++; 
+                const bId = `exp-msg-${bubbleCounter}`; 
+                
+                // 줄바꿈 기호를 HTML 줄바꿈(<br>)으로 변경하여 레이아웃 붕괴 방지
+                const safeExplanation = parsed.explanation.replace(/\n/g, ' <br> ');
+
+                msgDiv.innerHTML = `
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md self-start relative">
+                    <p class="text-[11px] font-extrabold text-amber-600 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-lightbulb"></i> [집중 해설] ${targetText}</p>
+                    <p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${createSpansForText(safeExplanation, bId, true)}</p>
+                </div>`;
+                
+                document.getElementById('chatContainer').appendChild(msgDiv); 
+                setTimeout(() => document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight, 50);
+                
+                window.updateStatus("대기 중");
+                document.getElementById('avatarWrap').style.borderColor = "#60a5fa"; // 원래 파란색으로 복구
+            } catch(e) {
+                console.error(e);
+                window.updateStatus("해설 통신 에러");
+                document.getElementById('avatarWrap').style.borderColor = "#f87171";
+            }
+        };
         window.handleUserMessage = handleUserMessage;
 
         // =======================================================
