@@ -1203,28 +1203,22 @@
             if (savedScripts.length === 0) return alert("대본을 생성해주세요!");
             if (!roleplayRec) return alert("마이크를 지원하지 않습니다.");
 
-            let targetScriptItem, userLine, targetLineIdx;
-
-            // 💡 현재 핑퐁(테스트) 모드인지, 아니면 그냥 단독 섀도잉인지 구분
-            if (isInteractiveTestActive) {
-                targetScriptItem = savedScripts[activeTestScriptIdx];
-                targetLineIdx = activeTestLineIdx;
-                userLine = targetScriptItem.scriptData[targetLineIdx];
-                if (userLine.role !== 'user') return alert("지금은 AI 상대방이 말하는 차례입니다! 기다려주세요.");
-            } else {
-                targetScriptItem = savedScripts[savedScripts.length - 1]; // 최신 대본
-                userLine = targetScriptItem.scriptData.find(d => d.role === 'user'); 
-                if(!userLine) return alert("읽을 대사가 없습니다.");
+            // 🚨 핵심 포인트: 실전 테스트(핑퐁) 중이 아닐 때 누르면 안내창 띄우기!
+            if (!isInteractiveTestActive) {
+                return alert("대본 우측 상단의 'Test(게임패드 🎮)' 버튼을 눌러주세요!");
             }
+
+            // 아래는 테스트 모드 진행 중일 때 정상 작동하는 로직
+            const targetScriptItem = savedScripts[activeTestScriptIdx];
+            const targetLineIdx = activeTestLineIdx;
+            const userLine = targetScriptItem.scriptData[targetLineIdx];
+            
+            if (userLine.role !== 'user') return alert("지금은 AI 상대방이 말하는 차례입니다! 기다려주세요.");
 
             const btn = document.getElementById("roleplayMicBtn"), icon = document.getElementById("roleplayMicIcon"), text = document.getElementById("roleplayMicText");
             if (isRpListening) { roleplayRec.stop(); return; }
 
             btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); icon.classList.replace("fa-microphone", "fa-ear-listen"); text.innerText = "듣고 있습니다...";
-            
-            if (!isInteractiveTestActive) {
-                alert(`🎤 다음 문장을 소리 내어 읽어보세요!\n\n"${userLine.en}"`);
-            }
             
             try { 
                 roleplayRec.lang = targetScriptItem.langCode;
@@ -1239,30 +1233,24 @@
                 recognizedText = e.results[0][0].transcript.toLowerCase();
                 const targetText = userLine.en.toLowerCase().replace(/[.,!?¿¡]/g, ""); 
                 finalScore = Math.round((targetText.split(" ").filter(w => recognizedText.split(" ").includes(w)).length / targetText.split(" ").length) * 100);
-                
-                if (!isInteractiveTestActive) {
-                    alert(finalScore > 80 ? `🎉 완벽해요! (일치율 ${finalScore}%)\n인식됨: ${recognizedText}` : `💪 더 연습해 볼까요? (일치율 ${finalScore}%)\n인식됨: ${recognizedText}`);
-                }
             };
 
             roleplayRec.onend = roleplayRec.onerror = () => { 
                 isRpListening = false; 
                 btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); icon.classList.replace("fa-ear-listen", "fa-microphone"); text.innerText = "말하기 시작"; 
 
-                // 🌟 테스트 모드일 경우: 화면에 점수를 박아주고 1.5초 뒤 다음 대사로!
-                if (isInteractiveTestActive) {
-                    const fb = document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
-                    if(fb) {
-                        const colorClass = finalScore > 80 ? "text-emerald-600 bg-emerald-50 border-emerald-200" : "text-amber-600 bg-amber-50 border-amber-200";
-                        const iconClass = finalScore > 80 ? "fa-circle-check" : "fa-triangle-exclamation";
-                        fb.innerHTML = `<span class="${colorClass} px-2 py-1 rounded-md border inline-block mt-1"><i class="fa-solid ${iconClass}"></i> 일치율: ${finalScore}% (내 발음: ${recognizedText || '인식 못함'})</span>`;
-                    }
-                    
-                    setTimeout(() => {
-                        activeTestLineIdx++;
-                        processNextTestLine();
-                    }, 1500); // 점수 확인하게 1.5초 기다려줌
+                // 화면에 점수를 박아주고 1.5초 뒤 다음 대사로!
+                const fb = document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
+                if(fb) {
+                    const colorClass = finalScore > 80 ? "text-emerald-600 bg-emerald-50 border-emerald-200" : "text-amber-600 bg-amber-50 border-amber-200";
+                    const iconClass = finalScore > 80 ? "fa-circle-check" : "fa-triangle-exclamation";
+                    fb.innerHTML = `<span class="${colorClass} px-2 py-1 rounded-md border inline-block mt-1"><i class="fa-solid ${iconClass}"></i> 일치율: ${finalScore}% (내 발음: ${recognizedText || '인식 못함'})</span>`;
                 }
+                
+                setTimeout(() => {
+                    activeTestLineIdx++;
+                    processNextTestLine();
+                }, 1500); 
             };
         };
 
