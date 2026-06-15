@@ -1099,9 +1099,14 @@
         document.querySelectorAll('.level-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
         document.querySelectorAll('.sit-card').forEach(card => card.onclick = (e) => { document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
 
-        // 🌟 대본 생성 버튼 로직
+        // 🌟 1. 랜덤 상황 클릭 시 카드 색상 변경해주는 함수 추가
+        window.setRandomSituation = function(element) {
+            document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card'));
+            element.classList.add('selected-card');
+        };
+        
+        // 🌟 2. 대본 생성 버튼 로직 (5개 저장 기능 + 랜덤 상황 판단 기능 통합)
         document.getElementById("generateBtn").onclick = async (e) => {
-            
             // 🚨 5개가 꽉 찼을 때 경고창 띄우기!
             if (savedScripts.length >= 5) {
                 if (!confirm("지금 새로운 대본을 생성하면 가장 오래된 1번 대본은 자동 삭제됩니다.\n계속하시겠습니까?")) return;
@@ -1109,7 +1114,11 @@
 
             const btn = e.currentTarget;
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
-            const situation = document.querySelector('.sit-card.selected-card').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
+            const selectedSitCard = document.querySelector('.sit-card.selected-card');
+            
+            // 랜덤 상황인지 확인!
+            let situation = selectedSitCard.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
+            const isRandom = situation === '일상 랜덤';
             
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
@@ -1120,10 +1129,16 @@
             document.getElementById("statusBoxText").innerText = "잠시만 기다려주세요...";
 
             try {
+                // 서버(워커)로 랜덤 여부(isRandom)를 같이 보냄
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ level: level, situation: situation, language: targetLangName }) 
+                    body: JSON.stringify({ 
+                        level: level, 
+                        situation: isRandom ? "랜덤한 일상 대화" : situation, 
+                        language: targetLangName,
+                        isRandom: isRandom 
+                    }) 
                 });
                 const data = await res.json(); 
                 
@@ -1143,6 +1158,7 @@
                 
                 // 화면 업데이트
                 renderScripts();
+                document.getElementById("statusBoxText").innerText = "새로운 대본이 생성되었습니다!";
 
             } catch (err) { 
                 alert("대본 생성에 실패했습니다."); 
@@ -1222,43 +1238,6 @@
             if (input && input.toLowerCase() === ans.toLowerCase()) alert("정답입니다! 콤보 +1 🔥"); else alert(`앗, 틀렸습니다! 정답은 '${ans}' 입니다.`);
         };
 
-        // 3. 말하기 연습 시 마이크가 [선택한 언어]로 채점하기
-        window.startShadowing = function() {
-            if (scriptData.length === 0) return alert("대본을 생성해주세요!");
-            if (!roleplayRec) return alert("마이크를 지원하지 않습니다.");
-            const userLine = scriptData.find(d => d.role === 'user'); if(!userLine) return alert("읽을 대사가 없습니다.");
-
-            const btn = document.getElementById("roleplayMicBtn"), icon = document.getElementById("roleplayMicIcon"), text = document.getElementById("roleplayMicText");
-            if (isRpListening) { roleplayRec.stop(); return; }
-
-            btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); icon.classList.replace("fa-microphone", "fa-ear-listen"); text.innerText = "듣고 있습니다...";
-            alert(`🎤 다음 문장을 소리 내어 읽어보세요!\n\n"${userLine.en}"`);
-            
-            try { 
-                // 🌟 마이크 인식 언어를 현재 선택한 언어로 동적 설정!
-                roleplayRec.lang = document.getElementById('targetLanguage').value;
-                roleplayRec.start(); 
-                isRpListening = true; 
-            } catch(e) { }
-
-            roleplayRec.onresult = (e) => {
-                // 특수문자 제거 정규식에 스페인어(¿¡) 등 다양한 언어 특수기호 제거 추가
-                const spokenText = e.results[0][0].transcript.toLowerCase();
-                const targetText = userLine.en.toLowerCase().replace(/[.,!?¿¡]/g, ""); 
-                const score = Math.round((targetText.split(" ").filter(w => spokenText.split(" ").includes(w)).length / targetText.split(" ").length) * 100);
-                alert(score > 80 ? `🎉 완벽해요! (일치율 ${score}%)\n인식됨: ${spokenText}` : `💪 더 연습해 볼까요? (일치율 ${score}%)\n인식됨: ${spokenText}`);
-            };
-            roleplayRec.onend = roleplayRec.onerror = () => { isRpListening = false; btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); icon.classList.replace("fa-ear-listen", "fa-microphone"); text.innerText = "말하기 시작"; };
-        };
-
-        window.startQuizMode = function() {
-            if (scriptData.length === 0) return alert("대본을 생성해주세요!");
-            const userLine = scriptData.find(d => d.role === 'user'), words = userLine.en.split(" ");
-            const idx = Math.floor(Math.random() * words.length), ans = words[idx].replace(/[.,!?¿¡]/g, ""); 
-            words[idx] = "______"; const input = prompt(`⏳ 빈칸에 들어갈 단어는?\n\n${words.join(" ")}`);
-            if (input && input.toLowerCase() === ans.toLowerCase()) alert("정답입니다! 콤보 +1 🔥"); else alert(`앗, 틀렸습니다! 정답은 '${ans}' 입니다.`);
-        };
-        
     </script>
 </body>
 </html>
