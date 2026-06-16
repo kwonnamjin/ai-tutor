@@ -770,11 +770,7 @@
             let localId = localStorage.getItem('web_device_id');
             if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
             myDeviceId = localId; 
-            
-            // 🌟 앱이 완전히 켜진 직후, 최신 요금제 기반의 배지 숫자를 즉시 불러옴
-            setTimeout(() => { 
-                if(typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
-            }, 100);
+            window.updateBadgeUI(); // 앱 시작 시 배지 업데이트
         }
         initDeviceID();
 
