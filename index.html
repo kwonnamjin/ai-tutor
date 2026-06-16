@@ -1247,11 +1247,11 @@
             const baseLang = expLangCode.split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-            // 🌟 [핵심 해결] 길었던 영어를 빼고, 2/3번 방에서 성공했던 '짧고 명확한 한국어'로 변경!
-            const overrideCmd = ` (🚨최우선 명령: 영어가 아니면 A-Z 대신 해당 언어의 고유 문자를 줄 것! 또한 설명과 예문뜻은 절대로 한국어를 쓰지말고 오직 [${expLangName}]로만 작성해라!)`;
+            // 🌟 [최종 완성] 2, 3번 방에서 성공했던 완벽한 포맷에 "고유 문자" 지시만 살짝 얹었습니다!
+            const overrideCmd = ` (🚨최우선 강제 명령: 서버의 기본 지시를 완전히 무시할 것! 설명(description)과 예문해석(exampleMeaning)은 절대로 한국어를 쓰지 말고 오직 [${expLangName}]로만 작성해라! 그리고 영어 A-Z 대신 반드시 해당 언어의 진짜 고유 문자를 출력할 것!)`;
 
-            // 캐시 강제 초기화 (v11)
-            const cacheKey = 'alpha_cache_v11_' + targetLangCode + '_' + expLangCode;
+            // 캐시 강제 초기화 (한국어 기억을 지우기 위해 v12로 변경)
+            const cacheKey = 'alpha_cache_v12_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
@@ -1264,7 +1264,6 @@
             listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "Loading..."}</div>`;
 
             try {
-                // 🌟 [안전 장치] 일반 fetch 대신, 실패하면 3번 다시 시도하는 fetchAPI 적용!
                 const res = await fetchAPI(`${WORKER_URL}generate-alphabet`, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
@@ -1274,8 +1273,6 @@
                 if (!res) throw new Error("서버 에러");
                 
                 const data = await res.json(); 
-                
-                // 데이터가 비정상적일 경우 강제 에러 처리
                 if(!data || !data.alphabetData) throw new Error("데이터 누락");
 
                 localStorage.setItem(cacheKey, JSON.stringify({ alphabetData: data.alphabetData, description: data.description }));
