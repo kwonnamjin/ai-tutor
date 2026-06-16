@@ -769,12 +769,7 @@
         async function initDeviceID() {
             let localId = localStorage.getItem('web_device_id');
             if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
-            myDeviceId = localId; 
-            
-            // 🌟 0.1초 기다렸다가 최신 배지 기능(차감된 숫자)을 안전하게 불러옵니다!
-            setTimeout(() => {
-                if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI();
-            }, 100);
+            myDeviceId = localId; updateBadgeUI();
         }
         initDeviceID();
 
@@ -1790,18 +1785,111 @@
         
         };
 
-        // 💡 앱 초기화: 폰트 크기 및 화면 UI 업데이트
+        // 💡 앱 초기화: 껐다 켜도 저장된 설정값 불러오기 (강제 지연 적용버전)
         document.addEventListener('DOMContentLoaded', () => {
-            const savedFontSize = localStorage.getItem('chat_font_size');
-            if (savedFontSize) {
-                document.documentElement.style.setProperty('--chat-font-size', savedFontSize + 'px');
-                const fontSlider = document.getElementById('fontSizeSlider');
-                if (fontSlider) fontSlider.value = savedFontSize;
-            }
+            // 다른 로직들이 다 실행될 때까지 0.1초(100ms) 기다렸다가 덮어씀!
+            setTimeout(() => {
+                // 1. 저장된 사용자 언어(해설 언어) 불러오기
+                const savedExpLang = localStorage.getItem('explanation_language');
+                if (savedExpLang) {
+                    const langSelect = document.getElementById('explanationLanguage');
+                    if (langSelect) langSelect.value = savedExpLang;
+                    if (typeof window.changeUILanguage === 'function') window.changeUILanguage(savedExpLang);
+                }
+
+                // 2. 저장된 폰트 크기 불러오기
+                const savedFontSize = localStorage.getItem('chat_font_size');
+                if (savedFontSize) {
+                    document.documentElement.style.setProperty('--chat-font-size', savedFontSize + 'px');
+                    const fontSlider = document.getElementById('fontSizeSlider');
+                    if (fontSlider) fontSlider.value = savedFontSize;
+                }
+
+                // 3. 저장된 목소리 성별 불러오기
+                const savedVoiceGender = localStorage.getItem('voice_gender');
+                if (savedVoiceGender) {
+                    if (typeof currentVoiceGender !== 'undefined') currentVoiceGender = savedVoiceGender;
+                    const genderSelect = document.getElementById('voiceGender');
+                    if (genderSelect) genderSelect.value = savedVoiceGender;
+                }
+
+                // 4. 저장된 목표 언어(학습 언어) 불러오기
+                const savedTargetLang = localStorage.getItem('target_language');
+                if (savedTargetLang) {
+                    const targetSelect = document.getElementById('targetLanguage');
+                    if (targetSelect) targetSelect.value = savedTargetLang;
+                }
+
+                // 5. 저장된 '입력 언어(말할 언어)' 불러오기 및 자동 저장 로직
+                const sttSelect = document.getElementById('sttInputLanguage');
+                if (sttSelect) {
+                    const savedSttLang = localStorage.getItem('stt_input_language');
+                    if (savedSttLang) sttSelect.value = savedSttLang;
+                    
+                    // 이벤트 리스너가 중복 등록되지 않도록 주의하며 추가
+                    sttSelect.onchange = function() {
+                        localStorage.setItem('stt_input_language', this.value);
+                        if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
+                    };
+                }
+
+                // UI 최종 업데이트
+                if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
+
+
+                // 💾 하단 언어(말할 언어) 완벽 저장 및 복구 시스템
+        document.addEventListener('DOMContentLoaded', () => {
+            const sttSelect = document.getElementById('sttInputLanguage');
+            if (!sttSelect) return;
+
+            // 1. 복구 기능: 앱이 켜질 때 로컬 스토리지에서 꺼내서 세팅
+            const applySavedSttLang = () => {
+                const savedLang = localStorage.getItem('stt_input_language');
+                if (savedLang) {
+                    sttSelect.value = savedLang;
+                }
+            };
             
-            // 모든 코드가 준비된 후 국기 및 UI 깔끔하게 새로고침
-            if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
+            // 즉시 한 번 적용하고, 다른 코드가 덮어쓸까 봐 0.15초 뒤에 '확인 사살'로 한 번 더 적용
+            applySavedSttLang();
+            setTimeout(applySavedSttLang, 150);
+
+            // 2. 저장 기능: 사용자가 셀렉트 박스를 만져서 언어를 바꿀 때마다 즉시 저장
+            sttSelect.addEventListener('change', function() {
+                localStorage.setItem('stt_input_language', this.value);
+            });
         });
+                
+            }, 100); // 100ms 딜레이 (비기기)
+        });
+
+
+
+
+
+        // 💾 하단 언어(말할 언어) 완벽 저장 및 복구 시스템
+        document.addEventListener('DOMContentLoaded', () => {
+            const sttSelect = document.getElementById('sttInputLanguage');
+            if (!sttSelect) return;
+
+            // 1. 복구 기능: 앱이 켜질 때 로컬 스토리지에서 꺼내서 세팅
+            const applySavedSttLang = () => {
+                const savedLang = localStorage.getItem('stt_input_language');
+                if (savedLang) {
+                    sttSelect.value = savedLang;
+                }
+            };
+            
+            // 즉시 한 번 적용하고, 다른 코드가 덮어쓸까 봐 0.15초 뒤에 '확인 사살'로 한 번 더 적용
+            applySavedSttLang();
+            setTimeout(applySavedSttLang, 150);
+
+            // 2. 저장 기능: 사용자가 셀렉트 박스를 만져서 언어를 바꿀 때마다 즉시 저장
+            sttSelect.addEventListener('change', function() {
+                localStorage.setItem('stt_input_language', this.value);
+            });
+        });
+
     </script>
 </body>
 </html>
