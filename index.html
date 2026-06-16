@@ -1607,6 +1607,22 @@
                 html += `</div></div>`;
             }
             listArea.innerHTML = html;
+
+            // 💡 4번방: 알파벳/파닉스 음성 재생 함수 (모바일 먹통 방지 완벽 적용)
+        window.playAlphabetAudio = function(textToSpeak, langCode) { 
+            // 1. 기존에 재생 중이던 소리가 있으면 무조건 강제 초기화 (먹통 방지)
+            window.speechSynthesis.cancel(); 
+            
+            // 2. 브라우저가 숨을 고를 아주 짧은 시간(0.05초)을 준 뒤 재생
+            setTimeout(() => {
+                const utt = new SpeechSynthesisUtterance(textToSpeak); 
+                utt.lang = langCode; 
+                utt.pitch = 1.1; // 살짝 높은 톤으로 또렷하게
+                utt.rate = 0.85; // 왕초보를 위해 조금 천천히 발음
+                window.speechSynthesis.speak(utt); 
+            }, 50);
+        };
+        
         };
     </script>
 </body>
