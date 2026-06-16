@@ -778,18 +778,6 @@
         }
         initDeviceID();
 
-        // 🌟 앱이 켜지자마자 가장 최신의 배지 숫자(예: 34)를 즉시 불러옵니다!
-        async function initDeviceID() {
-            let localId = localStorage.getItem('web_device_id');
-            if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
-            myDeviceId = localId; 
-            
-            setTimeout(() => { 
-                if(typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
-            }, 100);
-        }
-        initDeviceID();
-
         window.sendTextMessage = function() {
             const input = document.getElementById('textInput'); const text = input.value.trim();
             if (text) { input.value = ''; handleUserMessage(text); }
@@ -807,16 +795,9 @@
         updateGenderUI(currentVoiceGender, true); 
 
         window.enableInputs = function() {
-            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => {
-                const el = document.getElementById(id);
-                if(el) el.disabled = false;
-            });
-            const micBtn = document.getElementById('micBtn');
-            if(micBtn) {
-                micBtn.classList.replace('from-slate-400', 'from-blue-400'); 
-                micBtn.classList.replace('to-slate-600', 'to-blue-600');
-            }
-            if(typeof window.updateStatus === 'function') window.updateStatus("대기 중");
+            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
+            micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
+            window.updateStatus("대기 중");
         }
 
         // 🌟 2. 새로 추가한 [요금제 및 구독 관리 시스템]
