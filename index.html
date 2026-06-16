@@ -89,12 +89,14 @@
             </div>
 
             <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 no-scrollbar pb-6 relative">
-                 <div id="premiumBanner" class="bg-gradient-to-r from-indigo-600 via-blue-600 to-blue-500 rounded-2xl p-4 shadow-md cursor-pointer hover:shadow-lg transition-all self-start mb-4 mx-4" onclick="window.showSubscriptionModal('upgrade')">
-                    <div class="flex items-center gap-3">
-                      <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-yellow-300 border border-white/30 shrink-0"><i class="fa-solid fa-crown"></i></div>
+                 <!-- 멤버십 업그레이드 배너 (번역 덮어쓰기 방지 적용) -->
+            <div id="premiumBanner" class="bg-gradient-to-r from-indigo-600 via-blue-600 to-blue-500 rounded-2xl p-4 shadow-md cursor-pointer hover:shadow-lg transition-all self-start mb-4 mx-4" onclick="window.showSubscriptionModal('upgrade')">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-yellow-300 border border-white/30 shrink-0"><i class="fa-solid fa-crown"></i></div>
                     <div>
-                        <p id="premium_title" class="text-white font-black text-sm">멤버십 업그레이드</p>
-                        <p id="premium_desc" class="text-blue-100 text-[11px] mt-0.5">베이직 / 프리미엄 요금제로 한도를 늘려보세요!</p>
+                        <!-- id 속성을 지워서 다국어 자동 번역기가 덮어쓰지 못하게 철벽 방어! -->
+                        <p class="text-white font-black text-sm">멤버십 업그레이드</p>
+                        <p class="text-blue-100 text-[11px] mt-0.5">베이직 / 프리미엄 요금제로 한도를 늘려보세요!</p>
                     </div>
                 </div>
             </div>
