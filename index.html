@@ -769,8 +769,7 @@
         async function initDeviceID() {
             let localId = localStorage.getItem('web_device_id');
             if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
-            myDeviceId = localId; 
-            window.updateBadgeUI(); // 앱 시작 시 배지 업데이트
+            myDeviceId = localId; updateBadgeUI();
         }
         initDeviceID();
 
@@ -853,72 +852,54 @@
             return true;
         }
 
-        // 💡 5. 사용량 카운트 증가 및 전체 화면 배지 UI 자동 업데이트
+        // 💡 5. 사용량 카운트 갱신 및 전체 화면 배지 UI 확실한 업데이트 (HTML 고정 방식)
         window.updateBadgeUI = function() {
+            // 요금제 로직이 에러 나더라도 멈추지 않도록 안전망 추가
+            if (typeof checkUsageLimit !== 'function') return;
+
             const status = checkUsageLimit();
             const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
             
-            // 🌟 [핵심 1] 50/50 방식에서 -> 50, 49, 48... 남은 횟수 차감 방식으로 변경
+            // 남은 횟수 (예: 50 - 1 = 49)
             const remaining = Math.max(0, status.maxLimit - currentCount);
 
             let badgeContent = '';
             let badgeClassMain = ''; 
-            let badgeClassSub = '';  // 2, 3, 4번 방의 하얀색 배경에 어울리는 배지 스타일
+            let badgeClassSub = '';
 
             if (status.tier === 'premium') {
                 badgeContent = '<i class="fa-solid fa-crown text-amber-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
                 badgeClassMain = "shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-amber-400 shadow-inner flex items-center";
-                badgeClassSub = badgeClassMain; // 프리미엄은 항상 황금색 유지
+                badgeClassSub = badgeClassMain;
             } else if (status.tier === 'basic') {
                 badgeContent = '<i class="fa-solid fa-star text-indigo-300"></i> <span class="tracking-widest ml-1">BASIC</span>';
                 badgeClassMain = "shrink-0 bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-indigo-400 shadow-inner flex items-center";
-                badgeClassSub = badgeClassMain; // 베이직은 항상 보라색 유지
+                badgeClassSub = badgeClassMain;
             } else {
-                // 🌟 번개 아이콘 + 남은 숫자만 표시되도록 수정!
+                // 번개 아이콘 + 남은 숫자 표시
                 badgeContent = `<i class="fa-solid fa-bolt text-yellow-400"></i> <span>${remaining}</span>`;
                 badgeClassMain = "shrink-0 bg-blue-950/50 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg border border-blue-500 shadow-inner flex items-center gap-1 backdrop-blur-sm";
-                // 서브 화면(2, 3, 4번 방)용 깔끔한 라이트 테마 배지
+                // 2, 3, 4번 방의 밝은 헤더에 어울리는 하얀색 스타일
                 badgeClassSub = "shrink-0 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1";
             }
 
-            // 1번 메인 화면 배지 업데이트
+            // 1번방 (메인) 업데이트
             const badge1 = document.getElementById('usageBadge');
-            if(badge1) {
-                badge1.innerHTML = badgeContent;
-                badge1.className = badgeClassMain;
+            if(badge1) { 
+                badge1.innerHTML = badgeContent; 
+                badge1.className = badgeClassMain; 
             }
 
-            // 🌟 [핵심 2] 2, 3, 4번 방 상단 메뉴에도 배지를 자동으로 생성하고 동기화
-            const subRooms = [
-                { id: 'usageBadge2', headerId: 'header_room2' },
-                { id: 'usageBadge3', headerId: 'header_room3' },
-                { id: 'usageBadge4', headerId: 'header_room4' }
-            ];
-
-            subRooms.forEach(room => {
-                let badge = document.getElementById(room.id);
-                
-                // 해당 방에 배지가 아직 없다면, 언어 선택 창 바로 옆에 자동으로 만들어 끼워넣음
-                if (!badge) {
-                    const header = document.getElementById(room.headerId);
-                    if (header && header.parentElement) {
-                        const btnContainer = header.parentElement.querySelector('.flex.items-center.shrink-0');
-                        if (btnContainer) {
-                            btnContainer.classList.add('gap-2'); // 간격 띄우기
-                            badge = document.createElement('div');
-                            badge.id = room.id;
-                            btnContainer.insertBefore(badge, btnContainer.firstChild); // 버튼 앞에 착! 붙임
-                        }
-                    }
-                }
-                
-                // 배지 내용과 스타일 최종 적용
+            // 2, 3, 4번방 (서브) 업데이트
+            const subBadges = ['usageBadge2', 'usageBadge3', 'usageBadge4'];
+            subBadges.forEach(id => {
+                const badge = document.getElementById(id);
                 if (badge) {
                     badge.innerHTML = badgeContent;
                     badge.className = badgeClassSub;
                 }
             });
-        }
+        };
 
         // 💡 6. 결제 유도 모달창 및 가짜 결제 처리 (업그레이드 배너 클릭 대응)
         window.showSubscriptionModal = function(reason) {
