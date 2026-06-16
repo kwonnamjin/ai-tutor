@@ -1624,6 +1624,40 @@
         };
         
         };
+
+        // 💡 앱 초기화: 껐다 켜도 저장된 설정값 불러오기
+        document.addEventListener('DOMContentLoaded', () => {
+            // 1. 저장된 사용자 언어(해설 언어) 불러오기
+            const savedExpLang = localStorage.getItem('explanation_language');
+            if (savedExpLang) {
+                const langSelect = document.getElementById('explanationLanguage');
+                if (langSelect) langSelect.value = savedExpLang; // 셀렉트 박스 값 맞추기
+                
+                // 다국어 UI 즉시 적용
+                if (typeof window.changeUILanguage === 'function') {
+                    window.changeUILanguage(savedExpLang);
+                }
+            }
+
+            // 2. 저장된 폰트 크기 불러오기
+            const savedFontSize = localStorage.getItem('chat_font_size');
+            if (savedFontSize) {
+                document.documentElement.style.setProperty('--chat-font-size', savedFontSize + 'px');
+                const fontSlider = document.getElementById('fontSizeSlider');
+                if (fontSlider) fontSlider.value = savedFontSize;
+            }
+
+            // 3. 저장된 목소리 성별 불러오기
+            const savedVoiceGender = localStorage.getItem('voice_gender');
+            if (savedVoiceGender) {
+                // 전역 변수(currentVoiceGender)가 있다면 거기에 맞춤
+                if (typeof currentVoiceGender !== 'undefined') {
+                    currentVoiceGender = savedVoiceGender;
+                }
+                const genderSelect = document.getElementById('voiceGender');
+                if (genderSelect) genderSelect.value = savedVoiceGender;
+            }
+        });
     </script>
 </body>
 </html>
