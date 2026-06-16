@@ -1250,11 +1250,19 @@
             const baseLang = expLangCode.split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-            // 🌟 [영어 해킹 명령] 중국어 뻗음 방지 + 고유 문자 출력 + 발음/뜻 모두 지정 언어로 강제!
-            const overrideCmd = ` (🚨 SYSTEM OVERRIDE: YOU MUST NOT USE KOREAN HANGUL. 1. Generate TRUE native characters for the language. 2. The 'pronunciation' value MUST be written in ${expLangName} script. 3. The 'description' and 'exampleMeaning' values MUST be written entirely in ${expLangName}.)`;
+            // 🌟 [핵심] 중국어일 때 AI가 멘붕에 빠지지 않도록 정확히 무엇을 출력할지 지정!
+            let specialHint = "";
+            if (targetLangCode.startsWith('zh')) {
+                specialHint = "For Chinese, you MUST generate Pinyin initials/finals (e.g., b, p, m, f, a, o, e) or basic Hanzi. Do NOT output A-Z.";
+            } else {
+                specialHint = "Generate TRUE native characters for the target language. No English A-Z unless the target is English.";
+            }
 
-            // 과거의 잘못된 캐시를 날리기 위해 v14로 업데이트
-            const cacheKey = 'alpha_cache_v14_' + targetLangCode + '_' + expLangCode;
+            // 🌟 영어 해킹 명령에 중국어 특별 힌트를 결합
+            const overrideCmd = ` (🚨 FINAL SYSTEM OVERRIDE: 1. ${specialHint} 2. You MUST NOT use Korean Hangul at all. 3. The 'pronunciation', 'description', and 'exampleMeaning' fields MUST be translated ENTIRELY into [${expLangName}]. 4. Return pure JSON without markdown.)`;
+
+            // 과거의 잘못된 캐시를 날리기 위해 v15로 업데이트
+            const cacheKey = 'alpha_cache_v15_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
