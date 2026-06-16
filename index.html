@@ -1269,25 +1269,38 @@
 
             const btn = document.getElementById("generateBtn");
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
-            const situation = document.querySelector('.sit-card.selected-card').dataset.situation;
+            
+            // 🌟 [복구 완료] 사용자가 텍스트 창에 적은 내용을 최우선으로 가져옵니다!
+            const customInput = document.getElementById('rp_custom_input');
+            const customSituation = customInput ? customInput.value.trim() : "";
+            const selectedCard = document.querySelector('.sit-card.selected-card');
+            
+            // 텍스트 창에 글이 있으면 그걸 쓰고, 없으면 선택된 버튼의 상황을 씁니다.
+            const situation = customSituation ? customSituation : (selectedCard ? selectedCard.dataset.situation : '자유 대화');
             const isRandom = (situation === '일상 랜덤');
+            
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            // 🌟 버그 수정 2: AI에게 '해설'을 반드시 유저 설정 언어로 쓰고, 한국어는 절대 금지시킴!
             const overrideCmd = ` (CRITICAL RULE: Write main dialogue in ${targetLangName} (key: 'en'). Write translation in ${expLangName} (key: 'ko'). You MUST write the translation entirely in ${expLangName}. DO NOT use Korean!)`;
 
             btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
-                const res = await fetch(`${WORKER_URL}generate-script`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ level: level, situation: isRandom ? "랜덤한 일상 대화" : situation, language: targetLangName + overrideCmd, isRandom: isRandom }) });
+                const res = await fetch(`${WORKER_URL}generate-script`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ level: level, situation: isRandom ? "랜덤한 일상 대화" : situation, language: targetLangName + overrideCmd, isRandom: isRandom }) 
+                });
                 const data = await res.json(); 
                 if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
                 if (savedScripts.length >= 5) savedScripts.shift(); 
                 savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
                 localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts();
+                
+                // 🌟 대본이 생성되면 텍스트 창을 깔끔하게 비워줍니다.
+                if(customInput) customInput.value = '';
             } catch (err) { alert("대본 생성 실패"); } finally { 
                 const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
                 btn.innerText = UI_DICTIONARY[baseLang]?.generateBtn || "✨ AI 대본 생성하기"; btn.disabled = false; 
@@ -1483,13 +1496,14 @@
                 const baseLang = expLangCode.split('-')[0];
                 const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-                const cacheKey = 'full_alpha_v22_' + targetLangCode + '_' + expLangCode;
+                // 🌟 [핵심] 버전을 v23으로 올려서, 기존에 한국어로 잘못 생성되어 기기에 저장된 데이터를 버리고 새로 시작합니다!
+                const cacheKey = 'full_alpha_v23_' + targetLangCode + '_' + expLangCode;
                 let fullData = null;
                 let alphaProgress = {};
                 
                 try {
                     fullData = JSON.parse(localStorage.getItem(cacheKey));
-                    alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v22')) || {};
+                    alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v23')) || {};
                 } catch(e) { console.warn("캐시 초기화"); }
                 
                 let currentLimit = alphaProgress[cacheKey] || 0;
@@ -1513,7 +1527,8 @@
                         specialHint = "Generate ALL basic characters/letters for this language.";
                     }
 
-                    const overrideCmd = ` (CRITICAL MAPPING: 1. ${specialHint} 2. 'letter' and 'exampleWord' MUST be in [${targetLangName}]. 3. 'description' and 'exampleMeaning' MUST be written entirely in [${expLangName}]. 4. Return valid JSON only.)`;
+                    // 🌟 4번 방에도 "해설 언어가 한국어가 아니면 절대 한국어를 쓰지 마!" 라는 강력한 룰 추가
+                    const overrideCmd = ` (CRITICAL MAPPING: 1. ${specialHint} 2. 'letter' and 'exampleWord' MUST be in [${targetLangName}]. 3. 'description' and 'exampleMeaning' MUST be written entirely in [${expLangName}]. 4. DO NOT USE KOREAN unless the explanation language is Korean. 5. Return valid JSON only.)`;
 
                     btn.innerText = "⏳ 전체 발음 체계를 구성 중입니다..."; btn.disabled = true;
                     listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "로딩 중..."}</div>`;
@@ -1550,7 +1565,7 @@
 
                 currentLimit += 20;
                 alphaProgress[cacheKey] = currentLimit;
-                localStorage.setItem('alpha_progress_v22', JSON.stringify(alphaProgress));
+                localStorage.setItem('alpha_progress_v23', JSON.stringify(alphaProgress));
 
                 const isFinished = currentLimit >= fullData.alphabetData.length;
                 const dataToShow = fullData.alphabetData.slice(0, currentLimit);
