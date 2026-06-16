@@ -770,7 +770,11 @@
             let localId = localStorage.getItem('web_device_id');
             if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
             myDeviceId = localId; 
-            window.updateBadgeUI(); // 앱 시작 시 배지 업데이트
+            
+            // 🌟 0.1초 기다렸다가 최신 배지 기능(차감된 숫자)을 안전하게 불러옵니다!
+            setTimeout(() => {
+                if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI();
+            }, 100);
         }
         initDeviceID();
 
@@ -1180,7 +1184,85 @@
                 avatarWrap.style.borderColor="#f87171"; 
             }
         }
-        window.handleUserMessage = handleUserMessage;
+        window.handleUserMessage = async function(text) {
+            if(!text) return;
+            // 1. 요금제 체크 (이게 없으면 차감이 안 됩니다)
+            if (!window.checkAndBlockAPI()) return;
+        
+            addMessageToChat('user', text);
+
+            updateStatus("생각하는 중..."); 
+            const avatarWrap = document.getElementById('avatarWrap');
+            if(avatarWrap) avatarWrap.style.borderColor = "#94a3b8";
+            
+            const mode = document.getElementById('appMode').value;
+            const tLang = document.getElementById('targetLanguage');
+            const targetLang = tLang.value;
+            const targetName = tLang.options[tLang.selectedIndex].dataset.langName;
+            const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
+            const exactAiLang = aiLangNames[expLangCode] || expLangCode;
+            const criticalRule = `\n\n🚨 CRITICAL RULE: The value for 'translation' MUST be written entirely in ${exactAiLang} (ISO: ${expLangCode}). DO NOT use Korean under any circumstances unless the requested language is Korean!`;
+
+            let sysPrompt = mode === 'translate' 
+                ? `Translate the user's input (${inputName}) into ${targetName}. Respond in JSON: {"foreign_text":"Translated text in ${targetName}","translation":"Explanation in ${exactAiLang}"}` + criticalRule
+                : `You are a friendly and professional tutor for the language: ${targetName}. 
+                   If the user speaks ${targetName}, continue the conversation naturally. 
+                   If the user speaks another language, translate it and guide them back to ${targetName}. 
+                   Respond in JSON: {"foreign_text":"Your response in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}"}` + criticalRule;
+
+            try {
+                let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
+                
+                if(mode==='tutor') {
+                    if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
+                    ctx.push({role:"user",content:`[Input:${inputName}] ${text}`});
+                    if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)];
+                    conversationHistory = ctx; 
+                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+                }
+                
+                let res = await fetchAPI(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
+                    body: JSON.stringify({
+                        model: "deepseek-chat",
+                        messages: ctx,
+                        response_format: { type: "json_object" }
+                    })
+                });
+                
+                let data = await res.json();
+                let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+                const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+                
+                let parsed;
+                if (jsonMatch) {
+                    parsed = JSON.parse(jsonMatch[0]);
+                } else {
+                    throw new Error("JSON_NOT_FOUND");
+                }
+                
+                // 2. 통신 성공 시 카운트 증가
+                window.incrementLocalUsage();
+                
+                if(mode==='tutor') {
+                    conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)});
+                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); 
+                }
+                
+                if(parsed.foreign_text) {
+                    addMessageToChat('ai', parsed.foreign_text, parsed.translation || parsed.korean_translation, targetLang);
+                    speakText(parsed.foreign_text, targetLang);
+                }
+            } catch(e) { 
+                console.error(e);
+                updateStatus("AI 서버 통신 에러"); 
+                if(avatarWrap) avatarWrap.style.borderColor="#f87171"; 
+            }
+        };
         
 
         window.requestExplanationGlobal = function() { 
@@ -1418,42 +1500,36 @@
             const statusBoxText = document.getElementById("statusBoxText");
             if(statusBoxText && dict.rp_save_count) statusBoxText.innerText = dict.rp_save_count.replace('{n}', savedScripts.length);
         };
-
         window.generateScript = async function() {
-            if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
-            if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+    if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
+    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
 
-            const btn = document.getElementById("generateBtn");
-            const level = document.querySelector('.level-btn.selected-card').innerText.trim();
-            const situation = document.querySelector('.sit-card.selected-card').dataset.situation;
-            const isRandom = (situation === '일상 랜덤');
-            const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
-            
-            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
-            const expLangName = aiLangNames[expLangCode] || expLangCode;
-            
-            // 🌟 [핵심 수정] 타겟 언어와 사용자 언어의 자리를 완벽하게 강제 지정! (절대 한국어 금지령 삭제)
-            const overrideCmd = ` (CRITICAL JSON MAPPING: Write the main dialogue in [${targetLangName}] and put it in the 'en' key. Write the translation in [${expLangName}] and put it in the 'ko' key. Key names MUST remain 'en' and 'ko' regardless of the actual language used.)`;
+    const btn = document.getElementById("generateBtn");
+    const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
+    const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+    
+    // 🌟 핵심: 사용자 설정 언어를 AI에게 명확히 전달
+    const overrideCmd = ` (IMPORTANT: Write dialogue in ${targetLangName}. Write translation/explanation in ${expLangCode}. Key 'en' is for dialogue, 'ko' is for translation/explanation.)`;
 
-            btn.innerText = "⏳ ..."; btn.disabled = true;
-            try {
-                const res = await fetch(`${WORKER_URL}generate-script`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ level: level, situation: isRandom ? "랜덤한 일상 대화" : situation, language: targetLangName + overrideCmd, isRandom: isRandom }) 
-                });
-                const data = await res.json(); 
-                
-                if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
+    btn.innerText = "⏳ ..."; btn.disabled = true;
+    try {
+        const res = await fetch(`${WORKER_URL}generate-script`, { 
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ 
+                level: document.querySelector('.level-btn.selected-card').innerText.trim(), 
+                situation: document.querySelector('.sit-card.selected-card').dataset.situation, 
+                language: targetLangName + overrideCmd 
+            }) 
+        });
+        const data = await res.json(); 
+        window.incrementLocalUsage();
+        if (savedScripts.length >= 5) savedScripts.shift(); 
+        savedScripts.push({ level: '...', situation: '...', langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
+        localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts();
+    } catch (err) { alert("Fail"); } finally { btn.innerText = "✨ AI 대본 생성하기"; btn.disabled = false; }
+};
 
-                if (savedScripts.length >= 5) savedScripts.shift(); 
-                savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
-                localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts();
-            } catch (err) { alert("대본 생성 실패"); } finally { 
-                const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-                btn.innerText = UI_DICTIONARY[baseLang]?.generateBtn || "✨ AI 대본 생성하기"; btn.disabled = false; 
-            }
-        };
+        
         document.getElementById("generateBtn").onclick = window.generateScript;
 
         window.playSpecificScript = function(index) {
@@ -1602,39 +1678,25 @@
         };
 
         window.generateVocab = async function() {
-            if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
-            if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+    if (savedVocabs.length >= 5) { if (!confirm("오래된 단어장이 삭제됩니다.")) return; }
+    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
 
-            const btn = document.getElementById("generateVocabBtn");
-            const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
-            const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
-            
-            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
-            const expLangName = aiLangNames[expLangCode] || expLangCode;
-            
-            // 🌟 [핵심 수정] 타겟 언어(단어)와 사용자 언어(해석)의 출력 규칙을 명확히 함
-            const overrideCmd = ` (CRITICAL JSON MAPPING: The 'word' and 'example_en' MUST be written in [${targetLangName}]. The 'meaning' and 'example_ko' MUST be written entirely in [${expLangName}]. Keep key names as they are.)`;
+    const btn = document.getElementById("generateVocabBtn");
+    const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
+    const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+    
+    // 🌟 해석 언어를 지정하여 '영어 뜻'이 아니라 '사용자 언어 뜻'이 나오게 함
+    const overrideCmd = ` (IMPORTANT: Word/Example in ${targetLangName}. Meanig/Translation in ${expLangCode}.)`;
 
-            let myExistingWords = [];
-            savedVocabs.forEach(set => { if (set.langName === targetLangName) set.vocabData.forEach(v => myExistingWords.push(v.word)); });
-
-            btn.innerText = "⏳ ..."; btn.disabled = true;
-            try {
-                const res = await fetch(`${WORKER_URL}generate-vocab`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: theme, language: targetLangName + overrideCmd, existingWords: myExistingWords }) });
-                const data = await res.json(); 
-                
-                if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-
-                let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
-                if (savedVocabs.length >= 5) savedVocabs.shift(); 
-                savedVocabs.push({ id: newId, theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
-                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); window.showFlashcard(savedVocabs.length - 1, 0);
-            } catch (err) { alert("Fail"); } finally { 
-                const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-                btn.innerHTML = UI_DICTIONARY[baseLang]?.generateVocabBtn || "✨ AI 단어장 생성하기"; btn.disabled = false; 
-            }
-        };
+    btn.innerText = "⏳ ..."; btn.disabled = true;
+    try {
+        const res = await fetch(`${WORKER_URL}generate-vocab`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: '...', language: targetLangName + overrideCmd }) });
+        const data = await res.json(); 
+        window.incrementLocalUsage();
+        savedVocabs.push({ theme: '...', langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
+        localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); window.showFlashcard(savedVocabs.length - 1, 0);
+    } catch (err) { alert("Fail"); } finally { btn.innerText = "✨ AI 단어장 생성하기"; btn.disabled = false; }
+};
         window.renderVocabs();
 
         window.loadAlphabetData = async function() {
@@ -1786,111 +1848,27 @@
         
         };
 
-        // 💡 앱 초기화: 껐다 켜도 저장된 설정값 불러오기 (강제 지연 적용버전)
-        document.addEventListener('DOMContentLoaded', () => {
-            // 다른 로직들이 다 실행될 때까지 0.1초(100ms) 기다렸다가 덮어씀!
-            setTimeout(() => {
-                // 1. 저장된 사용자 언어(해설 언어) 불러오기
-                const savedExpLang = localStorage.getItem('explanation_language');
-                if (savedExpLang) {
-                    const langSelect = document.getElementById('explanationLanguage');
-                    if (langSelect) langSelect.value = savedExpLang;
-                    if (typeof window.changeUILanguage === 'function') window.changeUILanguage(savedExpLang);
-                }
+        // 💡 앱 초기화: 폰트 크기 및 화면 UI 업데이트
+        document.addEventListener('DOMContentLoaded', async () => {
+    // 1. 가장 먼저 언어 설정부터 복구
+    const savedExpLang = localStorage.getItem('explanation_language');
+    if (savedExpLang) {
+        document.getElementById('explanationLanguage').value = savedExpLang;
+        window.changeUILanguage(savedExpLang); // 언어 변경 적용
+    }
+    
+    const savedTargetLang = localStorage.getItem('target_language');
+    if (savedTargetLang) document.getElementById('targetLanguage').value = savedTargetLang;
+    
+    const savedSttLang = localStorage.getItem('stt_input_language');
+    if (savedSttLang) document.getElementById('sttInputLanguage').value = savedSttLang;
 
-                // 2. 저장된 폰트 크기 불러오기
-                const savedFontSize = localStorage.getItem('chat_font_size');
-                if (savedFontSize) {
-                    document.documentElement.style.setProperty('--chat-font-size', savedFontSize + 'px');
-                    const fontSlider = document.getElementById('fontSizeSlider');
-                    if (fontSlider) fontSlider.value = savedFontSize;
-                }
-
-                // 3. 저장된 목소리 성별 불러오기
-                const savedVoiceGender = localStorage.getItem('voice_gender');
-                if (savedVoiceGender) {
-                    if (typeof currentVoiceGender !== 'undefined') currentVoiceGender = savedVoiceGender;
-                    const genderSelect = document.getElementById('voiceGender');
-                    if (genderSelect) genderSelect.value = savedVoiceGender;
-                }
-
-                // 4. 저장된 목표 언어(학습 언어) 불러오기
-                const savedTargetLang = localStorage.getItem('target_language');
-                if (savedTargetLang) {
-                    const targetSelect = document.getElementById('targetLanguage');
-                    if (targetSelect) targetSelect.value = savedTargetLang;
-                }
-
-                // 5. 저장된 '입력 언어(말할 언어)' 불러오기 및 자동 저장 로직
-                const sttSelect = document.getElementById('sttInputLanguage');
-                if (sttSelect) {
-                    const savedSttLang = localStorage.getItem('stt_input_language');
-                    if (savedSttLang) sttSelect.value = savedSttLang;
-                    
-                    // 이벤트 리스너가 중복 등록되지 않도록 주의하며 추가
-                    sttSelect.onchange = function() {
-                        localStorage.setItem('stt_input_language', this.value);
-                        if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
-                    };
-                }
-
-                // UI 최종 업데이트
-                if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
-
-
-                // 💾 하단 언어(말할 언어) 완벽 저장 및 복구 시스템
-        document.addEventListener('DOMContentLoaded', () => {
-            const sttSelect = document.getElementById('sttInputLanguage');
-            if (!sttSelect) return;
-
-            // 1. 복구 기능: 앱이 켜질 때 로컬 스토리지에서 꺼내서 세팅
-            const applySavedSttLang = () => {
-                const savedLang = localStorage.getItem('stt_input_language');
-                if (savedLang) {
-                    sttSelect.value = savedLang;
-                }
-            };
-            
-            // 즉시 한 번 적용하고, 다른 코드가 덮어쓸까 봐 0.15초 뒤에 '확인 사살'로 한 번 더 적용
-            applySavedSttLang();
-            setTimeout(applySavedSttLang, 150);
-
-            // 2. 저장 기능: 사용자가 셀렉트 박스를 만져서 언어를 바꿀 때마다 즉시 저장
-            sttSelect.addEventListener('change', function() {
-                localStorage.setItem('stt_input_language', this.value);
-            });
-        });
-                
-            }, 100); // 100ms 딜레이 (비기기)
-        });
-
-
-
-
-
-        // 💾 하단 언어(말할 언어) 완벽 저장 및 복구 시스템
-        document.addEventListener('DOMContentLoaded', () => {
-            const sttSelect = document.getElementById('sttInputLanguage');
-            if (!sttSelect) return;
-
-            // 1. 복구 기능: 앱이 켜질 때 로컬 스토리지에서 꺼내서 세팅
-            const applySavedSttLang = () => {
-                const savedLang = localStorage.getItem('stt_input_language');
-                if (savedLang) {
-                    sttSelect.value = savedLang;
-                }
-            };
-            
-            // 즉시 한 번 적용하고, 다른 코드가 덮어쓸까 봐 0.15초 뒤에 '확인 사살'로 한 번 더 적용
-            applySavedSttLang();
-            setTimeout(applySavedSttLang, 150);
-
-            // 2. 저장 기능: 사용자가 셀렉트 박스를 만져서 언어를 바꿀 때마다 즉시 저장
-            sttSelect.addEventListener('change', function() {
-                localStorage.setItem('stt_input_language', this.value);
-            });
-        });
-
+    // 2. 그 다음 UI 반영
+    if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
+    
+    // 3. 마지막으로 배지 로드
+    setTimeout(() => { if(typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); }, 200);
+});
     </script>
 </body>
 </html>
