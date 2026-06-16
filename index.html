@@ -1251,7 +1251,8 @@
             
             for (let i = savedScripts.length - 1; i >= 0; i--) {
                 const scriptItem = savedScripts[i];
-                let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm"><p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p><div class="flex gap-1.5 items-center"><button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm"><i class="fa-solid fa-volume-high text-xs"></i></button><button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button><button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button><div class="w-px h-4 bg-indigo-200 mx-0.5"></div><button onclick="deleteScript(${i})" class="text-slate-400 hover:text-red-500 px-1 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="space-y-3">`;
+                // 🌟 버튼의 아이콘을 바꿀 수 있도록 id="play-btn-${i}" 를 추가했습니다.
+                let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm"><p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p><div class="flex gap-1.5 items-center"><button id="play-btn-${i}" onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm transition-colors duration-200"><i class="fa-solid fa-volume-high text-xs"></i></button><button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button><button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button><div class="w-px h-4 bg-indigo-200 mx-0.5"></div><button onclick="deleteScript(${i})" class="text-slate-400 hover:text-red-500 px-1 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="space-y-3">`;
                 scriptItem.scriptData.forEach((line, lineIdx) => {
                     const isAi = line.role === 'ai';
                     html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all"><div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div><div class="flex-1"><p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi? (dict.rp_ai || 'AI') : (dict.rp_user || 'Me')}</p><p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all">${line.en}</p><p class="text-xs text-gray-500 mt-1">${line.ko}</p><div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div></div></div>`;
@@ -1308,14 +1309,95 @@
         };
         document.getElementById("generateBtn").onclick = window.generateScript;
 
+        // 🌟 재생/정지 상태를 기억하는 변수들 추가
+        let activeScriptTimeout = null;
+        let isScriptPlaying = false;
+        let playingScriptIndex = -1;
+
         window.playSpecificScript = function(index) {
-            isInteractiveTestActive = false; const sd = savedScripts[index].scriptData; let playIdx = 0;
+            isInteractiveTestActive = false; 
+            const currentBtn = document.getElementById(`play-btn-${index}`);
+
+            // 🌟 1. 이미 재생 중인 대본을 다시 누른 경우 (재생 중지 & 아이콘 복구)
+            if (isScriptPlaying && playingScriptIndex === index) {
+                window.speechSynthesis.cancel();
+                clearTimeout(activeScriptTimeout);
+                isScriptPlaying = false;
+                playingScriptIndex = -1;
+                
+                if(currentBtn) {
+                    currentBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>';
+                    currentBtn.classList.replace('text-red-500', 'text-indigo-600');
+                    currentBtn.classList.replace('border-red-200', 'border-indigo-200');
+                }
+                return;
+            }
+
+            // 🌟 2. 새로운 대본을 재생하는 경우 (기존에 재생되던 게 있다면 강제 중지)
+            window.speechSynthesis.cancel();
+            clearTimeout(activeScriptTimeout);
+            
+            // 예전에 재생되던 다른 버튼의 아이콘을 원래대로 복구
+            if (playingScriptIndex !== -1) {
+                const oldBtn = document.getElementById(`play-btn-${playingScriptIndex}`);
+                if(oldBtn) {
+                    oldBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>';
+                    oldBtn.classList.replace('text-red-500', 'text-indigo-600');
+                    oldBtn.classList.replace('border-red-200', 'border-indigo-200');
+                }
+            }
+
+            isScriptPlaying = true;
+            playingScriptIndex = index;
+            
+            // 🌟 방금 누른 버튼을 '정지(빨간색 네모 ■)' 모양으로 변경
+            if(currentBtn) {
+                currentBtn.innerHTML = '<i class="fa-solid fa-square text-xs"></i>';
+                currentBtn.classList.replace('text-indigo-600', 'text-red-500');
+                currentBtn.classList.replace('border-indigo-200', 'border-red-200');
+            }
+
+            const sd = savedScripts[index].scriptData; 
+            let playIdx = 0;
+            
             const playNext = () => {
-                if (playIdx >= sd.length) return;
-                const utt = new SpeechSynthesisUtterance(sd[playIdx].en); utt.lang = savedScripts[index].langCode;
-                utt.pitch = sd[playIdx].role === 'ai' ? 1.2 : 0.8; utt.onend = () => { playIdx++; setTimeout(playNext, 500); }; synthesis.speak(utt);
-            }; playNext();
+                // 사용자가 중간에 정지 버튼을 눌렀다면 더 이상 실행하지 않음
+                if (!isScriptPlaying || playingScriptIndex !== index) return;
+                
+                if (playIdx >= sd.length) {
+                    // 대본이 끝까지 다 읽힌 경우 자연스럽게 버튼 원상복구
+                    isScriptPlaying = false;
+                    playingScriptIndex = -1;
+                    if(currentBtn) {
+                        currentBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>';
+                        currentBtn.classList.replace('text-red-500', 'text-indigo-600');
+                        currentBtn.classList.replace('border-red-200', 'border-indigo-200');
+                    }
+                    return;
+                }
+                
+                const utt = new SpeechSynthesisUtterance(sd[playIdx].en); 
+                utt.lang = savedScripts[index].langCode;
+                utt.pitch = sd[playIdx].role === 'ai' ? 1.2 : 0.8; 
+                
+                utt.onend = () => { 
+                    if(!isScriptPlaying) return;
+                    playIdx++; 
+                    activeScriptTimeout = setTimeout(playNext, 500); 
+                }; 
+                
+                // 에러가 나도 멈추지 않고 다음 줄로 넘어가게 처리
+                utt.onerror = () => {
+                    if(!isScriptPlaying) return;
+                    playIdx++; 
+                    activeScriptTimeout = setTimeout(playNext, 500);
+                }
+                
+                window.speechSynthesis.speak(utt);
+            }; 
+            playNext();
         };
+            
 
         window.toggleQuizMode = function(index) {
             const btn = document.getElementById(`quiz-btn-${index}`); const isQuizOn = btn.classList.contains('bg-amber-500');
