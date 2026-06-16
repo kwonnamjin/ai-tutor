@@ -1250,19 +1250,19 @@
             const baseLang = expLangCode.split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-            // 🌟 [핵심] 중국어일 때 AI가 멘붕에 빠지지 않도록 정확히 무엇을 출력할지 지정!
+            // 🌟 [핵심 해결] 중국어는 글자가 너무 많아 통신이 끊기므로(Fail 원인), 개수를 12개로 강력하게 제한!
             let specialHint = "";
             if (targetLangCode.startsWith('zh')) {
-                specialHint = "For Chinese, you MUST generate Pinyin initials/finals (e.g., b, p, m, f, a, o, e) or basic Hanzi. Do NOT output A-Z.";
+                specialHint = "Generate EXACTLY 12 basic Chinese Pinyin (b,p,m,f) or Hanzi. Limit to 12 items to prevent JSON truncation.";
             } else {
-                specialHint = "Generate TRUE native characters for the target language. No English A-Z unless the target is English.";
+                specialHint = "Generate native characters. Limit to 15 items max.";
             }
 
-            // 🌟 영어 해킹 명령에 중국어 특별 힌트를 결합
-            const overrideCmd = ` (🚨 FINAL SYSTEM OVERRIDE: 1. ${specialHint} 2. You MUST NOT use Korean Hangul at all. 3. The 'pronunciation', 'description', and 'exampleMeaning' fields MUST be translated ENTIRELY into [${expLangName}]. 4. Return pure JSON without markdown.)`;
+            // 🌟 글자 수 제한 + 강력한 언어 강제
+            const overrideCmd = ` (🚨 CRITICAL RULE: 1. ${specialHint} 2. The 'pronunciation', 'description', and 'exampleMeaning' MUST be written entirely in [${expLangName}]. 3. ABSOLUTELY NO KOREAN HANGUL ALLOWED. 4. Return valid JSON only.)`;
 
-            // 과거의 잘못된 캐시를 날리기 위해 v15로 업데이트
-            const cacheKey = 'alpha_cache_v15_' + targetLangCode + '_' + expLangCode;
+            // 과거의 끊어진 불량 캐시를 버리기 위해 v16으로 업데이트
+            const cacheKey = 'alpha_cache_v16_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
