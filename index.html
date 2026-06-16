@@ -1565,7 +1565,7 @@
             // 1. 처음 생성하는 언어인 경우 (서버 통신)
             if (!fullData) {
                 if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n(한 번 생성 후에는 데이터가 로컬에 영구 보존됩니다.)\n진행하시겠습니까?`)) return;
-
+                if (!window.checkAndBlockAPI()) return;
                 // 🌟 [수정됨] 개수 제한을 풀고 'ALL' 키워드를 넣어 전체 리스트를 요청함
                 let specialHint = "";
                 if (targetLangCode.startsWith('zh')) {
