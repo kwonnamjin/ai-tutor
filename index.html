@@ -659,15 +659,12 @@
                     else element.innerText = text;
                 }
             }
-
             const tutorOpt = document.querySelector("#appMode option[value='tutor']");
             const transOpt = document.querySelector("#appMode option[value='translate']");
             if (tutorOpt) tutorOpt.text = currentDict["appMode_tutor"];
             if (transOpt) transOpt.text = currentDict["appMode_translate"];
 
-            window.renderScripts();
-            window.renderVocabs();
-            window.updateLangDisplays();
+            window.renderScripts(); window.renderVocabs(); window.updateLangDisplays();
         };
 
         function renderLanguageSelects() {
@@ -676,19 +673,12 @@
             document.getElementById('sttInputLanguage').innerHTML = optionsHtml;
             document.getElementById('explanationLanguage').innerHTML = optionsHtml;
         }
-        // 1. 목록 생성
+
+        // 🌟 1. UI 및 언어 선택기 초기화
         renderLanguageSelects();
-        
-        // 2. 저장된 값 불러오기 (지금 찾으신 완벽한 코드)
         document.getElementById('targetLanguage').value = localStorage.getItem('target_language') || 'en-US';
         document.getElementById('sttInputLanguage').value = localStorage.getItem('stt_input_language') || 'ko-KR';
         document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
-
-        // 3. 하단 언어 바꿀 때마다 로컬 스토리지에 자동 저장 (요것만 추가!)
-        document.getElementById('sttInputLanguage').addEventListener('change', function() {
-            localStorage.setItem('stt_input_language', this.value);
-        });
-        
 
         window.updateLangDisplays = function() {
             ['targetLanguage', 'sttInputLanguage', 'explanationLanguage'].forEach(id => {
@@ -725,15 +715,10 @@
                 
                 btn.onclick = () => { 
                     document.getElementById(targetId).value = lang.code; 
-                    updateLangDisplays(); 
-                    closeCustomLangPicker(); 
-                    
-                    if (targetId === 'explanationLanguage' && typeof window.changeUILanguage === 'function') {
-                        window.changeUILanguage(lang.code);
-                    }
-                    if (targetId === 'targetLanguage' && typeof window.targetLanguageChanged === 'function') {
-                        window.targetLanguageChanged();
-                    }
+                    updateLangDisplays(); closeCustomLangPicker(); 
+                    if (targetId === 'explanationLanguage' && typeof window.changeUILanguage === 'function') window.changeUILanguage(lang.code);
+                    if (targetId === 'targetLanguage' && typeof window.targetLanguageChanged === 'function') window.targetLanguageChanged();
+                    if (targetId === 'sttInputLanguage') localStorage.setItem('stt_input_language', lang.code);
                 };
                 listContainer.appendChild(btn);
             });
@@ -746,19 +731,16 @@
             setTimeout(() => document.getElementById('customLangModal').classList.add('hidden'), 300);
         };
 
+        // 🌟 2. 전역 변수 및 API 설정
         const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
-
-        // 🌟 1. 삭제돼서 문제가 생겼던 [필수 전역 변수 및 UI 요소] 복구
         let isListening = false, isSpeaking = false, recognition = null;
         const synthesis = window.speechSynthesis;
         let conversationHistory = JSON.parse(sessionStorage.getItem('llmHistory')) || []; 
         let uiChatHistory = JSON.parse(sessionStorage.getItem('uiHistory')) || []; 
         let bubbleCounter = parseInt(sessionStorage.getItem('bubbleCounter')) || 0; 
-        
         let currentUtterance = null; 
         let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
         let tempGender = currentVoiceGender; 
-
         let currentBubbleId = null, startIndex = -1, endIndex = -1, myDeviceId = "unknown";
 
         const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
@@ -766,43 +748,12 @@
         const avatarWrap = document.getElementById('avatarWrap'), stopAudioBtn = document.getElementById('stopAudioBtn');
         const selectionTooltip = document.getElementById('selectionTooltip');
 
-        async function initDeviceID() {
-            let localId = localStorage.getItem('web_device_id');
-            if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
-            myDeviceId = localId; updateBadgeUI();
-        }
-        initDeviceID();
-
-        window.sendTextMessage = function() {
-            const input = document.getElementById('textInput'); const text = input.value.trim();
-            if (text) { input.value = ''; handleUserMessage(text); }
-        }
-
-        function updateGenderUI(g, applyImg=false) {
-            if(g === 'female') { 
-                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm border border-blue-200"; 
-                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
-            } else { 
-                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white shadow-sm text-blue-600 border border-blue-200"; 
-                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
-            }
-        }
-        updateGenderUI(currentVoiceGender, true); 
-
-        window.enableInputs = function() {
-            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
-            micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
-            window.updateStatus("대기 중");
-        }
-
-        // 🌟 2. 새로 추가한 [요금제 및 구독 관리 시스템]
+        // 🌟 3. 요금제 및 배지 업데이트 시스템 (V4)
         const PLAN_LIMITS = { 'free': 50, 'basic': 300, 'premium': 1000 };
 
-        function getResetDateStr() {
-            return new Date().toISOString().split('T')[0]; 
-        }
+        function getResetDateStr() { return new Date().toISOString().split('T')[0]; }
 
-        function checkUsageLimit() {
+        window.checkUsageLimit = function() {
             const currentTier = localStorage.getItem('subscription_tier') || 'free';
             const maxLimit = PLAN_LIMITS[currentTier];
 
@@ -830,21 +781,16 @@
 
         window.checkAndBlockAPI = function() {
             const status = checkUsageLimit();
-            if (!status.allowed) {
-                showSubscriptionModal(status.reason);
-                return false;
-            }
+            if (!status.allowed) { showSubscriptionModal(status.reason); return false; }
             return true;
         };
 
         window.incrementLocalUsage = function() {
             const status = checkUsageLimit();
             if (!status.allowed) return false;
-
             if (status.tier === 'free' && !localStorage.getItem('free_trial_start')) {
                 localStorage.setItem('free_trial_start', Date.now().toString());
             }
-
             let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4'));
             usageObj.count += 1;
             localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
@@ -852,21 +798,13 @@
             return true;
         }
 
-        // 💡 5. 사용량 카운트 갱신 및 전체 화면 배지 UI 확실한 업데이트 (HTML 고정 방식)
         window.updateBadgeUI = function() {
-            // 요금제 로직이 에러 나더라도 멈추지 않도록 안전망 추가
             if (typeof checkUsageLimit !== 'function') return;
-
             const status = checkUsageLimit();
             const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
-            
-            // 남은 횟수 (예: 50 - 1 = 49)
             const remaining = Math.max(0, status.maxLimit - currentCount);
 
-            let badgeContent = '';
-            let badgeClassMain = ''; 
-            let badgeClassSub = '';
-
+            let badgeContent = '', badgeClassMain = '', badgeClassSub = '';
             if (status.tier === 'premium') {
                 badgeContent = '<i class="fa-solid fa-crown text-amber-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
                 badgeClassMain = "shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-amber-400 shadow-inner flex items-center";
@@ -876,47 +814,27 @@
                 badgeClassMain = "shrink-0 bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-indigo-400 shadow-inner flex items-center";
                 badgeClassSub = badgeClassMain;
             } else {
-                // 번개 아이콘 + 남은 숫자 표시
                 badgeContent = `<i class="fa-solid fa-bolt text-yellow-400"></i> <span>${remaining}</span>`;
                 badgeClassMain = "shrink-0 bg-blue-950/50 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg border border-blue-500 shadow-inner flex items-center gap-1 backdrop-blur-sm";
-                // 2, 3, 4번 방의 밝은 헤더에 어울리는 하얀색 스타일
                 badgeClassSub = "shrink-0 bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-1.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-1";
             }
 
-            // 1번방 (메인) 업데이트
             const badge1 = document.getElementById('usageBadge');
-            if(badge1) { 
-                badge1.innerHTML = badgeContent; 
-                badge1.className = badgeClassMain; 
-            }
+            if(badge1) { badge1.innerHTML = badgeContent; badge1.className = badgeClassMain; }
 
-            // 2, 3, 4번방 (서브) 업데이트
-            const subBadges = ['usageBadge2', 'usageBadge3', 'usageBadge4'];
-            subBadges.forEach(id => {
+            ['usageBadge2', 'usageBadge3', 'usageBadge4'].forEach(id => {
                 const badge = document.getElementById(id);
-                if (badge) {
-                    badge.innerHTML = badgeContent;
-                    badge.className = badgeClassSub;
-                }
+                if (badge) { badge.innerHTML = badgeContent; badge.className = badgeClassSub; }
             });
         };
 
-        // 💡 6. 결제 유도 모달창 및 가짜 결제 처리 (업그레이드 배너 클릭 대응)
         window.showSubscriptionModal = function(reason) {
             const existingModal = document.getElementById('subscriptionModal');
             if (existingModal) existingModal.remove();
 
-            // 🌟 띄워지는 이유(reason)에 따라 제목과 설명을 다르게 보여줍니다.
-            let titleText = "멤버십 업그레이드";
-            let descText = "원하시는 요금제를 선택해<br>더욱 자유롭게 학습해 보세요!";
-
-            if (reason === 'trial_expired') {
-                titleText = "3일 무료 체험이 종료되었습니다.";
-                descText = "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요.";
-            } else if (reason === 'limit_reached') {
-                titleText = "일일 사용량을 모두 소진했습니다!";
-                descText = "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요.";
-            }
+            let titleText = "멤버십 업그레이드", descText = "원하시는 요금제를 선택해<br>더욱 자유롭게 학습해 보세요!";
+            if (reason === 'trial_expired') { titleText = "3일 무료 체험이 종료되었습니다."; descText = "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요."; } 
+            else if (reason === 'limit_reached') { titleText = "일일 사용량을 모두 소진했습니다!"; descText = "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요."; }
 
             const modalHtml = `
             <div id="subscriptionModal" class="fixed inset-0 bg-black/70 z-[999] flex items-center justify-center p-4 backdrop-blur-sm">
@@ -924,8 +842,7 @@
                     <button onclick="document.getElementById('subscriptionModal').remove()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-2xl"></i></button>
                     <div class="p-6 text-center">
                         <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-100"><i class="fa-solid fa-crown text-3xl text-indigo-500"></i></div>
-                        <h2 class="text-xl font-black text-slate-800 mb-2">${titleText}</h2>
-                        <p class="text-sm text-slate-500 mb-6">${descText}</p>
+                        <h2 class="text-xl font-black text-slate-800 mb-2">${titleText}</h2><p class="text-sm text-slate-500 mb-6">${descText}</p>
                         <div class="space-y-3 text-left">
                             <button onclick="processPayment('basic')" class="w-full border-2 border-indigo-100 hover:border-indigo-500 bg-indigo-50/50 rounded-2xl p-4 flex items-center justify-between transition-all">
                                 <div><h3 class="text-indigo-800 font-bold text-lg">베이직 (Basic)</h3><p class="text-xs text-indigo-500 font-medium">매일 300건 API 대화</p></div>
@@ -949,16 +866,50 @@
             let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
             usageObj.count = 0; localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
             document.getElementById('subscriptionModal').remove();
-            window.updateBadgeUI();
-            window.enableInputs();
+            window.updateBadgeUI(); window.enableInputs();
             alert("결제가 반영되었습니다. 대화를 다시 시작해 보세요!");
         }
 
+        // 🌟 4. 기기 초기화 및 입력 설정
+        async function initDeviceID() {
+            let localId = localStorage.getItem('web_device_id');
+            if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
+            myDeviceId = localId; 
+            setTimeout(() => { if(typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); }, 100);
+        }
+        initDeviceID();
+
+        window.sendTextMessage = function() {
+            const input = document.getElementById('textInput'); const text = input.value.trim();
+            if (text) { input.value = ''; handleUserMessage(text); }
+        }
+
+        function updateGenderUI(g, applyImg=false) {
+            if(g === 'female') { 
+                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm border border-blue-200"; 
+                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
+            } else { 
+                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white shadow-sm text-blue-600 border border-blue-200"; 
+                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
+            }
+        }
+        updateGenderUI(currentVoiceGender, true); 
+
+        window.enableInputs = function() {
+            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => {
+                const el = document.getElementById(id); if(el) el.disabled = false;
+            });
+            const mb = document.getElementById('micBtn');
+            if(mb) { mb.classList.replace('from-slate-400', 'from-blue-400'); mb.classList.replace('to-slate-600', 'to-blue-600'); }
+            window.updateStatus("대기 중");
+        }
+
+        // 🌟 5. 음성 인식 및 음성 합성 (TTS/STT)
         function initSpeechRecognition() {
             if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
                 recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
                 recognition.onstart = () => {
-                    isListening = true; if(window.stopSpeaking) window.stopSpeaking(); 
+                    isListening = true; window.stopSpeaking(); 
                     micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); 
                     micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); window.updateStatus("듣는 중...");
                 };
@@ -981,6 +932,16 @@
         }
         window.updateStatus = function(txt) { statusText.textContent = txt; }
 
+        window.speakText = function(text, langCode) {
+            if(!synthesis) return; synthesis.cancel(); const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim(); if(!clean) return;
+            currentUtterance = new SpeechSynthesisUtterance(clean); currentUtterance.lang = langCode; currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
+            currentUtterance.onstart = () => { isSpeaking = true; avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); window.updateStatus("말하는 중..."); };
+            currentUtterance.onend = currentUtterance.onerror = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); window.updateStatus("대기 중"); };
+            setTimeout(() => synthesis.speak(currentUtterance), 50);
+        }
+        window.stopSpeaking = function() { synthesis.cancel(); }
+
+        // 🌟 6. 단어 선택 및 툴팁
         function clearSelection() {
             document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
             startIndex = -1; endIndex = -1; currentBubbleId = null;
@@ -1020,43 +981,26 @@
         function createSpansForText(text, bubbleId, isExplanation = false) {
             const spanClass = isExplanation ? 'exp-word-span' : 'word-span';
             const langCode = isExplanation ? (document.getElementById('explanationLanguage').value || 'ko-KR') : (document.getElementById('targetLanguage').value || 'en-US');
-
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = text;
-            let wordIndex = 0;
-
+            const tempDiv = document.createElement('div'); tempDiv.innerHTML = text; let wordIndex = 0;
             function processNode(node) {
                 if (node.nodeType === 3) { 
                     let nodeText = node.nodeValue;
                     if (window.Intl && Intl.Segmenter && (langCode.startsWith('ja') || langCode.startsWith('zh') || langCode.startsWith('th'))) {
                         const segmenter = new Intl.Segmenter(langCode, { granularity: 'word' });
                         nodeText = Array.from(segmenter.segment(nodeText)).map(seg => seg.segment).join(' ');
-                    } else if (langCode.startsWith('ja') || langCode.startsWith('zh')) {
-                        nodeText = nodeText.replace(/([一-龥ぁ-んァ-ン])/g, ' $1 ');
-                    }
-                    
-                    const words = nodeText.trim().split(/\s+/);
-                    const fragment = document.createDocumentFragment();
-                    
+                    } else if (langCode.startsWith('ja') || langCode.startsWith('zh')) { nodeText = nodeText.replace(/([一-龥ぁ-んァ-ン])/g, ' $1 '); }
+                    const words = nodeText.trim().split(/\s+/); const fragment = document.createDocumentFragment();
                     words.forEach((word, i) => {
                         if (!word) return;
-                        const span = document.createElement('span');
-                        span.className = spanClass;
-                        span.setAttribute('data-index', wordIndex++);
+                        const span = document.createElement('span'); span.className = spanClass; span.setAttribute('data-index', wordIndex++);
                         span.setAttribute('onclick', `handleWordClick(event, '${bubbleId}', ${span.getAttribute('data-index')}, ${isExplanation})`);
-                        span.textContent = word;
-                        fragment.appendChild(span);
+                        span.textContent = word; fragment.appendChild(span);
                         if (i < words.length - 1) fragment.appendChild(document.createTextNode(' '));
                     });
-                    
                     node.parentNode.replaceChild(fragment, node);
-                } else if (node.nodeType === 1) { 
-                    Array.from(node.childNodes).forEach(processNode);
-                }
+                } else if (node.nodeType === 1) { Array.from(node.childNodes).forEach(processNode); }
             }
-
-            Array.from(tempDiv.childNodes).forEach(processNode);
-            return tempDiv.innerHTML;
+            Array.from(tempDiv.childNodes).forEach(processNode); return tempDiv.innerHTML;
         }
 
         window.readSelectedText = function() {
@@ -1082,42 +1026,28 @@
             chatContainer.appendChild(msgDiv); setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
             if (!isRestore) { uiChatHistory.push({sender, text, translation, targetLangCode}); sessionStorage.setItem('uiHistory', JSON.stringify(uiChatHistory)); sessionStorage.setItem('bubbleCounter', bubbleCounter.toString()); }
         }
-
         if (uiChatHistory.length > 0) uiChatHistory.forEach(msg => addMessageToChat(msg.sender, msg.text, msg.translation, msg.targetLangCode, true));
 
-        window.speakText = function(text, langCode) {
-            if(!synthesis) return; synthesis.cancel(); const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim(); if(!clean) return;
-            currentUtterance = new SpeechSynthesisUtterance(clean); currentUtterance.lang = langCode; currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
-            currentUtterance.onstart = () => { isSpeaking = true; avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); window.updateStatus("말하는 중..."); };
-            currentUtterance.onend = currentUtterance.onerror = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); window.updateStatus("대기 중"); };
-            setTimeout(() => synthesis.speak(currentUtterance), 50);
-        }
-        window.stopSpeaking = function() { synthesis.cancel(); }
-
+        // 🌟 7. API 통신 및 대화 (1번 방)
         async function fetchAPI(url, options) {
             let delay=500;
             for(let i=0;i<3;i++) { try { const res = await fetch(url, options); if(res.ok) return res; await new Promise(r=>setTimeout(r,delay)); delay*=2; } catch(e) { if(i==2) throw e; } }
         }
 
-        async function handleUserMessage(text) {
+        window.handleUserMessage = async function(text) {
             if(!text) return;
             if (!window.checkAndBlockAPI()) return;
-        
+            
             addMessageToChat('user', text);
-
             updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#94a3b8";
+            
             const mode = document.getElementById('appMode').value;
             const tLang = document.getElementById('targetLanguage');
             const targetLang = tLang.value, targetName = tLang.options[tLang.selectedIndex].dataset.langName;
             const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
-
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            
-            // 🌟 [추가된 부분 1] AI가 헷갈리지 않도록 언어 코드를 명확한 영어 이름으로 변환
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
             const exactAiLang = aiLangNames[expLangCode] || expLangCode;
-
-            // 🌟 [추가된 부분 2] 한국어를 절대 쓰지 말라는 초강력 영어 규칙 추가
             const criticalRule = `\n\n🚨 CRITICAL RULE: The value for 'translation' MUST be written entirely in ${exactAiLang} (ISO: ${expLangCode}). DO NOT use Korean under any circumstances unless the requested language is Korean!`;
 
             let sysPrompt = mode === 'translate' 
@@ -1126,70 +1056,34 @@
 
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
-                
                 if(mode==='tutor') {
                     if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
                     ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
                     if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)];
-                    conversationHistory = ctx; 
-                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+                    conversationHistory = ctx; sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
                 }
                 
                 let res = await fetchAPI(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
-                    body: JSON.stringify({
-                        model: "deepseek-chat",
-                        messages: ctx,
-                        response_format: { type: "json_object" }
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
+                    body: JSON.stringify({ model: "deepseek-chat", messages: ctx, response_format: { type: "json_object" } })
                 });
                 
                 let data = await res.json();
                 let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
                 const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-                
                 let parsed;
-                if (jsonMatch) {
-                    try { parsed = JSON.parse(jsonMatch[0]); } 
-                    catch (parseError) { throw parseError; }
-                } else {
-                    throw new Error("JSON_NOT_FOUND");
-                }
+                if (jsonMatch) parsed = JSON.parse(jsonMatch[0]); else throw new Error("JSON_NOT_FOUND");
                 
-                if (parsed.foreign_text === "LIMIT_REACHED") {
-                    enforcePaywall(parsed.translation || parsed.korean_translation); 
-                    return;
-                }
+                window.incrementLocalUsage();
                 
-                incrementLocalUsage();
-                
-                if(mode==='tutor') {
-                    conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)});
-                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); 
-                }
-                
-                if(parsed.foreign_text) {
-                    addMessageToChat('ai', parsed.foreign_text, parsed.translation || parsed.korean_translation, targetLang);
-                    speakText(parsed.foreign_text, targetLang);
-                }
-            } catch(e) { 
-                console.error(e);
-                updateStatus("AI 서버 통신 에러"); 
-                avatarWrap.style.borderColor="#f87171"; 
-            }
+                if(mode==='tutor') { conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)}); sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); }
+                if(parsed.foreign_text) { addMessageToChat('ai', parsed.foreign_text, parsed.translation || parsed.korean_translation, targetLang); speakText(parsed.foreign_text, targetLang); }
+            } catch(e) { console.error(e); updateStatus("AI 서버 통신 에러"); avatarWrap.style.borderColor="#f87171"; }
         }
-        window.handleUserMessage = handleUserMessage;
-        
 
         window.requestExplanationGlobal = function() { 
             let lastAiMsg = "";
-            for(let i = uiChatHistory.length - 1; i >= 0; i--) {
-                if(uiChatHistory[i].sender === 'ai') {
-                    lastAiMsg = uiChatHistory[i].text;
-                    break;
-                }
-            }
+            for(let i = uiChatHistory.length - 1; i >= 0; i--) { if(uiChatHistory[i].sender === 'ai') { lastAiMsg = uiChatHistory[i].text; break; } }
             if(!lastAiMsg) { alert("해설할 대화가 없습니다."); return; }
             window.requestExplanationFromBubble(`global`, lastAiMsg, false, lastAiMsg);
         };
@@ -1203,134 +1097,46 @@
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             
-            window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); 
-            document.getElementById('avatarWrap').style.borderColor = "#f59e0b"; 
+            window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); document.getElementById('avatarWrap').style.borderColor = "#f59e0b"; 
 
-            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
             const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
-            const systemPrompt = `You are an expert language tutor. CRITICAL RULE: Your ENTIRE explanation MUST be written entirely in ${exactAiLang} (ISO code: ${expLangCode}). Do NOT use Korean under any circumstances unless the code is 'ko-KR'. If the code is 'zh-CN', you MUST use Simplified Chinese (Hanzi) for all explanations. Output ONLY a valid JSON object without markdown formatting.`;
+            const systemPrompt = `You are an expert language tutor. CRITICAL RULE: Your ENTIRE explanation MUST be written entirely in ${exactAiLang} (ISO code: ${expLangCode}). Do NOT use Korean under any circumstances unless the code is 'ko-KR'. Output ONLY a valid JSON object without markdown formatting.`;
             const userPrompt = `Analyze the following text:\n- Learning Language: ${targetLangName}\n- Context: "${fullText}"\n- Part to explain: "${targetText}"\n\nProvide the meaning, grammatical features, and 1-2 practical examples for the "Part to explain". \nExpected JSON format:\n{"explanation": "Your detailed explanation written entirely in ${exactAiLang} here"}`;
 
             try {
                 let res = await fetchAPI(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
-                    body: JSON.stringify({
-                        model: "deepseek-chat",
-                        messages: [{role: "system", content: systemPrompt}, {role: "user", content: userPrompt}],
-                        response_format: { type: "json_object" }
-                    })
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
+                    body: JSON.stringify({ model: "deepseek-chat", messages: [{role: "system", content: systemPrompt}, {role: "user", content: userPrompt}], response_format: { type: "json_object" } })
                 });
                 
                 let data = await res.json();
                 let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
-                const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-                let parsed;
-                if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
-                else throw new Error("JSON_NOT_FOUND");
+                let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
                 
-                if (parsed.explanation === "LIMIT_REACHED") {
-                    enforcePaywall("무료 횟수 초과"); 
-                    return;
-                }
-                incrementLocalUsage();
+                window.incrementLocalUsage();
                 
-                const msgDiv = document.createElement('div'); 
-                msgDiv.className = "flex flex-col space-y-1 mt-4";
-                bubbleCounter++; 
-                const bId = `exp-msg-${bubbleCounter}`; 
+                const msgDiv = document.createElement('div'); msgDiv.className = "flex flex-col space-y-1 mt-4";
+                bubbleCounter++; const bId = `exp-msg-${bubbleCounter}`; 
                 
                 let explanationText = parsed.explanation;
                 if (window.Intl && Intl.Segmenter && (expLangCode.startsWith('ja') || expLangCode.startsWith('zh') || expLangCode.startsWith('th'))) {
                     const segmenter = new Intl.Segmenter(expLangCode, { granularity: 'word' });
                     explanationText = Array.from(segmenter.segment(explanationText)).map(seg => seg.segment).join(' ');
                 }
-
                 const safeExplanation = explanationText.replace(/\n/g, ' <br> ');
                 msgDiv.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md self-start relative"><p class="text-[11px] font-extrabold text-amber-600 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-lightbulb"></i> [집중 해설] ${targetText}</p><p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${createSpansForText(safeExplanation, bId, true)}</p></div>`;
                 
                 document.getElementById('chatContainer').appendChild(msgDiv); 
                 setTimeout(() => document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight, 50);
-                window.updateStatus("대기 중");
-                document.getElementById('avatarWrap').style.borderColor = "#60a5fa"; 
-            } catch(e) {
-                console.error(e);
-                window.updateStatus("해설 통신 에러");
-                document.getElementById('avatarWrap').style.borderColor = "#f87171";
-            }
+                window.updateStatus("대기 중"); document.getElementById('avatarWrap').style.borderColor = "#60a5fa"; 
+            } catch(e) { console.error(e); window.updateStatus("해설 통신 에러"); document.getElementById('avatarWrap').style.borderColor = "#f87171"; }
         };
 
-        function clearChatSession() { conversationHistory=[]; uiChatHistory=[]; sessionStorage.clear(); document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el=>el.remove()); }
-        window.changeAppMode = function() { clearChatSession(); } 
-        
-        // 💡 언어 변경 시 대화 및 4번 방 화면 초기화 (목표 언어 저장 기능 추가)
-        window.targetLanguageChanged = function() { 
-            // 🌟 [추가됨] 사용자가 방금 선택한 목표 언어를 로컬 스토리지에 저장
-            const currentTargetLang = document.getElementById('targetLanguage').value;
-            localStorage.setItem('target_language', currentTargetLang);
-
-            clearChatSession(); 
-            
-            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const baseLang = expLangCode.split('-')[0];
-            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-
-            window.updateStatus('학습 언어 변경 (대화 초기화됨)'); 
-            
-            const listArea = document.getElementById("alphabetListArea");
-            if(listArea) {
-                listArea.innerHTML = `<div id="alpha_empty_text" class="text-center text-slate-400 text-sm mt-10 font-bold">${dict.alpha_empty_text || "위 버튼을 눌러 기초 글자를 가져와 보세요!"}</div>`;
-            }
-            
-            const alphaBtn = document.getElementById("generateAlphaBtn");
-            if(alphaBtn) {
-                alphaBtn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기";
-                alphaBtn.disabled = false;
-                alphaBtn.classList.replace('bg-emerald-600', 'bg-slate-900');
-                alphaBtn.classList.replace('hover:bg-emerald-700', 'hover:bg-black');
-            }
-        }
-        window.selectGender = function(g) { tempGender = g; updateGenderUI(g, false); }
-        
-        window.toggleSettingsModal = function(show = true) { 
-            let m = document.getElementById('settingsModal');
-            if (show) {
-                document.getElementById('fontSizeSlider').value = localStorage.getItem('chat_font_size') || 14;
-                tempGender = currentVoiceGender; 
-                updateGenderUI(tempGender, false);
-                m.classList.remove('hidden');
-            } else {
-                m.classList.add('hidden');
-            }
-        }
-        
-        // 💡 설정 저장 및 언어 변경 시 대화 리셋 기능
-        window.saveSettings = function() { 
-            localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); 
-            
-            // 🌟 변경 전 사용자 언어가 무엇인지 기억해두기
-            const oldExpLang = localStorage.getItem('explanation_language');
-            const newExpLang = document.getElementById('explanationLanguage').value;
-            
-            localStorage.setItem('explanation_language', newExpLang);
-            currentVoiceGender = tempGender; 
-            localStorage.setItem('voice_gender', currentVoiceGender);
-            document.documentElement.style.setProperty('--chat-font-size', (localStorage.getItem('chat_font_size') || 14) + 'px');
-            
-            window.changeUILanguage(newExpLang);
-            window.updateLangDisplays();
-            window.toggleSettingsModal(false); 
-            
-            // 🌟 [핵심] 사용자 언어가 기존과 다르게 바뀌었다면, 대화 기록 완벽히 초기화
-            if (oldExpLang !== newExpLang) {
-                clearChatSession();
-                window.updateStatus("언어 설정이 변경되어 대화가 초기화되었습니다.");
-            }
-        }
-
+        // 🌟 8. 스와이프 화면 이동 기능
         const appScreens = [ document.getElementById('screen-main'), document.getElementById('screen-roleplay'), document.getElementById('screen-vocab'), document.getElementById('screen-alphabet') ];
-        let currentScreen = 0; let isMenuScrolling = false; let startX = 0; let startY = 0; let isVerticalScroll = false; 
+        let currentScreen = 0, isMenuScrolling = false, startX = 0, startY = 0, isVerticalScroll = false; 
 
         window.goToScreen = function(index) {
             if (index < 0 || index >= appScreens.length) return;
@@ -1366,47 +1172,71 @@
             else if (moveX > 70 && currentScreen > 0) goToScreen(currentScreen - 1); 
             else goToScreen(currentScreen);
         }, { passive: true });
+
+        // 🌟 9. 기타 설정 및 유틸리티
+        function clearChatSession() { conversationHistory=[]; uiChatHistory=[]; sessionStorage.removeItem('llmHistory'); sessionStorage.removeItem('uiHistory'); document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el=>el.remove()); }
+        window.changeAppMode = function() { clearChatSession(); } 
         
+        window.targetLanguageChanged = function() { 
+            const currentTargetLang = document.getElementById('targetLanguage').value;
+            localStorage.setItem('target_language', currentTargetLang);
+            clearChatSession(); 
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const dict = UI_DICTIONARY[expLangCode.split('-')[0]] || UI_DICTIONARY["en"];
+            window.updateStatus('학습 언어 변경 (대화 초기화됨)'); 
+            
+            const listArea = document.getElementById("alphabetListArea");
+            if(listArea) listArea.innerHTML = `<div id="alpha_empty_text" class="text-center text-slate-400 text-sm mt-10 font-bold">${dict.alpha_empty_text || "위 버튼을 눌러 기초 글자를 가져와 보세요!"}</div>`;
+            const alphaBtn = document.getElementById("generateAlphaBtn");
+            if(alphaBtn) {
+                alphaBtn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기";
+                alphaBtn.disabled = false;
+                alphaBtn.classList.replace('bg-emerald-600', 'bg-slate-900'); alphaBtn.classList.replace('hover:bg-emerald-700', 'hover:bg-black');
+            }
+        }
+        window.selectGender = function(g) { tempGender = g; updateGenderUI(g, false); }
+        
+        window.toggleSettingsModal = function(show = true) { 
+            let m = document.getElementById('settingsModal');
+            if (show) {
+                document.getElementById('fontSizeSlider').value = localStorage.getItem('chat_font_size') || 14;
+                tempGender = currentVoiceGender; updateGenderUI(tempGender, false);
+                m.classList.remove('hidden');
+            } else { m.classList.add('hidden'); }
+        }
+        
+        window.saveSettings = function() { 
+            localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); 
+            const oldExpLang = localStorage.getItem('explanation_language');
+            const newExpLang = document.getElementById('explanationLanguage').value;
+            localStorage.setItem('explanation_language', newExpLang);
+            currentVoiceGender = tempGender; localStorage.setItem('voice_gender', currentVoiceGender);
+            document.documentElement.style.setProperty('--chat-font-size', (localStorage.getItem('chat_font_size') || 14) + 'px');
+            window.changeUILanguage(newExpLang); window.updateLangDisplays(); window.toggleSettingsModal(false); 
+            if (oldExpLang !== newExpLang) { clearChatSession(); window.updateStatus("언어 설정이 변경되어 대화가 초기화되었습니다."); }
+        }
+
+        // 🌟 10. 2번 방 (롤플레잉)
         let savedScripts = JSON.parse(localStorage.getItem('roleplay_scripts')) || [];
-        let roleplayRec = null, isRpListening = false;
-        let activeTestScriptIdx = -1, activeTestLineIdx = -1, isInteractiveTestActive = false;
+        let roleplayRec = null, isRpListening = false, activeTestScriptIdx = -1, activeTestLineIdx = -1, isInteractiveTestActive = false;
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) roleplayRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
 
         document.querySelectorAll('.level-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
         window.setRandomSituation = function(element) { document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); element.classList.add('selected-card'); };
         document.querySelectorAll('.sit-card').forEach(card => card.onclick = (e) => setRandomSituation(e.currentTarget));
 
-        // 🗑️ 대본 삭제 기능 추가
         window.deleteScript = function(index) {
             if (!confirm("이 대본을 정말 삭제하시겠습니까?")) return;
-            savedScripts.splice(index, 1);
-            localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts));
-            window.renderScripts();
+            savedScripts.splice(index, 1); localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts();
         };
 
-        // 💡 수정된 대본 렌더링 함수 (X 버튼 추가됨)
         window.renderScripts = function() {
             const playerArea = document.getElementById("scriptList"); playerArea.innerHTML = "";
-            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+            const dict = UI_DICTIONARY[(document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0]] || UI_DICTIONARY["en"];
             if(savedScripts.length === 0) return;
-            
             for (let i = savedScripts.length - 1; i >= 0; i--) {
                 const scriptItem = savedScripts[i];
-                let html = `<div class="mb-5">
-                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm">
-                        <p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p>
-                        <div class="flex gap-1.5 items-center">
-                            <button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm"><i class="fa-solid fa-volume-high text-xs"></i></button>
-                            <button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button>
-                            <button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button>
-                            
-                            <!-- ❌ 삭제 버튼 추가 부분 -->
-                            <div class="w-px h-4 bg-indigo-200 mx-0.5"></div>
-                            <button onclick="deleteScript(${i})" class="text-slate-400 hover:text-red-500 px-1 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button>
-                        </div>
-                    </div>
-                    <div class="space-y-3">`;
-                    
+                let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm"><p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p><div class="flex gap-1.5 items-center"><button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm"><i class="fa-solid fa-volume-high text-xs"></i></button><button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button><button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button><div class="w-px h-4 bg-indigo-200 mx-0.5"></div><button onclick="deleteScript(${i})" class="text-slate-400 hover:text-red-500 px-1 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="space-y-3">`;
                 scriptItem.scriptData.forEach((line, lineIdx) => {
                     const isAi = line.role === 'ai';
                     html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all"><div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div><div class="flex-1"><p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi? (dict.rp_ai || 'AI') : (dict.rp_user || 'Me')}</p><p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all">${line.en}</p><p class="text-xs text-gray-500 mt-1">${line.ko}</p><div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div></div></div>`;
@@ -1414,13 +1244,12 @@
                 html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
                 playerArea.insertAdjacentHTML('beforeend', html);
             }
-            const statusBoxText = document.getElementById("statusBoxText");
-            if(statusBoxText && dict.rp_save_count) statusBoxText.innerText = dict.rp_save_count.replace('{n}', savedScripts.length);
+            const statusBoxText = document.getElementById("statusBoxText"); if(statusBoxText && dict.rp_save_count) statusBoxText.innerText = dict.rp_save_count.replace('{n}', savedScripts.length);
         };
 
         window.generateScript = async function() {
             if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
-            if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+            if (!window.checkAndBlockAPI()) return;
 
             const btn = document.getElementById("generateBtn");
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
@@ -1431,8 +1260,6 @@
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
-            
-            // 🌟 [핵심 수정] 타겟 언어와 사용자 언어의 자리를 완벽하게 강제 지정! (절대 한국어 금지령 삭제)
             const overrideCmd = ` (CRITICAL JSON MAPPING: Write the main dialogue in [${targetLangName}] and put it in the 'en' key. Write the translation in [${expLangName}] and put it in the 'ko' key. Key names MUST remain 'en' and 'ko' regardless of the actual language used.)`;
 
             btn.innerText = "⏳ ..."; btn.disabled = true;
@@ -1442,13 +1269,11 @@
                     body: JSON.stringify({ level: level, situation: isRandom ? "랜덤한 일상 대화" : situation, language: targetLangName + overrideCmd, isRandom: isRandom }) 
                 });
                 const data = await res.json(); 
-                
-                if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-
+                window.incrementLocalUsage();
                 if (savedScripts.length >= 5) savedScripts.shift(); 
                 savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
                 localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts();
-            } catch (err) { alert("대본 생성 실패"); } finally { 
+            } catch (err) { alert("Fail"); } finally { 
                 const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
                 btn.innerText = UI_DICTIONARY[baseLang]?.generateBtn || "✨ AI 대본 생성하기"; btn.disabled = false; 
             }
@@ -1495,23 +1320,18 @@
             const scriptItem = savedScripts[activeTestScriptIdx];
             if (activeTestLineIdx >= scriptItem.scriptData.length) { isInteractiveTestActive = false; alert("🎉 완료!"); return; }
             const line = scriptItem.scriptData[activeTestLineIdx]; const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
-            if(activeTestLineIdx > 0) document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`).classList.remove('bg-yellow-50', 'border-yellow-200');
+            if(activeTestLineIdx > 0) { const prev = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`); if(prev) prev.classList.remove('bg-yellow-50', 'border-yellow-200'); }
             if(lineDiv) { lineDiv.classList.add('bg-yellow-50', 'border-yellow-200'); lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
             if (line.role === 'ai') {
                 const utt = new SpeechSynthesisUtterance(line.en); utt.lang = scriptItem.langCode; utt.pitch = 1.2;
                 utt.onend = () => { activeTestLineIdx++; setTimeout(window.processNextTestLine, 500); }; synthesis.speak(utt);
-            } else {
-                document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 🎤</span>`;
-            }
+            } else { document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 🎤</span>`; }
         };
 
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) roleplayRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
-
         window.startShadowing = function() {
-            if (savedScripts.length === 0) return alert("Error");
-            if (!isInteractiveTestActive) return alert("Test First!");
+            if (savedScripts.length === 0 || !isInteractiveTestActive) return;
             const targetItem = savedScripts[activeTestScriptIdx]; const userLine = targetItem.scriptData[activeTestLineIdx];
-            if (userLine.role !== 'user') return alert("AI Turn.");
+            if (userLine.role !== 'user') return;
             const btn = document.getElementById("roleplayMicBtn"); if (isRpListening) { roleplayRec.stop(); return; }
             btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); document.getElementById("roleplayMicIcon").classList.replace("fa-microphone", "fa-ear-listen");
             try { roleplayRec.lang = targetItem.langCode; roleplayRec.start(); isRpListening = true; } catch(e) {}
@@ -1529,45 +1349,31 @@
         };
         window.renderScripts();
 
+        // 🌟 11. 3번 방 (단어장)
         let savedVocabs = JSON.parse(localStorage.getItem('vocab_scripts')) || [];
-        let currentVocabSetIdx = -1; let currentVocabWordIdx = 0;
+        let currentVocabSetIdx = -1, currentVocabWordIdx = 0;
 
         window.setVocabTheme = function(element) {
             document.querySelectorAll('.vocab-theme-btn').forEach(btn => { btn.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700'); btn.classList.add('bg-white', 'border-slate-200', 'text-slate-500'); });
             element.classList.remove('bg-white', 'border-slate-200', 'text-slate-500'); element.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
         };
 
-        // 🗑️ 단어장 삭제 기능 추가
         window.deleteVocab = function(index) {
             if (!confirm("이 단어장을 정말 삭제하시겠습니까?")) return;
-            savedVocabs.splice(index, 1);
-            localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs));
-            currentVocabSetIdx = -1; // 삭제 후 화면 리셋
-            window.renderVocabs();
+            savedVocabs.splice(index, 1); localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs));
+            currentVocabSetIdx = -1; window.renderVocabs();
         };
 
-        // 💡 수정된 단어장 렌더링 함수 (X 버튼 추가됨)
         window.renderVocabs = function() {
             const listArea = document.getElementById("vocabListArea"); listArea.innerHTML = "";
-            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-            
+            const dict = UI_DICTIONARY[(document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0]] || UI_DICTIONARY["en"];
             if(savedVocabs.length === 0) {
                 listArea.innerHTML = `<div id="vc_empty_text" class="text-center text-slate-400 text-sm mt-10 font-bold">${dict.vc_empty_text || "위 버튼을 눌러 첫 단어장을 생성해 보세요!"}</div>`;
-                document.getElementById("mainFlashcardArea").classList.add("hidden"); 
-                return;
+                document.getElementById("mainFlashcardArea").classList.add("hidden"); return;
             }
-            
             for (let i = savedVocabs.length - 1; i >= 0; i--) {
                 const set = savedVocabs[i];
-                let html = `<div>
-                    <!-- ❌ 삭제 버튼이 포함된 제목 부분 -->
-                    <div class="bg-slate-100 rounded-xl p-2.5 mb-3 flex justify-between items-center">
-                        <p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}: [${set.theme}] (${set.langName})</p>
-                        <button onclick="deleteVocab(${i})" class="text-slate-400 hover:text-red-500 px-2 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button>
-                    </div>
-                    <div class="grid grid-cols-4 gap-2">`;
-                    
+                let html = `<div><div class="bg-slate-100 rounded-xl p-2.5 mb-3 flex justify-between items-center"><p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}: [${set.theme}] (${set.langName})</p><button onclick="deleteVocab(${i})" class="text-slate-400 hover:text-red-500 px-2 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="grid grid-cols-4 gap-2">`;
                 set.vocabData.forEach((v, vIdx) => {
                     const isSelected = (currentVocabSetIdx === i && currentVocabWordIdx === vIdx);
                     const bgClass = isSelected ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300';
@@ -1602,7 +1408,7 @@
 
         window.generateVocab = async function() {
             if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
-            if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+            if (!window.checkAndBlockAPI()) return;
 
             const btn = document.getElementById("generateVocabBtn");
             const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
@@ -1611,8 +1417,6 @@
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
-            
-            // 🌟 [핵심 수정] 타겟 언어(단어)와 사용자 언어(해석)의 출력 규칙을 명확히 함
             const overrideCmd = ` (CRITICAL JSON MAPPING: The 'word' and 'example_en' MUST be written in [${targetLangName}]. The 'meaning' and 'example_ko' MUST be written entirely in [${expLangName}]. Keep key names as they are.)`;
 
             let myExistingWords = [];
@@ -1622,9 +1426,7 @@
             try {
                 const res = await fetch(`${WORKER_URL}generate-vocab`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: theme, language: targetLangName + overrideCmd, existingWords: myExistingWords }) });
                 const data = await res.json(); 
-                
-                if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-
+                window.incrementLocalUsage();
                 let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
                 if (savedVocabs.length >= 5) savedVocabs.shift(); 
                 savedVocabs.push({ id: newId, theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
@@ -1636,6 +1438,7 @@
         };
         window.renderVocabs();
 
+        // 🌟 12. 4번 방 (파닉스/알파벳)
         window.loadAlphabetData = async function() {
             try {
                 const listArea = document.getElementById("alphabetListArea");
@@ -1647,249 +1450,91 @@
                 const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
                 const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
                 const expLangName = aiLangNames[expLangCode] || expLangCode;
-                const baseLang = expLangCode.split('-')[0];
-                const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+                const dict = UI_DICTIONARY[expLangCode.split('-')[0]] || UI_DICTIONARY["en"];
 
-                // 🌟 [핵심] 버전 이름을 v22로 올려서 꼬여버린 쓰레기 데이터를 버리고 새로 시작함!
                 const cacheKey = 'full_alpha_v22_' + targetLangCode + '_' + expLangCode;
-                let fullData = null;
-                let alphaProgress = {};
-                
-                try {
-                    fullData = JSON.parse(localStorage.getItem(cacheKey));
-                    alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v22')) || {};
-                } catch(e) { console.warn("캐시 초기화"); }
+                let fullData = null, alphaProgress = {};
+                try { fullData = JSON.parse(localStorage.getItem(cacheKey)); alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v22')) || {}; } catch(e) {}
                 
                 let currentLimit = alphaProgress[cacheKey] || 0;
-
                 if (fullData && currentLimit >= fullData.alphabetData.length) return;
 
                 if (!fullData) {
-                    if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n(한 번 생성 후에는 기기에 영구 보존됩니다.)\n진행하시겠습니까?`)) return;
-                    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+                    if (!confirm(`[${targetLangName}]의 기초 발음 데이터를 처음 생성합니다.\n진행하시겠습니까?`)) return;
+                    if (!window.checkAndBlockAPI()) return;
 
                     let specialHint = "";
-                    if (targetLangCode.startsWith('zh')) {
-                        specialHint = "Generate ALL basic Chinese Pinyin (Initials and Finals). 'pronunciation' MUST be Pinyin.";
-                    } else if (targetLangCode.startsWith('ja')) {
-                        specialHint = "Generate ALL basic Hiragana and Katakana characters. 'pronunciation' MUST be Romaji.";
-                    } else if (targetLangCode.startsWith('en')) {
-                        specialHint = "Generate exactly 26 English alphabets (A to Z)."; 
-                    } else if (targetLangCode.startsWith('ko')) {
-                        // 🌟 배울 언어가 한국어일 때는 한국어 자음/모음을 확실히 뽑아주도록 지시!
-                        specialHint = "Generate ALL basic Korean Hangul Consonants and Vowels (자음과 모음).";
-                    } else {
-                        specialHint = "Generate ALL basic characters/letters for this language.";
-                    }
+                    if (targetLangCode.startsWith('zh')) specialHint = "Generate ALL basic Chinese Pinyin (Initials and Finals). 'pronunciation' MUST be Pinyin.";
+                    else if (targetLangCode.startsWith('ja')) specialHint = "Generate ALL basic Hiragana and Katakana characters. 'pronunciation' MUST be Romaji.";
+                    else if (targetLangCode.startsWith('en')) specialHint = "Generate exactly 26 English alphabets (A to Z)."; 
+                    else if (targetLangCode.startsWith('ko')) specialHint = "Generate ALL basic Korean Hangul Consonants and Vowels (자음과 모음).";
+                    else specialHint = "Generate ALL basic characters/letters for this language.";
 
-                    // 🌟 한국어 사용 금지령을 없애고, 역할을 깔끔하게 정리
                     const overrideCmd = ` (CRITICAL MAPPING: 1. ${specialHint} 2. 'letter' and 'exampleWord' MUST be in [${targetLangName}]. 3. 'description' and 'exampleMeaning' MUST be written entirely in [${expLangName}]. 4. Return valid JSON only.)`;
 
                     btn.innerText = "⏳ 전체 발음 체계를 구성 중입니다..."; btn.disabled = true;
-                    listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "로딩 중..."}</div>`;
+                    listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>로딩 중...</div>`;
 
                     try {
                         const res = await fetchAPI(`${WORKER_URL}generate-alphabet`, { 
-                            method: 'POST', 
-                            headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
+                            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
                             body: JSON.stringify({ language: targetLangName + overrideCmd }) 
                         });
-                        
-                        if (!res) throw new Error("서버 에러");
                         const data = await res.json(); 
-                        if(!data || !data.alphabetData) throw new Error("데이터 누락");
-
-                        if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-
-                        fullData = data;
-                        localStorage.setItem(cacheKey, JSON.stringify(fullData));
-                        currentLimit = 0; 
-                        
+                        window.incrementLocalUsage();
+                        fullData = data; localStorage.setItem(cacheKey, JSON.stringify(fullData)); currentLimit = 0; 
                     } catch (err) { 
-                        console.error("4번방 에러:", err);
-                        listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">서버 통신 실패. 버튼을 다시 눌러주세요!</div>`;
-                        btn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기"; 
-                        btn.disabled = false;
-                        return;
+                        listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">서버 통신 실패</div>`;
+                        btn.innerText = dict.generateAlphaBtn || "가져오기"; btn.disabled = false; return;
                     }
                 } else {
-                    btn.innerText = "⏳ 다음 발음 준비 중..."; 
-                    btn.disabled = true;
+                    btn.innerText = "⏳ 다음 발음 준비 중..."; btn.disabled = true;
                     await new Promise(resolve => setTimeout(resolve, 300));
                 }
 
-                currentLimit += 20;
-                alphaProgress[cacheKey] = currentLimit;
+                currentLimit += 20; alphaProgress[cacheKey] = currentLimit;
                 localStorage.setItem('alpha_progress_v22', JSON.stringify(alphaProgress));
 
                 const isFinished = currentLimit >= fullData.alphabetData.length;
                 const dataToShow = fullData.alphabetData.slice(0, currentLimit);
-                if (typeof window.renderAlphabet === 'function') window.renderAlphabet(dataToShow, fullData.description, targetLangCode);
+                window.renderAlphabet(dataToShow, fullData.description, targetLangCode);
 
                 if (isFinished) {
-                    btn.innerText = `🎉 모든 발음 학습 완료! (${fullData.alphabetData.length}개)`;
-                    btn.disabled = true;
-                    btn.classList.replace('bg-slate-900', 'bg-emerald-600');
-                    btn.classList.replace('hover:bg-black', 'hover:bg-emerald-700');
+                    btn.innerText = `🎉 완료! (${fullData.alphabetData.length}개)`; btn.disabled = true;
+                    btn.classList.replace('bg-slate-900', 'bg-emerald-600'); btn.classList.replace('hover:bg-black', 'hover:bg-emerald-700');
                 } else {
-                    btn.innerText = `👇 다음 발음 더 보기 (${dataToShow.length} / ${fullData.alphabetData.length})`;
-                    btn.disabled = false;
-                    btn.classList.replace('bg-emerald-600', 'bg-slate-900');
-                    btn.classList.replace('hover:bg-emerald-700', 'hover:bg-black');
+                    btn.innerText = `👇 더 보기 (${dataToShow.length} / ${fullData.alphabetData.length})`; btn.disabled = false;
+                    btn.classList.replace('bg-emerald-600', 'bg-slate-900'); btn.classList.replace('hover:bg-emerald-700', 'hover:bg-black');
                 }
             } catch (e) {
-                console.error("오류 방어:", e);
                 const btn = document.getElementById("generateAlphaBtn");
-                if(btn) { btn.innerText = "✨ 오류 발생 (다시 시도)"; btn.disabled = false; }
+                if(btn) { btn.innerText = "✨ 오류 (다시 시도)"; btn.disabled = false; }
             }
         };
 
-        // 💡 4번방 화면 그리기 (카테고리 자동 묶음 처리)
         window.renderAlphabet = function(alphabetData, description, langCode) {
-            const listArea = document.getElementById("alphabetListArea"); 
-            let html = "";
-            
+            const listArea = document.getElementById("alphabetListArea"); let html = "";
             if(description) html += `<div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mb-5 shadow-sm"><p class="text-[13px] text-emerald-800 font-bold leading-relaxed whitespace-pre-wrap"><i class="fa-solid fa-circle-info mr-1"></i> ${description}</p></div>`;
-            
-            const grouped = alphabetData.reduce((acc, curr) => { 
-                if (!acc[curr.category]) acc[curr.category] = []; 
-                acc[curr.category].push(curr); 
-                return acc; 
-            }, {});
-
+            const grouped = alphabetData.reduce((acc, curr) => { if (!acc[curr.category]) acc[curr.category] = []; acc[curr.category].push(curr); return acc; }, {});
             for (const [category, letters] of Object.entries(grouped)) {
                 html += `<div class="mb-6"><h3 class="text-sm font-extrabold text-emerald-700 mb-3 border-b border-emerald-100 pb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-leaf text-emerald-400 text-xs"></i> ${category}</h3><div class="grid grid-cols-3 gap-2">`;
                 letters.forEach(item => {
-                    const safeLetter = item.letter ? item.letter.replace(/'/g, "\\'") : "";
-                    const safeWord = item.exampleWord ? item.exampleWord.replace(/'/g, "\\'") : "";
+                    const safeLetter = item.letter ? item.letter.replace(/'/g, "\\'") : ""; const safeWord = item.exampleWord ? item.exampleWord.replace(/'/g, "\\'") : "";
                     html += `<button onclick="playAlphabetAudio('${safeLetter}. ${safeWord}', '${langCode}')" class="bg-white border-[2px] border-slate-100 rounded-2xl flex flex-col items-center justify-center p-2.5 shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md transition-all group relative"><span class="absolute top-2 left-2 text-sm drop-shadow-sm">${item.emoji || ''}</span><span class="text-3xl font-black text-slate-800 group-hover:text-emerald-600 transition-colors mt-2 mb-1">${item.letter}</span><span class="text-[10px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded-md group-hover:bg-white transition-colors mb-2">${item.pronunciation}</span><div class="w-full bg-slate-50 rounded-lg py-1.5 group-hover:bg-emerald-100/50 transition-colors"><p class="text-[11px] font-extrabold text-slate-700 truncate px-1">${item.exampleWord || ''}</p><p class="text-[9px] text-slate-500 truncate px-1">${item.exampleMeaning || ''}</p></div></button>`;
                 });
                 html += `</div></div>`;
             }
             listArea.innerHTML = html;
+        };
 
-            // 💡 4번방: 알파벳/파닉스 음성 재생 함수 (모바일 먹통 방지 완벽 적용)
         window.playAlphabetAudio = function(textToSpeak, langCode) { 
-            // 1. 기존에 재생 중이던 소리가 있으면 무조건 강제 초기화 (먹통 방지)
             window.speechSynthesis.cancel(); 
-            
-            // 2. 브라우저가 숨을 고를 아주 짧은 시간(0.05초)을 준 뒤 재생
             setTimeout(() => {
                 const utt = new SpeechSynthesisUtterance(textToSpeak); 
-                utt.lang = langCode; 
-                utt.pitch = 1.1; // 살짝 높은 톤으로 또렷하게
-                utt.rate = 0.85; // 왕초보를 위해 조금 천천히 발음
+                utt.lang = langCode; utt.pitch = 1.1; utt.rate = 0.85; 
                 window.speechSynthesis.speak(utt); 
             }, 50);
         };
-        
-        };
-
-        // 💡 앱 초기화: 껐다 켜도 저장된 설정값 불러오기 (강제 지연 적용버전)
-        document.addEventListener('DOMContentLoaded', () => {
-            // 다른 로직들이 다 실행될 때까지 0.1초(100ms) 기다렸다가 덮어씀!
-            setTimeout(() => {
-                // 1. 저장된 사용자 언어(해설 언어) 불러오기
-                const savedExpLang = localStorage.getItem('explanation_language');
-                if (savedExpLang) {
-                    const langSelect = document.getElementById('explanationLanguage');
-                    if (langSelect) langSelect.value = savedExpLang;
-                    if (typeof window.changeUILanguage === 'function') window.changeUILanguage(savedExpLang);
-                }
-
-                // 2. 저장된 폰트 크기 불러오기
-                const savedFontSize = localStorage.getItem('chat_font_size');
-                if (savedFontSize) {
-                    document.documentElement.style.setProperty('--chat-font-size', savedFontSize + 'px');
-                    const fontSlider = document.getElementById('fontSizeSlider');
-                    if (fontSlider) fontSlider.value = savedFontSize;
-                }
-
-                // 3. 저장된 목소리 성별 불러오기
-                const savedVoiceGender = localStorage.getItem('voice_gender');
-                if (savedVoiceGender) {
-                    if (typeof currentVoiceGender !== 'undefined') currentVoiceGender = savedVoiceGender;
-                    const genderSelect = document.getElementById('voiceGender');
-                    if (genderSelect) genderSelect.value = savedVoiceGender;
-                }
-
-                // 4. 저장된 목표 언어(학습 언어) 불러오기
-                const savedTargetLang = localStorage.getItem('target_language');
-                if (savedTargetLang) {
-                    const targetSelect = document.getElementById('targetLanguage');
-                    if (targetSelect) targetSelect.value = savedTargetLang;
-                }
-
-                // 5. 저장된 '입력 언어(말할 언어)' 불러오기 및 자동 저장 로직
-                const sttSelect = document.getElementById('sttInputLanguage');
-                if (sttSelect) {
-                    const savedSttLang = localStorage.getItem('stt_input_language');
-                    if (savedSttLang) sttSelect.value = savedSttLang;
-                    
-                    // 이벤트 리스너가 중복 등록되지 않도록 주의하며 추가
-                    sttSelect.onchange = function() {
-                        localStorage.setItem('stt_input_language', this.value);
-                        if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
-                    };
-                }
-
-                // UI 최종 업데이트
-                if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
-
-
-                // 💾 하단 언어(말할 언어) 완벽 저장 및 복구 시스템
-        document.addEventListener('DOMContentLoaded', () => {
-            const sttSelect = document.getElementById('sttInputLanguage');
-            if (!sttSelect) return;
-
-            // 1. 복구 기능: 앱이 켜질 때 로컬 스토리지에서 꺼내서 세팅
-            const applySavedSttLang = () => {
-                const savedLang = localStorage.getItem('stt_input_language');
-                if (savedLang) {
-                    sttSelect.value = savedLang;
-                }
-            };
-            
-            // 즉시 한 번 적용하고, 다른 코드가 덮어쓸까 봐 0.15초 뒤에 '확인 사살'로 한 번 더 적용
-            applySavedSttLang();
-            setTimeout(applySavedSttLang, 150);
-
-            // 2. 저장 기능: 사용자가 셀렉트 박스를 만져서 언어를 바꿀 때마다 즉시 저장
-            sttSelect.addEventListener('change', function() {
-                localStorage.setItem('stt_input_language', this.value);
-            });
-        });
-                
-            }, 100); // 100ms 딜레이 (비기기)
-        });
-
-
-
-
-
-        // 💾 하단 언어(말할 언어) 완벽 저장 및 복구 시스템
-        document.addEventListener('DOMContentLoaded', () => {
-            const sttSelect = document.getElementById('sttInputLanguage');
-            if (!sttSelect) return;
-
-            // 1. 복구 기능: 앱이 켜질 때 로컬 스토리지에서 꺼내서 세팅
-            const applySavedSttLang = () => {
-                const savedLang = localStorage.getItem('stt_input_language');
-                if (savedLang) {
-                    sttSelect.value = savedLang;
-                }
-            };
-            
-            // 즉시 한 번 적용하고, 다른 코드가 덮어쓸까 봐 0.15초 뒤에 '확인 사살'로 한 번 더 적용
-            applySavedSttLang();
-            setTimeout(applySavedSttLang, 150);
-
-            // 2. 저장 기능: 사용자가 셀렉트 박스를 만져서 언어를 바꿀 때마다 즉시 저장
-            sttSelect.addEventListener('change', function() {
-                localStorage.setItem('stt_input_language', this.value);
-            });
-        });
-
     </script>
 </body>
 </html>
