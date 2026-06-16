@@ -916,7 +916,7 @@
                 avatarWrap.style.borderColor="#f87171"; 
             }
         }
-        window.handleUserMessage = handleUserMessage;
+        
 
         // =======================================================
         // 💡 실시간 대화방: 스마트 과외 해설 기능 (다국어 지원)
@@ -935,10 +935,9 @@
                 alert("해설할 AI 대화 내역이 없습니다.");
                 return;
             }
-            window.requestExplanationFromBubble(`global`, lastAiMsg, false, lastAiMsg);
+           
         };
 
-        // 2. 단어를 터치해서 툴팁의 [전구 모양💡]을 눌렀을 때 (선택 구간 집중 해설)
         // 2. 단어를 터치해서 툴팁의 [전구 모양💡]을 눌렀을 때 (선택 구간 집중 해설)
         window.requestExplanationFromBubble = async function(bubbleId, fullText, isExp, selectedText) { 
             const targetText = selectedText || fullText;
@@ -947,20 +946,27 @@
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             
-            // 설정창에서 고른 내 모국어(해설 언어) 코드 가져오기 (예: ja-JP, en-US)
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             
             window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); 
             document.getElementById('avatarWrap').style.borderColor = "#f59e0b"; 
 
-            // 🌟 [핵심 방어막 1] 시스템(System) 권한으로 AI의 뇌 구조에 절대 규칙을 박아버립니다!
+            // 🌟 [최종 방어막] AI가 절대 헷갈리지 않도록 명확한 영어 이름표(Dict)를 달아줍니다!
+            const aiLangNames = {
+                "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", 
+                "zh-CN": "Simplified Chinese (Mandarin)", // 중국어는 무조건 간체자로 못 박기!
+                "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", 
+                "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian"
+            };
+            const exactAiLang = aiLangNames[expLangCode] || expLangCode;
+
+            // 시스템 프롬프트에 exactAiLang(예: Simplified Chinese)을 강제로 집어넣습니다.
             const systemPrompt = `You are an expert language tutor. 
-CRITICAL RULE: Your ENTIRE response MUST be written in the language corresponding to the ISO code [${expLangCode}]. 
-For example, if the code is 'ja-JP', you MUST write entirely in Japanese. If 'en-US', in English.
-Do NOT use Korean unless the code is 'ko-KR'.
+CRITICAL RULE: Your ENTIRE explanation MUST be written entirely in ${exactAiLang} (ISO code: ${expLangCode}). 
+Do NOT use Korean under any circumstances unless the code is 'ko-KR'. 
+If the code is 'zh-CN', you MUST use Simplified Chinese (Hanzi) for all explanations.
 Output ONLY a valid JSON object without markdown formatting.`;
 
-            // 🌟 [핵심 방어막 2] 사용자 요청 사항은 깔끔하게 분리합니다.
             const userPrompt = `Analyze the following text:
 - Learning Language: ${targetLangName}
 - Context: "${fullText}"
@@ -968,7 +974,7 @@ Output ONLY a valid JSON object without markdown formatting.`;
 
 Provide the meaning, grammatical features, and 1-2 practical examples for the "Part to explain". 
 Expected JSON format:
-{"explanation": "Your detailed explanation written entirely in ${expLangCode} language"}`;
+{"explanation": "Your detailed explanation written entirely in ${exactAiLang} here"}`;
 
             try {
                 let res = await fetchAPI(WORKER_URL, {
@@ -976,7 +982,6 @@ Expected JSON format:
                     headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
                     body: JSON.stringify({
                         model: "deepseek-chat",
-                        // 🌟 [핵심 방어막 3] 시스템 명령과 사용자 명령을 나누어서 전송합니다!
                         messages: [
                             {role: "system", content: systemPrompt},
                             {role: "user", content: userPrompt}
@@ -1034,7 +1039,6 @@ Expected JSON format:
                 document.getElementById('avatarWrap').style.borderColor = "#f87171";
             }
         };
-        window.handleUserMessage = handleUserMessage;
 
 
         
