@@ -1178,11 +1178,22 @@ Expected JSON format:
             const isRandom = (situation === '일상 랜덤');
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
+            // 🌟 사용자 언어(해설 언어)의 정확한 영문 이름표 가져오기
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
+            const expLangName = aiLangNames[expLangCode] || expLangCode;
+
             btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ level: level, situation: isRandom ? "랜덤한 일상 대화" : situation, language: targetLangName, isRandom: isRandom }) 
+                    // 🌟 [핵심] 언어 파라미터에 "해석은 반드시 이 언어로 해라!"는 비밀 지시를 섞어 보냅니다.
+                    body: JSON.stringify({ 
+                        level: level, 
+                        situation: isRandom ? "랜덤한 일상 대화" : situation, 
+                        language: `${targetLangName} (CRITICAL RULE: Translate the 'ko' field entirely into ${expLangName})`, 
+                        isRandom: isRandom 
+                    }) 
                 });
                 const data = await res.json(); 
                 if (savedScripts.length >= 5) savedScripts.shift(); 
@@ -1344,6 +1355,11 @@ Expected JSON format:
             const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
+            // 🌟 사용자 언어 가져오기
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
+            const expLangName = aiLangNames[expLangCode] || expLangCode;
+
             let myExistingWords = [];
             savedVocabs.forEach(set => {
                 if (set.langName === targetLangName) {
@@ -1356,7 +1372,12 @@ Expected JSON format:
                 const res = await fetch(`${WORKER_URL}generate-vocab`, { 
                     method: 'POST', 
                     headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ theme: theme, language: targetLangName, existingWords: myExistingWords }) 
+                    // 🌟 단어 뜻(meaning)과 예문 해석(example_ko)을 사용자 언어로 강제 변환!
+                    body: JSON.stringify({ 
+                        theme: theme, 
+                        language: `${targetLangName} (CRITICAL RULE: Translate the 'meaning' and 'example_ko' fields entirely into ${expLangName})`, 
+                        existingWords: myExistingWords 
+                    }) 
                 });
                 const data = await res.json(); 
                 let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
@@ -1382,10 +1403,16 @@ Expected JSON format:
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             const targetLangCode = tLang.value;
             
-            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+            // 🌟 사용자 언어 가져오기
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
+            const expLangName = aiLangNames[expLangCode] || expLangCode;
+
+            const baseLang = expLangCode.split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-            const cacheKey = 'alpha_cache_v3_' + targetLangCode;
+            // 🌟 내 모국어 설정이 다르면 캐시(저장된 기존 데이터)도 달라지도록 캐시 키 수정!
+            const cacheKey = 'alpha_cache_v4_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
@@ -1401,7 +1428,10 @@ Expected JSON format:
             try {
                 const res = await fetch(`${WORKER_URL}generate-alphabet`, { 
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ language: targetLangName }) 
+                    // 🌟 단어 설명과 예시 뜻을 사용자 언어로 강제 번역!
+                    body: JSON.stringify({ 
+                        language: `${targetLangName} (CRITICAL RULE: Translate the 'description' and 'exampleMeaning' fields entirely into ${expLangName})` 
+                    }) 
                 });
                 const data = await res.json(); 
                 
