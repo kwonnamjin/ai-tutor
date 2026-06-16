@@ -1381,7 +1381,10 @@
 
         window.generateScript = async function() {
             if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
+            
+            // 🌟 1. 한도 체크 (없으면 튕겨냄)
             if (!window.checkAndBlockAPI()) return;
+
             const btn = document.getElementById("generateBtn");
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
             const situation = document.querySelector('.sit-card.selected-card').dataset.situation;
@@ -1400,6 +1403,10 @@
                     body: JSON.stringify({ level: level, situation: isRandom ? "랜덤한 일상 대화" : situation, language: targetLangName + overrideCmd, isRandom: isRandom }) 
                 });
                 const data = await res.json(); 
+                
+                // 🌟 2. 통신 성공 시 카운트 1 차감!
+                window.incrementLocalUsage();
+
                 if (savedScripts.length >= 5) savedScripts.shift(); 
                 savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
                 localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); renderScripts();
@@ -1557,17 +1564,17 @@
 
         window.generateVocab = async function() {
             if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
+            
+            // 🌟 1. 한도 체크
             if (!window.checkAndBlockAPI()) return;
+
             const btn = document.getElementById("generateVocabBtn");
             const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            // 🌟 중국어가 에러나지 않도록 강력한 영어 이름표(Simplified Chinese)를 다시 달아줍니다.
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
-            
-            // 🌟 [영어 해킹 명령] 한글 사용을 원천 금지하고, 발음(pronunciation)도 번역 언어로 강제!
             const overrideCmd = ` (🚨 SYSTEM OVERRIDE: YOU MUST NOT USE KOREAN HANGUL. 1. The 'pronunciation' value MUST be written in ${expLangName} script. 2. The 'meaning' and 'example_ko' values MUST be written entirely in ${expLangName}.)`;
 
             let myExistingWords = [];
@@ -1577,6 +1584,10 @@
             try {
                 const res = await fetch(`${WORKER_URL}generate-vocab`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: theme, language: targetLangName + overrideCmd, existingWords: myExistingWords }) });
                 const data = await res.json(); 
+                
+                // 🌟 2. 통신 성공 시 카운트 1 차감!
+                window.incrementLocalUsage();
+
                 let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
                 if (savedVocabs.length >= 5) savedVocabs.shift(); 
                 savedVocabs.push({ id: newId, theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
@@ -1602,19 +1613,19 @@
             const baseLang = expLangCode.split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-            // 캐시 키에 버전을 달아 기존 데이터와 꼬이지 않게 함
             const cacheKey = 'full_alpha_v20_' + targetLangCode + '_' + expLangCode;
             let fullData = JSON.parse(localStorage.getItem(cacheKey));
             
-            // 현재 언어의 학습 진도 (어디까지 봤는지) 저장
             let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress')) || {};
             let currentLimit = alphaProgress[cacheKey] || 0;
 
             // 1. 처음 생성하는 언어인 경우 (서버 통신)
             if (!fullData) {
                 if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n(한 번 생성 후에는 데이터가 로컬에 영구 보존됩니다.)\n진행하시겠습니까?`)) return;
+
+                // 🌟 1. 한도 체크 (최초 생성 시에만 검사)
                 if (!window.checkAndBlockAPI()) return;
-                // 🌟 [수정됨] 개수 제한을 풀고 'ALL' 키워드를 넣어 전체 리스트를 요청함
+
                 let specialHint = "";
                 if (targetLangCode.startsWith('zh')) {
                     specialHint = "Generate ALL basic Chinese Pinyin (Initials and Finals). 'pronunciation' MUST be Pinyin.";
@@ -1640,10 +1651,12 @@
                     const data = await res.json(); 
                     if(!data || !data.alphabetData) throw new Error("데이터 누락");
 
-                    // 받아온 전체 데이터를 로컬에 영구 저장
+                    // 🌟 2. 통신 성공 시 카운트 1 차감!
+                    window.incrementLocalUsage();
+
                     fullData = data;
                     localStorage.setItem(cacheKey, JSON.stringify(fullData));
-                    currentLimit = 0; // 진도 초기화
+                    currentLimit = 0; 
                     
                 } catch (err) { 
                     console.error("4번방 통신 에러:", err);
@@ -1654,19 +1667,17 @@
                 }
             }
 
-            // 2. 버튼을 누를 때마다 20개씩 진도 증가
+            // 2. 버튼을 누를 때마다 20개씩 진도 증가 (서버 통신 안 함, 차감 안 함)
             currentLimit += 20;
             alphaProgress[cacheKey] = currentLimit;
             localStorage.setItem('alpha_progress', JSON.stringify(alphaProgress));
 
-            // 3. 진도율에 맞춰 데이터 자르기 (0번부터 현재 Limit까지)
+            // 3. 데이터 렌더링
             const isFinished = currentLimit >= fullData.alphabetData.length;
             const dataToShow = fullData.alphabetData.slice(0, currentLimit);
-
-            // 4. 잘라낸 데이터 화면에 그리기
             window.renderAlphabet(dataToShow, fullData.description, targetLangCode);
 
-            // 5. 버튼 상태 업데이트
+            // 4. 버튼 상태 업데이트
             if (isFinished) {
                 btn.innerText = `🎉 모든 발음 학습 완료! (${fullData.alphabetData.length}개)`;
                 btn.disabled = true;
