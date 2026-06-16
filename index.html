@@ -1600,101 +1600,121 @@
         window.renderVocabs();
 
        window.loadAlphabetData = async function() {
-            const listArea = document.getElementById("alphabetListArea");
-            const btn = document.getElementById("generateAlphaBtn");
-            const tLang = document.getElementById('targetLanguage');
-            const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
-            const targetLangCode = tLang.value;
-            
-            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
-            const expLangName = aiLangNames[expLangCode] || expLangCode;
-            const baseLang = expLangCode.split('-')[0];
-            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+            try {
+                const listArea = document.getElementById("alphabetListArea");
+                const btn = document.getElementById("generateAlphaBtn");
+                const tLang = document.getElementById('targetLanguage');
+                const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
+                const targetLangCode = tLang.value;
+                
+                const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+                const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
+                const expLangName = aiLangNames[expLangCode] || expLangCode;
+                const baseLang = expLangCode.split('-')[0];
+                const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-            const cacheKey = 'full_alpha_v20_' + targetLangCode + '_' + expLangCode;
-            let fullData = JSON.parse(localStorage.getItem(cacheKey));
-            
-            let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress')) || {};
-            let currentLimit = alphaProgress[cacheKey] || 0;
-
-            // 🌟 이미 모든 발음을 다 열었다면 무시
-            if (fullData && currentLimit >= fullData.alphabetData.length) return;
-
-            // 1. 처음 생성하는 언어인 경우 (서버 통신 & 비용 차감)
-            if (!fullData) {
-                if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n(한 번 생성 후에는 데이터가 기기에 영구 보존됩니다.)\n진행하시겠습니까?`)) return;
-
-                // 🌟 한도 체크 (처음 생성할 때만 1회 차감)
-                if (!window.checkAndBlockAPI()) return;
-
-                let specialHint = "";
-                if (targetLangCode.startsWith('zh')) {
-                    specialHint = "Generate ALL basic Chinese Pinyin (Initials and Finals). 'pronunciation' MUST be Pinyin.";
-                } else if (targetLangCode.startsWith('ja')) {
-                    specialHint = "Generate ALL basic Hiragana and Katakana characters. 'pronunciation' MUST be Romaji.";
-                } else {
-                    specialHint = "Generate ALL basic characters/letters for this language. 'pronunciation' MUST be IPA.";
-                }
-
-                const overrideCmd = ` (🚨 CRITICAL RULE: 1. ${specialHint} 2. 'pronunciation' MUST NEVER use Korean Hangul. 3. The 'description' and 'exampleMeaning' MUST be written entirely in [${expLangName}]. 4. Return valid JSON only.)`;
-
-                btn.innerText = "⏳ 전체 발음 체계를 구성 중입니다..."; btn.disabled = true;
-                listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "로딩 중..."}</div>`;
-
+                // 🌟 [핵심 해결책] 캐시 이름을 V21로 바꿔서 기존의 꼬인 쓰레기 데이터를 버리고 새출발!
+                const cacheKey = 'full_alpha_v21_' + targetLangCode + '_' + expLangCode;
+                let fullData = null;
+                let alphaProgress = {};
+                
+                // 로컬 스토리지 에러 방어막
                 try {
-                    const res = await fetchAPI(`${WORKER_URL}generate-alphabet`, { 
-                        method: 'POST', 
-                        headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
-                        body: JSON.stringify({ language: targetLangName + overrideCmd }) 
-                    });
-                    
-                    if (!res) throw new Error("서버 에러");
-                    const data = await res.json(); 
-                    if(!data || !data.alphabetData) throw new Error("데이터 누락");
+                    fullData = JSON.parse(localStorage.getItem(cacheKey));
+                    alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v21')) || {};
+                } catch(e) { console.warn("캐시 데이터 초기화"); }
+                
+                let currentLimit = alphaProgress[cacheKey] || 0;
 
-                    // 🌟 통신 성공 시 카운트 1 차감!
-                    window.incrementLocalUsage();
+                // 이미 모든 발음을 다 열었다면 무시
+                if (fullData && currentLimit >= fullData.alphabetData.length) return;
 
-                    fullData = data;
-                    localStorage.setItem(cacheKey, JSON.stringify(fullData));
-                    currentLimit = 0; 
-                    
-                } catch (err) { 
-                    console.error("4번방 통신 에러:", err);
-                    listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">서버 통신 실패. 버튼을 다시 눌러주세요!</div>`;
-                    btn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기"; 
-                    btn.disabled = false;
-                    return;
+                // 1. 처음 생성하는 언어인 경우 (서버 통신)
+                if (!fullData) {
+                    if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n(한 번 생성 후에는 기기에 영구 보존됩니다.)\n진행하시겠습니까?`)) return;
+
+                    // 🌟 요금제 차감 함수가 꼬여서 에러가 나더라도 버튼이 먹통 되지 않게 안전하게 처리!
+                    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+
+                    let specialHint = "";
+                    if (targetLangCode.startsWith('zh')) {
+                        specialHint = "Generate ALL basic Chinese Pinyin (Initials and Finals). 'pronunciation' MUST be Pinyin.";
+                    } else if (targetLangCode.startsWith('ja')) {
+                        specialHint = "Generate ALL basic Hiragana and Katakana characters. 'pronunciation' MUST be Romaji.";
+                    } else if (targetLangCode.startsWith('en')) {
+                        // 🌟 영어 엉뚱한 데이터 방지 초강력 명령!
+                        specialHint = "Generate exactly 26 English alphabets (A to Z)."; 
+                    } else {
+                        specialHint = "Generate ALL basic characters/letters for this language. 'pronunciation' MUST be IPA.";
+                    }
+
+                    const overrideCmd = ` (🚨 CRITICAL RULE: 1. ${specialHint} 2. 'pronunciation' MUST NEVER use Korean Hangul. 3. The 'description' and 'exampleMeaning' MUST be written entirely in [${expLangName}]. 4. Return valid JSON only.)`;
+
+                    btn.innerText = "⏳ 전체 발음 체계를 구성 중입니다..."; btn.disabled = true;
+                    listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "로딩 중..."}</div>`;
+
+                    try {
+                        const res = await fetchAPI(`${WORKER_URL}generate-alphabet`, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
+                            body: JSON.stringify({ language: targetLangName + overrideCmd }) 
+                        });
+                        
+                        if (!res) throw new Error("서버 에러");
+                        const data = await res.json(); 
+                        if(!data || !data.alphabetData) throw new Error("데이터 누락");
+
+                        // 🌟 통신 성공 시 카운트 1 차감! (함수 유무 체크로 안전하게)
+                        if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
+
+                        fullData = data;
+                        localStorage.setItem(cacheKey, JSON.stringify(fullData));
+                        currentLimit = 0; 
+                        
+                    } catch (err) { 
+                        console.error("4번방 통신 에러:", err);
+                        listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">서버 통신 실패. 버튼을 다시 눌러주세요!</div>`;
+                        btn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기"; 
+                        btn.disabled = false;
+                        return;
+                    }
+                } else {
+                    // 🌟 혜자 모드: 서버 통신 없이 진도만 뺄 때는 로딩 효과만 주고 차감하지 않음
+                    btn.innerText = "⏳ 다음 발음 준비 중..."; 
+                    btn.disabled = true;
+                    await new Promise(resolve => setTimeout(resolve, 300)); // 0.3초 대기
                 }
-            } else {
-                // 🌟 이미 데이터가 있는 경우: 차감 없이 살짝 로딩 연출만 보여줌 (혜자 모드)
-                btn.innerText = "⏳ 다음 발음 준비 중..."; 
-                btn.disabled = true;
-                await new Promise(resolve => setTimeout(resolve, 300)); // 0.3초 대기 후 스르륵 열림
-            }
 
-            // 2. 진도 20개 증가 및 로컬 저장
-            currentLimit += 20;
-            alphaProgress[cacheKey] = currentLimit;
-            localStorage.setItem('alpha_progress', JSON.stringify(alphaProgress));
+                // 2. 진도 20개 증가 및 로컬 저장
+                currentLimit += 20;
+                alphaProgress[cacheKey] = currentLimit;
+                localStorage.setItem('alpha_progress_v21', JSON.stringify(alphaProgress));
 
-            // 3. 데이터 렌더링
-            const isFinished = currentLimit >= fullData.alphabetData.length;
-            const dataToShow = fullData.alphabetData.slice(0, currentLimit);
-            window.renderAlphabet(dataToShow, fullData.description, targetLangCode);
+                // 3. 데이터 렌더링
+                const isFinished = currentLimit >= fullData.alphabetData.length;
+                const dataToShow = fullData.alphabetData.slice(0, currentLimit);
+                if (typeof window.renderAlphabet === 'function') window.renderAlphabet(dataToShow, fullData.description, targetLangCode);
 
-            // 4. 버튼 상태 업데이트
-            if (isFinished) {
-                btn.innerText = `🎉 모든 발음 학습 완료! (${fullData.alphabetData.length}개)`;
-                btn.disabled = true;
-                btn.classList.replace('bg-slate-900', 'bg-emerald-600');
-                btn.classList.replace('hover:bg-black', 'hover:bg-emerald-700');
-            } else {
-                btn.innerText = `👇 다음 발음 더 보기 (${dataToShow.length} / ${fullData.alphabetData.length})`;
-                btn.disabled = false;
-                btn.classList.replace('bg-emerald-600', 'bg-slate-900');
-                btn.classList.replace('hover:bg-emerald-700', 'hover:bg-black');
+                // 4. 버튼 상태 업데이트
+                if (isFinished) {
+                    btn.innerText = `🎉 모든 발음 학습 완료! (${fullData.alphabetData.length}개)`;
+                    btn.disabled = true;
+                    btn.classList.replace('bg-slate-900', 'bg-emerald-600');
+                    btn.classList.replace('hover:bg-black', 'hover:bg-emerald-700');
+                } else {
+                    btn.innerText = `👇 다음 발음 더 보기 (${dataToShow.length} / ${fullData.alphabetData.length})`;
+                    btn.disabled = false;
+                    btn.classList.replace('bg-emerald-600', 'bg-slate-900');
+                    btn.classList.replace('hover:bg-emerald-700', 'hover:bg-black');
+                }
+            } catch (e) {
+                // 어떤 에러가 나도 스크립트가 멈춰버리는 것을 방지!
+                console.error("버튼 먹통 방어 로그:", e);
+                const btn = document.getElementById("generateAlphaBtn");
+                if(btn) {
+                    btn.innerText = "✨ 오류 발생 (다시 시도)"; 
+                    btn.disabled = false;
+                }
             }
         };
 
