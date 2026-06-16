@@ -1599,8 +1599,7 @@
         };
         window.renderVocabs();
 
-       // 💡 4번방: 전체 리스트 로드 및 20개씩 이어보기
-        window.loadAlphabetData = async function() {
+       window.loadAlphabetData = async function() {
             const listArea = document.getElementById("alphabetListArea");
             const btn = document.getElementById("generateAlphaBtn");
             const tLang = document.getElementById('targetLanguage');
@@ -1619,11 +1618,14 @@
             let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress')) || {};
             let currentLimit = alphaProgress[cacheKey] || 0;
 
-            // 1. 처음 생성하는 언어인 경우 (서버 통신)
-            if (!fullData) {
-                if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n(한 번 생성 후에는 데이터가 로컬에 영구 보존됩니다.)\n진행하시겠습니까?`)) return;
+            // 🌟 이미 모든 발음을 다 열었다면 무시
+            if (fullData && currentLimit >= fullData.alphabetData.length) return;
 
-                // 🌟 1. 한도 체크 (최초 생성 시에만 검사)
+            // 1. 처음 생성하는 언어인 경우 (서버 통신 & 비용 차감)
+            if (!fullData) {
+                if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n(한 번 생성 후에는 데이터가 기기에 영구 보존됩니다.)\n진행하시겠습니까?`)) return;
+
+                // 🌟 한도 체크 (처음 생성할 때만 1회 차감)
                 if (!window.checkAndBlockAPI()) return;
 
                 let specialHint = "";
@@ -1651,7 +1653,7 @@
                     const data = await res.json(); 
                     if(!data || !data.alphabetData) throw new Error("데이터 누락");
 
-                    // 🌟 2. 통신 성공 시 카운트 1 차감!
+                    // 🌟 통신 성공 시 카운트 1 차감!
                     window.incrementLocalUsage();
 
                     fullData = data;
@@ -1665,9 +1667,14 @@
                     btn.disabled = false;
                     return;
                 }
+            } else {
+                // 🌟 이미 데이터가 있는 경우: 차감 없이 살짝 로딩 연출만 보여줌 (혜자 모드)
+                btn.innerText = "⏳ 다음 발음 준비 중..."; 
+                btn.disabled = true;
+                await new Promise(resolve => setTimeout(resolve, 300)); // 0.3초 대기 후 스르륵 열림
             }
 
-            // 2. 버튼을 누를 때마다 20개씩 진도 증가 (서버 통신 안 함, 차감 안 함)
+            // 2. 진도 20개 증가 및 로컬 저장
             currentLimit += 20;
             alphaProgress[cacheKey] = currentLimit;
             localStorage.setItem('alpha_progress', JSON.stringify(alphaProgress));
