@@ -1262,7 +1262,7 @@
             const overrideCmd = ` (🚨 CRITICAL RULE: 1. ${specialHint} 2. The 'pronunciation', 'description', and 'exampleMeaning' MUST be written entirely in [${expLangName}]. 3. ABSOLUTELY NO KOREAN HANGUL ALLOWED. 4. Return valid JSON only.)`;
 
             // 과거의 끊어진 불량 캐시를 버리기 위해 v16으로 업데이트
-            const cacheKey = 'alpha_cache_v16_' + targetLangCode + '_' + expLangCode;
+            const cacheKey = 'alpha_cache_v17_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
