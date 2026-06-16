@@ -769,7 +769,11 @@
         async function initDeviceID() {
             let localId = localStorage.getItem('web_device_id');
             if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
-            myDeviceId = localId; updateBadgeUI();
+            myDeviceId = localId; 
+            
+            setTimeout(() => { 
+                if(typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
+            }, 100); // <--- 이렇게 setTimeout이 있는 신형 코드는 남겨둡니다!
         }
         initDeviceID();
 
