@@ -730,6 +730,7 @@
                     
                     if (targetId === 'explanationLanguage' && typeof window.changeUILanguage === 'function') {
                         window.changeUILanguage(lang.code);
+                        localStorage.setItem('explanation_language', lang.code); // 🌟 이 한 줄을 추가! (즉시 자동 저장)
                     }
                     if (targetId === 'targetLanguage' && typeof window.targetLanguageChanged === 'function') {
                         window.targetLanguageChanged();
@@ -1432,9 +1433,8 @@
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            // 🌟 [핵심 수정] 타겟 언어와 사용자 언어의 자리를 완벽하게 강제 지정! (절대 한국어 금지령 삭제)
-            const overrideCmd = ` (CRITICAL JSON MAPPING: Write the main dialogue in [${targetLangName}] and put it in the 'en' key. Write the translation in [${expLangName}] and put it in the 'ko' key. Key names MUST remain 'en' and 'ko' regardless of the actual language used.)`;
-
+            // 🌟 한국어를 쓰지 말라고 명확하게 경고!
+            const overrideCmd = ` (CRITICAL RULE: Write main dialogue in ${targetLangName} (key: 'en'). Write translation in ${expLangName} (key: 'ko'). You MUST write translation in ${expLangName}, NOT Korean!)`;
             btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
@@ -1612,8 +1612,8 @@
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            // 🌟 [핵심 수정] 타겟 언어(단어)와 사용자 언어(해석)의 출력 규칙을 명확히 함
-            const overrideCmd = ` (CRITICAL JSON MAPPING: The 'word' and 'example_en' MUST be written in [${targetLangName}]. The 'meaning' and 'example_ko' MUST be written entirely in [${expLangName}]. Keep key names as they are.)`;
+            // 🌟 한국어를 쓰지 말라고 명확하게 경고!
+            const overrideCmd = ` (CRITICAL RULE: The 'word' and 'example_en' MUST be in ${targetLangName}. The 'meaning' and 'example_ko' MUST be in ${expLangName}, NOT Korean!)`;
 
             let myExistingWords = [];
             savedVocabs.forEach(set => { if (set.langName === targetLangName) set.vocabData.forEach(v => myExistingWords.push(v.word)); });
@@ -1890,7 +1890,53 @@
                 localStorage.setItem('stt_input_language', this.value);
             });
         });
-        
+        // ========== [4번방 자동 표시 마법 코드] ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // 다운받은 데이터가 있으면 화면에 알아서 그려주는 기능
+            function autoLoadAlphabet() {
+                const tLang = document.getElementById('targetLanguage');
+                if(!tLang) return;
+                
+                const targetLangCode = tLang.value;
+                const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+                
+                // 로컬 스토리지에 저장된 데이터 찾기
+                const cacheKey = 'full_alpha_v22_' + targetLangCode + '_' + expLangCode;
+                const cachedData = localStorage.getItem(cacheKey);
+                const btn = document.getElementById("generateAlphaBtn");
+
+                // 저장된 데이터가 있다면 버튼 안 눌러도 즉시 화면에 그림!
+                if (cachedData && typeof window.renderAlphabet === 'function') {
+                    const fullData = JSON.parse(cachedData);
+                    let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v22')) || {};
+                    let currentLimit = alphaProgress[cacheKey];
+                    
+                    // 예전에 몇 개까지 봤는지 기억해서 거기까지 다 보여줌
+                    if (!currentLimit || currentLimit === 0) currentLimit = fullData.alphabetData.length;
+                    
+                    window.renderAlphabet(fullData.alphabetData.slice(0, currentLimit), fullData.description, targetLangCode);
+                    
+                    // 버튼은 '완료' 상태로 예쁘게 바꿔줌
+                    if (btn) {
+                        btn.innerText = `🎉 불러오기 완료! (${fullData.alphabetData.length}개)`;
+                        btn.disabled = true;
+                        btn.classList.replace('bg-slate-900', 'bg-emerald-600');
+                        btn.classList.replace('hover:bg-black', 'hover:bg-emerald-700');
+                    }
+                }
+            }
+
+            // 1. 앱을 처음 켰을 때 카드가 있으면 알아서 보여줌
+            setTimeout(autoLoadAlphabet, 500);
+
+            // 2. 언어를 바꿀 때마다, 빈 화면 대신 저장된 카드가 있으면 0.1초 만에 짠! 하고 나타남
+            const originalLangChange = window.targetLanguageChanged;
+            window.targetLanguageChanged = function() {
+                if (typeof originalLangChange === 'function') originalLangChange(); // 원래 하던 일(화면 초기화) 먼저 하고
+                setTimeout(autoLoadAlphabet, 100); // 0.1초 뒤에 카드를 알아서 채워넣음
+            };
+        });
+        // ===================================================
 
     </script>
 </body>
