@@ -433,10 +433,10 @@
             "ja": {
                 "main_subtitle": "Smart Language Partner", "mic_warning_text": "マイクが制限されています。「別のブラウザで開く」を選択してください。",
                 "ai_engine_label": "AI Engine", "premium_title": "プレミアム無制限購読", "premium_desc": "月額4,500円(税込)で無制限に学習！",
-                "welcome_title": "あなたのAIチューターです。", "welcome_f1_title": "リアルタイム音声会話", "welcome_f1_desc": "下のマイクを押して話してください。対話型チューターと通翻訳モードをサポートします。",
+                "welcome_title": "あなたのAIチューターです。", "welcome_f1_title": "リアルタイム音声会話", "welcome_f1_desc": "下のマ이크を押して話してください。対話型チューターと通翻訳モードをサポートします。",
                 "welcome_f2_title": "スマート単語選択", "welcome_f2_desc": "吹き出しのテキストをタッチして区間を選択すると、隠しメニューが現れます。",
                 "welcome_f3_title": "ネイティブ発音＆カスタム解説", "welcome_f3_desc": "選択した単語だけをネイティブ発音で再度聞く(🔊)か、集中解説(💡)を受けることができます。",
-                "appMode_tutor": "🎓 対話型チューター", "appMode_translate": "🌐 通翻訳モード", "textInputPlaceholder": "直接入力してください...",
+                "appMode_tutor": "🎓 对话型チューター", "appMode_translate": "🌐 通翻訳モード", "textInputPlaceholder": "直接入力してください...",
                 "expGlobalBtnText": "家庭教師の解説", "header_room2": "🎬 状況別ロールプレイ", "rp_level_text": "1. レベル選択",
                 "rp_lv1": "入門", "rp_lv2": "初級", "rp_lv3": "中級", "rp_lv4": "ネイティブ", "rp_sit_text": "2. 状況選択",
                 "rp_sit1": "🎲 日常ランダム", "rp_sit2": "☕ カフェ注文", "rp_sit3": "🍽️ レストラン", "rp_sit4": "🛂 入国審査", "rp_sit5": "🛍️ 服の買い物", "rp_sit6": "🚕 タクシー乗車",
@@ -842,7 +842,6 @@
                 });
                 
                 let data = await res.json();
-                
                 let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
                 const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
                 
@@ -878,7 +877,7 @@
         }
         window.handleUserMessage = handleUserMessage;
 
-        window.requestExplanationGlobal = async function() { 
+        window.requestExplanationGlobal = function() { 
             let lastAiMsg = "";
             for(let i = uiChatHistory.length - 1; i >= 0; i--) {
                 if(uiChatHistory[i].sender === 'ai') {
@@ -896,34 +895,16 @@
 
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
-            
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             
             window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); 
             document.getElementById('avatarWrap').style.borderColor = "#f59e0b"; 
 
-            const aiLangNames = {
-                "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", 
-                "zh-CN": "Simplified Chinese (Mandarin)", 
-                "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", 
-                "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian"
-            };
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
             const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
-            const systemPrompt = `You are an expert language tutor. 
-CRITICAL RULE: Your ENTIRE explanation MUST be written entirely in ${exactAiLang} (ISO code: ${expLangCode}). 
-Do NOT use Korean under any circumstances unless the code is 'ko-KR'. 
-If the code is 'zh-CN', you MUST use Simplified Chinese (Hanzi) for all explanations.
-Output ONLY a valid JSON object without markdown formatting.`;
-
-            const userPrompt = `Analyze the following text:
-- Learning Language: ${targetLangName}
-- Context: "${fullText}"
-- Part to explain: "${targetText}"
-
-Provide the meaning, grammatical features, and 1-2 practical examples for the "Part to explain". 
-Expected JSON format:
-{"explanation": "Your detailed explanation written entirely in ${exactAiLang} here"}`;
+            const systemPrompt = `You are an expert language tutor. CRITICAL RULE: Your ENTIRE explanation MUST be written entirely in ${exactAiLang} (ISO code: ${expLangCode}). Do NOT use Korean under any circumstances unless the code is 'ko-KR'. If the code is 'zh-CN', you MUST use Simplified Chinese (Hanzi) for all explanations. Output ONLY a valid JSON object without markdown formatting.`;
+            const userPrompt = `Analyze the following text:\n- Learning Language: ${targetLangName}\n- Context: "${fullText}"\n- Part to explain: "${targetText}"\n\nProvide the meaning, grammatical features, and 1-2 practical examples for the "Part to explain". \nExpected JSON format:\n{"explanation": "Your detailed explanation written entirely in ${exactAiLang} here"}`;
 
             try {
                 let res = await fetchAPI(WORKER_URL, {
@@ -931,16 +912,12 @@ Expected JSON format:
                     headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
                     body: JSON.stringify({
                         model: "deepseek-chat",
-                        messages: [
-                            {role: "system", content: systemPrompt},
-                            {role: "user", content: userPrompt}
-                        ],
+                        messages: [{role: "system", content: systemPrompt}, {role: "user", content: userPrompt}],
                         response_format: { type: "json_object" }
                     })
                 });
                 
                 let data = await res.json();
-                
                 let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
                 const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
                 let parsed;
@@ -959,23 +936,16 @@ Expected JSON format:
                 const bId = `exp-msg-${bubbleCounter}`; 
                 
                 let explanationText = parsed.explanation;
-
                 if (window.Intl && Intl.Segmenter && (expLangCode.startsWith('ja') || expLangCode.startsWith('zh') || expLangCode.startsWith('th'))) {
                     const segmenter = new Intl.Segmenter(expLangCode, { granularity: 'word' });
                     explanationText = Array.from(segmenter.segment(explanationText)).map(seg => seg.segment).join(' ');
                 }
 
                 const safeExplanation = explanationText.replace(/\n/g, ' <br> ');
-
-                msgDiv.innerHTML = `
-                <div class="bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md self-start relative">
-                    <p class="text-[11px] font-extrabold text-amber-600 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-lightbulb"></i> [집중 해설] ${targetText}</p>
-                    <p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${createSpansForText(safeExplanation, bId, true)}</p>
-                </div>`;
+                msgDiv.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md self-start relative"><p class="text-[11px] font-extrabold text-amber-600 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-lightbulb"></i> [집중 해설] ${targetText}</p><p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${createSpansForText(safeExplanation, bId, true)}</p></div>`;
                 
                 document.getElementById('chatContainer').appendChild(msgDiv); 
                 setTimeout(() => document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight, 50);
-                
                 window.updateStatus("대기 중");
                 document.getElementById('avatarWrap').style.borderColor = "#60a5fa"; 
             } catch(e) {
@@ -988,11 +958,7 @@ Expected JSON format:
         function clearChatSession() { conversationHistory=[]; uiChatHistory=[]; sessionStorage.clear(); document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el=>el.remove()); }
         window.changeAppMode = function() { clearChatSession(); } 
         window.targetLanguageChanged = function() { clearChatSession(); }
-        
-        window.selectGender = function(g) { 
-            tempGender = g; 
-            updateGenderUI(g, false); 
-        }
+        window.selectGender = function(g) { tempGender = g; updateGenderUI(g, false); }
         
         window.toggleSettingsModal = function(show = true) { 
             let m = document.getElementById('settingsModal');
@@ -1013,20 +979,14 @@ Expected JSON format:
             localStorage.setItem('voice_gender', currentVoiceGender);
             document.documentElement.style.setProperty('--chat-font-size', (localStorage.getItem('chat_font_size') || 14) + 'px');
             
-            // 🌟 로컬 파일(file://)에서 에러가 나는 reload 대신, 화면 즉시 렌더링으로 변경 완료!
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             window.changeUILanguage(expLangCode);
             window.updateLangDisplays();
-            
             window.toggleSettingsModal(false); 
         }
 
         const appScreens = [ document.getElementById('screen-main'), document.getElementById('screen-roleplay'), document.getElementById('screen-vocab'), document.getElementById('screen-alphabet') ];
-        let currentScreen = 0; 
-        let isMenuScrolling = false; 
-        let startX = 0;
-        let startY = 0;               
-        let isVerticalScroll = false; 
+        let currentScreen = 0; let isMenuScrolling = false; let startX = 0; let startY = 0; let isVerticalScroll = false; 
 
         window.goToScreen = function(index) {
             if (index < 0 || index >= appScreens.length) return;
@@ -1041,36 +1001,22 @@ Expected JSON format:
 
         window.addEventListener('touchstart', (e) => {
             if (e.target.closest('.overflow-x-auto') || e.target.closest('input')) { isMenuScrolling = true; return; }
-            isMenuScrolling = false; 
-            isVerticalScroll = false;      
-            startX = e.touches[0].clientX; 
-            startY = e.touches[0].clientY; 
+            isMenuScrolling = false; isVerticalScroll = false; startX = e.touches[0].clientX; startY = e.touches[0].clientY; 
             appScreens.forEach(s => { if(s) s.style.transition = 'none'; });
         }, { passive: true });
 
         window.addEventListener('touchmove', (e) => {
             if (isMenuScrolling) return; 
-            
-            let moveX = e.touches[0].clientX - startX;
-            let moveY = e.touches[0].clientY - startY; 
-
-            if (!isVerticalScroll && Math.abs(moveY) > Math.abs(moveX)) {
-                isVerticalScroll = true;
-            }
-
+            let moveX = e.touches[0].clientX - startX; let moveY = e.touches[0].clientY - startY; 
+            if (!isVerticalScroll && Math.abs(moveY) > Math.abs(moveX)) isVerticalScroll = true;
             if (isVerticalScroll) return; 
-
             if(appScreens[currentScreen]) appScreens[currentScreen].style.transform = `translateX(${moveX}px)`;
             if (moveX > 0 && currentScreen > 0 && appScreens[currentScreen - 1]) appScreens[currentScreen - 1].style.transform = `translateX(calc(-30% + ${moveX * 0.3}px))`;
             if (moveX < 0 && currentScreen < appScreens.length - 1 && appScreens[currentScreen + 1]) appScreens[currentScreen + 1].style.transform = `translateX(calc(100% + ${moveX}px))`;
         }, { passive: true });
 
         window.addEventListener('touchend', (e) => {
-            if (isMenuScrolling || isVerticalScroll) { 
-                goToScreen(currentScreen);
-                return; 
-            }
-            
+            if (isMenuScrolling || isVerticalScroll) { goToScreen(currentScreen); return; }
             let moveX = e.changedTouches[0].clientX - startX;
             if (moveX < -70 && currentScreen < appScreens.length - 1) goToScreen(currentScreen + 1);
             else if (moveX > 70 && currentScreen > 0) goToScreen(currentScreen - 1); 
@@ -1082,28 +1028,17 @@ Expected JSON format:
         let activeTestScriptIdx = -1, activeTestLineIdx = -1, isInteractiveTestActive = false;
 
         document.querySelectorAll('.level-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
-        
-        window.setRandomSituation = function(element) {
-            document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); element.classList.add('selected-card');
-        };
+        window.setRandomSituation = function(element) { document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); element.classList.add('selected-card'); };
         document.querySelectorAll('.sit-card').forEach(card => card.onclick = (e) => setRandomSituation(e.currentTarget));
 
         window.renderScripts = function() {
             const playerArea = document.getElementById("scriptList"); playerArea.innerHTML = "";
-            
             const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-
             if(savedScripts.length === 0) return;
             for (let i = savedScripts.length - 1; i >= 0; i--) {
                 const scriptItem = savedScripts[i];
-                let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm">
-                        <p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p>
-                        <div class="flex gap-1.5">
-                            <button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm"><i class="fa-solid fa-volume-high text-xs"></i></button>
-                            <button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button>
-                            <button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button>
-                        </div></div><div class="space-y-3">`;
+                let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm"><p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p><div class="flex gap-1.5"><button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm"><i class="fa-solid fa-volume-high text-xs"></i></button><button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button><button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button></div></div><div class="space-y-3">`;
                 scriptItem.scriptData.forEach((line, lineIdx) => {
                     const isAi = line.role === 'ai';
                     html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all"><div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div><div class="flex-1"><p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi? (dict.rp_ai || 'AI') : (dict.rp_user || 'Me')}</p><p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all">${line.en}</p><p class="text-xs text-gray-500 mt-1">${line.ko}</p><div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div></div></div>`;
@@ -1112,10 +1047,7 @@ Expected JSON format:
                 playerArea.insertAdjacentHTML('beforeend', html);
             }
             const statusBoxText = document.getElementById("statusBoxText");
-            if(statusBoxText && dict.rp_save_count) {
-                statusBoxText.innerText = dict.rp_save_count.replace('{n}', savedScripts.length);
-            }
-            const scrollArea = document.getElementById("scrollArea"); if(scrollArea) scrollArea.scrollTop = 0;
+            if(statusBoxText && dict.rp_save_count) statusBoxText.innerText = dict.rp_save_count.replace('{n}', savedScripts.length);
         };
 
         window.generateScript = async function() {
@@ -1129,19 +1061,13 @@ Expected JSON format:
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             const aiLangNames = { "ko-KR": "한국어", "en-US": "English", "ja-JP": "日本語", "zh-CN": "简体中文", "es-ES": "Español", "th-TH": "ภาษาไทย", "vi-VN": "Tiếng Việt", "fr-FR": "Français", "de-DE": "Deutsch", "ru-RU": "Русский" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
-
-            const overrideCmd = ` (🚨최우선 강제 명령: 서버의 기본 지시를 무시할 것! 대본의 해석(ko)은 절대로 한국어를 쓰지 말고 오직 [${expLangName}]로만 작성해라!)`;
+            const overrideCmd = ` (🚨최우선 명령: 해석(ko)은 절대로 한국어를 쓰지 말고 오직 [${expLangName}]로만 작성해라!)`;
 
             btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        level: level, 
-                        situation: isRandom ? "랜덤한 일상 대화" : situation, 
-                        language: targetLangName + overrideCmd, 
-                        isRandom: isRandom 
-                    }) 
+                    body: JSON.stringify({ level: level, situation: isRandom ? "랜덤한 일상 대화" : situation, language: targetLangName + overrideCmd, isRandom: isRandom }) 
                 });
                 const data = await res.json(); 
                 if (savedScripts.length >= 5) savedScripts.shift(); 
@@ -1149,8 +1075,7 @@ Expected JSON format:
                 localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); renderScripts();
             } catch (err) { alert("대본 생성 실패"); } finally { 
                 const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-                btn.innerText = UI_DICTIONARY[baseLang]?.generateBtn || "✨ AI 대본 생성하기"; 
-                btn.disabled = false; 
+                btn.innerText = UI_DICTIONARY[baseLang]?.generateBtn || "✨ AI 대본 생성하기"; btn.disabled = false; 
             }
         };
         document.getElementById("generateBtn").onclick = window.generateScript;
@@ -1210,14 +1135,11 @@ Expected JSON format:
         window.startShadowing = function() {
             if (savedScripts.length === 0) return alert("Error");
             if (!isInteractiveTestActive) return alert("Test First!");
-            
             const targetItem = savedScripts[activeTestScriptIdx]; const userLine = targetItem.scriptData[activeTestLineIdx];
             if (userLine.role !== 'user') return alert("AI Turn.");
             const btn = document.getElementById("roleplayMicBtn"); if (isRpListening) { roleplayRec.stop(); return; }
-
             btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); document.getElementById("roleplayMicIcon").classList.replace("fa-microphone", "fa-ear-listen");
             try { roleplayRec.lang = targetItem.langCode; roleplayRec.start(); isRpListening = true; } catch(e) {}
-
             let score = 0, recognizedText = "";
             roleplayRec.onresult = (e) => {
                 recognizedText = e.results[0][0].transcript.toLowerCase();
@@ -1236,9 +1158,7 @@ Expected JSON format:
         let currentVocabSetIdx = -1; let currentVocabWordIdx = 0;
 
         window.setVocabTheme = function(element) {
-            document.querySelectorAll('.vocab-theme-btn').forEach(btn => {
-                btn.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700'); btn.classList.add('bg-white', 'border-slate-200', 'text-slate-500');
-            });
+            document.querySelectorAll('.vocab-theme-btn').forEach(btn => { btn.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700'); btn.classList.add('bg-white', 'border-slate-200', 'text-slate-500'); });
             element.classList.remove('bg-white', 'border-slate-200', 'text-slate-500'); element.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
         };
 
@@ -1246,12 +1166,10 @@ Expected JSON format:
             const listArea = document.getElementById("vocabListArea"); listArea.innerHTML = "";
             const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-
             if(savedVocabs.length === 0) {
                 listArea.innerHTML = `<div id="vc_empty_text" class="text-center text-slate-400 text-sm mt-10 font-bold">${dict.vc_empty_text || "위 버튼을 눌러 첫 단어장을 생성해 보세요!"}</div>`;
                 document.getElementById("mainFlashcardArea").classList.add("hidden"); return;
             }
-
             for (let i = savedVocabs.length - 1; i >= 0; i--) {
                 const set = savedVocabs[i];
                 let html = `<div><div class="bg-slate-100 rounded-xl p-2.5 mb-3"><p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}: [${set.theme}] (${set.langName})</p></div><div class="grid grid-cols-4 gap-2">`;
@@ -1273,32 +1191,22 @@ Expected JSON format:
             document.getElementById("vocabFlashcard").classList.remove('rotate-y-180'); 
             document.getElementById("vcCount").innerText = `${savedVocabs[setIdx].theme} (${wordIdx + 1}/10)`;
             document.getElementById("vcWord").innerText = v.word; document.getElementById("vcPron").innerText = `[${v.pronunciation}]`; document.getElementById("vcPhonetic").innerText = v.phonetic; document.getElementById("vcMeaning").innerText = v.meaning; document.getElementById("vcExEn").innerText = `"${v.example_en}"`; document.getElementById("vcExKo").innerText = v.example_ko;
-            document.getElementById("vocabScrollArea").scrollTop = 0; window.renderVocabs(); 
+            window.renderVocabs(); 
         };
 
         window.nextVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx < savedVocabs[currentVocabSetIdx].vocabData.length - 1) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx + 1); };
         window.prevVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx > 0) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1); };
 
         window.playVocabAudio = function() {
-            if(currentVocabSetIdx === -1) return; 
-            window.speechSynthesis.cancel();
-            
+            if(currentVocabSetIdx === -1) return; window.speechSynthesis.cancel();
             const vocab = savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx];
-            const flashcard = document.getElementById('vocabFlashcard');
-            
-            const isBackSide = flashcard.classList.contains('rotate-y-180');
-            const textToSpeak = isBackSide ? vocab.example_en : vocab.word;
-            
-            const utt = new SpeechSynthesisUtterance(textToSpeak);
-            utt.lang = savedVocabs[currentVocabSetIdx].langCode; 
-            utt.rate = isBackSide ? 0.9 : 1.0; 
-            window.speechSynthesis.speak(utt);
+            const isBackSide = document.getElementById('vocabFlashcard').classList.contains('rotate-y-180');
+            const utt = new SpeechSynthesisUtterance(isBackSide ? vocab.example_en : vocab.word);
+            utt.lang = savedVocabs[currentVocabSetIdx].langCode; utt.rate = isBackSide ? 0.9 : 1.0; window.speechSynthesis.speak(utt);
         };
 
         window.generateVocab = async function() {
-            if (savedVocabs.length >= 5) { 
-                if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; 
-            }
+            if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
             const btn = document.getElementById("generateVocabBtn");
             const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
@@ -1306,42 +1214,24 @@ Expected JSON format:
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             const aiLangNames = { "ko-KR": "한국어", "en-US": "English", "ja-JP": "日本語", "zh-CN": "简体中文", "es-ES": "Español", "th-TH": "ภาษาไทย", "vi-VN": "Tiếng Việt", "fr-FR": "Français", "de-DE": "Deutsch", "ru-RU": "Русский" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
-
-            const overrideCmd = ` (🚨최우선 강제 명령: 서버의 기본 지시를 무시할 것! 뜻(meaning)과 예문해석(example_ko)은 절대로 한국어를 쓰지 말고 오직 [${expLangName}]로만 작성해라!)`;
+            const overrideCmd = ` (🚨최우선 명령: 뜻(meaning)과 예문해석(example_ko)은 절대로 한국어를 쓰지 말고 오직 [${expLangName}]로만 작성해라!)`;
 
             let myExistingWords = [];
-            savedVocabs.forEach(set => {
-                if (set.langName === targetLangName) {
-                    set.vocabData.forEach(v => myExistingWords.push(v.word));
-                }
-            });
+            savedVocabs.forEach(set => { if (set.langName === targetLangName) set.vocabData.forEach(v => myExistingWords.push(v.word)); });
 
             btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
-                const res = await fetch(`${WORKER_URL}generate-vocab`, { 
-                    method: 'POST', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        theme: theme, 
-                        language: targetLangName + overrideCmd, 
-                        existingWords: myExistingWords 
-                    }) 
-                });
+                const res = await fetch(`${WORKER_URL}generate-vocab`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme: theme, language: targetLangName + overrideCmd, existingWords: myExistingWords }) });
                 const data = await res.json(); 
                 let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
                 if (savedVocabs.length >= 5) savedVocabs.shift(); 
                 savedVocabs.push({ id: newId, theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
-                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); 
-                window.showFlashcard(savedVocabs.length - 1, 0);
-            } catch (err) { 
-                alert("Fail"); 
-            } finally { 
+                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); window.showFlashcard(savedVocabs.length - 1, 0);
+            } catch (err) { alert("Fail"); } finally { 
                 const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-                btn.innerHTML = UI_DICTIONARY[baseLang]?.generateVocabBtn || "✨ AI 단어장 생성하기"; 
-                btn.disabled = false; 
+                btn.innerHTML = UI_DICTIONARY[baseLang]?.generateVocabBtn || "✨ AI 단어장 생성하기"; btn.disabled = false; 
             }
         };
-            
         window.renderVocabs();
 
         window.loadAlphabetData = async function() {
@@ -1351,19 +1241,17 @@ Expected JSON format:
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
             const targetLangCode = tLang.value;
             
-            // 🌟 사용자 언어 가져오기
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             const aiLangNames = { "ko-KR": "한국어", "en-US": "English", "ja-JP": "日本語", "zh-CN": "简体中文", "es-ES": "Español", "th-TH": "ภาษาไทย", "vi-VN": "Tiếng Việt", "fr-FR": "Français", "de-DE": "Deutsch", "ru-RU": "Русский" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
-
             const baseLang = expLangCode.split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-            // 🌟 [성공 공식 적용] 2, 3번 방에서 성공했던 '짧고 굵은 한국어 해킹 명령'으로 교체!
-            const overrideCmd = ` (🚨최우선 명령: 영어 A-Z 말고 반드시 해당 언어의 진짜 고유 문자를 출력할 것! 그리고 설명(description, exampleMeaning)은 절대로 한국어를 쓰지 말고 오직 [${expLangName}]로만 작성해라!)`;
+            // 🌟 [핵심 해결] 길었던 영어를 빼고, 2/3번 방에서 성공했던 '짧고 명확한 한국어'로 변경!
+            const overrideCmd = ` (🚨최우선 명령: 영어가 아니면 A-Z 대신 해당 언어의 고유 문자를 줄 것! 또한 설명과 예문뜻은 절대로 한국어를 쓰지말고 오직 [${expLangName}]로만 작성해라!)`;
 
-            // 캐시 초기화 (v9)
-            const cacheKey = 'alpha_cache_v9_' + targetLangCode + '_' + expLangCode;
+            // 캐시 강제 초기화 (v11)
+            const cacheKey = 'alpha_cache_v11_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
@@ -1372,41 +1260,60 @@ Expected JSON format:
                 return;
             }
 
-            btn.innerText = "⏳ ..."; 
-            btn.disabled = true;
+            btn.innerText = "⏳ ..."; btn.disabled = true;
             listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "Loading..."}</div>`;
 
             try {
-                const res = await fetch(`${WORKER_URL}generate-alphabet`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ 
-                        // 🌟 짧은 해킹 명령어로 안전하게 전송!
-                        language: targetLangName + overrideCmd 
-                    }) 
+                // 🌟 [안전 장치] 일반 fetch 대신, 실패하면 3번 다시 시도하는 fetchAPI 적용!
+                const res = await fetchAPI(`${WORKER_URL}generate-alphabet`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ language: targetLangName + overrideCmd }) 
                 });
                 
-                if (!res.ok) throw new Error("서버 에러");
-
+                if (!res) throw new Error("서버 에러");
+                
                 const data = await res.json(); 
                 
-                localStorage.setItem(cacheKey, JSON.stringify({
-                    alphabetData: data.alphabetData,
-                    description: data.description
-                }));
-                
+                // 데이터가 비정상적일 경우 강제 에러 처리
+                if(!data || !data.alphabetData) throw new Error("데이터 누락");
+
+                localStorage.setItem(cacheKey, JSON.stringify({ alphabetData: data.alphabetData, description: data.description }));
                 renderAlphabet(data.alphabetData, data.description, targetLangCode);
 
             } catch (err) { 
-                console.error(err);
-                listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">Fail</div>`;
+                console.error("4번방 통신 에러:", err);
+                listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">서버 혼잡(Fail). 다시 버튼을 눌러주세요!</div>`;
             } finally {
                 btn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기"; 
                 btn.disabled = false;
             }
         };
 
-    </script>
+        window.renderAlphabet = function(alphabetData, description, langCode) {
+            const listArea = document.getElementById("alphabetListArea"); listArea.innerHTML = "";
+            let html = "";
+            if(description) html += `<div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mb-5 shadow-sm"><p class="text-[13px] text-emerald-800 font-bold leading-relaxed whitespace-pre-wrap"><i class="fa-solid fa-circle-info mr-1"></i> ${description}</p></div>`;
+            const grouped = alphabetData.reduce((acc, curr) => { if (!acc[curr.category]) acc[curr.category] = []; acc[curr.category].push(curr); return acc; }, {});
 
-    
+            for (const [category, letters] of Object.entries(grouped)) {
+                html += `<div class="mb-6"><h3 class="text-sm font-extrabold text-emerald-700 mb-3 border-b border-emerald-100 pb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-leaf text-emerald-400 text-xs"></i> ${category}</h3><div class="grid grid-cols-3 gap-2">`;
+                letters.forEach(item => {
+                    const safeLetter = item.letter ? item.letter.replace(/'/g, "\\'") : "";
+                    const safeWord = item.exampleWord ? item.exampleWord.replace(/'/g, "\\'") : "";
+                    html += `<button onclick="playAlphabetAudio('${safeLetter}. ${safeWord}', '${langCode}')" class="bg-white border-[2px] border-slate-100 rounded-2xl flex flex-col items-center justify-center p-2.5 shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md transition-all group relative"><span class="absolute top-2 left-2 text-sm drop-shadow-sm">${item.emoji || ''}</span><span class="text-3xl font-black text-slate-800 group-hover:text-emerald-600 transition-colors mt-2 mb-1">${item.letter}</span><span class="text-[10px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded-md group-hover:bg-white transition-colors mb-2">${item.pronunciation}</span><div class="w-full bg-slate-50 rounded-lg py-1.5 group-hover:bg-emerald-100/50 transition-colors"><p class="text-[11px] font-extrabold text-slate-700 truncate px-1">${item.exampleWord || ''}</p><p class="text-[9px] text-slate-500 truncate px-1">${item.exampleMeaning || ''}</p></div></button>`;
+                });
+                html += `</div></div>`;
+            }
+            listArea.innerHTML = html;
+        };
+
+        window.playAlphabetAudio = function(textToSpeak, langCode) { if (isSpeaking) window.speechSynthesis.cancel(); const engineeringUtt = new SpeechSynthesisUtterance(textToSpeak); engineeringUtt.lang = langCode; engineeringUtt.pitch = 1.1; engineeringUtt.rate = 0.85; window.speechSynthesis.speak(engineeringUtt); };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedLang = localStorage.getItem('explanation_language') || 'ko-KR';
+            if (typeof window.changeUILanguage === 'function') window.changeUILanguage(savedLang);
+        });
+    </script>
 </body>
 </html>
