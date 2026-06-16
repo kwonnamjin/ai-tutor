@@ -677,10 +677,18 @@
             document.getElementById('sttInputLanguage').innerHTML = optionsHtml;
             document.getElementById('explanationLanguage').innerHTML = optionsHtml;
         }
+        // 1. 목록 생성
         renderLanguageSelects();
+        
+        // 2. 저장된 값 불러오기 (지금 찾으신 완벽한 코드)
         document.getElementById('targetLanguage').value = localStorage.getItem('target_language') || 'en-US';
         document.getElementById('sttInputLanguage').value = localStorage.getItem('stt_input_language') || 'ko-KR';
         document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
+
+        // 3. 하단 언어 바꿀 때마다 로컬 스토리지에 자동 저장 (요것만 추가!)
+        document.getElementById('sttInputLanguage').addEventListener('change', function() {
+            localStorage.setItem('stt_input_language', this.value);
+        });
         
 
         window.updateLangDisplays = function() {
@@ -740,104 +748,138 @@
         };
 
         const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
-        const MAX_FREE_COUNT = 50;
-        let isListening = false, isSpeaking = false, recognition = null;
-        const synthesis = window.speechSynthesis;
-        let conversationHistory = JSON.parse(sessionStorage.getItem('llmHistory')) || []; 
-        let uiChatHistory = JSON.parse(sessionStorage.getItem('uiHistory')) || []; 
-        let bubbleCounter = parseInt(sessionStorage.getItem('bubbleCounter')) || 0; 
-        
-        let currentUtterance = null; 
-        let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
-        let tempGender = currentVoiceGender; 
 
-        let currentBubbleId = null, startIndex = -1, endIndex = -1, myDeviceId = "unknown";
+        // 💡 1. 요금제 설정 (API 호출 한도)
+        const PLAN_LIMITS = { 'free': 50, 'basic': 300, 'premium': 1000 };
 
-        const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
-        const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
-        const avatarWrap = document.getElementById('avatarWrap'), stopAudioBtn = document.getElementById('stopAudioBtn');
-        const selectionTooltip = document.getElementById('selectionTooltip');
-
-        function getDailyDateKey() {
-            const now = new Date(); const kst = new Date(now.getTime() + (9 * 60 * 60 * 1000));
-            if (kst.getUTCHours() < 6) kst.setUTCDate(kst.getUTCDate() - 1); return `${kst.getUTCFullYear()}-${kst.getUTCMonth()+1}-${kst.getUTCDate()}`;
+        // 💡 2. 리셋 날짜 구하기 (UTC 0시 기준)
+        function getResetDateStr() {
+            // toISOString()은 기본적으로 UTC 시간을 반환하므로, 날짜(YYYY-MM-DD)만 잘라내면 완벽한 UTC 0시 기준이 됩니다.
+            return new Date().toISOString().split('T')[0]; 
         }
 
-        async function initDeviceID() {
-            let localId = localStorage.getItem('web_device_id');
-            if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
-            myDeviceId = localId; updateBadgeUI();
-        }
-        initDeviceID();
+        // 💡 3. 한도 체크 로직 (무료 3일 및 일일 사용량)
+        function checkUsageLimit() {
+            const currentTier = localStorage.getItem('subscription_tier') || 'free';
+            const maxLimit = PLAN_LIMITS[currentTier];
 
-        window.sendTextMessage = function() {
-            const input = document.getElementById('textInput'); const text = input.value.trim();
-            if (text) { input.value = ''; handleUserMessage(text); }
-        }
-
-        function updateGenderUI(g, applyImg=false) {
-            if(g === 'female') { 
-                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm border border-blue-200"; 
-                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
-            } else { 
-                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white shadow-sm text-blue-600 border border-blue-200"; 
-                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
+            // 무료 사용자 3일 제한 검사
+            if (currentTier === 'free') {
+                const firstUseDate = localStorage.getItem('free_trial_start');
+                if (firstUseDate) {
+                    const daysPassed = (Date.now() - parseInt(firstUseDate)) / (1000 * 60 * 60 * 24);
+                    if (daysPassed > 3) return { allowed: false, reason: 'trial_expired', tier: currentTier, count: 0, maxLimit };
+                }
             }
-        }
-        updateGenderUI(currentVoiceGender, true); 
 
-        function updateBadgeUI() {
-            const badge = document.getElementById('usageBadge'); const remainText = document.getElementById('remainCountText');
-            if (localStorage.getItem('is_premium') === 'true') {
-                badge.innerHTML = '<i class="fa-solid fa-crown text-yellow-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
-                badge.className = "bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-purple-400 shadow-inner flex items-center";
+            // 일일 사용량 검사
+            const todayStr = getResetDateStr();
+            let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
+
+            if (usageObj.date !== todayStr) {
+                usageObj = { date: todayStr, count: 0 };
+                localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
+            }
+
+            if (usageObj.count >= maxLimit) {
+                return { allowed: false, reason: 'limit_reached', tier: currentTier, count: usageObj.count, maxLimit };
+            }
+            return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
+        }
+
+        // 💡 4. API 사용 전 차단 및 모달창 띄우기 도우미 함수
+        window.checkAndBlockAPI = function() {
+            const status = checkUsageLimit();
+            if (!status.allowed) {
+                showSubscriptionModal(status.reason);
+                return false; // 통신 차단
+            }
+            return true; // 통신 허용
+        };
+
+        // 💡 5. 사용량 카운트 증가 및 배지 UI 업데이트
+        window.incrementLocalUsage = function() {
+            const status = checkUsageLimit();
+            if (!status.allowed) return false;
+
+            // 무료 사용자 최초 사용일 기록
+            if (status.tier === 'free' && !localStorage.getItem('free_trial_start')) {
+                localStorage.setItem('free_trial_start', Date.now().toString());
+            }
+
+            let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4'));
+            usageObj.count += 1;
+            localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
+            window.updateBadgeUI();
+            return true;
+        }
+
+        window.updateBadgeUI = function() {
+            const badge = document.getElementById('usageBadge');
+            const remainText = document.getElementById('remainCountText');
+            if(!badge) return;
+
+            const status = checkUsageLimit();
+            // 차단된 상태라면 현재 카운트를 그대로 두고, 아니면 실제 카운트를 가져옴
+            const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
+
+            if (status.tier === 'premium') {
+                badge.innerHTML = '<i class="fa-solid fa-crown text-amber-300"></i> <span class="tracking-widest ml-1">PREMIUM</span>';
+                badge.className = "shrink-0 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-amber-400 shadow-inner flex items-center";
+            } else if (status.tier === 'basic') {
+                badge.innerHTML = '<i class="fa-solid fa-star text-indigo-300"></i> <span class="tracking-widest ml-1">BASIC</span>';
+                badge.className = "shrink-0 bg-gradient-to-r from-indigo-500 to-blue-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-indigo-400 shadow-inner flex items-center";
             } else {
-                const todayKey = getDailyDateKey();
-                if (localStorage.getItem('local_date_key') !== todayKey) { localStorage.setItem('local_total_count', '0'); localStorage.setItem('local_date_key', todayKey); }
-                let count = parseInt(localStorage.getItem('local_total_count') || '0');
-                if(remainText) remainText.innerText = `${Math.max(0, MAX_FREE_COUNT - count)}/${MAX_FREE_COUNT}`;
+                badge.innerHTML = `<i class="fa-solid fa-bolt text-yellow-400"></i> <span id="remainCountText">${currentCount}/${status.maxLimit}</span>`;
+                badge.className = "shrink-0 bg-blue-950/50 text-white text-[10px] font-bold px-2 py-1.5 rounded-lg border border-blue-500 shadow-inner flex items-center gap-1 backdrop-blur-sm";
             }
         }
 
-        function incrementLocalUsage() {
-            if(localStorage.getItem('is_premium') === 'true') return;
-            const todayKey = getDailyDateKey();
-            if (localStorage.getItem('local_date_key') !== todayKey) { localStorage.setItem('local_total_count', '0'); localStorage.setItem('local_date_key', todayKey); }
-            let count = parseInt(localStorage.getItem('local_total_count') || '0'); localStorage.setItem('local_total_count', count + 1); updateBadgeUI();
+        // 💡 6. 결제 유도 모달창 및 가짜 결제 처리
+        function showSubscriptionModal(reason) {
+            const existingModal = document.getElementById('subscriptionModal');
+            if (existingModal) existingModal.remove();
+
+            let titleText = reason === 'trial_expired' ? "3일 무료 체험이 종료되었습니다." : "일일 사용량을 모두 소진했습니다!";
+            const modalHtml = `
+            <div id="subscriptionModal" class="fixed inset-0 bg-black/70 z-[999] flex items-center justify-center p-4 backdrop-blur-sm">
+                <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative animate-fade-in-up border border-slate-100">
+                    <button onclick="document.getElementById('subscriptionModal').remove()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-2xl"></i></button>
+                    <div class="p-6 text-center">
+                        <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-100"><i class="fa-solid fa-crown text-3xl text-indigo-500"></i></div>
+                        <h2 class="text-xl font-black text-slate-800 mb-2">${titleText}</h2>
+                        <p class="text-sm text-slate-500 mb-6">계속 학습하시려면<br>멤버십 플랜을 선택해 주세요.</p>
+                        <div class="space-y-3 text-left">
+                            <button onclick="processPayment('basic')" class="w-full border-2 border-indigo-100 hover:border-indigo-500 bg-indigo-50/50 rounded-2xl p-4 flex items-center justify-between transition-all">
+                                <div><h3 class="text-indigo-800 font-bold text-lg">베이직 (Basic)</h3><p class="text-xs text-indigo-500 font-medium">매일 300건 대화</p></div>
+                                <div class="text-right"><span class="text-slate-800 font-black text-lg">₩3,900</span><span class="text-xs text-slate-400">/월</span></div>
+                            </button>
+                            <button onclick="processPayment('premium')" class="w-full border-2 border-amber-200 hover:border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 flex items-center justify-between transition-all relative overflow-hidden">
+                                <div class="absolute top-0 right-0 bg-amber-400 text-white text-[10px] font-black px-2 py-0.5 rounded-bl-lg shadow-sm">무제한급</div>
+                                <div><h3 class="text-amber-700 font-bold text-lg">프리미엄 (Premium)</h3><p class="text-xs text-amber-600 font-medium">매일 1,000건 대화</p></div>
+                                <div class="text-right"><span class="text-slate-800 font-black text-lg">₩7,900</span><span class="text-xs text-slate-400">/월</span></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            window.stopSpeaking();
         }
 
-        function enforcePaywall(reasonCode) {
-            document.getElementById('paywallModal').classList.remove('hidden');
-            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = true);
-            micBtn.classList.replace('from-blue-400', 'from-slate-400'); micBtn.classList.replace('to-blue-600', 'to-slate-600');
-            stopSpeaking(); window.updateStatus("무료 이용 횟수 종료됨");
+        window.processPayment = function(plan) {
+            localStorage.setItem('subscription_tier', plan);
+            let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
+            usageObj.count = 0; localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
+            document.getElementById('subscriptionModal').remove();
+            window.updateBadgeUI();
+            alert("결제가 반영되었습니다. 대화를 다시 시작해 보세요!");
         }
 
-        function enableInputs() {
-            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
-            micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
-            window.updateStatus("대기 중");
-        }
 
-        window.processUpgrade = async function() {
-            if (!confirm("[웹 개발자 모드]\n강제로 결제 성공 처리할까요?")) return;
-            alert("결제가 완료되었습니다!"); localStorage.setItem('is_premium', 'true');
-            document.getElementById('paywallModal').classList.add('hidden'); enableInputs(); updateBadgeUI();
-        }
+            
 
-        function initSpeechRecognition() {
-            if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-                recognition.onstart = () => {
-                    isListening = true; window.stopSpeaking(); 
-                    micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); 
-                    micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); window.updateStatus("듣는 중...");
-                };
-                recognition.onresult = (e) => handleUserMessage(e.results[0][0].transcript);
-                recognition.onerror = () => { resetMic(); window.updateStatus("인식 실패 또는 권한 없음"); };
-                recognition.onend = () => resetMic();
-            } else { window.updateStatus("마이크 미지원"); micBtn.disabled = true; }
-        }
+
         initSpeechRecognition();
 
         window.toggleListening = async function() {
@@ -972,6 +1014,8 @@
 
         async function handleUserMessage(text) {
             if(!text) return;
+            if (!window.checkAndBlockAPI()) return;
+        
             addMessageToChat('user', text);
 
             updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#94a3b8";
@@ -1066,6 +1110,7 @@
         window.requestExplanationFromBubble = async function(bubbleId, fullText, isExp, selectedText) { 
             const targetText = selectedText || fullText;
             if(!targetText) return;
+            if (!window.checkAndBlockAPI()) return;
 
             const tLang = document.getElementById('targetLanguage');
             const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
@@ -1288,6 +1333,7 @@
 
         window.generateScript = async function() {
             if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
+            if (!window.checkAndBlockAPI()) return;
             const btn = document.getElementById("generateBtn");
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
             const situation = document.querySelector('.sit-card.selected-card').dataset.situation;
@@ -1463,6 +1509,7 @@
 
         window.generateVocab = async function() {
             if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
+            if (!window.checkAndBlockAPI()) return;
             const btn = document.getElementById("generateVocabBtn");
             const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
@@ -1676,6 +1723,30 @@
 
                 // UI 최종 업데이트
                 if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
+
+
+                // 💾 하단 언어(말할 언어) 완벽 저장 및 복구 시스템
+        document.addEventListener('DOMContentLoaded', () => {
+            const sttSelect = document.getElementById('sttInputLanguage');
+            if (!sttSelect) return;
+
+            // 1. 복구 기능: 앱이 켜질 때 로컬 스토리지에서 꺼내서 세팅
+            const applySavedSttLang = () => {
+                const savedLang = localStorage.getItem('stt_input_language');
+                if (savedLang) {
+                    sttSelect.value = savedLang;
+                }
+            };
+            
+            // 즉시 한 번 적용하고, 다른 코드가 덮어쓸까 봐 0.15초 뒤에 '확인 사살'로 한 번 더 적용
+            applySavedSttLang();
+            setTimeout(applySavedSttLang, 150);
+
+            // 2. 저장 기능: 사용자가 셀렉트 박스를 만져서 언어를 바꿀 때마다 즉시 저장
+            sttSelect.addEventListener('change', function() {
+                localStorage.setItem('stt_input_language', this.value);
+            });
+        });
                 
             }, 100); // 100ms 딜레이 (비기기)
         });
