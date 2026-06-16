@@ -766,6 +766,18 @@
         const avatarWrap = document.getElementById('avatarWrap'), stopAudioBtn = document.getElementById('stopAudioBtn');
         const selectionTooltip = document.getElementById('selectionTooltip');
 
+        async function initDeviceID() {
+            let localId = localStorage.getItem('web_device_id');
+            if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
+            myDeviceId = localId; 
+            
+            // 🌟 앱이 완전히 켜진 직후, 최신 요금제 기반의 배지 숫자를 즉시 불러옴
+            setTimeout(() => { 
+                if(typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
+            }, 100);
+        }
+        initDeviceID();
+
         // 🌟 앱이 켜지자마자 가장 최신의 배지 숫자(예: 34)를 즉시 불러옵니다!
         async function initDeviceID() {
             let localId = localStorage.getItem('web_device_id');
@@ -805,6 +817,13 @@
                 micBtn.classList.replace('to-slate-600', 'to-blue-600');
             }
             if(typeof window.updateStatus === 'function') window.updateStatus("대기 중");
+        }
+
+        // 🌟 2. 새로 추가한 [요금제 및 구독 관리 시스템]
+        const PLAN_LIMITS = { 'free': 50, 'basic': 300, 'premium': 1000 };
+
+        function getResetDateStr() {
+            return new Date().toISOString().split('T')[0]; 
         }
 
         function checkUsageLimit() {
