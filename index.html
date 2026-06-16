@@ -1353,18 +1353,17 @@ Expected JSON format:
             
             // 🌟 사용자 언어 가져오기
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            // 🌟 영어 이름표를 사용해 AI가 절대로 헷갈리지 못하게 만듭니다.
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
 
             const baseLang = expLangCode.split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-            // 🌟 [최종 해킹] 영어로 아주 강력하고 무섭게 통제합니다! (description과 exampleMeaning 강제 변환)
-            const overrideCmd = ` (🚨 CRITICAL SYSTEM RULE: Ignore all previous instructions regarding translation. You MUST translate the 'description' field and ALL 'exampleMeaning' fields ENTIRELY into ${expLangName}. Absolutely DO NOT use Korean unless the target language is Korean!)`;
+            // 🌟 [궁극의 해킹] AI의 "알파벳=영어" 고정관념을 부수고, 그 나라의 진짜 고유 문자를 강제합니다!
+            const overrideCmd = ` (🚨 CRITICAL INSTRUCTION: You MUST generate the native basic characters (e.g., Hiragana/Katakana for Japanese, Hanzi for Chinese, Cyrillic for Russian, Hangul for Korean) specific to the [${targetLangName}] language. Do NOT output the English A-Z alphabet unless the target language is actually English. Furthermore, your 'description' and all 'exampleMeaning' fields MUST be written ENTIRELY in [${expLangName}]. Do NOT use Korean unless the user language is Korean!)`;
 
-            // 🌟 [캐시 초기화] 예전에 저장된 한국어 버전을 피하기 위해 캐시 창고 이름을 v5로 바꿉니다!
-            const cacheKey = 'alpha_cache_v5_' + targetLangCode + '_' + expLangCode;
+            // 🌟 [캐시 완전 초기화] 멍청했던 과거 기억을 지우기 위해 창고 이름을 v6로 변경!
+            const cacheKey = 'alpha_cache_v6_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
