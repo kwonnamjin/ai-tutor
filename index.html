@@ -749,21 +749,65 @@
 
         const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
 
-        // 💡 1. 요금제 설정 (API 호출 한도)
+        // 🌟 1. 삭제돼서 문제가 생겼던 [필수 전역 변수 및 UI 요소] 복구
+        let isListening = false, isSpeaking = false, recognition = null;
+        const synthesis = window.speechSynthesis;
+        let conversationHistory = JSON.parse(sessionStorage.getItem('llmHistory')) || []; 
+        let uiChatHistory = JSON.parse(sessionStorage.getItem('uiHistory')) || []; 
+        let bubbleCounter = parseInt(sessionStorage.getItem('bubbleCounter')) || 0; 
+        
+        let currentUtterance = null; 
+        let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
+        let tempGender = currentVoiceGender; 
+
+        let currentBubbleId = null, startIndex = -1, endIndex = -1, myDeviceId = "unknown";
+
+        const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
+        const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
+        const avatarWrap = document.getElementById('avatarWrap'), stopAudioBtn = document.getElementById('stopAudioBtn');
+        const selectionTooltip = document.getElementById('selectionTooltip');
+
+        async function initDeviceID() {
+            let localId = localStorage.getItem('web_device_id');
+            if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
+            myDeviceId = localId; 
+            window.updateBadgeUI(); // 앱 시작 시 배지 업데이트
+        }
+        initDeviceID();
+
+        window.sendTextMessage = function() {
+            const input = document.getElementById('textInput'); const text = input.value.trim();
+            if (text) { input.value = ''; handleUserMessage(text); }
+        }
+
+        function updateGenderUI(g, applyImg=false) {
+            if(g === 'female') { 
+                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white text-blue-600 shadow-sm border border-blue-200"; 
+                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
+            } else { 
+                document.getElementById('genderMaleBtn').className="flex-1 py-2.5 text-sm font-bold rounded-lg bg-white shadow-sm text-blue-600 border border-blue-200"; 
+                document.getElementById('genderFemaleBtn').className="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-200 border border-transparent rounded-lg"; 
+            }
+        }
+        updateGenderUI(currentVoiceGender, true); 
+
+        window.enableInputs = function() {
+            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
+            micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
+            window.updateStatus("대기 중");
+        }
+
+        // 🌟 2. 새로 추가한 [요금제 및 구독 관리 시스템]
         const PLAN_LIMITS = { 'free': 50, 'basic': 300, 'premium': 1000 };
 
-        // 💡 2. 리셋 날짜 구하기 (UTC 0시 기준)
         function getResetDateStr() {
-            // toISOString()은 기본적으로 UTC 시간을 반환하므로, 날짜(YYYY-MM-DD)만 잘라내면 완벽한 UTC 0시 기준이 됩니다.
             return new Date().toISOString().split('T')[0]; 
         }
 
-        // 💡 3. 한도 체크 로직 (무료 3일 및 일일 사용량)
         function checkUsageLimit() {
             const currentTier = localStorage.getItem('subscription_tier') || 'free';
             const maxLimit = PLAN_LIMITS[currentTier];
 
-            // 무료 사용자 3일 제한 검사
             if (currentTier === 'free') {
                 const firstUseDate = localStorage.getItem('free_trial_start');
                 if (firstUseDate) {
@@ -772,7 +816,6 @@
                 }
             }
 
-            // 일일 사용량 검사
             const todayStr = getResetDateStr();
             let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
 
@@ -787,22 +830,19 @@
             return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
         }
 
-        // 💡 4. API 사용 전 차단 및 모달창 띄우기 도우미 함수
         window.checkAndBlockAPI = function() {
             const status = checkUsageLimit();
             if (!status.allowed) {
                 showSubscriptionModal(status.reason);
-                return false; // 통신 차단
+                return false;
             }
-            return true; // 통신 허용
+            return true;
         };
 
-        // 💡 5. 사용량 카운트 증가 및 배지 UI 업데이트
         window.incrementLocalUsage = function() {
             const status = checkUsageLimit();
             if (!status.allowed) return false;
 
-            // 무료 사용자 최초 사용일 기록
             if (status.tier === 'free' && !localStorage.getItem('free_trial_start')) {
                 localStorage.setItem('free_trial_start', Date.now().toString());
             }
@@ -820,7 +860,6 @@
             if(!badge) return;
 
             const status = checkUsageLimit();
-            // 차단된 상태라면 현재 카운트를 그대로 두고, 아니면 실제 카운트를 가져옴
             const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
 
             if (status.tier === 'premium') {
@@ -835,8 +874,7 @@
             }
         }
 
-        // 💡 6. 결제 유도 모달창 및 가짜 결제 처리
-        function showSubscriptionModal(reason) {
+        window.showSubscriptionModal = function(reason) {
             const existingModal = document.getElementById('subscriptionModal');
             if (existingModal) existingModal.remove();
 
@@ -864,7 +902,7 @@
                 </div>
             </div>`;
             document.body.insertAdjacentHTML('beforeend', modalHtml);
-            window.stopSpeaking();
+            if(window.stopSpeaking) window.stopSpeaking();
         }
 
         window.processPayment = function(plan) {
@@ -873,13 +911,23 @@
             usageObj.count = 0; localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
             document.getElementById('subscriptionModal').remove();
             window.updateBadgeUI();
+            window.enableInputs();
             alert("결제가 반영되었습니다. 대화를 다시 시작해 보세요!");
         }
 
-
-            
-
-
+        function initSpeechRecognition() {
+            if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.onstart = () => {
+                    isListening = true; if(window.stopSpeaking) window.stopSpeaking(); 
+                    micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); 
+                    micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); window.updateStatus("듣는 중...");
+                };
+                recognition.onresult = (e) => handleUserMessage(e.results[0][0].transcript);
+                recognition.onerror = () => { resetMic(); window.updateStatus("인식 실패 또는 권한 없음"); };
+                recognition.onend = () => resetMic();
+            } else { window.updateStatus("마이크 미지원"); micBtn.disabled = true; }
+        }
         initSpeechRecognition();
 
         window.toggleListening = async function() {
