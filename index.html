@@ -233,15 +233,19 @@
 
                 <section id="situationSection">
                     <h2 class="text-xs font-bold text-slate-500 mb-2"><i class="fa-solid fa-masks-theater text-purple-500 mr-1"></i> <span id="rp_sit_text">2. 상황 선택</span></h2>
-                    <div class="grid grid-cols-3 gap-1.5">
-                        <div id="rp_sit1" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="일상 랜덤">🎲 일상 랜덤</div>
-                        <div id="rp_sit2" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer selected-card" data-situation="카페 주문">☕ 카페 주문</div>
-                        <div id="rp_sit3" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="음식점">🍽️ 음식점</div>
-                        <div id="rp_sit4" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="입국 심사">🛂 입국 심사</div>
-                        <div id="rp_sit5" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="옷 쇼핑">🛍️ 옷 쇼핑</div>
-                        <div id="rp_sit6" class="sit-card py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="택시 탑승">🚕 택시 탑승</div>
+                    
+                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-2">
+                        <div id="rp_sit1" class="sit-card shrink-0 px-4 py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="일상 랜덤">🎲 일상 랜덤</div>
+                        <div id="rp_sit2" class="sit-card shrink-0 px-4 py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer selected-card" data-situation="카페 주문">☕ 카페 주문</div>
+                        <div id="rp_sit3" class="sit-card shrink-0 px-4 py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="음식점">🍽️ 음식점</div>
+                        <div id="rp_sit4" class="sit-card shrink-0 px-4 py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="입국 심사">🛂 입국 심사</div>
+                        <div id="rp_sit5" class="sit-card shrink-0 px-4 py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="옷 쇼핑">🛍️ 옷 쇼핑</div>
+                        <div id="rp_sit6" class="sit-card shrink-0 px-4 py-1.5 rounded-lg border-[1.5px] border-slate-100 bg-white text-[11px] font-bold text-slate-600 transition-all text-center cursor-pointer" data-situation="택시 탑승">🚕 택시 탑승</div>
                     </div>
-                    <button id="generateBtn" class="w-full mt-3 bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
+                    
+                    <input type="text" id="rp_custom_input" placeholder="예시) 이세계 상인과 가격 흥정하는 대본" class="w-full h-11 bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold rounded-xl px-4 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-inner mb-3" oninput="document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card'))">
+                    
+                    <button id="generateBtn" class="w-full bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
                         ✨ AI 대본 생성하기
                     </button>
                 </section>
@@ -648,6 +652,19 @@
             return dict["lang_" + code] || SUPPORTED_LANGUAGES.find(l => l.code === code).name;
         }
 
+        // 🌟 새로 추가된 커스텀 입력창 번역 데이터 동적 주입 (기존 데이터 깨짐 방지)
+        if(UI_DICTIONARY["ko"]) UI_DICTIONARY["ko"].rp_custom_input = "예시) 이세계 상인과 가격 흥정하는 대본";
+        if(UI_DICTIONARY["en"]) UI_DICTIONARY["en"].rp_custom_input = "Ex) Bargaining with a fantasy merchant";
+        if(UI_DICTIONARY["ja"]) UI_DICTIONARY["ja"].rp_custom_input = "例) 異世界の商人と価格交渉する台本";
+        if(UI_DICTIONARY["zh"]) UI_DICTIONARY["zh"].rp_custom_input = "例) 与异世界商人讨价还价的剧本";
+        if(UI_DICTIONARY["es"]) UI_DICTIONARY["es"].rp_custom_input = "Ej) Regatear precios con un comerciante";
+        if(UI_DICTIONARY["fr"]) UI_DICTIONARY["fr"].rp_custom_input = "Ex) Négocier avec un marchand";
+        if(UI_DICTIONARY["de"]) UI_DICTIONARY["de"].rp_custom_input = "Bsp) Feilschen mit einem Händler";
+        if(UI_DICTIONARY["vi"]) UI_DICTIONARY["vi"].rp_custom_input = "VD) Mặc cả với thương nhân thế giới khác";
+        if(UI_DICTIONARY["ru"]) UI_DICTIONARY["ru"].rp_custom_input = "Пример) Торг с торговцем из другого мира";
+        if(UI_DICTIONARY["th"]) UI_DICTIONARY["th"].rp_custom_input = "ตัวอย่าง) ต่อรองราคากับพ่อค้าต่างมิติ";
+        if(UI_DICTIONARY["ar"]) UI_DICTIONARY["ar"].rp_custom_input = "مثال) المساومة مع تاجر";
+
         window.changeUILanguage = function(langCode) {
             const baseLang = langCode.split('-')[0];
             const currentDict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
@@ -655,7 +672,8 @@
             for (const [id, text] of Object.entries(currentDict)) {
                 const element = document.getElementById(id);
                 if (element) {
-                    if (id === "textInputPlaceholder") document.getElementById("textInput").placeholder = text;
+                    // 🌟 텍스트 창들의 placeholder 도 번역되도록 예외 처리 추가!
+                    if (id === "textInputPlaceholder" || id === "rp_custom_input") element.placeholder = text;
                     else element.innerText = text;
                 }
             }
@@ -1385,7 +1403,15 @@
         let activeTestScriptIdx = -1, activeTestLineIdx = -1, isInteractiveTestActive = false;
 
         document.querySelectorAll('.level-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
-        window.setRandomSituation = function(element) { document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); element.classList.add('selected-card'); };
+        
+        window.setRandomSituation = function(element) { 
+            document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); 
+            element.classList.add('selected-card'); 
+            // 🌟 버튼을 누르면 직접 입력했던 커스텀 텍스트는 지워줌
+            const customInput = document.getElementById('rp_custom_input');
+            if(customInput) customInput.value = '';
+        };
+        
         document.querySelectorAll('.sit-card').forEach(card => card.onclick = (e) => setRandomSituation(e.currentTarget));
 
         // 🗑️ 대본 삭제 기능 추가
@@ -1396,57 +1422,31 @@
             window.renderScripts();
         };
 
-        // 💡 수정된 대본 렌더링 함수 (X 버튼 추가됨)
-        window.renderScripts = function() {
-            const playerArea = document.getElementById("scriptList"); playerArea.innerHTML = "";
-            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-            if(savedScripts.length === 0) return;
-            
-            for (let i = savedScripts.length - 1; i >= 0; i--) {
-                const scriptItem = savedScripts[i];
-                let html = `<div class="mb-5">
-                    <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm">
-                        <p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p>
-                        <div class="flex gap-1.5 items-center">
-                            <button onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm"><i class="fa-solid fa-volume-high text-xs"></i></button>
-                            <button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button>
-                            <button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button>
-                            
-                            <!-- ❌ 삭제 버튼 추가 부분 -->
-                            <div class="w-px h-4 bg-indigo-200 mx-0.5"></div>
-                            <button onclick="deleteScript(${i})" class="text-slate-400 hover:text-red-500 px-1 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button>
-                        </div>
-                    </div>
-                    <div class="space-y-3">`;
-                    
-                scriptItem.scriptData.forEach((line, lineIdx) => {
-                    const isAi = line.role === 'ai';
-                    html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all"><div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div><div class="flex-1"><p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi? (dict.rp_ai || 'AI') : (dict.rp_user || 'Me')}</p><p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all">${line.en}</p><p class="text-xs text-gray-500 mt-1">${line.ko}</p><div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div></div></div>`;
-                });
-                html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
-                playerArea.insertAdjacentHTML('beforeend', html);
-            }
-            const statusBoxText = document.getElementById("statusBoxText");
-            if(statusBoxText && dict.rp_save_count) statusBoxText.innerText = dict.rp_save_count.replace('{n}', savedScripts.length);
-        };
-
         window.generateScript = async function() {
             if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
             if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
 
             const btn = document.getElementById("generateBtn");
             const level = document.querySelector('.level-btn.selected-card').innerText.trim();
-            const situation = document.querySelector('.sit-card.selected-card').dataset.situation;
+            
+            // 🌟 [핵심] 사용자가 텍스트 창에 적은 내용을 최우선으로 가져오기
+            const customInput = document.getElementById('rp_custom_input');
+            const customSituation = customInput ? customInput.value.trim() : "";
+            const selectedCard = document.querySelector('.sit-card.selected-card');
+            
+            // 텍스트 창에 글이 있으면 그걸 쓰고, 없으면 선택된 버튼의 상황을 씀
+            const situation = customSituation ? customSituation : (selectedCard ? selectedCard.dataset.situation : '자유 대화');
             const isRandom = (situation === '일상 랜덤');
+            
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            // 🌟 한국어를 쓰지 말라고 명확하게 경고!
+            // 🌟 한국어 오작동 방지 철벽 방어
             const overrideCmd = ` (CRITICAL RULE: Write main dialogue in ${targetLangName} (key: 'en'). Write translation in ${expLangName} (key: 'ko'). You MUST write translation in ${expLangName}, NOT Korean!)`;
+
             btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
@@ -1460,6 +1460,10 @@
                 if (savedScripts.length >= 5) savedScripts.shift(); 
                 savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
                 localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts();
+                
+                // 생성 완료되면 텍스트 창 비워주기
+                if(customInput) customInput.value = '';
+                
             } catch (err) { alert("대본 생성 실패"); } finally { 
                 const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
                 btn.innerText = UI_DICTIONARY[baseLang]?.generateBtn || "✨ AI 대본 생성하기"; btn.disabled = false; 
