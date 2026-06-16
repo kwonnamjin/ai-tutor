@@ -981,11 +981,17 @@
             const inputName = document.getElementById('sttInputLanguage').options[document.getElementById('sttInputLanguage').selectedIndex].dataset.langName;
 
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const expLangName = typeof getLangName === 'function' ? getLangName(expLangCode) : (SUPPORTED_LANGUAGES.find(l => l.code === expLangCode)?.name || '한국어');
+            
+            // 🌟 [추가된 부분 1] AI가 헷갈리지 않도록 언어 코드를 명확한 영어 이름으로 변환
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
+            const exactAiLang = aiLangNames[expLangCode] || expLangCode;
+
+            // 🌟 [추가된 부분 2] 한국어를 절대 쓰지 말라는 초강력 영어 규칙 추가
+            const criticalRule = `\n\n🚨 CRITICAL RULE: The value for 'translation' MUST be written entirely in ${exactAiLang} (ISO: ${expLangCode}). DO NOT use Korean under any circumstances unless the requested language is Korean!`;
 
             let sysPrompt = mode === 'translate' 
-                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"번역결과","translation":"번역결과의 ${expLangName} 해석"}`
-                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","translation":"답변의 정확한 ${expLangName} 해석 및 사용자 문법 교정"}`;
+                ? `사용자(${inputName}) 문장을 완벽히 [${targetName}]로 번역해라. 의역을 살려 현지인처럼. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"번역결과","translation":"번역결과의 해석"}` + criticalRule
+                : `당신은 유쾌한 '${targetName}' 원어민 튜터다. 사용자가 '${targetName}'로 말하면 친구처럼 맞장구치며 대화를 이어가고, 다른 언어로 말하면 자연스럽게 해석하며 '${targetName}' 대화로 유도해라. 대화는 반드시 1~2문장으로 짧게 유지해라. 반드시 마크다운 없이 순수 JSON 형식으로만 응답해라: {"foreign_text":"오직 ${targetName}로만 작성된 당신의 답변","translation":"답변의 정확한 해석 및 사용자 문법 교정"}` + criticalRule;
 
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
@@ -1043,6 +1049,7 @@
             }
         }
         window.handleUserMessage = handleUserMessage;
+        
 
         window.requestExplanationGlobal = function() { 
             let lastAiMsg = "";
@@ -1165,17 +1172,28 @@
             }
         }
         
+        // 💡 설정 저장 및 언어 변경 시 대화 리셋 기능
         window.saveSettings = function() { 
             localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); 
-            localStorage.setItem('explanation_language', document.getElementById('explanationLanguage').value);
+            
+            // 🌟 변경 전 사용자 언어가 무엇인지 기억해두기
+            const oldExpLang = localStorage.getItem('explanation_language');
+            const newExpLang = document.getElementById('explanationLanguage').value;
+            
+            localStorage.setItem('explanation_language', newExpLang);
             currentVoiceGender = tempGender; 
             localStorage.setItem('voice_gender', currentVoiceGender);
             document.documentElement.style.setProperty('--chat-font-size', (localStorage.getItem('chat_font_size') || 14) + 'px');
             
-            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            window.changeUILanguage(expLangCode);
+            window.changeUILanguage(newExpLang);
             window.updateLangDisplays();
             window.toggleSettingsModal(false); 
+            
+            // 🌟 [핵심] 사용자 언어가 기존과 다르게 바뀌었다면, 대화 기록 완벽히 초기화
+            if (oldExpLang !== newExpLang) {
+                clearChatSession();
+                window.updateStatus("언어 설정이 변경되어 대화가 초기화되었습니다.");
+            }
         }
 
         const appScreens = [ document.getElementById('screen-main'), document.getElementById('screen-roleplay'), document.getElementById('screen-vocab'), document.getElementById('screen-alphabet') ];
