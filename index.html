@@ -766,6 +766,7 @@
         const avatarWrap = document.getElementById('avatarWrap'), stopAudioBtn = document.getElementById('stopAudioBtn');
         const selectionTooltip = document.getElementById('selectionTooltip');
 
+        // 🌟 앱이 켜지자마자 가장 최신의 배지 숫자(예: 34)를 즉시 불러옵니다!
         async function initDeviceID() {
             let localId = localStorage.getItem('web_device_id');
             if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
@@ -773,7 +774,7 @@
             
             setTimeout(() => { 
                 if(typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
-            }, 100); // <--- 이렇게 setTimeout이 있는 신형 코드는 남겨둡니다!
+            }, 100);
         }
         initDeviceID();
 
@@ -794,9 +795,16 @@
         updateGenderUI(currentVoiceGender, true); 
 
         window.enableInputs = function() {
-            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
-            micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
-            window.updateStatus("대기 중");
+            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.disabled = false;
+            });
+            const micBtn = document.getElementById('micBtn');
+            if(micBtn) {
+                micBtn.classList.replace('from-slate-400', 'from-blue-400'); 
+                micBtn.classList.replace('to-slate-600', 'to-blue-600');
+            }
+            if(typeof window.updateStatus === 'function') window.updateStatus("대기 중");
         }
 
         // 🌟 2. 새로 추가한 [요금제 및 구독 관리 시스템]
