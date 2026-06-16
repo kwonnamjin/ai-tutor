@@ -1263,8 +1263,8 @@
             // 🌟 [수정됨] 발음에는 한글 금지, 뜻과 설명은 사용자가 선택한 언어(expLangName) 적용
             const overrideCmd = ` (🚨 CRITICAL RULE: 1. ${specialHint} 2. 'pronunciation' MUST NEVER use Korean Hangul. 3. The 'description' and 'exampleMeaning' MUST be written entirely in [${expLangName}]. 4. Return valid JSON only.)`;
 
-            // 과거 캐시 무효화를 위해 버전 업그레이드 (v17 -> v18)
-            const cacheKey = 'alpha_cache_v18_' + targetLangCode + '_' + expLangCode;
+            // 과거 캐시 무효화를 위해 버전 업그레이드 (v18 -> v19)
+            const cacheKey = 'alpha_cache_v19_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
