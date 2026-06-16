@@ -1626,59 +1626,58 @@
         
         };
 
-        // 💡 앱 초기화: 껐다 켜도 저장된 설정값 불러오기
+        // 💡 앱 초기화: 껐다 켜도 저장된 설정값 불러오기 (강제 지연 적용버전)
         document.addEventListener('DOMContentLoaded', () => {
-            // 1. 저장된 사용자 언어(해설 언어) 불러오기
-            const savedExpLang = localStorage.getItem('explanation_language');
-            if (savedExpLang) {
-                const langSelect = document.getElementById('explanationLanguage');
-                if (langSelect) langSelect.value = savedExpLang;
-                if (typeof window.changeUILanguage === 'function') window.changeUILanguage(savedExpLang);
-            }
-
-            // 2. 저장된 폰트 크기 불러오기
-            const savedFontSize = localStorage.getItem('chat_font_size');
-            if (savedFontSize) {
-                document.documentElement.style.setProperty('--chat-font-size', savedFontSize + 'px');
-                const fontSlider = document.getElementById('fontSizeSlider');
-                if (fontSlider) fontSlider.value = savedFontSize;
-            }
-
-            // 3. 저장된 목소리 성별 불러오기
-            const savedVoiceGender = localStorage.getItem('voice_gender');
-            if (savedVoiceGender) {
-                if (typeof currentVoiceGender !== 'undefined') currentVoiceGender = savedVoiceGender;
-                const genderSelect = document.getElementById('voiceGender');
-                if (genderSelect) genderSelect.value = savedVoiceGender;
-            }
-
-            // 4. 저장된 목표 언어(학습 언어) 불러오기
-            const savedTargetLang = localStorage.getItem('target_language');
-            if (savedTargetLang) {
-                const targetSelect = document.getElementById('targetLanguage');
-                if (targetSelect) {
-                    targetSelect.value = savedTargetLang;
+            // 다른 로직들이 다 실행될 때까지 0.1초(100ms) 기다렸다가 덮어씀!
+            setTimeout(() => {
+                // 1. 저장된 사용자 언어(해설 언어) 불러오기
+                const savedExpLang = localStorage.getItem('explanation_language');
+                if (savedExpLang) {
+                    const langSelect = document.getElementById('explanationLanguage');
+                    if (langSelect) langSelect.value = savedExpLang;
+                    if (typeof window.changeUILanguage === 'function') window.changeUILanguage(savedExpLang);
                 }
-            }
 
-            // 🌟 5. 저장된 '입력 언어(말할 언어)' 불러오기 및 자동 저장 기능 추가
-            const sttSelect = document.getElementById('sttInputLanguage');
-            if (sttSelect) {
-                // 저장된 값 불러오기
-                const savedSttLang = localStorage.getItem('stt_input_language');
-                if (savedSttLang) {
-                    sttSelect.value = savedSttLang;
+                // 2. 저장된 폰트 크기 불러오기
+                const savedFontSize = localStorage.getItem('chat_font_size');
+                if (savedFontSize) {
+                    document.documentElement.style.setProperty('--chat-font-size', savedFontSize + 'px');
+                    const fontSlider = document.getElementById('fontSizeSlider');
+                    if (fontSlider) fontSlider.value = savedFontSize;
                 }
+
+                // 3. 저장된 목소리 성별 불러오기
+                const savedVoiceGender = localStorage.getItem('voice_gender');
+                if (savedVoiceGender) {
+                    if (typeof currentVoiceGender !== 'undefined') currentVoiceGender = savedVoiceGender;
+                    const genderSelect = document.getElementById('voiceGender');
+                    if (genderSelect) genderSelect.value = savedVoiceGender;
+                }
+
+                // 4. 저장된 목표 언어(학습 언어) 불러오기
+                const savedTargetLang = localStorage.getItem('target_language');
+                if (savedTargetLang) {
+                    const targetSelect = document.getElementById('targetLanguage');
+                    if (targetSelect) targetSelect.value = savedTargetLang;
+                }
+
+                // 5. 저장된 '입력 언어(말할 언어)' 불러오기 및 자동 저장 로직
+                const sttSelect = document.getElementById('sttInputLanguage');
+                if (sttSelect) {
+                    const savedSttLang = localStorage.getItem('stt_input_language');
+                    if (savedSttLang) sttSelect.value = savedSttLang;
+                    
+                    // 이벤트 리스너가 중복 등록되지 않도록 주의하며 추가
+                    sttSelect.onchange = function() {
+                        localStorage.setItem('stt_input_language', this.value);
+                        if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
+                    };
+                }
+
+                // UI 최종 업데이트
+                if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
                 
-                // 사용자가 입력 언어를 바꿀 때마다 로컬 스토리지에 즉시 자동 저장
-                sttSelect.addEventListener('change', function() {
-                    localStorage.setItem('stt_input_language', this.value);
-                    if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
-                });
-            }
-
-            // 모든 언어 선택이 끝난 후, UI(국기 등) 한 번에 새로고침
-            if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
+            }, 100); // 100ms 딜레이 (비기기)
         });
     </script>
 </body>
