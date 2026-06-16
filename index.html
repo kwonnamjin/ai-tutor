@@ -1131,25 +1131,26 @@
 
         function clearChatSession() { conversationHistory=[]; uiChatHistory=[]; sessionStorage.clear(); document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el=>el.remove()); }
         window.changeAppMode = function() { clearChatSession(); } 
-        // 💡 언어 변경 시 대화 및 4번 방 화면 초기화
-        // 💡 언어 변경 시 대화 및 4번 방 화면 초기화 (다국어 UI 번역 완벽 적용)
+        
+        // 💡 언어 변경 시 대화 및 4번 방 화면 초기화 (목표 언어 저장 기능 추가)
         window.targetLanguageChanged = function() { 
+            // 🌟 [추가됨] 사용자가 방금 선택한 목표 언어를 로컬 스토리지에 저장
+            const currentTargetLang = document.getElementById('targetLanguage').value;
+            localStorage.setItem('target_language', currentTargetLang);
+
             clearChatSession(); 
             
-            // 현재 설정된 사용자 언어(해설 언어)에 맞는 사전 데이터 가져오기
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             const baseLang = expLangCode.split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
             window.updateStatus('학습 언어 변경 (대화 초기화됨)'); 
             
-            // 4번 방(자음모음) 텅 빈 상태로 초기화 & 다국어 문구 적용
             const listArea = document.getElementById("alphabetListArea");
             if(listArea) {
                 listArea.innerHTML = `<div id="alpha_empty_text" class="text-center text-slate-400 text-sm mt-10 font-bold">${dict.alpha_empty_text || "위 버튼을 눌러 기초 글자를 가져와 보세요!"}</div>`;
             }
             
-            // 생성 버튼 초기화 & 다국어 문구 적용
             const alphaBtn = document.getElementById("generateAlphaBtn");
             if(alphaBtn) {
                 alphaBtn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기";
