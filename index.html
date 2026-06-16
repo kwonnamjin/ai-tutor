@@ -678,10 +678,10 @@
             document.getElementById('explanationLanguage').innerHTML = optionsHtml;
         }
         renderLanguageSelects();
-        
-        document.getElementById('targetLanguage').value = 'en-US';
-        document.getElementById('sttInputLanguage').value = 'ko-KR';
+        document.getElementById('targetLanguage').value = localStorage.getItem('target_language') || 'en-US';
+        document.getElementById('sttInputLanguage').value = localStorage.getItem('stt_input_language') || 'ko-KR';
         document.getElementById('explanationLanguage').value = localStorage.getItem('explanation_language') || 'ko-KR';
+        
 
         window.updateLangDisplays = function() {
             ['targetLanguage', 'sttInputLanguage', 'explanationLanguage'].forEach(id => {
