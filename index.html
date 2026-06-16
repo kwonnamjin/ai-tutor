@@ -1353,24 +1353,17 @@ Expected JSON format:
             
             // 🌟 사용자 언어 가져오기
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
 
             const baseLang = expLangCode.split('-')[0];
             const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-            // 🌟 [진짜 최종 완벽 해킹] AI가 헷갈리지 않도록 명찰을 달아줍니다!
-            // "학습할 언어의 진짜 글자를 뽑고, 뜻풀이는 무조건 번역 언어로 해!"
-            const injectedLanguage = `
-[TARGET_LANGUAGE: ${targetLangName}]
-[TRANSLATION_LANGUAGE: ${expLangName}]
-CRITICAL RULES:
-1. Generate the true native alphabet/characters ONLY for the TARGET_LANGUAGE (e.g., Hangul for Korean, Hanzi for Chinese, Hiragana for Japanese).
-2. Write ALL 'description' and 'exampleMeaning' fields ENTIRELY in the TRANSLATION_LANGUAGE.
-3. Ignore any default internal prompts that ask you to translate into Korean.`;
+            // 🌟 [핵심 해결] 서버가 에러를 뿜지 않도록, 줄바꿈을 없애고 한 줄로 압축한 강력한 명령어!
+            const overrideCmd = ` (CRITICAL RULE: 1. Generate TRUE native characters for [${targetLangName}] like Hangul/Hiragana/Hanzi. NO English A-Z unless target is English. 2. Translate 'description' and 'exampleMeaning' ENTIRELY into [${expLangName}]. NO Korean unless user language is Korean.)`;
 
-            // 🌟 [캐시 완전 초기화] 멍청했던 과거 기억을 지우기 위해 창고 이름을 v7로 변경!
-            const cacheKey = 'alpha_cache_v7_' + targetLangCode + '_' + expLangCode;
+            // 캐시 초기화 v8
+            const cacheKey = 'alpha_cache_v8_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
 
             if (cachedData) {
@@ -1387,10 +1380,13 @@ CRITICAL RULES:
                 const res = await fetch(`${WORKER_URL}generate-alphabet`, { 
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, 
                     body: JSON.stringify({ 
-                        // 🌟 기존의 짧은 이름 대신, 명찰이 달린 거대한 폭탄(?) 명령어를 통째로 던집니다!
-                        language: injectedLanguage 
+                        // 🌟 다시 한 줄로 합쳐서 안전하게 전송합니다!
+                        language: targetLangName + overrideCmd 
                     }) 
                 });
+                
+                if (!res.ok) throw new Error("서버 응답 오류");
+
                 const data = await res.json(); 
                 
                 localStorage.setItem(cacheKey, JSON.stringify({
@@ -1401,6 +1397,7 @@ CRITICAL RULES:
                 renderAlphabet(data.alphabetData, data.description, targetLangCode);
 
             } catch (err) { 
+                console.error(err);
                 listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">Fail</div>`;
             } finally {
                 btn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기"; 
