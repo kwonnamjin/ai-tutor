@@ -1631,12 +1631,8 @@
             const savedExpLang = localStorage.getItem('explanation_language');
             if (savedExpLang) {
                 const langSelect = document.getElementById('explanationLanguage');
-                if (langSelect) langSelect.value = savedExpLang; // 셀렉트 박스 값 맞추기
-                
-                // 다국어 UI 즉시 적용
-                if (typeof window.changeUILanguage === 'function') {
-                    window.changeUILanguage(savedExpLang);
-                }
+                if (langSelect) langSelect.value = savedExpLang;
+                if (typeof window.changeUILanguage === 'function') window.changeUILanguage(savedExpLang);
             }
 
             // 2. 저장된 폰트 크기 불러오기
@@ -1650,12 +1646,20 @@
             // 3. 저장된 목소리 성별 불러오기
             const savedVoiceGender = localStorage.getItem('voice_gender');
             if (savedVoiceGender) {
-                // 전역 변수(currentVoiceGender)가 있다면 거기에 맞춤
-                if (typeof currentVoiceGender !== 'undefined') {
-                    currentVoiceGender = savedVoiceGender;
-                }
+                if (typeof currentVoiceGender !== 'undefined') currentVoiceGender = savedVoiceGender;
                 const genderSelect = document.getElementById('voiceGender');
                 if (genderSelect) genderSelect.value = savedVoiceGender;
+            }
+
+            // 🌟 4. 저장된 목표 언어(학습 언어) 불러오기 추가
+            const savedTargetLang = localStorage.getItem('target_language');
+            if (savedTargetLang) {
+                const targetSelect = document.getElementById('targetLanguage');
+                if (targetSelect) {
+                    targetSelect.value = savedTargetLang;
+                    // 언어 선택창 UI 업데이트 (국기 및 이름)
+                    if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
+                }
             }
         });
     </script>
