@@ -94,21 +94,24 @@
                 </div>
 
                 <!-- 2. 우측 위아래 2단으로 쌓인 페르소나 & 메모장 버튼 -->
-                <div class="flex-1 flex flex-col gap-1.5">
-                    <!-- 윗줄: 친구 & 비서 -->
-                    <div class="flex gap-1.5">
-                        <button id="btn_persona_friend" onclick="changePersona('friend')" class="flex-1 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm">🥰 <span id="ui_persona_friend">친근한 친구</span></button>
-                        <button id="btn_persona_assistant" onclick="changePersona('assistant')" class="flex-1 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">👔 <span id="ui_persona_assistant">개인 비서</span></button>
-                    </div>
-                    <!-- 아랫줄: 가이드 & 메모장 -->
-                    <div class="flex gap-1.5">
-                        <button id="btn_persona_guide" onclick="changePersona('guide')" class="flex-1 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">✈️ <span id="ui_persona_guide">여행 가이드</span></button>
-                        <button onclick="toggleMemoModal(true)" class="flex-1 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-[11px] font-bold transition-all shadow-sm flex items-center justify-center gap-1 relative hover:bg-amber-100">
-                            <i class="fa-solid fa-note-sticky"></i> <span id="ui_memo_text">메모장</span>
-                            <!-- 알림 뱃지 -->
-                            <span id="memoCountBadge" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full hidden shadow-sm border border-white">0</span>
-                        </button>
-                    </div>
+                <div class="fixed top-3 right-3 flex gap-1 z-50">
+                            <button onclick="window.currentPersona='friend';" class="w-[70px] h-[32px] flex items-center justify-center bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-[10px] font-bold rounded shadow-sm transition-all">
+                                <span id="ui_persona_friend">친근한 친구</span>
+                            </button>
+                            
+                            <button onclick="window.currentPersona='assistant';" class="w-[70px] h-[32px] flex items-center justify-center bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 text-[10px] font-bold rounded shadow-sm transition-all">
+                                <span id="ui_persona_assistant">개인 비서</span>
+                            </button>
+                            
+                            <button onclick="window.currentPersona='guide';" class="w-[70px] h-[32px] flex items-center justify-center bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-[10px] font-bold rounded shadow-sm transition-all">
+                                <span id="ui_persona_guide">여행 가이드</span>
+                            </button>
+                            
+                            <button onclick="document.getElementById('memoModal').classList.remove('hidden');" class="w-[70px] h-[32px] flex items-center justify-center bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 text-[10px] font-bold rounded shadow-sm transition-all relative">
+                                <span id="ui_memo_text">메모장</span>
+                                <span id="memoCountBadge" class="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full hidden">0</span>
+                            </button>
+                        </div>
                 </div>
             </div>
 
