@@ -79,19 +79,37 @@
                 <span id="activeEngineText" class="font-bold text-blue-600 text-[10px] bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200"><i class="fa-solid fa-shield-halved mr-0.5"></i> DeepSeek Secure</span>
             </div>
 
-            <div class="flex-none bg-gradient-to-b from-blue-50 to-slate-100 pt-4 pb-3 flex flex-col items-center justify-center relative border-b border-slate-200 shadow-sm z-10">
-                <div id="avatarWrap" class="avatar-container mb-2 transition-all duration-300">
-                    <img src="./app-icon.png" alt="AI Avatar" class="avatar-img" id="avatarImage" onerror="this.onerror=null; this.src='https://placehold.co/300x300/1e293b/60a5fa?text=AI'">
+            <!-- 🌟 [수정됨] 컴팩트한 상단 프로필 & 페르소나/메모장 영역 -->
+            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 shrink-0 flex items-center gap-4 shadow-sm z-10 relative">
+                
+                <!-- 1. 좌측 구석으로 작아진 AI 아바타 -->
+                <div class="flex flex-col items-center shrink-0">
+                    <div id="avatarWrap" class="w-14 h-14 rounded-full bg-white border-[3px] border-slate-200 shadow-sm flex items-center justify-center transition-all duration-300 relative">
+                        <i class="fa-solid fa-robot text-2xl text-slate-400"></i>
+                        <!-- 정지 버튼도 아바타 옆에 앙증맞게 붙임 -->
+                        <button id="stopAudioBtn" onclick="stopSpeaking()" class="absolute -bottom-1 -right-1 bg-white w-6 h-6 rounded-full shadow border border-slate-200 text-slate-400 flex items-center justify-center disabled:opacity-50 hover:text-red-500 transition-colors" disabled><i class="fa-solid fa-stop text-[10px]"></i></button>
+                    </div>
+                    <p id="statusText" class="text-[9px] font-extrabold text-slate-400 mt-1.5 tracking-wide">대기 중</p>
                 </div>
-                <div id="statusText" class="text-[10px] font-bold text-blue-700 bg-blue-100/80 border border-blue-200 px-4 py-1 rounded-full shadow-sm backdrop-blur-sm">
-                    준비됨. 하단 마이크를 눌러 시작하세요.
-                </div>
-            </div>
 
-            <div class="flex gap-2 px-4 py-2 bg-slate-50 border-b border-slate-100 overflow-x-auto no-scrollbar shrink-0">
-                <button id="btn_persona_friend" onclick="changePersona('friend')" class="shrink-0 px-4 py-1.5 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm">🥰 친근한 친구</button>
-                <button id="btn_persona_assistant" onclick="changePersona('assistant')" class="shrink-0 px-4 py-1.5 rounded-full border-2 border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">👔 개인 비서</button>
-                <button id="btn_persona_guide" onclick="changePersona('guide')" class="shrink-0 px-4 py-1.5 rounded-full border-2 border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">✈️ 여행 가이드</button>
+                <!-- 2. 우측 위아래 2단으로 쌓인 페르소나 & 메모장 버튼 -->
+                <div class="flex-1 flex flex-col gap-1.5">
+                    <!-- 윗줄: 친구 & 비서 -->
+                    <div class="flex gap-1.5">
+                        <button id="btn_persona_friend" onclick="changePersona('friend')" class="flex-1 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm">🥰 친근한 친구</button>
+                        <button id="btn_persona_assistant" onclick="changePersona('assistant')" class="flex-1 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">👔 개인 비서</button>
+                    </div>
+                    <!-- 아랫줄: 가이드 & 메모장 -->
+                    <div class="flex gap-1.5">
+                        <button id="btn_persona_guide" onclick="changePersona('guide')" class="flex-1 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">✈️ 여행 가이드</button>
+                        <button onclick="toggleMemoModal(true)" class="flex-1 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-[11px] font-bold transition-all shadow-sm flex items-center justify-center gap-1 relative hover:bg-amber-100">
+                            <i class="fa-solid fa-note-sticky"></i> 메모장
+                            <!-- 알림 뱃지 -->
+                            <span id="memoCountBadge" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full hidden shadow-sm border border-white">0</span>
+                        </button>
+                    </div>
+                </div>
+                
             </div>
 
             <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 no-scrollbar pb-6 relative">
