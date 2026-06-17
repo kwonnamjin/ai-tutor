@@ -1144,23 +1144,20 @@
             // 🎭 3가지 페르소나 완벽 설정 (개인비서 성격 부드럽게 수정!)
             const personaInstructions = {
                 friend: `You are the user's warm, supportive, and cheerful best friend who is a native ${targetName} speaker. React with deep empathy, humor, and lots of emojis! 🥳 Keep your response to 1-2 short, natural conversational sentences. Do not be strict.`,
-                
-                // 🌟 개인 비서: 너무 딱딱하지 않게, 친절하고 부드러운 말투로 튜닝
                 assistant: `You are the user's smart, reliable, and friendly personal assistant who is a native ${targetName} speaker. Be helpful and professional, but always keep a warm, polite, and approachable tone. Provide clear and practical answers while being warmly encouraging. 👔`,
-                
                 guide: `You are an enthusiastic, knowledgeable, and engaging travel guide who is a native ${targetName} speaker. Share fascinating local insights, cultural tips, and exciting recommendations. Use a welcoming and adventurous tone! ✈️`
-            
-            
             };
             
-            // 사용자가 누른 버튼에 맞는 성격을 가져옵니다.
             const selectedPersona = personaInstructions[window.currentPersona] || personaInstructions['friend'];
 
+            // 🌟 AI가 딴소리 못하게 JSON 답변 뼈대 안에 메모장 칸을 아예 만들어줍니다!
+            const memoRule = `\n🚨 CRITICAL: If the user asks to save, remember, or memo a schedule/task, you MUST extract the content and put it in the "save_memo" JSON key in ${exactAiLang}. If not, leave it empty.`;
+
             let sysPrompt = mode === 'translate' 
-                ? `Translate the user's input into ${targetName}. Respond in JSON: {"foreign_text":"Translated text in ${targetName}","translation":"Explanation in ${exactAiLang}"}` + memoryPrompt + criticalRule
-                : selectedPersona + ` If the user speaks another language, translate it naturally. Respond in JSON: {"foreign_text":"Your response in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}"}` + memoryPrompt + criticalRule;
-            try {
+                ? `Translate the user's input into ${targetName}. Respond in JSON: {"foreign_text":"Translated text in ${targetName}","translation":"Explanation in ${exactAiLang}","save_memo":""}` + memoryPrompt + criticalRule + memoRule
+                : selectedPersona + ` If the user speaks another language, translate it naturally. Respond in JSON: {"foreign_text":"Your response in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}","save_memo":""}` + memoryPrompt + criticalRule + memoRule;           try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
+                
                 if(mode==='tutor') {
                     if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
                     
