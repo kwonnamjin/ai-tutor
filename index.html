@@ -34,7 +34,7 @@
         
         .selected-card { border-color: #3b82f6 !important; background-color: #eff6ff !important; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3) !important; transform: scale(1.02); }
 
-        .perspective-500 { perspective: 500px; }
+        .perspective-1000 { perspective: 1000px; }
         .transform-style-3d { transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
@@ -2250,6 +2250,19 @@
             langSelector.addEventListener('change', window.updateExtraUI);
         }
         // =======================================================================
+
+
+
+
+
+
+        <button onclick="localStorage.removeItem('free_usage_count'); localStorage.removeItem('total_allowed_count'); alert('결제 기록 초기화 완료! 무료 50회 상태로 돌아갑니다.'); location.reload();" 
+        class="fixed bottom-4 right-4 bg-red-600 text-white text-xs px-3 py-2 rounded shadow-lg z-50 opacity-50 hover:opacity-100">
+    결제 리셋
+</button>
+
+
+
 
     </script>
 </body>
