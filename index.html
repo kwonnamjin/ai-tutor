@@ -1887,13 +1887,13 @@
                 const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
                 // 🌟 [핵심 1] 모든 버전을 v25로 완벽하게 통일하여 꼬인 데이터 초기화!
-                const cacheKey = 'full_alpha_v25_' + targetLangCode + '_' + expLangCode;
+                const cacheKey = 'full_alpha_v26_' + targetLangCode + '_' + expLangCode;
                 let fullData = null;
                 let alphaProgress = {};
                 
                 try {
                     fullData = JSON.parse(localStorage.getItem(cacheKey));
-                    alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v25')) || {};
+                    alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v26')) || {};
                 } catch(e) { console.warn("캐시 초기화"); }
                 
                 let currentLimit = alphaProgress[cacheKey] || 0;
@@ -1961,7 +1961,7 @@
                 currentLimit += 20;
                 alphaProgress[cacheKey] = currentLimit;
                 // 여기도 v25로 저장!
-                localStorage.setItem('alpha_progress_v25', JSON.stringify(alphaProgress));
+                localStorage.setItem('alpha_progress_v26', JSON.stringify(alphaProgress));
 
                 const isFinished = currentLimit >= fullData.alphabetData.length;
                 const dataToShow = fullData.alphabetData.slice(0, currentLimit);
@@ -2028,13 +2028,13 @@
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
             
             // 🌟 [핵심] 불러올 때도 똑같이 v25 상자를 열어보도록 수정!
-            const cacheKey = 'full_alpha_v25_' + targetLangCode + '_' + expLangCode;
+            const cacheKey = 'full_alpha_v26_' + targetLangCode + '_' + expLangCode;
             const cachedData = localStorage.getItem(cacheKey);
             const btn = document.getElementById("generateAlphaBtn");
 
             if (cachedData && typeof window.renderAlphabet === 'function') {
                 const fullData = JSON.parse(cachedData);
-                let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v25')) || {};
+                let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v26')) || {};
                 let currentLimit = alphaProgress[cacheKey] || fullData.alphabetData.length;
                 if(currentLimit === 0) currentLimit = fullData.alphabetData.length;
                 
