@@ -1058,7 +1058,9 @@
             if (!window.checkAndBlockAPI()) return;
         
             addMessageToChat('user', text);
-            updateStatus("생각하는 중..."); avatarWrap.style.borderColor = "#94a3b8";
+            updateStatus("생각하는 중..."); 
+            const avatarWrap = document.getElementById('avatarWrap');
+            if(avatarWrap) avatarWrap.style.borderColor = "#94a3b8";
             
             const mode = document.getElementById('appMode').value;
             const tLang = document.getElementById('targetLanguage');
@@ -1069,22 +1071,32 @@
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
             const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
+            // 🧠 [장기 기억 주입] 로컬 스토리지에서 100자 메모지를 꺼내서 AI에게 쥐어줍니다.
+            const savedMemory = localStorage.getItem('user_compressed_memory') || '';
+            const memoryPrompt = savedMemory ? `\n\n[User's Core Memory (Always remember this): ${savedMemory}]` : '';
+
             const criticalRule = `\n\n🚨 CRITICAL RULE: The value for 'translation' MUST be written entirely in ${exactAiLang}. DO NOT use Korean under any circumstances unless the requested language is Korean!`;
 
+            // 시스템 프롬프트에 메모지(memoryPrompt)를 몰래 붙여서 전송!
             let sysPrompt = mode === 'translate' 
-                ? `Translate the user's input into ${targetName}. Respond in JSON: {"foreign_text":"Translated text in ${targetName}","translation":"Explanation in ${exactAiLang}"}` + criticalRule
+                ? `Translate the user's input into ${targetName}. Respond in JSON: {"foreign_text":"Translated text in ${targetName}","translation":"Explanation in ${exactAiLang}"}` + memoryPrompt + criticalRule
                 : `You are a friendly and professional tutor for the language: ${targetName}. 
                    If the user speaks ${targetName}, continue the conversation naturally. 
                    If the user speaks another language, translate it and guide them back to ${targetName}. 
-                   Respond in JSON: {"foreign_text":"Your response in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}"}` + criticalRule;
+                   Respond in JSON: {"foreign_text":"Your response in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}"}` + memoryPrompt + criticalRule;
 
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
                 if(mode==='tutor') {
                     if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
+                    
+                    // 매번 시스템 프롬프트를 최신화 (메모지가 중간에 바뀔 수 있으므로)
+                    ctx[0] = {role:"system", content:sysPrompt}; 
+                    
                     ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
-                    if(ctx.length>9) ctx=[ctx[0], ...ctx.slice(-8)];
-                    conversationHistory = ctx; sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+                    
+                    conversationHistory = ctx; 
+                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
                 }
                 
                 let res = await fetchAPI(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, body: JSON.stringify({ model: "deepseek-chat", messages: ctx, response_format: { type: "json_object" } }) });
@@ -1097,9 +1109,17 @@
                 
                 window.incrementLocalUsage();
                 
-                if(mode==='tutor') { conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)}); sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); }
+                if(mode==='tutor') { 
+                    conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)}); 
+                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); 
+                    
+                    // 🧠 [장기 기억 업데이트 트리거] 대화가 끝나면 몰래 백그라운드 요원 호출!
+                    // await를 쓰지 않아서 사용자의 채팅 속도에는 전혀 영향을 주지 않습니다.
+                    window.compressMemory();
+                }
+                
                 if(parsed.foreign_text) { addMessageToChat('ai', parsed.foreign_text, parsed.translation || parsed.korean_translation, targetLang); speakText(parsed.foreign_text, targetLang); }
-            } catch(e) { console.error(e); updateStatus("AI 서버 통신 에러"); avatarWrap.style.borderColor="#f87171"; }
+            } catch(e) { console.error(e); updateStatus("AI 서버 통신 에러"); if(avatarWrap) avatarWrap.style.borderColor="#f87171"; }
         }
         window.handleUserMessage = handleUserMessage;
 
@@ -1809,6 +1829,44 @@
                 localStorage.setItem('stt_input_language', this.value);
             });
         });
+        // 🧠 [장기 기억 시스템] 대화가 길어지면 핵심만 100자로 압축하고 과거 기록을 지워 토큰을 절약함
+        window.compressMemory = async function() {
+            // 대화가 8번(사용자 4번, AI 4번) 이상 쌓이지 않았으면 아직 압축하지 않음
+            if (conversationHistory.length < 8) return; 
+
+            const savedMem = localStorage.getItem('user_compressed_memory') || '없음';
+            const chatLog = JSON.stringify(conversationHistory);
+            
+            // AI에게 내리는 특명: "기존 메모와 방금 대화를 보고, 유저의 특징만 100자 이내로 갱신해!"
+            const sysPrompt = `당신은 기억 압축기입니다. 기존 기억과 새로운 대화 기록을 분석하여, 사용자의 직업, 취미, 관심사, 성향, 언어적 약점 등 핵심 정보만 추출하세요. 반드시 한국어로 100자 이내로 요약하여 JSON 형식으로 응답하세요: {"memory": "..."}`;
+
+            try {
+                let res = await fetchAPI(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
+                    body: JSON.stringify({ 
+                        model: "deepseek-chat", 
+                        messages: [{role: "system", content: sysPrompt}, {role: "user", content: `기존 기억: ${savedMem}\n새 대화: ${chatLog}`}], 
+                        response_format: { type: "json_object" } 
+                    })
+                });
+                
+                let data = await res.json();
+                let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+                let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
+                
+                if (parsed.memory) {
+                    // 1. 요약된 100자 메모를 기기에 영구 저장
+                    localStorage.setItem('user_compressed_memory', parsed.memory);
+                    
+                    // 2. 🌟 토큰(비용) 절약의 핵심: 기억을 메모지에 적었으니, 길었던 옛날 대화는 싹둑 자르고 최근 4마디(단기 기억)만 남김!
+                    conversationHistory = conversationHistory.slice(-4);
+                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+                }
+            } catch(e) { 
+                console.log("기억 압축 중 오류 발생 (대화에는 지장 없음)"); 
+            }
+        };
 
     </script>
 </body>
