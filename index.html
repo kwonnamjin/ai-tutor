@@ -1098,8 +1098,7 @@
             let sysPrompt = mode === 'translate' 
                 ? `Translate the user's input into ${targetName}. Respond in JSON: {"foreign_text":"Translated text in ${targetName}","translation":"Explanation in ${exactAiLang}"}` + memoryPrompt + criticalRule
                 : selectedPersona + ` If the user speaks another language, translate it naturally. Respond in JSON: {"foreign_text":"Your response in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}"}` + memoryPrompt + criticalRule;
-
-                        try {
+            try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
                 if(mode==='tutor') {
                     if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
@@ -1186,6 +1185,35 @@
         function clearChatSession() { conversationHistory=[]; uiChatHistory=[]; sessionStorage.clear(); document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el=>el.remove()); }
         window.changeAppMode = function() { clearChatSession(); } 
         
+        // 🎭 페르소나 상태 저장 및 변경 함수
+        window.currentPersona = localStorage.getItem('ai_persona') || 'friend';
+
+        window.changePersona = function(type) {
+            window.currentPersona = type;
+            localStorage.setItem('ai_persona', type);
+            
+            // 선택된 버튼만 파란색으로 하이라이트 처리
+            ['friend', 'assistant', 'guide'].forEach(p => {
+                const btn = document.getElementById('btn_persona_' + p);
+                if(btn) {
+                    if(p === type) {
+                        btn.className = "shrink-0 px-4 py-1.5 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm";
+                    } else {
+                        btn.className = "shrink-0 px-4 py-1.5 rounded-full border-2 border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100";
+                    }
+                }
+            });
+            
+            // 페르소나가 바뀌면 대화가 꼬이지 않게 채팅창을 깔끔하게 비워줍니다.
+            if(typeof clearChatSession === 'function') clearChatSession();
+            window.updateStatus("새로운 페르소나가 적용되었습니다!");
+        };
+
+        // 앱을 처음 켰을 때, 마지막으로 선택했던 페르소나 버튼 색상을 맞춰줌
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => window.changePersona(window.currentPersona), 300);
+        });
+
         window.targetLanguageChanged = function() { 
             const currentTargetLang = document.getElementById('targetLanguage').value;
             localStorage.setItem('target_language', currentTargetLang);
@@ -1880,34 +1908,7 @@
             } catch(e) { 
                 console.log("기억 압축 중 오류 발생 (대화에는 지장 없음)"); 
             }
-            // 🎭 페르소나 상태 저장 및 변경 함수
-        window.currentPersona = localStorage.getItem('ai_persona') || 'friend';
-
-        window.changePersona = function(type) {
-            window.currentPersona = type;
-            localStorage.setItem('ai_persona', type);
             
-            // 선택된 버튼만 파란색으로 하이라이트 처리
-            ['friend', 'assistant', 'guide'].forEach(p => {
-                const btn = document.getElementById('btn_persona_' + p);
-                if(btn) {
-                    if(p === type) {
-                        btn.className = "shrink-0 px-4 py-1.5 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm";
-                    } else {
-                        btn.className = "shrink-0 px-4 py-1.5 rounded-full border-2 border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100";
-                    }
-                }
-            });
-            
-            // 페르소나가 바뀌면 대화가 꼬이지 않게 채팅창을 깔끔하게 비워줍니다.
-            if(typeof clearChatSession === 'function') clearChatSession();
-            window.updateStatus("새로운 페르소나가 적용되었습니다!");
-        };
-
-        // 앱을 처음 켰을 때, 마지막으로 선택했던 페르소나 버튼 색상을 맞춰줌
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => window.changePersona(window.currentPersona), 300);
-        });
         };
 
     </script>
