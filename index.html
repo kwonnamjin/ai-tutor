@@ -2269,6 +2269,19 @@
         }
         // =======================================================================
 
+        // ✂️ 문장을 단어별로 쪼개서 클릭 가능하게 만들어주는 마법 가위
+        window.createSpansForText = function(text, bId) {
+            // 문장을 띄어쓰기 기준으로 나눕니다.
+            return text.split(' ').map(word => {
+                // 빈칸이면 그냥 패스
+                if (!word.trim()) return word;
+                
+                // 단어 하나하나에 형광펜 효과(hover)와 클릭(onclick) 기능을 달아줍니다!
+                // (클릭 시 requestExplanationFromBubble 함수를 실행하여 해설을 요청합니다)
+                return `<span class="inline-block cursor-pointer hover:bg-yellow-200 hover:text-blue-800 rounded px-[2px] transition-colors duration-200" onclick="requestExplanationFromBubble('${bId}', this.innerText, true); event.stopPropagation();">${word}</span>`;
+            }).join(' ');
+        };
+
 
 
 
