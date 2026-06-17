@@ -88,6 +88,12 @@
                 </div>
             </div>
 
+            <div class="flex gap-2 px-4 py-2 bg-slate-50 border-b border-slate-100 overflow-x-auto no-scrollbar shrink-0">
+                <button id="btn_persona_friend" onclick="changePersona('friend')" class="shrink-0 px-4 py-1.5 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm">🥰 친근한 친구</button>
+                <button id="btn_persona_assistant" onclick="changePersona('assistant')" class="shrink-0 px-4 py-1.5 rounded-full border-2 border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">👔 개인 비서</button>
+                <button id="btn_persona_guide" onclick="changePersona('guide')" class="shrink-0 px-4 py-1.5 rounded-full border-2 border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">✈️ 여행 가이드</button>
+            </div>
+
             <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 no-scrollbar pb-6 relative">
                  <!-- 멤버십 업그레이드 배너 (번역 덮어쓰기 방지 적용) -->
             <div id="premiumBanner" class="bg-gradient-to-r from-indigo-600 via-blue-600 to-blue-500 rounded-2xl p-4 shadow-md cursor-pointer hover:shadow-lg transition-all self-start mb-4 mx-4" onclick="window.showSubscriptionModal('upgrade')">
@@ -1077,17 +1083,23 @@
 
             const criticalRule = `\n\n🚨 CRITICAL RULE: The value for 'translation' MUST be written entirely in ${exactAiLang}. DO NOT use Korean under any circumstances unless the requested language is Korean!`;
 
-            /// 🌟 못된 선생님 해고! 다정하고 유쾌한 베스트 프렌드로 AI 세뇌하기
+            // 🎭 3가지 페르소나 완벽 설정
+            const personaInstructions = {
+                friend: `You are the user's warm, supportive, and cheerful best friend who is a native ${targetName} speaker. React with deep empathy, humor, and lots of emojis! 🥳 Keep your response to 1-2 short, natural conversational sentences. Do not be strict.`,
+                
+                assistant: `You are the user's highly professional, polite, and efficient personal assistant who is a native ${targetName} speaker. Provide clear, concise, and logically structured answers. Use formal and respectful language. Focus on accuracy and productivity. 👔`,
+                
+                guide: `You are an enthusiastic, knowledgeable, and engaging travel guide who is a native ${targetName} speaker. Share fascinating local insights, cultural tips, and exciting recommendations. Use a welcoming and adventurous tone! ✈️`
+            };
+            
+            // 사용자가 누른 버튼에 맞는 성격을 가져옵니다.
+            const selectedPersona = personaInstructions[window.currentPersona] || personaInstructions['friend'];
+
             let sysPrompt = mode === 'translate' 
                 ? `Translate the user's input into ${targetName}. Respond in JSON: {"foreign_text":"Translated text in ${targetName}","translation":"Explanation in ${exactAiLang}"}` + memoryPrompt + criticalRule
-                : `You are the user's warm, supportive, and cheerful best friend who is a native ${targetName} speaker. 
-                   - Do NOT act like a strict, boring grammar teacher. 
-                   - Focus on building a fun, empathetic, and engaging conversation.
-                   - React with deep empathy, humor, and lots of emojis! 🥳
-                   - Keep your response to 1-2 short, natural conversational sentences.
-                   - If the user makes a mistake or speaks another language, don't scold them. Just gently guide them back by translating naturally.
-                   Respond in JSON: {"foreign_text":"Your friendly, emoji-filled response in ${targetName}","translation":"Friendly interpretation and very gentle tips in ${exactAiLang}"}` + memoryPrompt + criticalRule;
-            try {
+                : selectedPersona + ` If the user speaks another language, translate it naturally. Respond in JSON: {"foreign_text":"Your response in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}"}` + memoryPrompt + criticalRule;
+
+                        try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
                 if(mode==='tutor') {
                     if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
@@ -1868,6 +1880,34 @@
             } catch(e) { 
                 console.log("기억 압축 중 오류 발생 (대화에는 지장 없음)"); 
             }
+            // 🎭 페르소나 상태 저장 및 변경 함수
+        window.currentPersona = localStorage.getItem('ai_persona') || 'friend';
+
+        window.changePersona = function(type) {
+            window.currentPersona = type;
+            localStorage.setItem('ai_persona', type);
+            
+            // 선택된 버튼만 파란색으로 하이라이트 처리
+            ['friend', 'assistant', 'guide'].forEach(p => {
+                const btn = document.getElementById('btn_persona_' + p);
+                if(btn) {
+                    if(p === type) {
+                        btn.className = "shrink-0 px-4 py-1.5 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm";
+                    } else {
+                        btn.className = "shrink-0 px-4 py-1.5 rounded-full border-2 border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100";
+                    }
+                }
+            });
+            
+            // 페르소나가 바뀌면 대화가 꼬이지 않게 채팅창을 깔끔하게 비워줍니다.
+            if(typeof clearChatSession === 'function') clearChatSession();
+            window.updateStatus("새로운 페르소나가 적용되었습니다!");
+        };
+
+        // 앱을 처음 켰을 때, 마지막으로 선택했던 페르소나 버튼 색상을 맞춰줌
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => window.changePersona(window.currentPersona), 300);
+        });
         };
 
     </script>
