@@ -1135,44 +1135,39 @@
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
             const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
-            // 🧠 [장기 기억 주입] 로컬 스토리지에서 100자 메모지를 꺼내서 AI에게 쥐어줍니다.
+            // 🧠 [장기 기억 주입]
             const savedMemory = localStorage.getItem('user_compressed_memory') || '';
-            const memoryPrompt = savedMemory ? `\n\n[User's Core Memory (Always remember this): ${savedMemory}]` : '';
+            const memoryPrompt = savedMemory ? `\n\n[User's Core Memory: ${savedMemory}]` : '';
+            const criticalRule = `\n\n🚨 CRITICAL RULE: The 'translation' MUST be in ${exactAiLang}.`;
 
-            const criticalRule = `\n\n🚨 CRITICAL RULE: The value for 'translation' MUST be written entirely in ${exactAiLang}. DO NOT use Korean under any circumstances unless the requested language is Korean!`;
-
-            // 🎭 3가지 페르소나 완벽 설정 (개인비서 성격 부드럽게 수정!)
+            // 🎭 [3가지 페르소나 설정]
             const personaInstructions = {
-                friend: `You are the user's warm, supportive, and cheerful best friend who is a native ${targetName} speaker. React with deep empathy, humor, and lots of emojis! 🥳 Keep your response to 1-2 short, natural conversational sentences. Do not be strict.`,
-                assistant: `You are the user's smart, reliable, and friendly personal assistant who is a native ${targetName} speaker. Be helpful and professional, but always keep a warm, polite, and approachable tone. Provide clear and practical answers while being warmly encouraging. 👔`,
-                guide: `You are an enthusiastic, knowledgeable, and engaging travel guide who is a native ${targetName} speaker. Share fascinating local insights, cultural tips, and exciting recommendations. Use a welcoming and adventurous tone! ✈️`
+                friend: `You are the user's cheerful best friend (native ${targetName}). Use emojis! Keep it short (1-2 sentences).`,
+                assistant: `You are the user's smart, friendly personal assistant (native ${targetName}). Polite, clear, and approachable.`,
+                guide: `You are an engaging travel guide (native ${targetName}). Share local insights with an adventurous tone.`
             };
-            
             const selectedPersona = personaInstructions[window.currentPersona] || personaInstructions['friend'];
 
-            // 🌟 AI가 딴소리 못하게 JSON 답변 뼈대 안에 메모장 칸을 아예 만들어줍니다!
-            const memoRule = `\n🚨 CRITICAL: If the user asks to save, remember, or memo a schedule/task, you MUST extract the content and put it in the "save_memo" JSON key in ${exactAiLang}. If not, leave it empty.`;
+            // 📝 [메모장 강제 작성 규칙 - 매우 강력하게 지시]
+            const memoRule = `\n🚨 CRITICAL: If the user asks to save, note, or remember a schedule/task, you MUST extract the core schedule into the "save_memo" key (in ${exactAiLang}). If there is no schedule to save, "save_memo" MUST be "".`;
 
             let sysPrompt = mode === 'translate' 
-                ? `Translate the user's input into ${targetName}. Respond in JSON: {"foreign_text":"Translated text in ${targetName}","translation":"Explanation in ${exactAiLang}","save_memo":""}` + memoryPrompt + criticalRule + memoRule
-                : selectedPersona + ` If the user speaks another language, translate it naturally. Respond in JSON: {"foreign_text":"Your response in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}","save_memo":""}` + memoryPrompt + criticalRule + memoRule;           try {
+                ? `Translate to ${targetName}. Respond in JSON: {"foreign_text":"...","translation":"...","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule
+                : selectedPersona + ` Translate to ${targetName} if needed. Respond in JSON: {"foreign_text":"...","translation":"...","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
+
+            try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
-                
                 if(mode==='tutor') {
                     if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
-                    
-                    // 매번 시스템 프롬프트를 최신화 (메모지가 중간에 바뀔 수 있으므로)
-                    ctx[0] = {role:"system", content:sysPrompt}; 
-                    
+                    ctx[0] = {role:"system", content:sysPrompt}; // 매번 프롬프트 최신화
                     ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
-                    
                     conversationHistory = ctx; 
                     sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
                 }
                 
                 let res = await fetchAPI(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, body: JSON.stringify({ model: "deepseek-chat", messages: ctx, response_format: { type: "json_object" } }) });
                 let data = await res.json();
-                let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+                let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/ সুবিধ/g, "").replace(/```/g, "").trim();
                 const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
                 
                 let parsed;
@@ -1183,13 +1178,23 @@
                 if(mode==='tutor') { 
                     conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)}); 
                     sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); 
+                    if(typeof window.compressMemory === 'function') window.compressMemory(); // 백그라운드 기억 요약
+                }
+
+                // 🎯 [핵심] AI가 보낸 "save_memo"를 낚아채서 내 화면 메모장에 꽂아넣는 코드!
+                if(parsed.save_memo && parsed.save_memo.trim() !== "") {
+                    let currentMemos = JSON.parse(localStorage.getItem('ai_auto_memos')) || [];
+                    currentMemos.unshift({ content: parsed.save_memo, timestamp: Date.now() });
+                    localStorage.setItem('ai_auto_memos', JSON.stringify(currentMemos));
                     
-                    // 🧠 [장기 기억 업데이트 트리거] 대화가 끝나면 몰래 백그라운드 요원 호출!
-                    // await를 쓰지 않아서 사용자의 채팅 속도에는 전혀 영향을 주지 않습니다.
-                    window.compressMemory();
+                    if(typeof window.renderMemos === 'function') window.renderMemos(); // 뱃지 숫자 즉시 갱신
+                    updateStatus("📝 AI가 일정을 메모장에 저장했습니다!"); // 성공 메시지
                 }
                 
-                if(parsed.foreign_text) { addMessageToChat('ai', parsed.foreign_text, parsed.translation || parsed.korean_translation, targetLang); speakText(parsed.foreign_text, targetLang); }
+                if(parsed.foreign_text) { 
+                    addMessageToChat('ai', parsed.foreign_text, parsed.translation || parsed.korean_translation, targetLang); 
+                    speakText(parsed.foreign_text, targetLang); 
+                }
             } catch(e) { console.error(e); updateStatus("AI 서버 통신 에러"); if(avatarWrap) avatarWrap.style.borderColor="#f87171"; }
         }
         window.handleUserMessage = handleUserMessage;
