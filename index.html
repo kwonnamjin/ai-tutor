@@ -1186,12 +1186,11 @@
         };
 
         function clearChatSession() { conversationHistory=[]; uiChatHistory=[]; sessionStorage.clear(); document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el=>el.remove()); }
-        window.changeAppMode = function() { clearChatSession(); } 
-        
-        // 🎭 페르소나 상태 저장 및 변경 함수
+        // ========== [페르소나 변경 로직 수정] ==========
         window.currentPersona = localStorage.getItem('ai_persona') || 'friend';
 
-        window.changePersona = function(type) {
+        // 🌟 isInit 이라는 안전장치를 추가했습니다.
+        window.changePersona = function(type, isInit = false) {
             window.currentPersona = type;
             localStorage.setItem('ai_persona', type);
             
@@ -1207,15 +1206,20 @@
                 }
             });
             
-            // 페르소나가 바뀌면 대화가 꼬이지 않게 채팅창을 깔끔하게 비워줍니다.
-            if(typeof clearChatSession === 'function') clearChatSession();
-            window.updateStatus("새로운 페르소나가 적용되었습니다!");
+            // 🌟 앱이 처음 켜진 게 아닐 때(사용자가 직접 눌렀을 때)만 채팅창을 비웁니다!
+            if(!isInit) {
+                if(typeof clearChatSession === 'function') clearChatSession();
+                window.updateStatus("새로운 페르소나가 적용되었습니다!");
+            }
         };
 
-        // 앱을 처음 켰을 때, 마지막으로 선택했던 페르소나 버튼 색상을 맞춰줌
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(() => window.changePersona(window.currentPersona), 300);
-        });
+        // 앱을 처음 켰을 때, 버튼 색상만 맞추고 채팅창은 지우지 않게 'true' 신호를 보냅니다.
+        setTimeout(() => {
+            if (typeof window.changePersona === 'function') {
+                window.changePersona(window.currentPersona, true);
+            }
+        }, 500);
+        // ========================================================
 
         window.targetLanguageChanged = function() { 
             const currentTargetLang = document.getElementById('targetLanguage').value;
