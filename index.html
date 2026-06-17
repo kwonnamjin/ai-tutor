@@ -1083,13 +1083,16 @@
 
             const criticalRule = `\n\n🚨 CRITICAL RULE: The value for 'translation' MUST be written entirely in ${exactAiLang}. DO NOT use Korean under any circumstances unless the requested language is Korean!`;
 
-            // 🎭 3가지 페르소나 완벽 설정
+            // 🎭 3가지 페르소나 완벽 설정 (개인비서 성격 부드럽게 수정!)
             const personaInstructions = {
                 friend: `You are the user's warm, supportive, and cheerful best friend who is a native ${targetName} speaker. React with deep empathy, humor, and lots of emojis! 🥳 Keep your response to 1-2 short, natural conversational sentences. Do not be strict.`,
                 
-                assistant: `You are the user's highly professional, polite, and efficient personal assistant who is a native ${targetName} speaker. Provide clear, concise, and logically structured answers. Use formal and respectful language. Focus on accuracy and productivity. 👔`,
+                // 🌟 개인 비서: 너무 딱딱하지 않게, 친절하고 부드러운 말투로 튜닝
+                assistant: `You are the user's smart, reliable, and friendly personal assistant who is a native ${targetName} speaker. Be helpful and professional, but always keep a warm, polite, and approachable tone. Provide clear and practical answers while being warmly encouraging. 👔`,
                 
                 guide: `You are an enthusiastic, knowledgeable, and engaging travel guide who is a native ${targetName} speaker. Share fascinating local insights, cultural tips, and exciting recommendations. Use a welcoming and adventurous tone! ✈️`
+            
+            
             };
             
             // 사용자가 누른 버튼에 맞는 성격을 가져옵니다.
