@@ -96,23 +96,23 @@
                 <!-- 2. 우측 위아래 2단으로 쌓인 페르소나 & 메모장 버튼 -->
                 <div class="flex items-center justify-between w-full mb-3 z-50">
                             
-                          
+                            <img id="aiAvatarImg" src="https://cdn-icons-png.flaticon.com/512/4712/4712010.png" class="w-10 h-10 object-contain drop-shadow-sm" alt="AI">
 
                             <div class="flex gap-1">
-                                <button onclick="window.currentPersona='friend';" class="w-[70px] h-[32px] flex items-center justify-center bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-[10px] font-bold rounded shadow-sm transition-all">
-                                    <span id="ui_persona_friend">친근한 친구</span>
+                                <button onclick="window.currentPersona='friend';" class="w-[70px] h-[32px] flex items-center justify-center bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-[10px] font-bold rounded shadow-sm transition-all px-1">
+                                    <span id="ui_persona_friend" class="truncate w-full text-center">친근한 친구</span>
                                 </button>
                                 
-                                <button onclick="window.currentPersona='assistant';" class="w-[70px] h-[32px] flex items-center justify-center bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 text-[10px] font-bold rounded shadow-sm transition-all">
-                                    <span id="ui_persona_assistant">개인 비서</span>
+                                <button onclick="window.currentPersona='assistant';" class="w-[70px] h-[32px] flex items-center justify-center bg-green-50 hover:bg-green-100 border border-green-200 text-green-700 text-[10px] font-bold rounded shadow-sm transition-all px-1">
+                                    <span id="ui_persona_assistant" class="truncate w-full text-center">개인 비서</span>
                                 </button>
                                 
-                                <button onclick="window.currentPersona='guide';" class="w-[70px] h-[32px] flex items-center justify-center bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-[10px] font-bold rounded shadow-sm transition-all">
-                                    <span id="ui_persona_guide">여행 가이드</span>
+                                <button onclick="window.currentPersona='guide';" class="w-[70px] h-[32px] flex items-center justify-center bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-[10px] font-bold rounded shadow-sm transition-all px-1">
+                                    <span id="ui_persona_guide" class="truncate w-full text-center">여행 가이드</span>
                                 </button>
                                 
-                                <button onclick="document.getElementById('memoModal').classList.remove('hidden');" class="w-[70px] h-[32px] flex items-center justify-center bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 text-[10px] font-bold rounded shadow-sm transition-all relative">
-                                    <span id="ui_memo_text">메모장</span>
+                                <button onclick="document.getElementById('memoModal').classList.remove('hidden');" class="w-[70px] h-[32px] flex items-center justify-center bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 text-[10px] font-bold rounded shadow-sm transition-all px-1 relative">
+                                    <span id="ui_memo_text" class="truncate w-full text-center">메모장</span>
                                     <span id="memoCountBadge" class="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center bg-red-500 text-white text-[9px] font-bold rounded-full hidden">0</span>
                                 </button>
                             </div>
