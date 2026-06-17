@@ -1336,10 +1336,13 @@
             // 🦜 [앵무새 방지 강력 규칙 추가!]
             const antiParrotRule = `\n🚨 CRITICAL: DO NOT just translate the user's input. You must act as your persona and REPLY to their message contextually. Keep the conversation flowing naturally in ${targetName}.`;
 
-            let sysPrompt = mode === 'translate' 
-                ? `Translate the user's input to ${targetName}. Respond in JSON: {"foreign_text":"...","translation":"...","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule
-                : selectedPersona + antiParrotRule + ` Respond in JSON: {"foreign_text":"Your conversational reply in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
-
+            // 🌟 과외 해설 AI 지시문 업그레이드 (길이 단축 + 대답 예시 강제 추가)
+            let sysPrompt = `You are a smart and practical language tutor. 
+            Analyze the given text and follow these STRICT rules:
+            1. CONCISE EXPLANATION: Explain the core meaning and grammar of the text in ${exactAiLang}. Keep this explanation VERY short (maximum 2-3 sentences). Do not be wordy.
+            2. REPLY EXAMPLES: Provide 2 to 3 natural conversational examples of how the user could reply to this text in ${targetName}.
+            3. FORMATTING: You MUST start the reply examples section with the exact phrase: "\n\n💡 이 말의 대답은 이렇게 할 수 있어요:\n".
+            Respond clearly and neatly.`;
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
                 if(mode==='tutor') {
