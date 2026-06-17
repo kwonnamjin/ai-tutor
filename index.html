@@ -1336,13 +1336,10 @@
             // 🦜 [앵무새 방지 강력 규칙 추가!]
             const antiParrotRule = `\n🚨 CRITICAL: DO NOT just translate the user's input. You must act as your persona and REPLY to their message contextually. Keep the conversation flowing naturally in ${targetName}.`;
 
-            // 🌟 과외 해설 AI 지시문 업그레이드 (길이 단축 + 대답 예시 강제 추가)
-            let sysPrompt = `You are a smart and practical language tutor. 
-            Analyze the given text and follow these STRICT rules:
-            1. CONCISE EXPLANATION: Explain the core meaning and grammar of the text in ${exactAiLang}. Keep this explanation VERY short (maximum 2-3 sentences). Do not be wordy.
-            2. REPLY EXAMPLES: Provide 2 to 3 natural conversational examples of how the user could reply to this text in ${targetName}.
-            3. FORMATTING: You MUST start the reply examples section with the exact phrase: "\n\n💡 이 말의 대답은 이렇게 할 수 있어요:\n".
-            Respond clearly and neatly.`;
+            let sysPrompt = mode === 'translate' 
+                ? `Translate the user's input to ${targetName}. Respond in JSON: {"foreign_text":"...","translation":"...","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule
+                : selectedPersona + antiParrotRule + ` Respond in JSON: {"foreign_text":"Your conversational reply in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
+
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
                 if(mode==='tutor') {
@@ -1408,7 +1405,15 @@
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
             const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
-            const systemPrompt = `You are an expert language tutor. CRITICAL RULE: Your ENTIRE explanation MUST be written entirely in ${exactAiLang} (ISO code: ${expLangCode}). Do NOT use Korean under any circumstances unless the code is 'ko-KR'. Output ONLY a valid JSON object without markdown formatting.`;
+            const systemPrompt = `You are an expert language tutor. 
+            Analyze the given text and follow these STRICT rules:
+            1. CONCISE EXPLANATION: Explain the core meaning and grammar of the text. Keep this explanation VERY short (maximum 2-3 sentences).
+            2. REPLY EXAMPLES: Provide 2 to 3 natural conversational examples of how the user could reply to this text.
+            3. FORMATTING: You MUST start the reply examples section with the exact phrase: "\n\n💡 이 말의 대답은 이렇게 할 수 있어요:\n".
+            4. CRITICAL RULE: Your ENTIRE explanation MUST be written entirely in ${exactAiLang} (ISO code: ${expLangCode}). Do NOT use Korean under any circumstances unless the code is 'ko-KR'.
+            5. JSON ONLY: Output ONLY a valid JSON object without markdown formatting.
+            
+            Respond in JSON: {"translation": "put your short explanation and reply examples here"}`;
             const userPrompt = `Analyze the following text:\n- Learning Language: ${targetLangName}\n- Context: "${fullText}"\n- Part to explain: "${targetText}"\n\nProvide the meaning, grammatical features, and 1-2 practical examples for the "Part to explain". \nExpected JSON format:\n{"explanation": "Your detailed explanation written entirely in ${exactAiLang} here"}`;
 
             try {
