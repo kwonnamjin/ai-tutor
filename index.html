@@ -1140,20 +1140,23 @@
             const memoryPrompt = savedMemory ? `\n\n[User's Core Memory: ${savedMemory}]` : '';
             const criticalRule = `\n\n🚨 CRITICAL RULE: The 'translation' MUST be in ${exactAiLang}.`;
 
-            // 🎭 [3가지 페르소나 설정]
+            // 🎭 [3가지 페르소나 설정 - 티키타카 강화]
             const personaInstructions = {
-                friend: `You are the user's cheerful best friend (native ${targetName}). Use emojis! Keep it short (1-2 sentences).`,
-                assistant: `You are the user's smart, friendly personal assistant (native ${targetName}). Polite, clear, and approachable.`,
-                guide: `You are an engaging travel guide (native ${targetName}). Share local insights with an adventurous tone.`
+                friend: `You are the user's cheerful best friend (native ${targetName}). Use lots of emojis! Ask questions back to keep the conversation going smoothly. Keep it to 1-2 natural sentences.`,
+                assistant: `You are the user's smart, friendly personal assistant (native ${targetName}). Answer their questions, confirm their requests, and chat actively. Polite, clear, and approachable.`,
+                guide: `You are an engaging travel guide (native ${targetName}). Give great recommendations, answer questions actively, and share local insights.`
             };
             const selectedPersona = personaInstructions[window.currentPersona] || personaInstructions['friend'];
 
-            // 📝 [메모장 강제 작성 규칙 - 매우 강력하게 지시]
-            const memoRule = `\n🚨 CRITICAL: If the user asks to save, note, or remember a schedule/task, you MUST extract the core schedule into the "save_memo" key (in ${exactAiLang}). If there is no schedule to save, "save_memo" MUST be "".`;
+            // 📝 [메모장 강제 작성 규칙]
+            const memoRule = `\n🚨 CRITICAL: If the user asks to save, note, or remember a schedule/task, extract it into the "save_memo" key (in ${exactAiLang}). Otherwise, "save_memo" MUST be "".`;
+
+            // 🦜 [앵무새 방지 강력 규칙 추가!]
+            const antiParrotRule = `\n🚨 CRITICAL: DO NOT just translate the user's input. You must act as your persona and REPLY to their message contextually. Keep the conversation flowing naturally in ${targetName}.`;
 
             let sysPrompt = mode === 'translate' 
-                ? `Translate to ${targetName}. Respond in JSON: {"foreign_text":"...","translation":"...","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule
-                : selectedPersona + ` Translate to ${targetName} if needed. Respond in JSON: {"foreign_text":"...","translation":"...","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
+                ? `Translate the user's input to ${targetName}. Respond in JSON: {"foreign_text":"...","translation":"...","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule
+                : selectedPersona + antiParrotRule + ` Respond in JSON: {"foreign_text":"Your conversational reply in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
 
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
