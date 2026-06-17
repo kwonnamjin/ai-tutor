@@ -96,21 +96,36 @@
                 <div class="flex-1 flex flex-col gap-1.5">
                     <!-- 윗줄: 친구 & 비서 -->
                     <div class="flex gap-1.5">
-                        <button id="btn_persona_friend" onclick="changePersona('friend')" class="flex-1 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm">🥰 친근한 친구</button>
-                        <button id="btn_persona_assistant" onclick="changePersona('assistant')" class="flex-1 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">👔 개인 비서</button>
+                        <button id="btn_persona_friend" onclick="changePersona('friend')" class="flex-1 py-1.5 rounded-lg border border-blue-300 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm">🥰 <span id="ui_persona_friend">친근한 친구</span></button>
+                        <button id="btn_persona_assistant" onclick="changePersona('assistant')" class="flex-1 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">👔 <span id="ui_persona_assistant">개인 비서</span></button>
                     </div>
                     <!-- 아랫줄: 가이드 & 메모장 -->
                     <div class="flex gap-1.5">
-                        <button id="btn_persona_guide" onclick="changePersona('guide')" class="flex-1 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">✈️ 여행 가이드</button>
+                        <button id="btn_persona_guide" onclick="changePersona('guide')" class="flex-1 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100">✈️ <span id="ui_persona_guide">여행 가이드</span></button>
                         <button onclick="toggleMemoModal(true)" class="flex-1 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-700 text-[11px] font-bold transition-all shadow-sm flex items-center justify-center gap-1 relative hover:bg-amber-100">
-                            <i class="fa-solid fa-note-sticky"></i> 메모장
+                            <i class="fa-solid fa-note-sticky"></i> <span id="ui_memo_text">메모장</span>
                             <!-- 알림 뱃지 -->
                             <span id="memoCountBadge" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full hidden shadow-sm border border-white">0</span>
                         </button>
                     </div>
                 </div>
-                
             </div>
+
+    <!-- 📝 AI 자동 메모장 모달 -->
+    <div id="memoModal" class="fixed inset-0 bg-black/60 z-[999] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+        <div class="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl relative flex flex-col max-h-[80vh]">
+            <div class="bg-amber-50 p-4 border-b border-amber-100 flex justify-between items-center shrink-0">
+                <h2 class="text-base font-black text-amber-800"><i class="fa-solid fa-note-sticky text-amber-500 mr-1"></i> <span id="ui_memo_title">AI 비서의 메모장</span></h2>
+                <button onclick="toggleMemoModal(false)" class="text-amber-400 hover:text-amber-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div id="memoListArea" class="p-4 flex-1 overflow-y-auto space-y-3 bg-slate-50">
+                <!-- 메모가 여기에 추가됩니다 -->
+            </div>
+            <div class="p-3 border-t border-slate-100 shrink-0 bg-white">
+                <button onclick="clearAllMemos()" class="w-full py-2 bg-slate-100 text-slate-500 text-xs font-bold rounded-xl hover:bg-slate-200 transition-colors">🗑️ <span id="ui_memo_clear">모든 메모 지우기</span></button>
+            </div>
+        </div>
+    </div>
 
             <div id="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 no-scrollbar pb-6 relative">
                  <!-- 멤버십 업그레이드 배너 (번역 덮어쓰기 방지 적용) -->
@@ -413,7 +428,7 @@
         ];
 
         const UI_DICTIONARY = {
-            "ko": {
+           "ko": {
                 "main_subtitle": "Smart Language Partner", "mic_warning_text": "브라우저 마이크 제한. '다른 브라우저로 열기'를 선택해 주세요.",
                 "ai_engine_label": "AI Engine", "premium_title": "프리미엄 무제한 구독", "premium_desc": "월 4,500원(VAT 포함)으로 무제한 학습하세요!",
                 "welcome_title": "당신의 AI 튜터입니다.", "welcome_f1_title": "실시간 음성 대화", "welcome_f1_desc": "하단의 파란 마이크를 눌러 말해보세요. 대화형 튜터와 통번역 모드를 지원합니다.",
@@ -433,7 +448,8 @@
                 "set_voice_gender": "AI 목소리 성별", "gender_f_text": "여성", "gender_m_text": "남성", "set_exp_lang": "사용자 언어",
                 "settings_close": "닫기", "settings_save": "저장", "pw_title": "튜터링 종료", "paywallReasonText": "무료 튜터링 대화를 모두 소진하셨습니다.", "pw_upgrade_text": "프리미엄 결제하기",
                 "picker_target": "학습할 언어 선택", "picker_stt": "내 음성 언어 선택", "picker_exp": "사용자 언어 선택",
-                "lang_ko-KR": "한국어", "lang_en-US": "영어", "lang_es-ES": "스페인어", "lang_ja-JP": "일본어", "lang_zh-CN": "중국어", "lang_th-TH": "태국어", "lang_vi-VN": "베트남어", "lang_ar-SA": "아랍어", "lang_gd-GB": "스코틀랜드어", "lang_fr-FR": "프랑스어", "lang_ru-RU": "러시아어", "lang_hi-IN": "힌디어", "lang_la": "라틴어", "lang_he-IL": "히브리어", "lang_ne-NP": "네팔어", "lang_de-DE": "독일어", "lang_mn-MN": "몽골어", "lang_bo-CN": "티베트어", "lang_pl-PL": "폴란드어", "lang_sw-KE": "스와힐리"
+                "lang_ko-KR": "한국어", "lang_en-US": "영어", "lang_es-ES": "스페인어", "lang_ja-JP": "일본어", "lang_zh-CN": "중국어", "lang_th-TH": "태국어", "lang_vi-VN": "베트남어", "lang_ar-SA": "아랍어", "lang_gd-GB": "스코틀랜드어", "lang_fr-FR": "프랑스어", "lang_ru-RU": "러시아어", "lang_hi-IN": "힌디어", "lang_la": "라틴어", "lang_he-IL": "히브리어", "lang_ne-NP": "네팔어", "lang_de-DE": "독일어", "lang_mn-MN": "몽골어", "lang_bo-CN": "티베트어", "lang_pl-PL": "폴란드어", "lang_sw-KE": "스와힐리",
+                "ui_persona_friend": "친근한 친구", "ui_persona_assistant": "개인 비서", "ui_persona_guide": "여행 가이드", "ui_memo_text": "메모장", "ui_memo_title": "AI 비서의 메모장", "ui_memo_clear": "모든 메모 지우기", "ui_memo_empty": "아직 작성된 메모가 없습니다.<br>채팅으로 AI에게 일정을 메모해 달라고 해보세요!"
             },
             "en": {
                 "main_subtitle": "Smart Language Partner", "mic_warning_text": "Mic restricted by browser. Please select 'Open in another browser'.",
@@ -455,8 +471,10 @@
                 "set_voice_gender": "AI Voice Gender", "gender_f_text": "Female", "gender_m_text": "Male", "set_exp_lang": "User Language",
                 "settings_close": "Close", "settings_save": "Save", "pw_title": "Tutoring Ended", "paywallReasonText": "You have exhausted your free tutoring conversations.", "pw_upgrade_text": "Upgrade to Premium",
                 "picker_target": "Select Target Language", "picker_stt": "Select Voice Input Language", "picker_exp": "Select User Language",
-                "lang_ko-KR": "Korean", "lang_en-US": "English", "lang_es-ES": "Spanish", "lang_ja-JP": "Japanese", "lang_zh-CN": "Chinese", "lang_th-TH": "Thai", "lang_vi-VN": "Vietnamese", "lang_ar-SA": "Arabic", "lang_gd-GB": "Scottish", "lang_fr-FR": "French", "lang_ru-RU": "Russian", "lang_hi-IN": "Hindi", "lang_la": "Latin", "lang_he-IL": "Hebrew", "lang_ne-NP": "Nepali", "lang_de-DE": "German", "lang_mn-MN": "Mongolian", "lang_bo-CN": "Tibetan", "lang_pl-PL": "Polish", "lang_sw-KE": "Swahili"
+                "lang_ko-KR": "Korean", "lang_en-US": "English", "lang_es-ES": "Spanish", "lang_ja-JP": "Japanese", "lang_zh-CN": "Chinese", "lang_th-TH": "Thai", "lang_vi-VN": "Vietnamese", "lang_ar-SA": "Arabic", "lang_gd-GB": "Scottish", "lang_fr-FR": "French", "lang_ru-RU": "Russian", "lang_hi-IN": "Hindi", "lang_la": "Latin", "lang_he-IL": "Hebrew", "lang_ne-NP": "Nepali", "lang_de-DE": "German", "lang_mn-MN": "Mongolian", "lang_bo-CN": "Tibetan", "lang_pl-PL": "Polish", "lang_sw-KE": "Swahili",
+                "ui_persona_friend": "Best Friend", "ui_persona_assistant": "Assistant", "ui_persona_guide": "Travel Guide", "ui_memo_text": "Notes", "ui_memo_title": "AI Assistant Notes", "ui_memo_clear": "Clear All Notes", "ui_memo_empty": "No notes yet.<br>Ask the AI to note down your schedule!"
             },
+                
             "ja": {
                 "main_subtitle": "Smart Language Partner", "mic_warning_text": "マイクが制限されています。「別のブラウザで開く」を選択してください。",
                 "ai_engine_label": "AI Engine", "premium_title": "プレミアム無制限購読", "premium_desc": "月額4,500円(税込)で無制限に学習！",
@@ -477,7 +495,9 @@
                 "set_voice_gender": "AI音声の性別", "gender_f_text": "女性", "gender_m_text": "男性", "set_exp_lang": "ユーザー言語",
                 "settings_close": "閉じる", "settings_save": "保存", "pw_title": "チュータリング終了", "paywallReasonText": "無料会話回数をすべて使い切りました。", "pw_upgrade_text": "プレミアム決済",
                 "picker_target": "学習する言語を選択", "picker_stt": "音声入力言語を選択", "picker_exp": "ユーザー言語を選択",
-                "lang_ko-KR": "韓国語", "lang_en-US": "英語", "lang_es-ES": "スペイン語", "lang_ja-JP": "日本語", "lang_zh-CN": "中国語", "lang_th-TH": "タイ語", "lang_vi-VN": "ベトナム語", "lang_ar-SA": "アラビア語", "lang_gd-GB": "スコットランド語", "lang_fr-FR": "フランス語", "lang_ru-RU": "ロシア語", "lang_hi-IN": "ヒンディー語", "lang_la": "ラテン語", "lang_he-IL": "ヘブライ語", "lang_ne-NP": "ネパール語", "lang_de-DE": "ドイツ語", "lang_mn-MN": "モンゴル語", "lang_bo-CN": "チベット語", "lang_pl-PL": "ポーランド語", "lang_sw-KE": "スワヒリ語"
+                "lang_ko-KR": "韓国語", "lang_en-US": "英語", "lang_es-ES": "スペイン語", "lang_ja-JP": "日本語", "lang_zh-CN": "中国語", "lang_th-TH": "タイ語", "lang_vi-VN": "ベトナム語", "lang_ar-SA": "アラビア語", "lang_gd-GB": "スコットランド語", "lang_fr-FR": "フランス語", "lang_ru-RU": "ロシア語", "lang_hi-IN": "ヒンディー語", "lang_la": "ラテン語", "lang_he-IL": "ヘブライ語", "lang_ne-NP": "ネパール語", "lang_de-DE": "ドイツ語", "lang_mn-MN": "モンゴル語", "lang_bo-CN": "チベット語", "lang_pl-PL": "ポーランド語", "lang_sw-KE": "スワヒリ語",
+                "ui_persona_friend": "親しい友達", "ui_persona_assistant": "個人秘書", "ui_persona_guide": "旅行ガイド", "ui_memo_text": "メモ帳", "ui_memo_title": "AI秘書のメモ帳", "ui_memo_clear": "すべてのメモを消去", "ui_memo_empty": "まだメモがありません。<br>チャットでAIに予定をメモしてもらおう！"
+           
             },
             "zh": {
                 "main_subtitle": "Smart Language Partner", "mic_warning_text": "浏览器麦克风受限，请选择“在其他浏览器中打开”。",
@@ -499,7 +519,9 @@
                 "set_voice_gender": "AI 语音性别", "gender_f_text": "女性", "gender_m_text": "男性", "set_exp_lang": "用户语言",
                 "settings_close": "关闭", "settings_save": "保存", "pw_title": "辅导结束", "paywallReasonText": "您的免费对话次数已用完。", "pw_upgrade_text": "升级到高级版",
                 "picker_target": "选择学习语言", "picker_stt": "选择语音输入语言", "picker_exp": "选择用户语言",
-                "lang_ko-KR": "韩语", "lang_en-US": "英语", "lang_es-ES": "西班牙语", "lang_ja-JP": "日语", "lang_zh-CN": "中文", "lang_th-TH": "泰语", "lang_vi-VN": "越南语", "lang_ar-SA": "阿拉伯语", "lang_gd-GB": "苏格兰语", "lang_fr-FR": "法语", "lang_ru-RU": "俄语", "lang_hi-IN": "印地语", "lang_la": "拉丁语", "lang_he-IL": "希伯来语", "lang_ne-NP": "尼泊尔语", "lang_de-DE": "德语", "lang_mn-MN": "蒙古语", "lang_bo-CN": "藏语", "lang_pl-PL": "波兰语", "lang_sw-KE": "斯瓦希里语"
+                "lang_ko-KR": "韩语", "lang_en-US": "英语", "lang_es-ES": "西班牙语", "lang_ja-JP": "日语", "lang_zh-CN": "中文", "lang_th-TH": "泰语", "lang_vi-VN": "越南语", "lang_ar-SA": "阿拉伯语", "lang_gd-GB": "苏格兰语", "lang_fr-FR": "法语", "lang_ru-RU": "俄语", "lang_hi-IN": "印地语", "lang_la": "拉丁语", "lang_he-IL": "希伯来语", "lang_ne-NP": "尼泊尔语", "lang_de-DE": "德语", "lang_mn-MN": "蒙古语", "lang_bo-CN": "藏语", "lang_pl-PL": "波兰语", "lang_sw-KE": "斯瓦希里语",
+                "ui_persona_friend": "亲密朋友", "ui_persona_assistant": "私人助理", "ui_persona_guide": "旅行向导", "ui_memo_text": "备忘录", "ui_memo_title": "AI助理备忘录", "ui_memo_clear": "清除所有备忘录", "ui_memo_empty": "还没有备忘录。<br>在聊天中让AI为您记下日程吧！"
+          
             },
             "es": {
                 "main_subtitle": "Socio de Idiomas Inteligente", "mic_warning_text": "Micrófono restringido. Por favor, seleccione 'Abrir en otro navegador'.",
@@ -521,7 +543,10 @@
                 "set_voice_gender": "Género de voz de IA", "gender_f_text": "Femenino", "gender_m_text": "Masculino", "set_exp_lang": "Idioma del usuario",
                 "settings_close": "Cerrar", "settings_save": "Guardar", "pw_title": "Tutoría Finalizada", "paywallReasonText": "Has agotado tus conversaciones gratuitas.", "pw_upgrade_text": "Actualizar a Premium",
                 "picker_target": "Seleccionar idioma objetivo", "picker_stt": "Idioma de entrada de voz", "picker_exp": "Idioma del usuario",
-                "lang_ko-KR": "Coreano", "lang_en-US": "Inglés", "lang_es-ES": "Español", "lang_ja-JP": "Japonés", "lang_zh-CN": "Chino", "lang_th-TH": "Tailandés", "lang_vi-VN": "Vietnamita", "lang_ar-SA": "Árabe", "lang_gd-GB": "Escocés", "lang_fr-FR": "Francés", "lang_ru-RU": "Ruso", "lang_hi-IN": "Hindi", "lang_la": "Latín", "lang_he-IL": "Hebreo", "lang_ne-NP": "Nepalí", "lang_de-DE": "Alemán", "lang_mn-MN": "Mongol", "lang_bo-CN": "Tibetano", "lang_pl-PL": "Polaco", "lang_sw-KE": "Suajili"
+                "lang_ko-KR": "Coreano", "lang_en-US": "Inglés", "lang_es-ES": "Español", "lang_ja-JP": "Japonés", "lang_zh-CN": "Chino", "lang_th-TH": "Tailandés", "lang_vi-VN": "Vietnamita", "lang_ar-SA": "Árabe", "lang_gd-GB": "Escocés", "lang_fr-FR": "Francés", "lang_ru-RU": "Ruso", "lang_hi-IN": "Hindi", "lang_la": "Latín", "lang_he-IL": "Hebreo", "lang_ne-NP": "Nepalí", "lang_de-DE": "Alemán", "lang_mn-MN": "Mongol", "lang_bo-CN": "Tibetano", "lang_pl-PL": "Polaco", "lang_sw-KE": "Suajili",
+                 "ui_persona_friend": "Mejor Amigo", "ui_persona_assistant": "Asistente", "ui_persona_guide": "Guía de Viaje", 
+                "ui_memo_text": "Notas", "ui_memo_title": "Notas del Asistente de IA", "ui_memo_clear": "Borrar todas las notas", "ui_memo_empty": "Aún no hay notas.<br>¡Pídele a la IA que anote tu horario en el chat!"
+                
             },
             "fr": {
                 "main_subtitle": "Partenaire Linguistique Intelligent", "mic_warning_text": "Microphone restreint. Veuillez sélectionner 'Ouvrir dans un autre navigateur'.",
@@ -543,7 +568,9 @@
                 "set_voice_gender": "Genre de la voix", "gender_f_text": "Femme", "gender_m_text": "Homme", "set_exp_lang": "Langue de l'utilisateur",
                 "settings_close": "Fermer", "settings_save": "Sauvegarder", "pw_title": "Tutorat Terminé", "paywallReasonText": "Vous avez épuisé vos conversations gratuites.", "pw_upgrade_text": "Passer à Premium",
                 "picker_target": "Langue cible", "picker_stt": "Langue de saisie vocale", "picker_exp": "Langue de l'utilisateur",
-                "lang_ko-KR": "Coréen", "lang_en-US": "Anglais", "lang_es-ES": "Espagnol", "lang_ja-JP": "Japonais", "lang_zh-CN": "Chinois", "lang_th-TH": "Thaï", "lang_vi-VN": "Vietnamien", "lang_ar-SA": "Arabe", "lang_gd-GB": "Écossais", "lang_fr-FR": "Français", "lang_ru-RU": "Russe", "lang_hi-IN": "Hindi", "lang_la": "Latin", "lang_he-IL": "Hébreu", "lang_ne-NP": "Népalais", "lang_de-DE": "Allemand", "lang_mn-MN": "Mongol", "lang_bo-CN": "Tibétain", "lang_pl-PL": "Polonais", "lang_sw-KE": "Swahili"
+                "lang_ko-KR": "Coréen", "lang_en-US": "Anglais", "lang_es-ES": "Espagnol", "lang_ja-JP": "Japonais", "lang_zh-CN": "Chinois", "lang_th-TH": "Thaï", "lang_vi-VN": "Vietnamien", "lang_ar-SA": "Arabe", "lang_gd-GB": "Écossais", "lang_fr-FR": "Français", "lang_ru-RU": "Russe", "lang_hi-IN": "Hindi", "lang_la": "Latin", "lang_he-IL": "Hébreu", "lang_ne-NP": "Népalais", "lang_de-DE": "Allemand", "lang_mn-MN": "Mongol", "lang_bo-CN": "Tibétain", "lang_pl-PL": "Polonais", "lang_sw-KE": "Swahili",
+                "ui_persona_friend": "Ami Proche", "ui_persona_assistant": "Assistant", "ui_persona_guide": "Guide Touristique", "ui_memo_text": "Notes", "ui_memo_title": "Notes de l'Assistant IA", "ui_memo_clear": "Tout effacer", "ui_memo_empty": "Aucune note pour le moment.<br>Demandez à l'IA de noter votre emploi du temps !"
+            
             },
             "de": {
                 "main_subtitle": "Intelligenter Sprachpartner", "mic_warning_text": "Mikrofon blockiert. Bitte wählen Sie 'In anderem Browser öffnen'.",
@@ -565,7 +592,9 @@
                 "set_voice_gender": "KI-Stimme", "gender_f_text": "Weiblich", "gender_m_text": "Männlich", "set_exp_lang": "Benutzersprache",
                 "settings_close": "Schließen", "settings_save": "Speichern", "pw_title": "Nachhilfe Beendet", "paywallReasonText": "Kostenlose Gespräche aufgebraucht.", "pw_upgrade_text": "Premium kaufen",
                 "picker_target": "Zielsprache", "picker_stt": "Spracheingabe", "picker_exp": "Benutzersprache",
-                "lang_ko-KR": "Koreanisch", "lang_en-US": "Englisch", "lang_es-ES": "Spanisch", "lang_ja-JP": "Japanisch", "lang_zh-CN": "Chinesisch", "lang_th-TH": "Thailändisch", "lang_vi-VN": "Vietnamesisch", "lang_ar-SA": "Arabisch", "lang_gd-GB": "Schottisch", "lang_fr-FR": "Französisch", "lang_ru-RU": "Russisch", "lang_hi-IN": "Hindi", "lang_la": "Latein", "lang_he-IL": "Hebräisch", "lang_ne-NP": "Nepalesisch", "lang_de-DE": "Deutsch", "lang_mn-MN": "Mongolisch", "lang_bo-CN": "Tibetisch", "lang_pl-PL": "Polnisch", "lang_sw-KE": "Suaheli"
+                "lang_ko-KR": "Koreanisch", "lang_en-US": "Englisch", "lang_es-ES": "Spanisch", "lang_ja-JP": "Japanisch", "lang_zh-CN": "Chinesisch", "lang_th-TH": "Thailändisch", "lang_vi-VN": "Vietnamesisch", "lang_ar-SA": "Arabisch", "lang_gd-GB": "Schottisch", "lang_fr-FR": "Französisch", "lang_ru-RU": "Russisch", "lang_hi-IN": "Hindi", "lang_la": "Latein", "lang_he-IL": "Hebräisch", "lang_ne-NP": "Nepalesisch", "lang_de-DE": "Deutsch", "lang_mn-MN": "Mongolisch", "lang_bo-CN": "Tibetisch", "lang_pl-PL": "Polnisch", "lang_sw-KE": "Suaheli",
+                "ui_persona_friend": "Bester Freund", "ui_persona_assistant": "Assistent", "ui_persona_guide": "Reiseführer", "ui_memo_text": "Notizen", "ui_memo_title": "KI-Assistent Notizen", "ui_memo_clear": "Alle löschen", "ui_memo_empty": "Noch keine Notizen.<br>Bitte die KI im Chat, deinen Zeitplan zu notieren!"
+          
             },
             "vi": {
                 "main_subtitle": "Đối tác ngôn ngữ thông minh", "mic_warning_text": "Micro bị hạn chế. Vui lòng chọn 'Mở trong trình duyệt khác'.",
@@ -587,7 +616,10 @@
                 "set_voice_gender": "Giọng AI", "gender_f_text": "Nữ", "gender_m_text": "Nam", "set_exp_lang": "Ngôn ngữ của bạn",
                 "settings_close": "Đóng", "settings_save": "Lưu", "pw_title": "Kết thúc buổi học", "paywallReasonText": "Bạn đã hết số lượt trò chuyện miễn phí.", "pw_upgrade_text": "Nâng cấp Premium",
                 "picker_target": "Ngôn ngữ mục tiêu", "picker_stt": "Ngôn ngữ nhập giọng nói", "picker_exp": "Ngôn ngữ người dùng",
-                "lang_ko-KR": "Tiếng Hàn", "lang_en-US": "Tiếng Anh", "lang_es-ES": "Tiếng Tây Ban Nha", "lang_ja-JP": "Tiếng Nhật", "lang_zh-CN": "Tiếng Trung", "lang_th-TH": "Tiếng Thái", "lang_vi-VN": "Tiếng Việt", "lang_ar-SA": "Tiếng Ả Rập", "lang_gd-GB": "Tiếng Scotland", "lang_fr-FR": "Tiếng Pháp", "lang_ru-RU": "Tiếng Nga", "lang_hi-IN": "Tiếng Hindi", "lang_la": "Tiếng Latinh", "lang_he-IL": "Tiếng Do Thái", "lang_ne-NP": "Tiếng Nepal", "lang_de-DE": "Tiếng Đức", "lang_mn-MN": "Tiếng Mông Cổ", "lang_bo-CN": "Tiếng Tây Tạng", "lang_pl-PL": "Tiếng Ba Lan", "lang_sw-KE": "Tiếng Swahili"
+                "lang_ko-KR": "Tiếng Hàn", "lang_en-US": "Tiếng Anh", "lang_es-ES": "Tiếng Tây Ban Nha", "lang_ja-JP": "Tiếng Nhật", "lang_zh-CN": "Tiếng Trung", "lang_th-TH": "Tiếng Thái", "lang_vi-VN": "Tiếng Việt", "lang_ar-SA": "Tiếng Ả Rập", "lang_gd-GB": "Tiếng Scotland", "lang_fr-FR": "Tiếng Pháp", "lang_ru-RU": "Tiếng Nga", "lang_hi-IN": "Tiếng Hindi", "lang_la": "Tiếng Latinh", "lang_he-IL": "Tiếng Do Thái", "lang_ne-NP": "Tiếng Nepal", "lang_de-DE": "Tiếng Đức", "lang_mn-MN": "Tiếng Mông Cổ", "lang_bo-CN": "Tiếng Tây Tạng", "lang_pl-PL": "Tiếng Ba Lan", "lang_sw-KE": "Tiếng Swahili",
+                "ui_persona_friend": "Bạn thân", "ui_persona_assistant": "Trợ lý", "ui_persona_guide": "Hướng dẫn viên", "ui_memo_text": "Ghi chú", "ui_memo_title": "Ghi chú của Trợ lý AI", "ui_memo_clear": "Xóa tất cả", "ui_memo_empty": "Chưa có ghi chú nào.<br>Hãy yêu cầu AI ghi lại lịch trình của bạn!"
+           
+           
             },
             "ru": {
                 "main_subtitle": "Умный языковой партнер", "mic_warning_text": "Микрофон ограничен. Выберите 'Открыть в другом браузере'.",
@@ -609,7 +641,10 @@
                 "set_voice_gender": "Голос AI", "gender_f_text": "Женский", "gender_m_text": "Мужской", "set_exp_lang": "Язык интерфейса",
                 "settings_close": "Закрыть", "settings_save": "Сохранить", "pw_title": "Урок окончен", "paywallReasonText": "Бесплатные разговоры исчерпаны.", "pw_upgrade_text": "Купить Премиум",
                 "picker_target": "Изучаемый язык", "picker_stt": "Язык голосового ввода", "picker_exp": "Язык пользователя",
-                "lang_ko-KR": "Корейский", "lang_en-US": "Английский", "lang_es-ES": "Испанский", "lang_ja-JP": "Японский", "lang_zh-CN": "Китайский", "lang_th-TH": "Тайский", "lang_vi-VN": "Вьетнамский", "lang_ar-SA": "Арабский", "lang_gd-GB": "Шотландский", "lang_fr-FR": "Французский", "lang_ru-RU": "Русский", "lang_hi-IN": "Хинди", "lang_la": "Латынь", "lang_he-IL": "Иврит", "lang_ne-NP": "Непальский", "lang_de-DE": "Немецкий", "lang_mn-MN": "Монгольский", "lang_bo-CN": "Тибетский", "lang_pl-PL": "Польский", "lang_sw-KE": "Суахили"
+                "lang_ko-KR": "Корейский", "lang_en-US": "Английский", "lang_es-ES": "Испанский", "lang_ja-JP": "Японский", "lang_zh-CN": "Китайский", "lang_th-TH": "Тайский", "lang_vi-VN": "Вьетнамский", "lang_ar-SA": "Арабский", "lang_gd-GB": "Шотландский", "lang_fr-FR": "Французский", "lang_ru-RU": "Русский", "lang_hi-IN": "Хинди", "lang_la": "Латынь", "lang_he-IL": "Иврит", "lang_ne-NP": "Непальский", "lang_de-DE": "Немецкий", "lang_mn-MN": "Монгольский", "lang_bo-CN": "Тибетский", "lang_pl-PL": "Польский", "lang_sw-KE": "Суахили",
+                "ui_persona_friend": "Близкий друг", "ui_persona_assistant": "Ассистент", "ui_persona_guide": "Гид", "ui_memo_text": "Заметки", "ui_memo_title": "Заметки ИИ-ассистеннта", "ui_memo_clear": "Удалить всё", "ui_memo_empty": "Заметок пока нет.<br>Попросите ИИ записать ваше расписание!"
+          
+          
             },
             "th": {
                 "main_subtitle": "เพื่อนเรียนภาษาอัจฉริยะ", "mic_warning_text": "ไมโครโฟนถูกจำกัด กรุณาเลือก 'เปิดในเบราว์เซอร์อื่น'",
@@ -631,7 +666,9 @@
                 "set_voice_gender": "เสียง AI", "gender_f_text": "หญิง", "gender_m_text": "ชาย", "set_exp_lang": "ภาษาของผู้ใช้",
                 "settings_close": "ปิด", "settings_save": "บันทึก", "pw_title": "หมดเวลาเรียน", "paywallReasonText": "คุณใช้โควต้าสนทนาฟรีหมดแล้ว", "pw_upgrade_text": "อัปเกรดเป็นพรีเมียม",
                 "picker_target": "เลือกภาษาเป้าหมาย", "picker_stt": "เลือกภาษาพูด", "picker_exp": "เลือกภาษาผู้ใช้",
-                "lang_ko-KR": "เกาหลี", "lang_en-US": "อังกฤษ", "lang_es-ES": "สเปน", "lang_ja-JP": "ญี่ปุ่น", "lang_zh-CN": "จีน", "lang_th-TH": "ไทย", "lang_vi-VN": "เวียดนาม", "lang_ar-SA": "อาหรับ", "lang_gd-GB": "สกอตติช", "lang_fr-FR": "ฝรั่งเศส", "lang_ru-RU": "รัสเซีย", "lang_hi-IN": "ฮินดี", "lang_la": "ละติน", "lang_he-IL": "ฮีบรู", "lang_ne-NP": "เนปาลี", "lang_de-DE": "เยอรมัน", "lang_mn-MN": "มองโกเลีย", "lang_bo-CN": "ทิเบต", "lang_pl-PL": "โปแลนด์", "lang_sw-KE": "สวาฮีลี"
+                "lang_ko-KR": "เกาหลี", "lang_en-US": "อังกฤษ", "lang_es-ES": "สเปน", "lang_ja-JP": "ญี่ปุ่น", "lang_zh-CN": "จีน", "lang_th-TH": "ไทย", "lang_vi-VN": "เวียดนาม", "lang_ar-SA": "อาหรับ", "lang_gd-GB": "สกอตติช", "lang_fr-FR": "ฝรั่งเศส", "lang_ru-RU": "รัสเซีย", "lang_hi-IN": "ฮินดี", "lang_la": "ละติน", "lang_he-IL": "ฮีบรู", "lang_ne-NP": "เนปาลี", "lang_de-DE": "เยอรมัน", "lang_mn-MN": "มองโกเลีย", "lang_bo-CN": "ทิเบต", "lang_pl-PL": "โปแลนด์", "lang_sw-KE": "สวาฮีลี",
+                "ui_persona_friend": "เพื่อนสนิท", "ui_persona_assistant": "ผู้ช่วยส่วนตัว", "ui_persona_guide": "ไกด์นำเที่ยว", "ui_memo_text": "บันทึก", "ui_memo_title": "บันทึกของผู้ช่วย AI", "ui_memo_clear": "ลบทั้งหมด", "ui_memo_empty": "ยังไม่มีบันทึก<br>บอกให้ AI จดตารางเวลาของคุณในแชทสิ!"
+           
             },
             "ar": {
                 "main_subtitle": "شريك اللغة الذكي", "mic_warning_text": "الميكروفون مقيد. يرجى اختيار 'فتح في متصفح آخر'.",
@@ -653,7 +690,9 @@
                 "set_voice_gender": "صوت الذكاء الاصطناعي", "gender_f_text": "أنثى", "gender_m_text": "ذكر", "set_exp_lang": "لغة المستخدم",
                 "settings_close": "إغلاق", "settings_save": "حفظ", "pw_title": "انتهت الجلسة", "paywallReasonText": "لقد استنفدت محادثاتك المجانية.", "pw_upgrade_text": "الترقية للبريميوم",
                 "picker_target": "لغة التعلم", "picker_stt": "لغة الإدخال الصوتي", "picker_exp": "لغة المستخدم",
-                "lang_ko-KR": "الكورية", "lang_en-US": "الإنجليزية", "lang_es-ES": "الإسبانية", "lang_ja-JP": "اليابانية", "lang_zh-CN": "الصينية", "lang_th-TH": "التايلاندية", "lang_vi-VN": "الفيتنامية", "lang_ar-SA": "العربية", "lang_gd-GB": "الاسكتلندية", "lang_fr-FR": "الفرنسية", "lang_ru-RU": "الروسية", "lang_hi-IN": "الهندية", "lang_la": "اللاتينية", "lang_he-IL": "العبرية", "lang_ne-NP": "النيبالية", "lang_de-DE": "الألمانية", "lang_mn-MN": "المنغولية", "lang_bo-CN": "التبتية", "lang_pl-PL": "البولندية", "lang_sw-KE": "السواحيلية"
+                "lang_ko-KR": "الكورية", "lang_en-US": "الإنجليزية", "lang_es-ES": "الإسبانية", "lang_ja-JP": "اليابانية", "lang_zh-CN": "الصينية", "lang_th-TH": "التايلاندية", "lang_vi-VN": "الفيتنامية", "lang_ar-SA": "العربية", "lang_gd-GB": "الاسكتلندية", "lang_fr-FR": "الفرنسية", "lang_ru-RU": "الروسية", "lang_hi-IN": "الهندية", "lang_la": "اللاتينية", "lang_he-IL": "العبرية", "lang_ne-NP": "النيبالية", "lang_de-DE": "الألمانية", "lang_mn-MN": "المنغولية", "lang_bo-CN": "التبتية", "lang_pl-PL": "البولندية", "lang_sw-KE": "السواحيلية",
+                "ui_persona_friend": "صديق مقرب", "ui_persona_assistant": "مساعد شخصي", "ui_persona_guide": "مرشد سياحي", "ui_memo_text": "ملاحظات", "ui_memo_title": "ملاحظات المساعد الذكي", "ui_memo_clear": "مسح الكل", "ui_memo_empty": "لا توجد ملاحظات بعد.<br>اطلب من الذكاء الاصطناعي تدوين جدولك!"
+          
             },
             "hi": { "main_subtitle": "Smart Language Partner", "mic_warning_text": "Mic restricted. Open in another browser.", "ai_engine_label": "AI Engine", "premium_title": "Premium", "premium_desc": "Learn unlimited!", "welcome_title": "I am your AI Tutor.", "welcome_f1_title": "Live Voice Chat", "welcome_f1_desc": "Tap mic to speak.", "welcome_f2_title": "Smart Words", "welcome_f2_desc": "Tap words to select.", "welcome_f3_title": "Pronunciation", "welcome_f3_desc": "Listen to native pronunciation.", "appMode_tutor": "🎓 Tutor", "appMode_translate": "🌐 Translate", "textInputPlaceholder": "Type here...", "expGlobalBtnText": "Explain", "header_room2": "🎬 Roleplay", "rp_level_text": "1. Level", "rp_lv1": "Beginner", "rp_lv2": "Basic", "rp_lv3": "Intermediate", "rp_lv4": "Native", "rp_sit_text": "2. Situation", "rp_sit1": "🎲 Random", "rp_sit2": "☕ Cafe", "rp_sit3": "🍽️ Restaurant", "rp_sit4": "🛂 Immigration", "rp_sit5": "🛍️ Shop", "rp_sit6": "🚕 Taxi", "generateBtn": "✨ Generate", "statusBoxTitle": "Info", "statusBoxText": "Select level and situtation.", "roleplayMicText": "Speak", "rp_save_count": "{n} saved.", "rp_ai": "AI", "rp_user": "Me", "header_room3": "📝 Vocab", "vc_theme1": "✈️ Travel", "vc_theme2": "💼 Business", "vc_theme3": "❤️ Romance", "vc_theme4": "🍽️ Dining", "generateVocabBtn": "✨ Generate Vocab", "vc_select": "Select", "vc_flip_hint": "Flip", "vc_listen_btn": "Listen", "vc_empty_text": "Generate vocab above!", "header_room4": "🔤 Phonics", "generateAlphaBtn": "✨ Get Phonics", "alpha_desc": "Learn letters.", "alpha_empty_text": "Get letters above!", "alpha_fetching": "Loading...", "settings_title_text": "Settings", "set_font_size": "Font Size", "set_voice_gender": "Voice", "gender_f_text": "Female", "gender_m_text": "Male", "set_exp_lang": "Language", "settings_close": "Close", "settings_save": "Save", "pw_title": "Ended", "paywallReasonText": "Free uses exhausted.", "pw_upgrade_text": "Upgrade", "picker_target": "Target Lang", "picker_stt": "Voice Lang", "picker_exp": "User Lang", "lang_ko-KR": "Korean", "lang_en-US": "English", "lang_es-ES": "Spanish", "lang_ja-JP": "Japanese", "lang_zh-CN": "Chinese", "lang_th-TH": "Thai", "lang_vi-VN": "Vietnamese", "lang_ar-SA": "Arabic", "lang_gd-GB": "Scottish", "lang_fr-FR": "French", "lang_ru-RU": "Russian", "lang_hi-IN": "Hindi", "lang_la": "Latin", "lang_he-IL": "Hebrew", "lang_ne-NP": "Nepali", "lang_de-DE": "German", "lang_mn-MN": "Mongolian", "lang_bo-CN": "Tibetan", "lang_pl-PL": "Polish", "lang_sw-KE": "Swahili" },
             "pl": { "main_subtitle": "Smart Language Partner", "mic_warning_text": "Mic restricted. Open in another browser.", "ai_engine_label": "AI Engine", "premium_title": "Premium", "premium_desc": "Learn unlimited!", "welcome_title": "I am your AI Tutor.", "welcome_f1_title": "Live Voice Chat", "welcome_f1_desc": "Tap mic to speak.", "welcome_f2_title": "Smart Words", "welcome_f2_desc": "Tap words to select.", "welcome_f3_title": "Pronunciation", "welcome_f3_desc": "Listen to native pronunciation.", "appMode_tutor": "🎓 Tutor", "appMode_translate": "🌐 Translate", "textInputPlaceholder": "Type here...", "expGlobalBtnText": "Explain", "header_room2": "🎬 Roleplay", "rp_level_text": "1. Level", "rp_lv1": "Beginner", "rp_lv2": "Basic", "rp_lv3": "Intermediate", "rp_lv4": "Native", "rp_sit_text": "2. Situation", "rp_sit1": "🎲 Random", "rp_sit2": "☕ Cafe", "rp_sit3": "🍽️ Restaurant", "rp_sit4": "🛂 Immigration", "rp_sit5": "🛍️ Shop", "rp_sit6": "🚕 Taxi", "generateBtn": "✨ Generate", "statusBoxTitle": "Info", "statusBoxText": "Select level and situtation.", "roleplayMicText": "Speak", "rp_save_count": "{n} saved.", "rp_ai": "AI", "rp_user": "Me", "header_room3": "📝 Vocab", "vc_theme1": "✈️ Travel", "vc_theme2": "💼 Business", "vc_theme3": "❤️ Romance", "vc_theme4": "🍽️ Dining", "generateVocabBtn": "✨ Generate Vocab", "vc_select": "Select", "vc_flip_hint": "Flip", "vc_listen_btn": "Listen", "vc_empty_text": "Generate vocab above!", "header_room4": "🔤 Phonics", "generateAlphaBtn": "✨ Get Phonics", "alpha_desc": "Learn letters.", "alpha_empty_text": "Get letters above!", "alpha_fetching": "Loading...", "settings_title_text": "Settings", "set_font_size": "Font Size", "set_voice_gender": "Voice", "gender_f_text": "Female", "gender_m_text": "Male", "set_exp_lang": "Language", "settings_close": "Close", "settings_save": "Save", "pw_title": "Ended", "paywallReasonText": "Free uses exhausted.", "pw_upgrade_text": "Upgrade", "picker_target": "Target Lang", "picker_stt": "Voice Lang", "picker_exp": "User Lang", "lang_ko-KR": "Korean", "lang_en-US": "English", "lang_es-ES": "Spanish", "lang_ja-JP": "Japanese", "lang_zh-CN": "Chinese", "lang_th-TH": "Thai", "lang_vi-VN": "Vietnamese", "lang_ar-SA": "Arabic", "lang_gd-GB": "Scottish", "lang_fr-FR": "French", "lang_ru-RU": "Russian", "lang_hi-IN": "Hindi", "lang_la": "Latin", "lang_he-IL": "Hebrew", "lang_ne-NP": "Nepali", "lang_de-DE": "German", "lang_mn-MN": "Mongolian", "lang_bo-CN": "Tibetan", "lang_pl-PL": "Polish", "lang_sw-KE": "Swahili" },
@@ -1935,6 +1974,69 @@
             }
             
         };
+
+        // ========== 📝 AI 자동 메모장 기능 (다국어 적용 완료) ==========
+        let savedAIMemos = JSON.parse(localStorage.getItem('ai_auto_memos')) || [];
+
+        window.toggleMemoModal = function(show) {
+            const modal = document.getElementById('memoModal');
+            if (show) { window.renderMemos(); modal.classList.remove('hidden'); } 
+            else modal.classList.add('hidden');
+        };
+
+        window.renderMemos = function() {
+            const area = document.getElementById('memoListArea');
+            const badge = document.getElementById('memoCountBadge');
+            
+            // 🌟 사용자 언어 가져오기
+            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+            
+            area.innerHTML = '';
+            
+            if (savedAIMemos.length === 0) {
+                // 🌟 빈 메모장 안내 문구도 다국어로 나옴
+                area.innerHTML = `<div class="text-center text-slate-400 text-xs font-bold mt-10">${dict.ui_memo_empty || "아직 작성된 메모가 없습니다.<br>채팅으로 AI에게 일정을 메모해 달라고 해보세요!"}</div>`;
+                if(badge) badge.classList.add('hidden');
+                return;
+            }
+
+            if(badge) {
+                badge.innerText = savedAIMemos.length;
+                badge.classList.remove('hidden');
+            }
+
+            savedAIMemos.forEach((memo, i) => {
+                const dateStr = new Date(memo.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+                area.insertAdjacentHTML('beforeend', `
+                    <div class="bg-white p-3 rounded-xl border border-amber-200 shadow-sm relative pr-8">
+                        <button onclick="deleteMemo(${i})" class="absolute top-3 right-3 text-slate-300 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                        <p class="text-[10px] font-bold text-amber-500 mb-1">${dateStr}</p>
+                        <p class="text-sm font-bold text-slate-700 leading-relaxed">${memo.content}</p>
+                    </div>
+                `);
+            });
+        };
+
+        window.deleteMemo = function(index) {
+            savedAIMemos.splice(index, 1);
+            localStorage.setItem('ai_auto_memos', JSON.stringify(savedAIMemos));
+            window.renderMemos();
+        };
+
+        window.clearAllMemos = function() {
+            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+            const confirmMsg = UI_DICTIONARY[baseLang]?.ui_memo_clear || "모든 메모를 지우시겠습니까?";
+            
+            if(!confirm(confirmMsg)) return;
+            savedAIMemos = [];
+            localStorage.setItem('ai_auto_memos', JSON.stringify(savedAIMemos));
+            window.renderMemos();
+        };
+        
+        // 앱 처음 켰을 때 알림 뱃지 띄우기
+        setTimeout(window.renderMemos, 500);
+        // ==========================================================
 
     </script>
 </body>
