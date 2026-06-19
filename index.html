@@ -1242,7 +1242,29 @@ if (text === "testmode999") {
             isListening = false; micBtn.classList.replace('from-red-400', 'from-blue-400'); micBtn.classList.replace('to-red-600', 'to-blue-600'); 
             micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); if(!isSpeaking) window.updateStatus("대기 중"); 
         }
-        window.updateStatus = function(txt) { statusText.textContent = txt; }
+        // =================================================================
+// 🌟 [핵심 복구] 잃어버린 AI 통신 심장과 플러터 마이크 귀를 다시 붙입니다!
+// =================================================================
+
+async function fetchAPI(url, options) {
+    let delay = 500;
+    for(let i=0; i<3; i++) { 
+        try { 
+            const res = await fetch(url, options); 
+            if(res.ok) return res; 
+            await new Promise(r => setTimeout(r, delay)); 
+            delay *= 2; 
+        } catch(e) { 
+            if(i == 2) throw e; 
+        } 
+    }
+}
+
+window.onSpeechResult = function(text) {
+    resetMic();
+    if(text) handleUserMessage(text);
+}
+// =================================================================
 
         function clearSelection() {
             document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
