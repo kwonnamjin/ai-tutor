@@ -1031,7 +1031,8 @@
 
         // 알림창도 영어로 띄워주는 센스!
         alert("Test mode activated: Tokens fully charged! 🚀");
-        input.value = '';
+        // 🌟 추가: 코인 충전 후 페이지를 새로고침해서 바뀐 숫자를 불러옴!
+        location.reload();
         return;
     }
 
