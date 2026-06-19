@@ -1108,9 +1108,19 @@ if (text === "testmode999") {
         }
 
         window.updateBadgeUI = function() {
-            if (typeof checkUsageLimit !== 'function') return;
-            const status = checkUsageLimit();
-            const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
+    if (typeof checkUsageLimit !== 'function') return;
+    
+    // 🌟 핵심: 여기서 '강제 테스트 모드'인지 확인!
+    const isTestMode = localStorage.getItem('is_test_mode') === 'true';
+    
+    const status = checkUsageLimit();
+    const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
+    
+    // 🌟 테스트 모드라면 status를 강제로 프리미엄으로 덮어씀!
+    if (isTestMode) {
+        status.tier = 'premium';
+        status.maxLimit = 9999;
+    }
             const remaining = Math.max(0, status.maxLimit - currentCount);
 
             let badgeContent = '', badgeClassMain = '', badgeClassSub = '';
