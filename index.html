@@ -1351,16 +1351,50 @@ if (text === "testmode999") {
         if (uiChatHistory.length > 0) uiChatHistory.forEach(msg => addMessageToChat(msg.sender, msg.text, msg.translation, msg.targetLangCode, true));
 
         window.speakText = function(text, langCode) {
-    if (window.flutter_inappwebview) {
-        // 앱 안드로이드 성우 쓰기
-        const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim();
+    if(!text) return;
+    const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim(); 
+    if(!clean) return;
+
+    const avatarWrap = document.getElementById('avatarWrap');
+    const stopAudioBtn = document.getElementById('stopAudioBtn');
+
+    // 🌟 1. 스마트폰 앱(AAB)에서 접속한 경우: 플러터 네이티브 성우 호출
+    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+        isSpeaking = true;
+        if(avatarWrap) { avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; }
+        if(stopAudioBtn) { stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); }
+        window.updateStatus("말하는 중...");
+
+        // 플러터 쪽에 "소리 내줘!" 라고 신호 보내기
         window.flutter_inappwebview.callHandler('speak', clean, langCode);
+
+        // 앱 성우는 소리가 언제 끝나는지 웹으로 바로 알려주기 힘들기 때문에, 대략 3초 뒤에 입술(애니메이션)을 멈춥니다.
+        setTimeout(() => {
+            isSpeaking = false;
+            if(avatarWrap) { avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); }
+            if(stopAudioBtn) { stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); }
+            window.updateStatus("대기 중");
+        }, 3000);
+
+    // 🌟 2. 컴퓨터나 크롬 웹 브라우저에서 접속한 경우: 기존 웹 성우 호출
     } else {
-        // 크롬 웹 브라우저 성우 쓰기 (기존 코드)
         if(!synthesis) return; synthesis.cancel(); 
-        const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim(); if(!clean) return;
         currentUtterance = new SpeechSynthesisUtterance(clean); 
-        // ... (나머지 기존 말하기 코드 그대로) ...
+        currentUtterance.lang = langCode; 
+        currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
+        
+        currentUtterance.onstart = () => { 
+            isSpeaking = true; 
+            if(avatarWrap) { avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; }
+            if(stopAudioBtn) { stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); }
+            window.updateStatus("말하는 중..."); 
+        };
+        currentUtterance.onend = currentUtterance.onerror = () => { 
+            isSpeaking = false; 
+            if(avatarWrap) { avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); }
+            if(stopAudioBtn) { stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); }
+            window.updateStatus("대기 중"); 
+        };
         setTimeout(() => synthesis.speak(currentUtterance), 50);
     }
 }
