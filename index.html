@@ -2579,8 +2579,31 @@ window.processNextTestLine = function() {
         document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 🎤</span>`;
     }
 };
-// =================================================================
 
+// 🌟 [1번방 마이크 최종 해결 패치] 2번방과 똑같은 마이크로 강제 연결!
+// =================================================================
+window.toggleListening = function() {
+    const lang = document.getElementById('sttInputLanguage').value;
+
+    // 앱(플러터) 전용 마이크로 연결하던 썩은 다리를 끊고, 
+    // 방금 잘 작동하는 것을 확인한 2번방(웹) 마이크 엔진으로 100% 통일합니다!
+    if(!recognition) {
+        window.updateStatus("마이크를 사용할 수 없습니다.");
+        return;
+    }
+
+    if(isListening) {
+        recognition.stop();
+    } else {
+        recognition.lang = lang;
+        try {
+            recognition.start();
+        } catch(e) {
+            window.updateStatus("마이크 시작 오류");
+        }
+    }
+};
+// =================================================================
 
 
 
