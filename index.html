@@ -1026,17 +1026,20 @@
     const text = input.value.trim();
 
     // 🤫 [시크릿 코드: 글로벌 심사관용]
-    if (text === "testmode999") { 
-        localStorage.setItem('user_${remaining}', '9999'); 
-        
-        // 🌟 핵심: 충전 모드임을 알리는 표식을 남김
-        localStorage.setItem('is_test_mode', 'true'); 
-        
-        alert("Test mode activated: ${remaining} fully charged! 🚀");
-        input.value = ''; 
-        location.reload(); 
-        return; 
-    }
+if (text === "testmode999") { 
+    // 🌟 핵심: 앱이 바라보는 'daily_usage_v4' 데이터를 직접 수정!
+    const testData = { count: 0, date: new Date().toLocaleDateString() };
+    localStorage.setItem('daily_usage_v4', JSON.stringify(testData));
+    
+    alert("Test mode activated: Remaining count refreshed! 🚀");
+    
+    input.value = ''; 
+    
+    // 🌟 새로고침 대신, 이 함수를 바로 불러주면 깜박임 없이 즉시 반영됩니다!
+    updateBadgeUI(); 
+    
+    return; 
+}
 
     if (text) { 
         input.value = ''; 
