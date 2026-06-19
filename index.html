@@ -2441,6 +2441,147 @@ window.stopSpeaking = function() {
         };
 
 
+        // =================================================================
+// 🌟 [앱 환경 마이크 & 소리 완벽 복구 패치] 
+// =================================================================
+
+// 1. 사라졌던 플러터 마이크 '귀' 복구
+window.onSpeechResult = function(text) {
+    resetMic();
+    if(text) handleUserMessage(text);
+};
+
+// 2. 단어장 스피커 소리 앱 성우로 연결
+window.playVocabAudio = function() {
+    if(currentVocabSetIdx === -1) return; 
+    const vocab = savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx];
+    const isBackSide = document.getElementById('vocabFlashcard').classList.contains('rotate-y-180');
+    const textToRead = isBackSide ? vocab.example_en : vocab.word;
+    
+    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+        window.flutter_inappwebview.callHandler('speak', textToRead, savedVocabs[currentVocabSetIdx].langCode);
+    } else {
+        window.speechSynthesis.cancel();
+        const utt = new SpeechSynthesisUtterance(textToRead);
+        utt.lang = savedVocabs[currentVocabSetIdx].langCode; 
+        utt.rate = isBackSide ? 0.9 : 1.0; 
+        window.speechSynthesis.speak(utt);
+    }
+};
+
+// 3. 파닉스(기초 글자) 스피커 소리 앱 성우로 연결
+window.playAlphabetAudio = function(textToSpeak, langCode) { 
+    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+        window.flutter_inappwebview.callHandler('speak', textToSpeak, langCode);
+    } else {
+        window.speechSynthesis.cancel(); 
+        setTimeout(() => {
+            const utt = new SpeechSynthesisUtterance(textToSpeak); 
+            utt.lang = langCode; utt.pitch = 1.1; utt.rate = 0.85; 
+            window.speechSynthesis.speak(utt); 
+        }, 50);
+    }
+};
+
+// 4. 롤플레잉 대본 재생 및 게임 소리 앱 성우로 연결
+window.playSpecificScript = function(index) {
+    isInteractiveTestActive = false; 
+    const currentBtn = document.getElementById(`play-btn-${index}`);
+    
+    // 이미 재생 중이면 멈춤
+    if (isScriptPlaying && playingScriptIndex === index) {
+        if(window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop');
+        else window.speechSynthesis.cancel();
+        clearTimeout(activeScriptTimeout);
+        isScriptPlaying = false; playingScriptIndex = -1;
+        if(currentBtn) { currentBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>'; currentBtn.classList.replace('text-red-500', 'text-indigo-600'); currentBtn.classList.replace('border-red-200', 'border-indigo-200'); }
+        return;
+    }
+
+    if(window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop');
+    else window.speechSynthesis.cancel();
+    clearTimeout(activeScriptTimeout);
+    
+    if (playingScriptIndex !== -1) {
+        const oldBtn = document.getElementById(`play-btn-${playingScriptIndex}`);
+        if(oldBtn) { oldBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>'; oldBtn.classList.replace('text-red-500', 'text-indigo-600'); oldBtn.classList.replace('border-red-200', 'border-indigo-200'); }
+    }
+
+    isScriptPlaying = true; playingScriptIndex = index;
+    if(currentBtn) { currentBtn.innerHTML = '<i class="fa-solid fa-square text-xs"></i>'; currentBtn.classList.replace('text-indigo-600', 'text-red-500'); currentBtn.classList.replace('border-indigo-200', 'border-red-200'); }
+
+    const sd = savedScripts[index].scriptData; 
+    let playIdx = 0;
+    
+    const playNext = () => {
+        if (!isScriptPlaying || playingScriptIndex !== index) return;
+        if (playIdx >= sd.length) {
+            isScriptPlaying = false; playingScriptIndex = -1;
+            if(currentBtn) { currentBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>'; currentBtn.classList.replace('text-red-500', 'text-indigo-600'); currentBtn.classList.replace('border-red-200', 'border-indigo-200'); }
+            return;
+        }
+        
+        const textToRead = sd[playIdx].en;
+        if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+            window.flutter_inappwebview.callHandler('speak', textToRead, savedScripts[index].langCode);
+            const duration = (textToRead.length * 80) + 1200; // 글자수에 비례하여 재생 시간 자동 계산
+            activeScriptTimeout = setTimeout(() => {
+                if(!isScriptPlaying) return;
+                playIdx++; playNext();
+            }, duration);
+        } else {
+            const utt = new SpeechSynthesisUtterance(textToRead); 
+            utt.lang = savedScripts[index].langCode;
+            utt.pitch = sd[playIdx].role === 'ai' ? 1.2 : 0.8; 
+            utt.onend = utt.onerror = () => { 
+                if(!isScriptPlaying) return;
+                playIdx++; activeScriptTimeout = setTimeout(playNext, 500); 
+            }; 
+            window.speechSynthesis.speak(utt);
+        }
+    }; 
+    playNext();
+};
+
+window.startInteractiveTest = function(index) {
+    if(window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop');
+    else window.speechSynthesis.cancel(); 
+    
+    activeTestScriptIdx = index; activeTestLineIdx = 0; isInteractiveTestActive = true;
+    for(let i=0; i<savedScripts[index].scriptData.length; i++) {
+        const fb = document.getElementById(`feedback-${index}-line-${i}`); if(fb) fb.innerHTML = "";
+        const div = document.getElementById(`script-${index}-line-${i}`); if(div) div.classList.remove('bg-yellow-50', 'border-yellow-200');
+    }
+    window.processNextTestLine();
+};
+
+window.processNextTestLine = function() {
+    if (!isInteractiveTestActive) return;
+    const scriptItem = savedScripts[activeTestScriptIdx];
+    if (activeTestLineIdx >= scriptItem.scriptData.length) { isInteractiveTestActive = false; alert("🎉 완료!"); return; }
+    
+    const line = scriptItem.scriptData[activeTestLineIdx]; 
+    const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
+    if(activeTestLineIdx > 0) document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`).classList.remove('bg-yellow-50', 'border-yellow-200');
+    if(lineDiv) { lineDiv.classList.add('bg-yellow-50', 'border-yellow-200'); lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    
+    if (line.role === 'ai') {
+        if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+            window.flutter_inappwebview.callHandler('speak', line.en, scriptItem.langCode);
+            const duration = (line.en.length * 80) + 1200;
+            setTimeout(() => { activeTestLineIdx++; window.processNextTestLine(); }, duration);
+        } else {
+            const utt = new SpeechSynthesisUtterance(line.en); utt.lang = scriptItem.langCode; utt.pitch = 1.2;
+            utt.onend = () => { activeTestLineIdx++; setTimeout(window.processNextTestLine, 500); }; 
+            window.speechSynthesis.speak(utt);
+        }
+    } else {
+        document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 🎤</span>`;
+    }
+};
+// =================================================================
+
+
 
 
     </script>
