@@ -1194,13 +1194,19 @@ if (text === "testmode999") {
         }
 
         window.processPayment = function(plan) {
-            localStorage.setItem('subscription_tier', plan);
-            let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
-            usageObj.count = 0; localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
-            document.getElementById('subscriptionModal').remove();
-            window.updateBadgeUI(); window.enableInputs();
-            alert("결제가 반영되었습니다. 대화를 다시 시작해 보세요!");
-        }
+    if (window.flutter_inappwebview) {
+        // 구글 인앱 결제 바텀시트 띄우기 (플러터로 신호 보냄)
+        window.flutter_inappwebview.callHandler('purchase', plan);
+    } else {
+        // 웹용 결제 처리 (또는 강제 프리미엄 적용 로직)
+        localStorage.setItem('subscription_tier', plan);
+        let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
+        usageObj.count = 0; localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
+        document.getElementById('subscriptionModal').remove();
+        window.updateBadgeUI(); window.enableInputs();
+        alert("결제가 반영되었습니다. 대화를 다시 시작해 보세요!");
+    }
+}
 
         function initSpeechRecognition() {
             if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -1218,10 +1224,19 @@ if (text === "testmode999") {
         initSpeechRecognition();
 
         window.toggleListening = async function() {
-            if(!recognition) return;
-            if(isListening) recognition.stop();
-            else { recognition.lang = document.getElementById('sttInputLanguage').value; recognition.start(); }
-        }
+    const lang = document.getElementById('sttInputLanguage').value;
+    
+    // 🌟 핵심: 앱 안에서 실행 중인지 확인!
+    if (window.flutter_inappwebview) {
+        // 앱 네이티브 마이크 켜기 (플러터로 신호 보냄)
+        window.flutter_inappwebview.callHandler('startListening', lang);
+    } else {
+        // 크롬 브라우저 웹 마이크 켜기 (기존 코드)
+        if(!recognition) return;
+        if(isListening) recognition.stop();
+        else { recognition.lang = lang; recognition.start(); }
+    }
+}
 
         function resetMic() { 
             isListening = false; micBtn.classList.replace('from-red-400', 'from-blue-400'); micBtn.classList.replace('to-red-600', 'to-blue-600'); 
@@ -1336,18 +1351,27 @@ if (text === "testmode999") {
         if (uiChatHistory.length > 0) uiChatHistory.forEach(msg => addMessageToChat(msg.sender, msg.text, msg.translation, msg.targetLangCode, true));
 
         window.speakText = function(text, langCode) {
-            if(!synthesis) return; synthesis.cancel(); const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim(); if(!clean) return;
-            currentUtterance = new SpeechSynthesisUtterance(clean); currentUtterance.lang = langCode; currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
-            currentUtterance.onstart = () => { isSpeaking = true; avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); window.updateStatus("말하는 중..."); };
-            currentUtterance.onend = currentUtterance.onerror = () => { isSpeaking = false; avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); window.updateStatus("대기 중"); };
-            setTimeout(() => synthesis.speak(currentUtterance), 50);
-        }
-        window.stopSpeaking = function() { synthesis.cancel(); }
+    if (window.flutter_inappwebview) {
+        // 앱 안드로이드 성우 쓰기
+        const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim();
+        window.flutter_inappwebview.callHandler('speak', clean, langCode);
+    } else {
+        // 크롬 웹 브라우저 성우 쓰기 (기존 코드)
+        if(!synthesis) return; synthesis.cancel(); 
+        const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim(); if(!clean) return;
+        currentUtterance = new SpeechSynthesisUtterance(clean); 
+        // ... (나머지 기존 말하기 코드 그대로) ...
+        setTimeout(() => synthesis.speak(currentUtterance), 50);
+    }
+}
 
-        async function fetchAPI(url, options) {
-            let delay=500;
-            for(let i=0;i<3;i++) { try { const res = await fetch(url, options); if(res.ok) return res; await new Promise(r=>setTimeout(r,delay)); delay*=2; } catch(e) { if(i==2) throw e; } }
-        }
+window.stopSpeaking = function() {
+    if (window.flutter_inappwebview) {
+        window.flutter_inappwebview.callHandler('stop'); // 앱 성우 끄기
+    } else {
+        synthesis.cancel(); // 웹 성우 끄기
+    }
+}
 
         async function handleUserMessage(text) {
             if(!text) return;
