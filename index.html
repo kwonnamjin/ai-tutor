@@ -1026,17 +1026,16 @@
     const text = input.value.trim();
 
     // 🤫 [시크릿 코드: 글로벌 심사관용]
-    if (text === "testmode999") { // 👈 심사관이 치기 쉬운 영어로 변경!
-        localStorage.setItem('user_tokens', '9999'); 
+    if (text === "testmode999") { 
+        localStorage.setItem('user_${remaining}', '9999'); 
         
-        alert("Test mode activated: Tokens fully charged! 🚀");
+        // 🌟 핵심: 충전 모드임을 알리는 표식을 남김
+        localStorage.setItem('is_test_mode', 'true'); 
         
-        input.value = ''; // 입력창 비우기
-
-        // 🌟 추가: 코인 충전 후 페이지를 강제로 새로고침!
+        alert("Test mode activated: ${remaining} fully charged! 🚀");
+        input.value = ''; 
         location.reload(); 
-        
-        return; // 여기서 함수 종료
+        return; 
     }
 
     if (text) { 
