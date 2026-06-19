@@ -1022,23 +1022,26 @@
         initDeviceID();
 
         window.sendTextMessage = function() {
-    const input = document.getElementById('textInput');
+    const input = document.getElementById('textInput'); 
     const text = input.value.trim();
 
     // 🤫 [시크릿 코드: 글로벌 심사관용]
     if (text === "testmode999") { // 👈 심사관이 치기 쉬운 영어로 변경!
-        localStorage.setItem('user_tokens', '9999');
-
-        // 알림창도 영어로 띄워주는 센스!
+        localStorage.setItem('user_tokens', '9999'); 
+        
         alert("Test mode activated: Tokens fully charged! 🚀");
-        // 🌟 추가: 코인 충전 후 페이지를 새로고침해서 바뀐 숫자를 불러옴!
-        location.reload();
-        return;
+        
+        input.value = ''; // 입력창 비우기
+
+        // 🌟 추가: 코인 충전 후 페이지를 강제로 새로고침!
+        location.reload(); 
+        
+        return; // 여기서 함수 종료
     }
 
-    if (text) {
-        input.value = '';
-        handleUserMessage(text);
+    if (text) { 
+        input.value = ''; 
+        handleUserMessage(text); 
     }
 }
 
