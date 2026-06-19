@@ -1494,10 +1494,11 @@ window.stopSpeaking = function() {
             // 🦜 [앵무새 방지 강력 규칙 추가!]
             const antiParrotRule = `\n🚨 CRITICAL: DO NOT just translate the user's input. You must act as your persona and REPLY to their message contextually. Keep the conversation flowing naturally in ${targetName}.`;
 
+            // 🌟 [수정됨] 통번역 모드와 튜터 모드의 지시문을 완벽하게 분리하고 강화했습니다!
             let sysPrompt = mode === 'translate' 
-                ? `Translate the user's input to ${targetName}. Respond in JSON: {"foreign_text":"...","translation":"...","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule
-                : selectedPersona + antiParrotRule + ` Respond in JSON: {"foreign_text":"Your conversational reply in ${targetName}","translation":"Explanation/Correction in ${exactAiLang}","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
-
+                ? `You are a strict professional translator. Your ONLY job is to translate the user's input into ${targetName}. DO NOT answer questions, DO NOT continue the conversation, and DO NOT repeat the original text. Respond in JSON: {"foreign_text":"[The translated text in ${targetName}]", "translation":"[The exact meaning in ${exactAiLang}]", "save_memo":""}` + memoryPrompt + criticalRule + memoRule
+                : selectedPersona + antiParrotRule + ` Respond in JSON: {"foreign_text":"Your conversational reply in ${targetName}","translation":"A simple, direct, and natural translation of your 'foreign_text' in ${exactAiLang}. DO NOT add any grammar explanations, notes, or corrections! Just the translation.","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
+                
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
                 if(mode==='tutor') {
