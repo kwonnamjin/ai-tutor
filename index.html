@@ -1021,31 +1021,51 @@
         }
         initDeviceID();
 
-        window.sendTextMessage = function() {
+
+
+        // =====================================================================
+// 🌟 [수정됨] 시크릿 코드 입력 시 즉각 프리미엄 배지 & 9999코인 반영!
+// =====================================================================
+window.sendTextMessage = function() {
     const input = document.getElementById('textInput'); 
     const text = input.value.trim();
 
-    // 🤫 [시크릿 코드: 글로벌 심사관용]
-if (text === "testmode999") { 
-    // 🌟 핵심: 앱이 바라보는 'daily_usage_v4' 데이터를 직접 수정!
-    const testData = { count: 0, date: new Date().toLocaleDateString() };
-    localStorage.setItem('daily_usage_v4', JSON.stringify(testData));
-    
-    alert("Test mode activated: Remaining count refreshed! 🚀");
-    
-    input.value = ''; 
-    
-    // 🌟 새로고침 대신, 이 함수를 바로 불러주면 깜박임 없이 즉시 반영됩니다!
-    updateBadgeUI(); 
-    
-    return; 
-}
+    // 🤫 [시크릿 코드: 글로벌 심사관 & 테스트용]
+    if (text === "testmode999") { 
+        // 1. 강제로 요금제를 '프리미엄'으로 변경
+        localStorage.setItem('subscription_tier', 'premium');
+        
+        // 2. 9999 뱃지를 띄우기 위한 스위치 ON
+        localStorage.setItem('is_test_mode', 'true');
+        
+        // 3. 오늘 사용한 횟수를 0으로 싹 초기화
+        const testData = { count: 0, date: new Date().toLocaleDateString() };
+        localStorage.setItem('daily_usage_v4', JSON.stringify(testData));
+        
+        alert("프리미엄 테스트 모드가 활성화되었습니다! 🚀");
+        
+        input.value = ''; 
+        
+        // 4. 🌟 새로고침 없이 즉시 상단 뱃지와 숫자를 9999로 변경!
+        if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
+        if (typeof window.enableInputs === 'function') window.enableInputs();
+        
+        return; 
+    }
 
     if (text) { 
         input.value = ''; 
         handleUserMessage(text); 
     }
 }
+// =====================================================================
+
+
+
+
+
+
+
 
         function updateGenderUI(g, applyImg=false) {
             if(g === 'female') { 
@@ -1498,7 +1518,7 @@ window.stopSpeaking = function() {
             let sysPrompt = mode === 'translate' 
                 ? `You are a strict professional translator. Your ONLY job is to translate the user's input into ${targetName}. DO NOT answer questions, DO NOT continue the conversation, and DO NOT repeat the original text. Respond in JSON: {"foreign_text":"[The translated text in ${targetName}]", "translation":"[The exact meaning in ${exactAiLang}]", "save_memo":""}` + memoryPrompt + criticalRule + memoRule
                 : selectedPersona + antiParrotRule + ` Respond in JSON: {"foreign_text":"Your conversational reply in ${targetName}","translation":"A simple, direct, and natural translation of your 'foreign_text' in ${exactAiLang}. DO NOT add any grammar explanations, notes, or corrections! Just the translation.","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
-                
+
             try {
                 let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
                 if(mode==='tutor') {
