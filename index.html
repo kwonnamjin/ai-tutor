@@ -1333,7 +1333,7 @@
             setTimeout(() => document.getElementById('customLangModal').classList.add('hidden'), 300);
         };
 
-        const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
+        const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev";
 
         let isListening = false, isSpeaking = false, recognition = null;
         const synthesis = window.speechSynthesis;
@@ -1761,6 +1761,7 @@ function resetMic() {
 
         window.speakText = function(text, langCode) {
     if(!text) return;
+    
     const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').trim(); 
     if(!clean) return;
 
@@ -1892,6 +1893,14 @@ window.stopSpeaking = function() {
                     
                     if(typeof window.renderMemos === 'function') window.renderMemos(); // 뱃지 숫자 즉시 갱신
                     updateStatus("📝 AI가 일정을 메모장에 저장했습니다!"); // 성공 메시지
+
+                    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+                        window.flutter_inappwebview.callHandler('scheduleLocalPush', {
+                            title: "📝 AI 비서의 메모",
+                            body: parsed.save_memo,
+                            delayHours: 0 // 24시간 뒤에 알림 (테스트할 땐 0.01 로 바꾸면 금방 옵니다)
+                        });
+                    }
                 }
                 
                 if(parsed.foreign_text) { 
@@ -2403,7 +2412,18 @@ window.stopSpeaking = function() {
                 let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
                 if (savedVocabs.length >= 5) savedVocabs.shift(); 
                 savedVocabs.push({ id: newId, theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
-                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); window.showFlashcard(savedVocabs.length - 1, 0);
+                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); 
+                window.showFlashcard(savedVocabs.length - 1, 0);
+
+                if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+                    window.flutter_inappwebview.callHandler('scheduleLocalPush', {
+                        title: "📚 단어장 복습 시간!",
+                        body: `어제 만든 [${theme}] 단어장, 까먹기 전에 플래시카드 한번 뒤집어 볼까요?`,
+                        delayHours: 0 // 24시간 뒤에 알림
+                    });
+                }
+
+
             } catch (err) { alert("Fail"); } finally { 
                 const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
                 btn.innerHTML = UI_DICTIONARY[baseLang]?.generateVocabBtn || "✨ AI 단어장 생성하기"; btn.disabled = false; 
