@@ -1885,37 +1885,47 @@ window.stopSpeaking = function() {
                     if(typeof window.compressMemory === 'function') window.compressMemory(); // 백그라운드 기억 요약
                 }
 
-                // 🎯 [수정된 코드] 메모장 및 커스텀 알림 처리
+                // 🎯 [수정된 코드] 메모장에 이모지(⏰/📝) 붙여서 저장하기
                 if(parsed.save_memo && parsed.save_memo.trim() !== "") {
                     let currentMemos = JSON.parse(localStorage.getItem('ai_auto_memos')) || [];
-                    currentMemos.unshift({ content: parsed.save_memo, timestamp: Date.now() });
-                    localStorage.setItem('ai_auto_memos', JSON.stringify(currentMemos));
+                    let finalMemoText = parsed.save_memo; // 화면에 보여줄 최종 텍스트
                     
-                    if(typeof window.renderMemos === 'function') window.renderMemos(); 
-
                     // 🌟 1. 시간이 지정된 경우 (커스텀 알림)
                     if (parsed.alarm_time && window.flutter_inappwebview) {
                         let alarmDate = new Date(parsed.alarm_time);
                         let diffMs = alarmDate.getTime() - Date.now();
                         
                         if (diffMs > 0) {
-                            let delayHours = diffMs / (1000 * 60 * 60); // 남은 시간을 '시간' 단위로 변환
+                            // 👉 알림이 예약된 경우: ⏰ 이모지 붙이기
+                            finalMemoText = "⏰ [알림] " + parsed.save_memo; 
+                            
+                            let delayHours = diffMs / (1000 * 60 * 60); 
                             window.flutter_inappwebview.callHandler('scheduleLocalPush', {
-                                id: Math.floor(Math.random() * 100000), // 무작위 ID (여러 개 쌓임)
+                                id: Math.floor(Math.random() * 100000), // 무작위 ID 지정
                                 title: "⏰ 튜터의 리마인더",
                                 body: parsed.save_memo,
                                 delayHours: delayHours
                             });
                             updateStatus("⏰ 알림과 함께 메모가 저장되었습니다!"); 
                         } else {
+                            // 👉 시간이 과거인 경우: 📝 메모로 강제 전환
+                            finalMemoText = "📝 [메모] " + parsed.save_memo;
                             updateStatus("📝 일정 시간이 지나 메모로만 저장되었습니다.");
                         }
                     } 
                     // 🌟 2. 시간이 없는 경우 (조용한 메모)
                     else {
+                        // 👉 시간 지정이 없는 경우: 📝 메모 이모지 붙이기
+                        finalMemoText = "📝 [메모] " + parsed.save_memo;
                         updateStatus("📝 AI가 메모장에 기록했습니다. (알림 없음)"); 
-                        // -> 플러터로 신호를 보내지 않으므로 알림이 울리지 않음!
                     }
+
+                    // 🌟 3. 최종 완성된 텍스트를 메모장(localStorage)에 꽂아넣기!
+                    currentMemos.unshift({ content: finalMemoText, timestamp: Date.now() });
+                    localStorage.setItem('ai_auto_memos', JSON.stringify(currentMemos));
+                    
+                    // 뱃지 숫자 갱신 및 화면 다시 그리기
+                    if(typeof window.renderMemos === 'function') window.renderMemos(); 
                 }
                 
                 if(parsed.foreign_text) { 
