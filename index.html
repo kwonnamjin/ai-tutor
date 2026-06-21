@@ -2413,16 +2413,46 @@ window.playAlphabetAudio = function(textToSpeak, langCode) {
 
 window.autoLoadAlphabet = function() {
     const tLang = document.getElementById('targetLanguage'); if(!tLang) return;
-    const targetLangCode = tLang.value; const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+    const targetLangCode = tLang.value; 
+    const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
     const cacheKey = 'full_alpha_v28_' + targetLangCode + '_' + expLangCode;
-    const cachedData = localStorage.getItem(cacheKey); const btn = document.getElementById("generateAlphaBtn");
+    
+    // 🌟 스마트폰 캐시에 숨어있는 해당 언어 데이터 찾기
+    const cachedData = localStorage.getItem(cacheKey); 
+    const btn = document.getElementById("generateAlphaBtn");
+    const listArea = document.getElementById("alphabetListArea");
 
     if (cachedData && typeof window.renderAlphabet === 'function') {
-        const fullData = JSON.parse(cachedData); let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v28')) || {};
-        let currentLimit = alphaProgress[cacheKey] || fullData.alphabetData.length;
-        if(currentLimit === 0) currentLimit = fullData.alphabetData.length;
+        const fullData = JSON.parse(cachedData); 
+        let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v28')) || {};
+        
+        // 🌟 예전에 어디까지 눌러봤는지(더 보기 진도) 기억해내기
+        let currentLimit = alphaProgress[cacheKey] || 20; 
+        
+        // 🌟 숨겨놨던 데이터 예전 진도만큼 쫙 펼치기
         window.renderAlphabet(fullData.alphabetData.slice(0, currentLimit), fullData.description, targetLangCode);
-        if (btn) { btn.innerText = `🎉 불러오기 완료! (${fullData.alphabetData.length}개)`; btn.disabled = true; btn.classList.replace('bg-slate-900', 'bg-emerald-600'); }
+        
+        if (btn) {
+            const isFinished = currentLimit >= fullData.alphabetData.length;
+            if (isFinished) {
+                btn.innerText = `🎉 완료! (${fullData.alphabetData.length}개)`; 
+                btn.disabled = true; 
+                btn.classList.replace('bg-slate-900', 'bg-emerald-600'); 
+            } else {
+                btn.innerText = `👇 더 보기 (${currentLimit} / ${fullData.alphabetData.length})`; 
+                btn.disabled = false; 
+                btn.classList.replace('bg-emerald-600', 'bg-slate-900'); 
+            }
+        }
+    } else {
+        // 🌟 이 언어는 아직 데이터를 안 받은 상태라면, 화면을 깨끗이 청소하고 버튼 초기화!
+        if(listArea) listArea.innerHTML = '';
+        if(btn) { 
+            btn.innerText = "✨ AI 파닉스 가져오기"; 
+            btn.disabled = false; 
+            btn.classList.remove('bg-emerald-600'); 
+            btn.classList.add('bg-slate-900'); 
+        }
     }
 };
 
