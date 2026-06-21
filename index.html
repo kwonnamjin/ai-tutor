@@ -345,8 +345,8 @@
                     <input type="text" id="rp_custom_input" placeholder="예시) 이세계 상인과 가격 흥정하는 대본" class="w-full h-11 bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold rounded-xl px-4 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-inner mb-3" oninput="document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card'))">
                     
                     <button id="generateBtn" class="w-full bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
-                        ✨ AI 대본 생성하기
-                    </button>
+    ✨ AI 대본 생성하기
+</button>
                 </section>
 
                 <hr class="border-slate-200 border-dashed border-t-2 my-3">
@@ -2031,39 +2031,42 @@ window.renderScripts = function() {
     }
 };
 
-window.generateScript = async function() {
-    if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
-    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+// 🎬 [수정완료] 1. 대본 생성 함수
+        window.generateScript = async function() {
+            if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
+            if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
 
-    const btn = document.getElementById("generateBtn");
-    const level = document.querySelector('.level-btn.selected-card').innerText.trim();
-    const customInput = document.getElementById('rp_custom_input');
-    const customSituation = customInput ? customInput.value.trim() : "";
-    const selectedCard = document.querySelector('.sit-card.selected-card');
-    const situation = customSituation ? customSituation : (selectedCard ? selectedCard.dataset.situation : '자유 대화');
-    const isRandom = (situation === '일상 랜덤');
-    
-    const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
-    const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-    const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
-    const expLangName = aiLangNames[expLangCode] || expLangCode;
+            const btn = document.getElementById("generateBtn");
+            const level = document.querySelector('.level-btn.selected-card').innerText.trim();
+            const customInput = document.getElementById('rp_custom_input');
+            const customSituation = customInput ? customInput.value.trim() : "";
+            const selectedCard = document.querySelector('.sit-card.selected-card');
+            const situation = customSituation ? customSituation : (selectedCard ? selectedCard.dataset.situation : '자유 대화');
+            const isRandom = (situation === '일상 랜덤');
+            
+            const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
+            const expLangName = aiLangNames[expLangCode] || expLangCode;
 
-    btn.disabled = true;
-    try {
-        const res = await fetch(`${WORKER_URL}generate-script`, { 
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ level: level, situation: isRandom ? "random daily life" : situation, language: targetLangName, expLanguage: expLangName, isRandom: isRandom }) 
-        });
-        const data = await res.json(); 
-        if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-        if (savedScripts.length >= 5) savedScripts.shift(); 
-        savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
-        localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts();
-        if(customInput) customInput.value = '';
-    } catch (err) { alert("대본 생성 실패"); } finally { 
-        btn.innerText = "✨ AI 대본 생성하기"; btn.disabled = false; 
-    }
-};
+            btn.disabled = true;
+            try {
+                // 🌟 서버로 expLanguage 전송
+                const res = await fetch(`${WORKER_URL}generate-script`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ level: level, situation: isRandom ? "random daily life" : situation, language: targetLangName, expLanguage: expLangName, isRandom: isRandom }) 
+                });
+                const data = await res.json(); 
+                if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
+                if (savedScripts.length >= 5) savedScripts.shift(); 
+                savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
+                localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts();
+                if(customInput) customInput.value = '';
+            } catch (err) { alert("대본 생성 실패"); } finally { 
+                const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+                btn.innerText = UI_DICTIONARY[baseLang]?.generateBtn || "✨ AI 대본 생성하기"; btn.disabled = false; 
+            }
+        };
 
 let activeScriptTimeout = null; let isScriptPlaying = false; let playingScriptIndex = -1;
 window.playSpecificScript = function(index) {
@@ -2238,96 +2241,130 @@ window.playVocabAudio = function() {
     }
 };
 
-window.generateVocab = async function() {
-    if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
-    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
-
-    const btn = document.getElementById("generateVocabBtn");
-    const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
-    const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
-    const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-    const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
-    const expLangName = aiLangNames[expLangCode] || expLangCode;
-
-    let myExistingWords = [];
-    savedVocabs.forEach(set => { if (set.langName === targetLangName) set.vocabData.forEach(v => myExistingWords.push(v.word)); });
-
-    btn.innerText = "⏳ ..."; btn.disabled = true;
-    try {
-        const res = await fetch(`${WORKER_URL}generate-vocab`, { 
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ theme: theme, language: targetLangName, expLanguage: expLangName, existingWords: myExistingWords }) 
-        });
-        const data = await res.json(); 
-        if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-        let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
-        if (savedVocabs.length >= 5) savedVocabs.shift(); 
-        savedVocabs.push({ id: newId, theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
-        localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); window.showFlashcard(savedVocabs.length - 1, 0);
-
-        if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-            window.flutter_inappwebview.callHandler('scheduleLocalPush', { id: 999, title: "📚 복습 시간!", body: `오늘 공부했던 내용들 복습해 볼까요?`, delayHours: 24 });
-        }
-    } catch (err) { alert("Fail"); } finally { btn.innerText = "✨ AI 단어장 생성하기"; btn.disabled = false; }
-};
-window.renderVocabs();
-
-window.loadAlphabetData = async function() {
-    try {
-        const listArea = document.getElementById("alphabetListArea");
-        const btn = document.getElementById("generateAlphaBtn");
-        const tLang = document.getElementById('targetLanguage');
-        const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
-        const targetLangCode = tLang.value;
-        const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-        const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
-        const expLangName = aiLangNames[expLangCode] || expLangCode;
-
-        const cacheKey = 'full_alpha_v28_' + targetLangCode + '_' + expLangCode;
-        let fullData = null; let alphaProgress = {};
-        try { fullData = JSON.parse(localStorage.getItem(cacheKey)); alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v28')) || {}; } catch(e) {}
-        
-        let currentLimit = alphaProgress[cacheKey] || 0;
-        if (fullData && currentLimit >= fullData.alphabetData.length) return;
-
-        if (!fullData) {
-            if (!confirm(`[${targetLangName}] 발음 데이터를 처음 생성합니다.\n진행하시겠습니까?`)) return;
+// 📝 [수정완료] 2. 단어장 생성 함수
+        window.generateVocab = async function() {
+            if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
             if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
 
-            let specialHint = ""; let letterRule = `'letter' and 'exampleWord' MUST be in [${targetLangName}].`;
-            if (targetLangCode.startsWith('zh')) { specialHint = "Generate basic Chinese Pinyin (Initials and Finals)."; letterRule = `'letter' MUST be English alphabet. 'pronunciation' MUST be Pinyin. 'exampleWord' MUST be Chinese Hanzi.`; } 
-            else if (targetLangCode.startsWith('ja')) { specialHint = "Generate basic Hiragana and Katakana."; letterRule = `'letter' MUST be Japanese. 'pronunciation' MUST be English Romaji.`; } 
-            else if (targetLangCode.startsWith('ko')) { specialHint = "Generate basic Korean Hangul Consonants and Vowels."; letterRule = `'letter' and 'exampleWord' MUST be Korean Hangul. 'pronunciation' MUST be English Romaji.`; }
+            const btn = document.getElementById("generateVocabBtn");
+            const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
+            const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
+            const expLangName = aiLangNames[expLangCode] || expLangCode;
 
-            btn.innerText = "⏳ 발음 체계 구성 중..."; btn.disabled = true;
+            let myExistingWords = [];
+            savedVocabs.forEach(set => { if (set.langName === targetLangName) set.vocabData.forEach(v => myExistingWords.push(v.word)); });
+
+            btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
-                const res = await fetchAPI(`${WORKER_URL}generate-alphabet`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
-                    body: JSON.stringify({ language: targetLangName, expLanguage: expLangName, extraHint: `${specialHint} ${letterRule}` }) 
+                // 🌟 서버로 expLanguage 전송
+                const res = await fetch(`${WORKER_URL}generate-vocab`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ theme: theme, language: targetLangName, expLanguage: expLangName, existingWords: myExistingWords }) 
                 });
-                if (!res) throw new Error("서버 에러");
                 const data = await res.json(); 
-                if(!data || !data.alphabetData) throw new Error("데이터 누락");
                 if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
 
-                fullData = data; localStorage.setItem(cacheKey, JSON.stringify(fullData)); currentLimit = 0; 
-            } catch (err) { btn.innerText = "✨ AI 파닉스 가져오기"; btn.disabled = false; return; }
-        } else {
-            btn.innerText = "⏳ 준비 중..."; btn.disabled = true;
-            await new Promise(resolve => setTimeout(resolve, 300));
-        }
+                let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
+                if (savedVocabs.length >= 5) savedVocabs.shift(); 
+                savedVocabs.push({ id: newId, theme: theme, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, vocabData: data.vocabData });
+                localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); 
+                window.showFlashcard(savedVocabs.length - 1, 0);
 
-        currentLimit += 20; alphaProgress[cacheKey] = currentLimit;
-        localStorage.setItem('alpha_progress_v28', JSON.stringify(alphaProgress));
+                if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+                    window.flutter_inappwebview.callHandler('scheduleLocalPush', { id: 999, title: "📚 학습 복습 시간!", body: `오늘 공부했던 내용들, 까먹기 전에 한 번 복습해 볼까요?`, delayHours: 24 });
+                }
+            } catch (err) { alert("Fail"); } finally { 
+                const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+                btn.innerHTML = UI_DICTIONARY[baseLang]?.generateVocabBtn || "✨ AI 단어장 생성하기"; btn.disabled = false; 
+            }
+        };
+window.renderVocabs();
 
-        const isFinished = currentLimit >= fullData.alphabetData.length;
-        const dataToShow = fullData.alphabetData.slice(0, currentLimit);
-        if (typeof window.renderAlphabet === 'function') window.renderAlphabet(dataToShow, fullData.description, targetLangCode);
+// 🔤 [수정완료] 3. 자음/모음(파닉스) 생성 함수
+        window.loadAlphabetData = async function() {
+            try {
+                const listArea = document.getElementById("alphabetListArea");
+                const btn = document.getElementById("generateAlphaBtn");
+                const tLang = document.getElementById('targetLanguage');
+                const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
+                const targetLangCode = tLang.value;
+                const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+                const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
+                const expLangName = aiLangNames[expLangCode] || expLangCode;
+                const baseLang = expLangCode.split('-')[0];
+                const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
-        if (isFinished) { btn.innerText = `🎉 완료! (${fullData.alphabetData.length}개)`; btn.disabled = true; btn.classList.replace('bg-slate-900', 'bg-emerald-600'); } 
-        else { btn.innerText = `👇 더 보기 (${dataToShow.length} / ${fullData.alphabetData.length})`; btn.disabled = false; btn.classList.replace('bg-emerald-600', 'bg-slate-900'); }
-    } catch (e) { const btn = document.getElementById("generateAlphaBtn"); if(btn) { btn.innerText = "✨ 오류 발생 (다시 시도)"; btn.disabled = false; } }
-};
+                const cacheKey = 'full_alpha_v28_' + targetLangCode + '_' + expLangCode;
+                let fullData = null; let alphaProgress = {};
+                try { fullData = JSON.parse(localStorage.getItem(cacheKey)); alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v28')) || {}; } catch(e) {}
+                
+                let currentLimit = alphaProgress[cacheKey] || 0;
+                if (fullData && currentLimit >= fullData.alphabetData.length) return;
+
+                if (!fullData) {
+                    if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n진행하시겠습니까?`)) return;
+                    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+
+                    // 🌟 언어별 특수 세팅 (병음, 히라가나 등) 안전하게 유지
+                    let specialHint = "";
+                    let letterRule = `'letter' and 'exampleWord' MUST be in [${targetLangName}].`;
+                    if (targetLangCode.startsWith('zh')) {
+                        specialHint = "Generate basic Chinese Pinyin (Shengmu/Initials and Yunmu/Finals).";
+                        letterRule = `'letter' MUST be English alphabet for Pinyin (e.g., b, p, m, f, a, o). 'pronunciation' MUST be Pinyin with tone marks. 'exampleWord' MUST be Chinese Hanzi.`;
+                    } else if (targetLangCode.startsWith('ja')) {
+                        specialHint = "Generate ALL basic Hiragana and Katakana characters.";
+                        letterRule = `'letter' MUST be Japanese. 'pronunciation' MUST be English Romaji.`;
+                    } else if (targetLangCode.startsWith('en')) {
+                        specialHint = "Generate exactly 26 English alphabets (A to Z)."; 
+                    } else if (targetLangCode.startsWith('ko')) {
+                        specialHint = "Generate ALL basic Korean Hangul Consonants and Vowels (자음과 모음).";
+                        letterRule = `'letter' and 'exampleWord' MUST be Korean Hangul. 'pronunciation' MUST be English Romaji.`;
+                    } else {
+                        specialHint = "Generate ALL basic characters/letters for this language.";
+                    }
+
+                    btn.innerText = "⏳ 전체 발음 체계를 구성 중입니다..."; btn.disabled = true;
+                    listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "로딩 중..."}</div>`;
+
+                    try {
+                        // 🌟 서버로 expLanguage와 extraHint 전송
+                        const res = await fetchAPI(`${WORKER_URL}generate-alphabet`, { 
+                            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
+                            body: JSON.stringify({ language: targetLangName, expLanguage: expLangName, extraHint: `${specialHint} ${letterRule}` }) 
+                        });
+                        if (!res) throw new Error("서버 에러");
+                        const data = await res.json(); 
+                        if(!data || !data.alphabetData) throw new Error("데이터 누락");
+                        if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
+
+                        fullData = data; localStorage.setItem(cacheKey, JSON.stringify(fullData)); currentLimit = 0; 
+                    } catch (err) { 
+                        listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">서버 통신 실패. 버튼을 다시 눌러주세요!</div>`;
+                        btn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기"; btn.disabled = false; return;
+                    }
+                } else {
+                    btn.innerText = "⏳ 다음 발음 준비 중..."; btn.disabled = true;
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                currentLimit += 20; alphaProgress[cacheKey] = currentLimit;
+                localStorage.setItem('alpha_progress_v28', JSON.stringify(alphaProgress));
+
+                const isFinished = currentLimit >= fullData.alphabetData.length;
+                const dataToShow = fullData.alphabetData.slice(0, currentLimit);
+                if (typeof window.renderAlphabet === 'function') window.renderAlphabet(dataToShow, fullData.description, targetLangCode);
+
+                if (isFinished) {
+                    btn.innerText = `🎉 모든 발음 학습 완료! (${fullData.alphabetData.length}개)`; btn.disabled = true;
+                    btn.classList.replace('bg-slate-900', 'bg-emerald-600'); btn.classList.replace('hover:bg-black', 'hover:bg-emerald-700');
+                } else {
+                    btn.innerText = `👇 다음 발음 더 보기 (${dataToShow.length} / ${fullData.alphabetData.length})`; btn.disabled = false;
+                    btn.classList.replace('bg-emerald-600', 'bg-slate-900'); btn.classList.replace('hover:bg-emerald-700', 'hover:bg-black');
+                }
+            } catch (e) { const btn = document.getElementById("generateAlphaBtn"); if(btn) { btn.innerText = "✨ 오류 발생 (다시 시도)"; btn.disabled = false; } }
+        };
 
 window.renderAlphabet = function(alphabetData, description, langCode) {
     const listArea = document.getElementById("alphabetListArea"); let html = "";
