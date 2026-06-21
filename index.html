@@ -1946,7 +1946,12 @@ window.changePersona = function(type, isInit = false) {
     window.currentPersona = type; localStorage.setItem('ai_persona', type);
     ['friend', 'assistant', 'guide'].forEach(p => {
         const btn = document.getElementById('btn_persona_' + p);
-        if(btn) btn.className = (p === type) ? "shrink-0 px-4 py-1.5 rounded-full border-2 border-blue-500 bg-blue-50 text-blue-700 text-[11px] font-bold transition-all shadow-sm" : "shrink-0 px-4 py-1.5 rounded-full border-2 border-slate-200 bg-white text-slate-500 text-[11px] font-bold transition-all hover:bg-slate-100";
+        if(btn) {
+            // 🌟 [UI 업그레이드] 선택된 버튼은 화려하게 튀어나오고, 선택 안 된 버튼은 깔끔하게 숨죽이도록!
+            btn.className = (p === type) 
+                ? "shrink-0 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-[11px] font-extrabold shadow-md transform scale-105 transition-all duration-300" 
+                : "shrink-0 px-4 py-1.5 rounded-full border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all duration-300 hover:bg-slate-50 hover:text-slate-600 shadow-sm";
+        }
     });
     if(!isInit) { clearChatSession(); window.updateStatus("새로운 페르소나가 적용되었습니다!"); }
 };
