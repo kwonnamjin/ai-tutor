@@ -344,9 +344,9 @@
                     
                     <input type="text" id="rp_custom_input" placeholder="예시) 이세계 상인과 가격 흥정하는 대본" class="w-full h-11 bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold rounded-xl px-4 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-inner mb-3" oninput="document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card'))">
                     
-                    <button id="generateBtn" class="w-full bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
-    ✨ AI 대본 생성하기
-</button>
+                    <button id="generateBtn" onclick="generateScript()" class="w-full bg-slate-900 text-white text-sm font-bold py-2.5 rounded-xl shadow-md hover:bg-black transition-all">
+                       ✨ AI 대본 생성하기
+                    </button>
                 </section>
 
                 <hr class="border-slate-200 border-dashed border-t-2 my-3">
