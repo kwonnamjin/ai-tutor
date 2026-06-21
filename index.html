@@ -2164,11 +2164,11 @@ window.stopSpeaking = function() {
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            const overrideCmd = ` (CRITICAL RULE: Write main dialogue in ${targetLangName} (key: 'en'). Write translation in ${expLangName} (key: 'ko'). You MUST write the translation entirely in ${expLangName}. DO NOT use Korean!)`;
-
+            // 🌟 "DO NOT use Korean!" 모순을 제거하고 깔끔하게 해당 언어만 쓰도록 지시!
+            const overrideCmd = ` (CRITICAL RULE: Write main dialogue in ${targetLangName} (key: 'en'). Write translation in ${expLangName} (key: 'ko'). You MUST write the translation entirely in ${expLangName}.)`;
             btn.innerText = "⏳ ..."; btn.disabled = true;
             try {
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
@@ -2418,12 +2418,11 @@ window.stopSpeaking = function() {
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            // 🌟 버그 수정 3: 단어장 생성 시에도 절대 한국어를 쓰지 못하게 강제
-            const overrideCmd = ` (CRITICAL RULE: The 'word' and 'example_en' MUST be written in ${targetLangName}. The 'meaning' and 'example_ko' MUST be written entirely in ${expLangName}. DO NOT use Korean!)`;
-
+            // 🌟 "DO NOT use Korean!" 모순 제거 완료!
+            const overrideCmd = ` (CRITICAL RULE: The 'word' and 'example_en' MUST be written in ${targetLangName}. The 'meaning' and 'example_ko' MUST be written entirely in ${expLangName}.)`;
             let myExistingWords = [];
             savedVocabs.forEach(set => { if (set.langName === targetLangName) set.vocabData.forEach(v => myExistingWords.push(v.word)); });
 
@@ -2467,7 +2466,8 @@ window.stopSpeaking = function() {
                 const targetLangCode = tLang.value;
                 
                 const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-                const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish" };
+                // 🌟 지원 언어 목록 넉넉하게 확장
+                const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
                 const expLangName = aiLangNames[expLangCode] || expLangCode;
                 const baseLang = expLangCode.split('-')[0];
                 const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
