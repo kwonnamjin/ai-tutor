@@ -2096,11 +2096,19 @@ window.playSpecificScript = function(index) {
             return;
         }
         const textToRead = sd[playIdx].en;
+        // 🌟 [핵심] 역할에 따라 Pitch(음정) 세팅 (AI: 1.2, 나: 0.8)
+        const pitch = (sd[playIdx].role.toLowerCase() === 'ai') ? 1.2 : 0.8;
+        
         if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-            window.flutter_inappwebview.callHandler('speak', textToRead, savedScripts[index].langCode);
-            activeScriptTimeout = setTimeout(() => { if(!isScriptPlaying) return; playIdx++; playNext(); }, (textToRead.length * 80) + 1200);
+            // 🌟 [핵심] .then()을 써서 성우가 말을 완전히 끝내면 다음 줄로 넘어가도록 설계!
+            window.flutter_inappwebview.callHandler('speak', textToRead, savedScripts[index].langCode, pitch).then(() => {
+                if(!isScriptPlaying) return; 
+                playIdx++; 
+                playNext();
+            });
         } else {
-            const utt = new SpeechSynthesisUtterance(textToRead); utt.lang = savedScripts[index].langCode; utt.pitch = sd[playIdx].role === 'ai' ? 1.2 : 0.8; 
+            const utt = new SpeechSynthesisUtterance(textToRead); 
+            utt.lang = savedScripts[index].langCode; utt.pitch = pitch; 
             utt.onend = utt.onerror = () => { if(!isScriptPlaying) return; playIdx++; activeScriptTimeout = setTimeout(playNext, 500); }; 
             window.speechSynthesis.speak(utt);
         }
@@ -2138,16 +2146,24 @@ window.processNextTestLine = function() {
     if (!isInteractiveTestActive) return;
     const scriptItem = savedScripts[activeTestScriptIdx];
     if (activeTestLineIdx >= scriptItem.scriptData.length) { isInteractiveTestActive = false; alert("🎉 완료!"); return; }
-    const line = scriptItem.scriptData[activeTestLineIdx]; const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
+    
+    const line = scriptItem.scriptData[activeTestLineIdx]; 
+    const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
     if(activeTestLineIdx > 0) document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`).classList.remove('bg-yellow-50', 'border-yellow-200');
     if(lineDiv) { lineDiv.classList.add('bg-yellow-50', 'border-yellow-200'); lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    if (line.role === 'ai') {
+    
+    // 🌟 [핵심] 대소문자 구분 없이 소문자 변환하여 확인
+    if (line.role.toLowerCase() === 'ai') {
         if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-            window.flutter_inappwebview.callHandler('speak', line.en, scriptItem.langCode);
-            setTimeout(() => { activeTestLineIdx++; window.processNextTestLine(); }, (line.en.length * 80) + 1200);
+            // 🌟 [핵심] .then()으로 말을 완벽히 끝낸 후에 다음 줄로!
+            window.flutter_inappwebview.callHandler('speak', line.en, scriptItem.langCode, 1.2).then(() => {
+                activeTestLineIdx++; 
+                window.processNextTestLine();
+            });
         } else {
             const utt = new SpeechSynthesisUtterance(line.en); utt.lang = scriptItem.langCode; utt.pitch = 1.2;
-            utt.onend = () => { activeTestLineIdx++; setTimeout(window.processNextTestLine, 500); }; window.speechSynthesis.speak(utt);
+            utt.onend = () => { activeTestLineIdx++; setTimeout(window.processNextTestLine, 500); }; 
+            window.speechSynthesis.speak(utt);
         }
     } else {
         document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 🎤</span>`;
