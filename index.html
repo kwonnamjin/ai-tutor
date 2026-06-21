@@ -2164,11 +2164,12 @@ window.stopSpeaking = function() {
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
+            const aiLangNames = { "ko-KR": "한국어", "en-US": "영어", "ja-JP": "일본어", "zh-CN": "중국어", "es-ES": "스페인어", "th-TH": "태국어", "vi-VN": "베트남어", "fr-FR": "프랑스어", "de-DE": "독일어", "ru-RU": "러시아어", "ar-SA": "아랍어", "hi-IN": "힌디어" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            // 🌟 [수정] JSON 키 이름('en', 'ko')에 AI가 낚이는 현상 완벽 방어!
-            const overrideCmd = ` (CRITICAL LANGUAGE RULES: 1. Target Learning Language = [${targetLangName}]. 2. User Explanation Language = [${expLangName}]. 3. Put ${targetLangName} text in the 'en' key. 4. Put ${expLangName} text in the 'ko' key. DO NOT be confused by the key names 'en' and 'ko', they are just variable names!)`;            btn.innerText = "⏳ ..."; 
+            // 🌟 매운맛 한국어 경고!
+            const overrideCmd = ` (🚨최우선 명령: 대화 원문은 ${targetLangName}로 작성하고, 번역은 절대 한국어를 쓰지 말고 무조건 [${expLangName}]로 작성하세요! JSON 키가 'ko'라고 되어 있어도 이름에 속지 말고 반드시 [${expLangName}] 내용만 넣어야 합니다!)`; 
+
             btn.disabled = true;
             try {
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
@@ -2418,11 +2419,11 @@ window.stopSpeaking = function() {
             const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
             
             const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
+            const aiLangNames = { "ko-KR": "한국어", "en-US": "영어", "ja-JP": "일본어", "zh-CN": "중국어", "es-ES": "스페인어", "th-TH": "태국어", "vi-VN": "베트남어", "fr-FR": "프랑스어", "de-DE": "독일어", "ru-RU": "러시아어", "ar-SA": "아랍어", "hi-IN": "힌디어" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            // 🌟 [수정] JSON 키 이름('_en', '_ko')에 AI가 낚이는 현상 완벽 방어!
-            const overrideCmd = ` (CRITICAL LANGUAGE RULES: 1. Target Learning Language = [${targetLangName}]. 2. User Explanation Language = [${expLangName}]. 3. The keys 'word' and 'example_en' MUST be in ${targetLangName}. 4. The keys 'meaning' and 'example_ko' MUST be in ${expLangName}. Ignore the literal meanings of '_en' and '_ko' in the keys!)`;
+            // 🌟 매운맛 한국어 경고!
+            const overrideCmd = ` (🚨최우선 명령: 단어와 예문('example_en')은 ${targetLangName}로 작성하고, 뜻('meaning')과 번역('example_ko')은 절대 한국어를 쓰지 말고 무조건 [${expLangName}]로 작성하세요! 변수 이름에 ko가 들어간다고 한국어 쓰면 안 됩니다!)`;
             let myExistingWords = [];
             savedVocabs.forEach(set => { if (set.langName === targetLangName) set.vocabData.forEach(v => myExistingWords.push(v.word)); });
 
@@ -2466,10 +2467,12 @@ window.stopSpeaking = function() {
                 const targetLangCode = tLang.value;
                 
                 const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-                // 🌟 지원 언어 목록 넉넉하게 확장
-                const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
+                const aiLangNames = { "ko-KR": "한국어", "en-US": "영어", "ja-JP": "일본어", "zh-CN": "중국어", "es-ES": "스페인어", "th-TH": "태국어", "vi-VN": "베트남어", "fr-FR": "프랑스어", "de-DE": "독일어", "ru-RU": "러시아어", "ar-SA": "아랍어", "hi-IN": "힌디어" };
                 const expLangName = aiLangNames[expLangCode] || expLangCode;
                 const baseLang = expLangCode.split('-')[0];
+
+                // 🌟 매운맛 한국어 경고!
+                const overrideCmd = ` (🚨최우선 명령: 발음 표기, description, exampleMeaning 등 모든 설명과 뜻풀이는 절대 한국어를 쓰지 말고 무조건 [${expLangName}]로 작성하세요!)`;
                 const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
 
                 // 🌟 [핵심 1] 모든 버전을 v25로 완벽하게 통일하여 꼬인 데이터 초기화!
