@@ -2167,9 +2167,9 @@ window.stopSpeaking = function() {
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            // 🌟 "DO NOT use Korean!" 모순을 제거하고 깔끔하게 해당 언어만 쓰도록 지시!
-            const overrideCmd = ` (CRITICAL RULE: Write main dialogue in ${targetLangName} (key: 'en'). Write translation in ${expLangName} (key: 'ko'). You MUST write the translation entirely in ${expLangName}.)`;
-            btn.innerText = "⏳ ..."; btn.disabled = true;
+            // 🌟 [수정] JSON 키 이름('en', 'ko')에 AI가 낚이는 현상 완벽 방어!
+            const overrideCmd = ` (CRITICAL LANGUAGE RULES: 1. Target Learning Language = [${targetLangName}]. 2. User Explanation Language = [${expLangName}]. 3. Put ${targetLangName} text in the 'en' key. 4. Put ${expLangName} text in the 'ko' key. DO NOT be confused by the key names 'en' and 'ko', they are just variable names!)`;            btn.innerText = "⏳ ..."; 
+            btn.disabled = true;
             try {
                 const res = await fetch(`${WORKER_URL}generate-script`, { 
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, 
@@ -2421,8 +2421,8 @@ window.stopSpeaking = function() {
             const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
             const expLangName = aiLangNames[expLangCode] || expLangCode;
             
-            // 🌟 "DO NOT use Korean!" 모순 제거 완료!
-            const overrideCmd = ` (CRITICAL RULE: The 'word' and 'example_en' MUST be written in ${targetLangName}. The 'meaning' and 'example_ko' MUST be written entirely in ${expLangName}.)`;
+            // 🌟 [수정] JSON 키 이름('_en', '_ko')에 AI가 낚이는 현상 완벽 방어!
+            const overrideCmd = ` (CRITICAL LANGUAGE RULES: 1. Target Learning Language = [${targetLangName}]. 2. User Explanation Language = [${expLangName}]. 3. The keys 'word' and 'example_en' MUST be in ${targetLangName}. 4. The keys 'meaning' and 'example_ko' MUST be in ${expLangName}. Ignore the literal meanings of '_en' and '_ko' in the keys!)`;
             let myExistingWords = [];
             savedVocabs.forEach(set => { if (set.langName === targetLangName) set.vocabData.forEach(v => myExistingWords.push(v.word)); });
 
@@ -2509,7 +2509,8 @@ window.stopSpeaking = function() {
                         specialHint = "Generate ALL basic characters/letters for this language.";
                     }
 
-                    const overrideCmd = ` (CRITICAL MAPPING: 1. ${specialHint} 2. ${letterRule}. 3. 'description' and 'exampleMeaning' MUST be written entirely in [${expLangName}]. 4. Return valid JSON only.)`;
+                     // 🌟 [수정] 알파벳 생성 시 언어 혼선 완벽 방어!
+                    const overrideCmd = ` (CRITICAL LANGUAGE RULES: 1. Target Characters = [${targetLangName}]. 2. User Explanation Language = [${expLangName}]. 3. 'description' and 'exampleMeaning' MUST be written entirely in ${expLangName}. 4. MAPPING: ${specialHint} ${letterRule} Return valid JSON only.)`;
 
                     btn.innerText = "⏳ 전체 발음 체계를 구성 중입니다..."; btn.disabled = true;
                     listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "로딩 중..."}</div>`;
