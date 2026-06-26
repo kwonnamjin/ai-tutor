@@ -1830,46 +1830,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-window.applyCustomAi = function() {
-    const nameInput = document.getElementById('customAiNameInput').value.trim();
-    const promptInput = document.getElementById('customAiPromptInput').value.trim();
+// script.js 파일 내부의 changeUILanguage 및 관련 연동부 전체 교체/추가
 
-    if (!nameInput || !promptInput) {
-        alert('AI의 이름과 성격을 모두 입력해주세요!');
+window.closeAllPanels = function() {
+    document.querySelectorAll('.panel-popup').forEach(p => p.classList.add('hidden'));
+};
+
+window.applyCustomAi = function() {
+    const nameInput = document.getElementById('customAiNameInput');
+    const promptInput = document.getElementById('customAiPromptInput');
+    
+    if (!nameInput || !promptInput) return;
+
+    const name = nameInput.value.trim();
+    const prompt = promptInput.value.trim();
+
+    if (!name || !prompt) {
+        alert("이름과 성격을 모두 입력해 주세요!");
         return;
     }
 
-    // 1. 커스텀 데이터 확실하게 저장 (객체 통합 방식)
-    const customPersonaData = {
-        name: nameInput,
-        prompt: promptInput
-    };
-    localStorage.setItem('user_custom_persona', JSON.stringify(customPersonaData));
-
-    // 2. 현재 모드를 'custom'으로 강력하게 고정 (오류 방지를 위해 두 가지 키 모두 저장)
-    localStorage.setItem('current_persona', 'custom');
-    localStorage.setItem('currentPersona', 'custom');
     window.currentPersona = 'custom';
+    window.customAiName = name;
+    window.customAiPrompt = prompt;
 
-    // 3. 상태 알림 업데이트
     if (typeof window.updateStatus === 'function') {
-        window.updateStatus(`${nameInput} 모드 적용!`);
+        window.updateStatus(`${name} 모드 적용!`);
     }
+    
+    window.closeAllPanels();
+    if (typeof navigate === 'function') navigate('screen-main');
+};
 
-    // 4. 채팅 내역 초기화 (페르소나 몰입을 위해 필수)
-    if (typeof window.clearChatSession === 'function') {
-        window.clearChatSession();
-    } else {
-        if (window.chatHistory) window.chatHistory = [];
-        const chatBox = document.getElementById('chat-box');
-        if (chatBox) chatBox.innerHTML = '';
-    }
+window.changeUILanguage = function(langCode) {
+    const baseLang = langCode.split('-')[0];
+    const currentDict = window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY["en"];
+    
+    if (!currentDict) return;
 
-    // 5. 드롭다운 및 패널 닫기
-    const dropdown = document.getElementById('customAiDropdown');
-    if (dropdown) dropdown.classList.add('hidden');
-    if (typeof window.togglePanel === 'function') {
-        window.togglePanel('inlineSparePanel');
+    // data-i18n 속성이 부여된 모든 엘리먼트 덮어쓰기 유도
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (currentDict[key]) el.innerHTML = currentDict[key];
+    });
+
+    // 플레이스홀더 제어부
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+        const key = el.getAttribute('data-i18n-ph');
+        if (currentDict[key]) el.placeholder = currentDict[key];
+    });
+
+    // 기존 구형 ID 매핑 호환성 처리
+    for (const [id, text] of Object.entries(currentDict)) {
+        const element = document.getElementById(id);
+        if (element) {
+            if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                element.placeholder = text;
+            } else {
+                element.innerHTML = text;
+            }
+        }
     }
 };
 
