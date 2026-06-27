@@ -639,17 +639,29 @@ window.initSpeechRecognition = function() {
                 if(!synthesis) return; synthesis.cancel(); 
                 currentUtterance = new SpeechSynthesisUtterance(clean); 
                 
-                // 🌟 핵심 수정 1: 확실한 목표 언어 코드 가져오기 (매개변수가 없어도 무조건 로컬스토리지에서 땡겨옴)
                 const targetLangCode = langCode || localStorage.getItem('target_language') || 'en-US';
                 currentUtterance.lang = targetLangCode; 
-                currentUtterance.pitch = currentVoiceGender === 'female' ? 1.2 : 0.7;
                 
-                // 🌟 핵심 수정 2: OS(스마트폰/PC)에 설치된 목소리 중에서 원어민 목소리를 찾아 강제로 할당!
+                // 🌟 추가된 핵심 로직: 사용자가 드롭다운에서 선택한 기기 목소리 찾아서 적용하기!
                 const voices = window.speechSynthesis.getVoices();
-                const nativeVoice = voices.find(v => v.lang.startsWith(targetLangCode.split('-')[0]));
-                if (nativeVoice) {
-                    currentUtterance.voice = nativeVoice;
+                const savedVoiceName = localStorage.getItem('selected_voice_name');
+                let selectedVoice = null;
+                
+                // 1순위: 사용자가 선택한 목소리
+                if (savedVoiceName) {
+                    selectedVoice = voices.find(v => v.name === savedVoiceName && v.lang.startsWith(targetLangCode.split('-')[0]));
                 }
+                // 2순위: 없으면 해당 언어의 기본 목소리
+                if (!selectedVoice) {
+                    selectedVoice = voices.find(v => v.lang.startsWith(targetLangCode.split('-')[0]));
+                }
+                
+                if (selectedVoice) {
+                    currentUtterance.voice = selectedVoice;
+                }
+                
+                // 🌟 남/여 억지 톤 조절(pitch) 삭제하고 원본 목소리 톤(1.0) 유지
+                currentUtterance.pitch = 1.0; 
                 
                 currentUtterance.onstart = () => { 
                     isSpeaking = true; 
@@ -1011,7 +1023,10 @@ window.goHome = function() { window.navigate('screen-home'); };
         };
 
         // 🌟 2. 롤플레잉 전체 듣기: 대본 읽을 때 이모지 안 읽음!
-        let activeScriptTimeout = null; let isScriptPlaying = false; let playingScriptIndex = -1;
+        let activeScriptTimeout = null; 
+        let isScriptPlaying = false; 
+        let playingScriptIndex = -1;
+        
         window.playSpecificScript = function(index) {
             isInteractiveTestActive = false; const currentBtn = document.getElementById(`play-btn-${index}`);
             if (isScriptPlaying && playingScriptIndex === index) {
@@ -1054,11 +1069,28 @@ window.goHome = function() { window.navigate('screen-home'); };
                         playNext();
                     });
                 } else {
-                    const utt = new SpeechSynthesisUtterance(textToRead); 
-                    utt.lang = savedScripts[index].langCode; utt.pitch = pitch; 
-                    utt.onend = utt.onerror = () => { if(!isScriptPlaying) return; playIdx++; activeScriptTimeout = setTimeout(playNext, 500); }; 
-                    window.speechSynthesis.speak(utt);
+                const utt = new SpeechSynthesisUtterance(textToRead); 
+                utt.lang = savedScripts[index].langCode; 
+                
+                // 🌟 추가된 기기 목소리 적용 로직!
+                const voices = window.speechSynthesis.getVoices();
+                const savedVoiceName = localStorage.getItem('selected_voice_name');
+                let selectedVoice = null;
+                
+                if (savedVoiceName) {
+                    selectedVoice = voices.find(v => v.name === savedVoiceName && v.lang.startsWith(utt.lang.split('-')[0]));
                 }
+                if (!selectedVoice) {
+                    selectedVoice = voices.find(v => v.lang.startsWith(utt.lang.split('-')[0]));
+                }
+                if (selectedVoice) {
+                    utt.voice = selectedVoice;
+                }
+
+                utt.pitch = pitch; // 대본은 AI와 내 목소리 톤이 달라야 하므로 기존 피치 유지
+                utt.onend = utt.onerror = () => { if(!isScriptPlaying) return; playIdx++; activeScriptTimeout = setTimeout(playNext, 500); }; 
+                window.speechSynthesis.speak(utt);
+            }
             }; playNext();
         };
                     
@@ -1539,14 +1571,23 @@ window.goHome = function() { window.navigate('screen-home'); };
         if (langSelector) langSelector.addEventListener('change', window.updateExtraUI);
         
 
-        // 🌟 출석 모달 열고 닫기 함수 명시적 추가 (버튼 먹통 버그 해결!)
-        window.openStreakModal = function() { 
-            document.getElementById('streak-modal').classList.remove('hidden'); 
-            window.updateStreakUI(); // 창 열 때 최신 상태 반영
-        };
-        window.closeStreakModal = function() { 
-            document.getElementById('streak-modal').classList.add('hidden'); 
-        };
+// 🌟 출석/퀘스트 모달 열고 닫기 스위치 함수
+window.openStreakModal = function() { 
+    const modal = document.getElementById('streak-modal');
+    if (modal) {
+        modal.classList.remove('hidden'); 
+        window.updateStreakUI(); // 창 열 때 최신 퀘스트 상태로 싹 업데이트!
+    } else {
+        console.error("streak-modal 창을 찾을 수 없습니다! HTML에 있는지 확인하세요.");
+    }
+};
+
+window.closeStreakModal = function() { 
+    const modal = document.getElementById('streak-modal');
+    if (modal) {
+        modal.classList.add('hidden'); 
+    }
+};
 
         // 🌟 대본 학습 기록을 저장하는 함수
 window.markScriptAsLearned = function(scriptIndex) {
@@ -1721,36 +1762,61 @@ window.addStudyMission = function(type) {
             if (dd && !e.target.closest('#genderDropdownContainer')) dd.classList.add('hidden');
         };
 
-        
+        // 🌟 1. 기기 목소리 리스트 불러오기 및 UI 렌더링
+window.renderVoiceList = function() {
+    const container = document.getElementById('voiceListContainer');
+    if (!container) return;
 
-        // 🌟 새로운 목소리 성별 변경 로직 (드롭다운용)
-        window.changeVoiceGender = function(gender) {
-            currentVoiceGender = gender;
-            localStorage.setItem('voice_gender', gender);
-            
-            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-            const genderText = gender === 'female' ? (dict.gender_f_text || '여성') : (dict.gender_m_text || '남성');
-            
-            // 화면 텍스트 업데이트
-            const dispG = document.getElementById('disp-voiceGender');
-            if (dispG) {
-                dispG.innerHTML = (gender === 'female' ? '👩 ' : '👨 ') + genderText;
-            }
-            
-            // 선택 후 메뉴 닫기
-            document.getElementById('drop-gender').classList.add('hidden');
+    const targetLang = localStorage.getItem('target_language') || 'en-US';
+    const voices = window.speechSynthesis.getVoices();
+
+    // 현재 설정된 타겟 언어(예: en-US 이면 en으로 시작하는 것)와 일치하는 목소리만 필터링
+    const filteredVoices = voices.filter(v => v.lang.startsWith(targetLang.split('-')[0]));
+
+    container.innerHTML = ''; // '불러오는 중...' 문구 비우기
+
+    if (filteredVoices.length === 0) {
+        container.innerHTML = '<div class="p-4 text-center text-[10px] text-slate-400">사용 가능한 목소리가 없습니다.</div>';
+        return;
+    }
+
+    filteredVoices.forEach(voice => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-left px-4 py-3 text-[11px] font-bold text-slate-600 hover:bg-slate-100 border-b border-slate-50 transition-colors truncate";
+        btn.innerText = `🗣️ ${voice.name}`;
+        
+        btn.onclick = () => {
+            // 목소리 이름 저장
+            localStorage.setItem('selected_voice_name', voice.name);
+            window.updateVoiceDisplay(voice.name);
+            document.getElementById('drop-voice').classList.add('hidden');
+            if(typeof window.updateStatus === 'function') window.updateStatus("AI 목소리가 변경되었습니다!");
         };
-        // 앱 켤 때 이전에 선택한 성별 글씨 유지하기
-        setTimeout(() => {
-            const savedGender = localStorage.getItem('voice_gender') || 'female';
-            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-            const genderText = savedGender === 'female' ? (dict.gender_f_text || '여성') : (dict.gender_m_text || '남성');
-            
-            const disp = document.getElementById('disp-voiceGender');
-            if (disp) disp.innerHTML = (savedGender === 'female' ? '👩 ' : '👨 ') + genderText;
-        }, 300);
+        container.appendChild(btn);
+    });
+};
+
+// 🌟 2. 선택된 목소리 이름을 UI에 표시하는 함수
+window.updateVoiceDisplay = function(voiceName) {
+    const disp = document.getElementById('disp-voiceName');
+    if (disp) {
+        disp.innerText = voiceName ? voiceName : "기본 음성";
+    }
+};
+
+// 🌟 3. 브라우저에서 목소리 로딩이 끝날 때 리스트 새로고침 (필수 방어코드)
+if (window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = window.renderVoiceList;
+}
+
+// 🌟 4. 앱 초기화 시 목소리 UI 업데이트
+setTimeout(() => {
+    const savedVoice = localStorage.getItem('selected_voice_name');
+    window.updateVoiceDisplay(savedVoice);
+    window.renderVoiceList();
+}, 500);
+
+
 
 // 화면 아무 곳이나 클릭하면 열려있는 패널 모두 닫기
 document.addEventListener('click', (e) => {
