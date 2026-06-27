@@ -1639,7 +1639,7 @@ window.markScriptAsLearned = function(scriptIndex) {
             }
 
             // 🌟 보상 타겟 로직 (테스트용: 시작하자마자 1일 타겟이 스페셜 페르소나!)
-            let nextTarget = 1, rewardText = "스페셜 페르소나 🎁";
+            let nextTarget = 30, rewardText = "스페셜 페르소나 🎁";
             if (streakData.streak >= 1 && streakData.streak < 5) { nextTarget = 5; rewardText = "초승달 10개 🌙"; }
             else if (streakData.streak >= 5 && streakData.streak < 10) { nextTarget = 10; rewardText = "초승달 20개 🌙"; }
             else if (streakData.streak >= 10 && streakData.streak < 20) { nextTarget = 20; rewardText = "초승달 30개 🌙"; }
@@ -1766,11 +1766,20 @@ window.addStudyMission = function(type) {
 window.renderVoiceList = function() {
     const container = document.getElementById('voiceListContainer');
     if (!container) return;
+    
+    // 1. 목소리 목록 가져오기
+    let voices = window.speechSynthesis.getVoices();
+    
+    // 2. 1초가 지나도 목소리가 없으면 다시 시도 (재귀 호출)
+    if (voices.length === 0) {
+        setTimeout(window.renderVoiceList, 1000); 
+        return;
+    }
 
     const targetLang = localStorage.getItem('target_language') || 'en-US';
-    const voices = window.speechSynthesis.getVoices();
 
-    // 현재 설정된 타겟 언어(예: en-US 이면 en으로 시작하는 것)와 일치하는 목소리만 필터링
+    // 🌟 수정: 14번째 줄의 중복 선언(const voices = ...)을 삭제하고 
+    // 위에서 이미 가져온 voices 변수를 그대로 사용합니다.
     const filteredVoices = voices.filter(v => v.lang.startsWith(targetLang.split('-')[0]));
 
     container.innerHTML = ''; // '불러오는 중...' 문구 비우기
@@ -1780,13 +1789,12 @@ window.renderVoiceList = function() {
         return;
     }
 
+    // 3. 필터링된 목소리 버튼 생성
     filteredVoices.forEach(voice => {
         const btn = document.createElement('button');
-        btn.className = "w-full text-left px-4 py-3 text-[11px] font-bold text-slate-600 hover:bg-slate-100 border-b border-slate-50 transition-colors truncate";
+        btn.className = "w-full text-left px-4 py-3 text-[11px] font-bold text-slate-700 hover:bg-slate-50 border-b border-slate-50 transition-colors truncate";
         btn.innerText = `🗣️ ${voice.name}`;
-        
         btn.onclick = () => {
-            // 목소리 이름 저장
             localStorage.setItem('selected_voice_name', voice.name);
             window.updateVoiceDisplay(voice.name);
             document.getElementById('drop-voice').classList.add('hidden');
