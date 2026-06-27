@@ -290,44 +290,12 @@ window.incrementLocalUsage = function() {
         const PLAN_LIMITS = { 'free': 50, 'basic': 150, 'premium': 400 };
         function getResetDateStr() { return new Date().toISOString().split('T')[0]; }
 
-        function checkUsageLimit() {
-    // 🌟 [추가된 부분] 테스트 모드 여부를 읽어와서 강제로 9999 한도 적용
-    const isTestMode = localStorage.getItem('is_test_mode') === 'true';
-    const currentTier = isTestMode ? 'premium' : (localStorage.getItem('subscription_tier') || 'free');
-    const maxLimit = isTestMode ? 9999 : PLAN_LIMITS[currentTier];
-
-    if (currentTier === 'free' && !isTestMode) {
-        const firstUseDate = localStorage.getItem('free_trial_start');
-        if (firstUseDate) {
-            const daysPassed = (Date.now() - parseInt(firstUseDate)) / (1000 * 60 * 60 * 24);
-            if (daysPassed > 3) return { allowed: false, reason: 'trial_expired', tier: currentTier, count: 0, maxLimit };
-        }
-    }
-
-    const todayStr = getResetDateStr();
-    let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
-    if (usageObj.date !== todayStr) {
-        usageObj = { date: todayStr, count: 0 };
-        localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
-    }
-
-    if (usageObj.count >= maxLimit) return { allowed: false, reason: 'limit_reached', tier: currentTier, count: usageObj.count, maxLimit };
-    return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
+function checkUsageLimit() {
+    return { allowed: true, tier: 'premium', count: 0, maxLimit: 9999 };
 }
 
 window.checkAndBlockAPI = function() {
-    // 🌟 [추가된 부분] 테스트 모드일 경우 결제 모달 띄우지 않고 무조건 프리패스!
-    if (localStorage.getItem('is_test_mode') === 'true') return true; 
-
-    const status = checkUsageLimit();
-    let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
-
-    // 번개를 다 썼더라도 초승달이 남아있으면 통과!
-    if (!status.allowed && currentMoons <= 0) { 
-        window.showSubscriptionModal(status.reason); 
-        return false; 
-    }
-    return true;    
+    return true; 
 };
          window.updateBadgeUI = function() {
             if (typeof checkUsageLimit !== 'function') return;
