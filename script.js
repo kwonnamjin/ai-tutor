@@ -729,10 +729,15 @@ window.initSpeechRecognition = function() {
     const memoRule = `\n🚨 CRITICAL: If the user asks to save, note, or remember a schedule/task, extract it into the "save_memo" key (in ${exactAiLang}). Otherwise, "save_memo" MUST be "".`;          
     const antiParrotRule = `\n🚨 CRITICAL: DO NOT just translate the user's input. You must act as your persona and REPLY to their message contextually. Keep the conversation flowing naturally in ${targetName}.`;
 
+// 🌟 [수정 1] 번역기 모드일 때 AI의 오지랖을 완벽 차단하고, 입/출력 언어를 명확히 고정합니다.
     let sysPrompt = mode === 'translate' 
-        ? `You are a strict professional translator. Your ONLY job is to translate the user's input into ${targetName}. DO NOT answer questions, DO NOT continue the conversation, and DO NOT repeat the original text. Respond in JSON: {"foreign_text":"[The translated text in ${targetName}]", "translation":"[The exact meaning in ${exactAiLang}]", "save_memo":""}` + memoryPrompt + criticalRule + memoRule
+        ? `You are a strict translation machine. Your ONLY purpose is to translate the user's input into [${targetName}]. 
+        CRITICAL RULES:
+        1. DO NOT converse, DO NOT answer questions, DO NOT agree or say "I'm here" or "Okay".
+        2. Even if the input is a conversational question like "How are you?", DO NOT answer it. Just translate the sentence itself into [${targetName}].
+        3. Provide the translation in the "foreign_text" field, and provide the original meaning in the "translation" field using [${inputName}].
+        Respond EXACTLY in JSON: {"foreign_text":"<translated text in ${targetName}>", "translation":"<meaning in ${inputName}>", "save_memo":""}`
         : selectedPersona + antiParrotRule + ` Respond in JSON: {"foreign_text":"Your conversational reply in ${targetName}","translation":"A simple, direct, and natural translation of your 'foreign_text' in ${exactAiLang}. DO NOT add any grammar explanations, notes, or corrections! Just the translation.","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
-
     try {
         let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
         
@@ -749,9 +754,11 @@ window.initSpeechRecognition = function() {
         // 🌟 [추가된 핵심 코드] API 서버로 보낼 때만 꼬리표를 몰래 다는 복사본 생성
         let apiMessages = JSON.parse(JSON.stringify(ctx));
         if (mode === 'tutor' && apiMessages.length > 0) {
-            // 맨 마지막 메시지(방금 입력한 텍스트) 끝에 강력한 언어 통제 규칙 삽입
-            // 참고: JSON 포맷 중 "foreign_text"를 반드시 목표 언어로 쓰도록 강제함
+            // 튜터 모드 언어 고정
             apiMessages[apiMessages.length - 1].content += `\n\n[SYSTEM STRICT RULE: You MUST write the "foreign_text" ONLY in ${targetName}. NEVER use ${inputName} or any other language for "foreign_text". This is an absolute rule.]`;
+        } else if (mode === 'translate' && apiMessages.length > 0) {
+            // 🌟 [수정 2] 번역 모드일 때는 유저의 메시지 앞에 '절대 대답하지 말고 번역만 해'라는 협박문(?)을 씌웁니다.
+            apiMessages[apiMessages.length - 1].content = `[STRICT RULE: TRANSLATE the following text into ${targetName}. DO NOT answer the question or converse.]\n\n` + apiMessages[apiMessages.length - 1].content;
         }
 
         // 🔥 ctx 대신 꼬리표가 달린 apiMessages를 서버로 전송합니다.
