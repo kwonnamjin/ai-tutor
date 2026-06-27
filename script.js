@@ -1864,23 +1864,30 @@ window.applyCustomAi = function() {
 
 window.changeUILanguage = function(langCode) {
     const baseLang = langCode.split('-')[0];
-    const currentDict = window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY["en"];
     
+    // 1. 에러 방지: 번역 사전을 안전하게 불러옵니다.
+    const dictionary = window.UI_DICTIONARY || (typeof UI_DICTIONARY !== 'undefined' ? UI_DICTIONARY : null);
+    if (!dictionary) {
+        console.error("번역 사전을 찾을 수 없습니다.");
+        return;
+    }
+
+    const currentDict = dictionary[baseLang] || dictionary["en"];
     if (!currentDict) return;
 
-    // data-i18n 속성이 부여된 모든 엘리먼트 덮어쓰기 유도
+    // 2. 다국어 텍스트 적용 (새로운 data-i18n 방식)
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (currentDict[key]) el.innerHTML = currentDict[key];
     });
 
-    // 플레이스홀더 제어부
+    // 3. 다국어 플레이스홀더 적용 (새로운 data-i18n-ph 방식)
     document.querySelectorAll('[data-i18n-ph]').forEach(el => {
         const key = el.getAttribute('data-i18n-ph');
         if (currentDict[key]) el.placeholder = currentDict[key];
     });
 
-    // 기존 구형 ID 매핑 호환성 처리
+    // 4. 기존 ID 기반 텍스트 변경 (질문자님이 보여주신 원래 기능 완벽 포함)
     for (const [id, text] of Object.entries(currentDict)) {
         const element = document.getElementById(id);
         if (element) {
@@ -1891,6 +1898,11 @@ window.changeUILanguage = function(langCode) {
             }
         }
     }
+
+    // 5. 언어 선택 시 열려있던 모든 드롭다운 메뉴 닫기
+    document.querySelectorAll('#drop-exp, #drop-target, #drop-stt, #drop-gender').forEach(drop => {
+        if (drop) drop.classList.add('hidden');
+    });
 };
 
 
