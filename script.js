@@ -1243,7 +1243,7 @@ window.goHome = function() { window.navigate('screen-home'); };
             window.addStudyMission('vocab'); 
             window.addLearningStat('word', 1);
         };
-window.generateVocab = async function() {
+        window.generateVocab = async function() {
     if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
     if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
 
