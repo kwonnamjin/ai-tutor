@@ -19,6 +19,32 @@ const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
         const selectionTooltip = document.getElementById('selectionTooltip');
 
 
+// ==========================================================
+// 🌟 [필수 추가] 모바일/PC 웹 브라우저 AI 목소리 차단 해제 마법사
+// ==========================================================
+let isTtsUnlocked = false;
+function unlockTtsEngine() {
+    if (isTtsUnlocked) return;
+    // 화면을 처음 터치할 때, 투명한(볼륨 0) 목소리를 재생해 브라우저 허락을 받아냅니다.
+    const silentUtt = new SpeechSynthesisUtterance('');
+    silentUtt.volume = 0; 
+    window.speechSynthesis.speak(silentUtt);
+    
+    isTtsUnlocked = true;
+    console.log("🔊 웹 브라우저 AI 음성 잠금 해제 완료!");
+    
+    // 한 번 허락받으면 더 이상 실행할 필요 없음
+    document.removeEventListener('click', unlockTtsEngine);
+    document.removeEventListener('touchstart', unlockTtsEngine);
+}
+// 사용자가 화면 아무 곳이나 터치/클릭하는 순간 작동!
+document.addEventListener('click', unlockTtsEngine);
+document.addEventListener('touchstart', unlockTtsEngine);
+// ==========================================================
+
+
+
+
 // 🌟 2. 공통 UI 조작 함수
 window.handleBodyClick = function(e) {
     if (!e.target.classList.contains('word-span') && !e.target.classList.contains('exp-word-span') && !e.target.closest('#selectionTooltip') && !e.target.closest('button')) {
