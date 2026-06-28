@@ -813,7 +813,6 @@ window.initSpeechRecognition = function() {
     const memoRule = `\n🚨 CRITICAL: If the user asks to save, note, or remember a schedule/task, extract it into the "save_memo" key (in ${exactAiLang}). Otherwise, "save_memo" MUST be "".`;          
     const antiParrotRule = `\n🚨 CRITICAL: DO NOT just translate the user's input. You must act as your persona and REPLY to their message contextually. Keep the conversation flowing naturally in ${targetName}.`;
 
-// 🌟 [수정 1] 번역기 모드일 때 AI의 오지랖을 완벽 차단하고, 입/출력 언어를 명확히 고정합니다.
     let sysPrompt = mode === 'translate' 
         ? `You are a strict translation machine. Your ONLY purpose is to translate the user's input into [${targetName}]. 
         CRITICAL RULES:
@@ -830,22 +829,17 @@ window.initSpeechRecognition = function() {
             ctx[0] = {role:"system", content:sysPrompt}; 
             ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
             
-            // 🔥 원본 히스토리 저장 (화면과 다음 턴을 위해 꼬리표 없이 깨끗하게 저장)
             conversationHistory = ctx; 
             sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
         }
         
-        // 🌟 [추가된 핵심 코드] API 서버로 보낼 때만 꼬리표를 몰래 다는 복사본 생성
         let apiMessages = JSON.parse(JSON.stringify(ctx));
         if (mode === 'tutor' && apiMessages.length > 0) {
-            // 튜터 모드 언어 고정
             apiMessages[apiMessages.length - 1].content += `\n\n[SYSTEM STRICT RULE: You MUST write the "foreign_text" ONLY in ${targetName}. NEVER use ${inputName} or any other language for "foreign_text". This is an absolute rule.]`;
         } else if (mode === 'translate' && apiMessages.length > 0) {
-            // 🌟 [수정 2] 번역 모드일 때는 유저의 메시지 앞에 '절대 대답하지 말고 번역만 해'라는 협박문(?)을 씌웁니다.
             apiMessages[apiMessages.length - 1].content = `[STRICT RULE: TRANSLATE the following text into ${targetName}. DO NOT answer the question or converse.]\n\n` + apiMessages[apiMessages.length - 1].content;
         }
 
-        // 🔥 ctx 대신 꼬리표가 달린 apiMessages를 서버로 전송합니다.
         let res = await fetchAPI(WORKER_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json', 'X-Device-ID': typeof myDeviceId !== 'undefined' ? myDeviceId : '' }, 
@@ -859,6 +853,21 @@ window.initSpeechRecognition = function() {
         let parsed;
         if (jsonMatch) parsed = JSON.parse(jsonMatch[0]); else throw new Error("JSON_NOT_FOUND");
         
+        // 🌟🌟🌟 [여기가 추가된 철벽 방어막입니다!] 🌟🌟🌟
+        const checkText = (parsed.foreign_text || "").toLowerCase();
+        if (checkText.includes("limit") || checkText.includes("error") || checkText.includes("connect") || checkText.includes("exceeded")) {
+            // 앱 화면에 사용자에게 친절하게 안내
+            if (typeof addMessageToChat === 'function') {
+                addMessageToChat('ai', "⚠️ 현재 AI 서버 트래픽이 많아 응답이 지연되고 있습니다. 잠시 후 다시 말해주세요. (번개 차감 안 됨)");
+            }
+            if (typeof updateStatus === 'function') updateStatus("서버 지연");
+            if (avatarWrap) avatarWrap.style.borderColor = "#f87171"; // 빨간색 테두리로 경고 표시
+            
+            return; // 🛑 여기서 함수를 끝내버림! (아래에 있는 번개 차감 로직까지 절대 못 내려갑니다)
+        }
+        // 🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟
+
+        // 위 방어막을 무사히 통과한 정상 대화일 때만 비로소 차감!
         if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
         
         if(mode==='tutor') { 
