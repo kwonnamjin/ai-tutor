@@ -2142,3 +2142,31 @@ window.requestVoicesFromApp = function() {
 window.addEventListener('flutterInAppWebViewPlatformReady', function(event) {
     window.requestVoicesFromApp();
 });
+
+// =========================================================================
+// 🌟 [추가] 브라우저 소리 자동재생 차단 해제용 '음성 켜기' 버튼 자동 생성
+// =========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. 화면 중앙 상단에 눈에 띄는 버튼을 만듭니다.
+    const playBtn = document.createElement('button');
+    playBtn.id = 'forcePlayBtn';
+    playBtn.innerHTML = '여기를 눌러서 음성을 켜주세요 🔊';
+    playBtn.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:99999; padding:15px 30px; font-size:16px; font-weight:900; background-color:#3b82f6; color:white; border:none; border-radius:12px; box-shadow:0 10px 15px -3px rgba(0,0,0,0.1); cursor:pointer; transition:all 0.3s;';
+    
+    // 2. 만든 버튼을 화면(body)에 집어넣습니다.
+    document.body.appendChild(playBtn);
+
+    // 3. 버튼을 클릭했을 때 소리가 나도록 연결합니다.
+    playBtn.addEventListener('click', function() {
+        // ⚠️ 주의: 아래 '음원파일경로.mp3' 부분을 깃허브에 올리신 실제 파일 이름으로 꼭 바꾸세요! (예: 'welcome.mp3')
+        var audio = new Audio('음원파일경로.mp3'); 
+        
+        audio.play().then(() => {
+            console.log("🔊 브라우저 오디오 차단 해제 완료!");
+            playBtn.style.display = 'none'; // 성공하면 화면에서 버튼을 숨깁니다.
+        }).catch((error) => {
+            console.error("소리 재생 실패: ", error);
+            alert("소리 파일을 찾을 수 없습니다. 파일 이름과 경로를 확인해주세요.");
+        });
+    });
+});
