@@ -19,6 +19,15 @@ const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
         const selectionTooltip = document.getElementById('selectionTooltip');
 
 
+
+        // [소리 먹통 해결 코드] 화면을 처음 터치할 때 폰의 '소리 차단'을 강제로 뚫어버립니다.
+document.addEventListener('touchstart', function() {
+    // 아무 소리도 안 나는 투명한 음성을 0.1초 재생해서 폰에게 허락을 받아냄
+    var silentUtt = new SpeechSynthesisUtterance('');
+    silentUtt.volume = 0;
+    window.speechSynthesis.speak(silentUtt);
+    console.log("웹뷰 소리 차단 해제 완료!");
+}, { once: true }); // 딱 한 번만 실행됨
 // ==========================================================
 // 🌟 [필수 추가] 모바일/PC 웹 브라우저 AI 목소리 차단 해제 마법사
 // ==========================================================
