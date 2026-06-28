@@ -222,8 +222,21 @@ window.populateDropdowns = function() {
                     window.changeUILanguage(lang.code);
                 }
                 if (setup.target === 'targetLanguage') {
-                    localStorage.setItem('target_language', lang.code);
-                }
+    localStorage.setItem('target_language', lang.code);
+    
+    // 🌟 [여기가 추가된 핵심!] 언어가 바뀌면 기존 목소리 기억을 싹 지워버립니다.
+    window.selectedTtsVoiceName = "";
+    localStorage.removeItem('saved_voice_name');
+    localStorage.removeItem('selected_voice_name');
+    
+    // UI에 표시되는 이름도 즉시 '기본 음성'으로 바꿔줍니다.
+    if (typeof window.updateVoiceDisplay === 'function') {
+        window.updateVoiceDisplay("기본 음성");
+    }
+    
+    // 🌟 리스트 새로고침
+    window.requestVoicesFromApp(); 
+}
                 if (setup.target === 'sttInputLanguage') {
                     localStorage.setItem('stt_input_language', lang.code);
                 }
@@ -415,12 +428,12 @@ window.incrementLocalUsage = function() {
                         <h2 class="text-xl font-black text-slate-800 mb-2">${titleText}</h2><p class="text-sm text-slate-500 mb-6">${descText}</p>
                         <div class="space-y-3 text-left">
                             <button onclick="processPayment('basic')" class="w-full border-2 border-indigo-100 hover:border-indigo-500 bg-indigo-50/50 rounded-2xl p-4 flex items-center justify-between transition-all">
-                                <div><h3 class="text-indigo-800 font-bold text-lg">베이직 (Basic)</h3><p class="text-xs text-indigo-500 font-medium">매일 150건 API 대화</p></div>
+                                <div><h3 class="text-indigo-800 font-bold text-lg">베이직 (Basic)</h3><p class="text-xs text-indigo-500 font-medium">매일 150건 충전</p></div>
                                 <div class="text-right"><span class="text-slate-800 font-black text-lg">₩3,900</span><span class="text-xs text-slate-400">/월</span></div>
                             </button>
                             <button onclick="processPayment('premium')" class="w-full border-2 border-amber-200 hover:border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 flex items-center justify-between transition-all relative overflow-hidden">
                                 <div class="absolute top-0 right-0 bg-amber-400 text-white text-[10px] font-black px-2 py-0.5 rounded-bl-lg shadow-sm">무제한급</div>
-                                <div><h3 class="text-amber-700 font-bold text-lg">프리미엄 (Premium)</h3><p class="text-xs text-amber-600 font-medium">매일 400건 API 대화</p></div>
+                                <div><h3 class="text-amber-700 font-bold text-lg">프리미엄 (Premium)</h3><p class="text-xs text-amber-600 font-medium">매일 400건 충전</p></div>
                                 <div class="text-right"><span class="text-slate-800 font-black text-lg">₩7,900</span><span class="text-xs text-slate-400">/월</span></div>
                             </button>
                         </div>
@@ -466,18 +479,28 @@ window.incrementLocalUsage = function() {
        
 // 🌟 서로 말하는 언어를 맞바꾸는 기능 (Me <-> AI)
 window.swapLanguages = function() {
-    // 로컬 스토리지에서 현재 값을 가져옴
+    // 1. 기존 언어 교환 로직
     const tCode = localStorage.getItem('target_language') || 'en-US';
     const sCode = localStorage.getItem('stt_input_language') || 'ko-KR';
 
-    // 1. 값 서로 교환해서 저장
     localStorage.setItem('target_language', sCode);
     localStorage.setItem('stt_input_language', tCode);
 
-    // 2. 대화 세션 초기화 (언어가 바뀌었으므로 대화도 리셋하는 것이 안전함)
-    if (typeof window.clearChatSession === 'function') window.clearChatSession();
+    // 🌟 [핵심 추가] AI 언어가 바뀌었으므로 목소리 설정을 강제 초기화!
+    window.selectedTtsVoiceName = "";
+    localStorage.removeItem('saved_voice_name');
+    localStorage.removeItem('selected_voice_name');
+    
+    // UI 표시 이름도 '기본 음성'으로 변경
+    if (typeof window.updateVoiceDisplay === 'function') {
+        window.updateVoiceDisplay("기본 음성");
+    }
 
-    // 3. UI 즉시 업데이트 및 알림
+    // 🌟 리스트 새로고침 (이거 호출하면 앱에서 언어 바뀐 거 알고 리스트 싹 갱신됨)
+    window.requestVoicesFromApp();
+
+    // 2. 대화 세션 초기화 및 상태 업데이트 (기존 로직 유지)
+    if (typeof window.clearChatSession === 'function') window.clearChatSession();
     if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
     if (typeof window.updateStatus === 'function') window.updateStatus("언어 역할이 변경되었습니다 🔄");
 };
@@ -648,71 +671,44 @@ window.initSpeechRecognition = function() {
         }
         // 🌟 1. 프리토킹: 화면엔 이모지가 보이지만, 읽을 때는 이모지 필터링!
         window.speakText = function(text, langCode) {
-            if(!text) return;
-            // 👇 정규식을 이용해 이모지만 완벽하게 걸러냅니다
-            const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ')
-                              .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '')
-                              .trim(); 
-            if(!clean) return;
+    if(!text) return;
+    const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim(); 
+    if(!clean) return;
 
-            const avatarWrap = document.getElementById('avatarWrap');
-            const stopAudioBtn = document.getElementById('stopAudioBtn');
+    const targetLangCode = langCode || localStorage.getItem('target_language') || 'en-US';
+    
+    // 🌟 UI 효과 시작 (기존 방식 유지)
+    isSpeaking = true;
+    if(avatarWrap) { avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; }
+    if(stopAudioBtn) { stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); }
+    if(typeof window.updateStatus === 'function') window.updateStatus("말하는 중...");
 
-            if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-                isSpeaking = true;
-                if(avatarWrap) { avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; }
-                if(stopAudioBtn) { stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); }
-                window.updateStatus("말하는 중...");
-                window.flutter_inappwebview.callHandler('speak', clean, langCode, window.selectedTtsVoiceName || "");
-                setTimeout(() => {
-                    isSpeaking = false;
-                    if(avatarWrap) { avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); }
-                    if(stopAudioBtn) { stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); }
-                    window.updateStatus("대기 중");
-                }, 3000);
-            } else {
-                if(!synthesis) return; synthesis.cancel(); 
-                currentUtterance = new SpeechSynthesisUtterance(clean); 
-                
-                const targetLangCode = langCode || localStorage.getItem('target_language') || 'en-US';
-                currentUtterance.lang = targetLangCode; 
-                
-                // 🌟 추가된 핵심 로직: 사용자가 드롭다운에서 선택한 기기 목소리 찾아서 적용하기!
-                const voices = window.speechSynthesis.getVoices();
-                const savedVoiceName = localStorage.getItem('selected_voice_name');
-                let selectedVoice = null;
-                
-                // 1순위: 사용자가 선택한 목소리
-                if (savedVoiceName) {
-                    selectedVoice = voices.find(v => v.name === savedVoiceName && v.lang.startsWith(targetLangCode.split('-')[0]));
-                }
-                // 2순위: 없으면 해당 언어의 기본 목소리
-                if (!selectedVoice) {
-                    selectedVoice = voices.find(v => v.lang.startsWith(targetLangCode.split('-')[0]));
-                }
-                
-                if (selectedVoice) {
-                    currentUtterance.voice = selectedVoice;
-                }
-                
-                // 🌟 남/여 억지 톤 조절(pitch) 삭제하고 원본 목소리 톤(1.0) 유지
-                currentUtterance.pitch = 1.0; 
-                
-                currentUtterance.onstart = () => { 
-                    isSpeaking = true; 
-                    if(avatarWrap) { avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; }
-                    if(stopAudioBtn) { stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); }
-                    if(typeof window.updateStatus === 'function') window.updateStatus("말하는 중..."); 
-                };
-                currentUtterance.onend = currentUtterance.onerror = () => { 
-                    isSpeaking = false; 
-                    if(avatarWrap) { avatarWrap.classList.remove('speaking-pulse', 'speaking-bob'); }
-                    if(stopAudioBtn) { stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); }
-                    if(typeof window.updateStatus === 'function') window.updateStatus("대기 중"); 
-                };
-                setTimeout(() => synthesis.speak(currentUtterance), 50);
-            }
+    // 🌟 앱이면 플러터로, 아니면 브라우저 엔진으로 발화
+    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+        // [강제 기본 음성 로직] 캐시가 있다면 체크, 없으면 기본값으로 플러터에 요청
+        let voiceToUse = window.deviceVoicesCache?.find(v => v.name === window.selectedTtsVoiceName);
+        if (!voiceToUse) {
+            voiceToUse = window.deviceVoicesCache?.find(v => v.locale.startsWith(targetLangCode.split('-')[0])) || window.deviceVoicesCache?.[0];
+            window.selectedTtsVoiceName = voiceToUse ? voiceToUse.name : "";
         }
+        window.flutter_inappwebview.callHandler('speak', clean, targetLangCode, window.selectedTtsVoiceName);
+    } else {
+        // 웹 브라우저 엔진 (기존 방식)
+        if(synthesis) synthesis.cancel();
+        currentUtterance = new SpeechSynthesisUtterance(clean);
+        currentUtterance.lang = targetLangCode;
+        // ... (기존 웹 보이스 찾기 로직)
+        synthesis.speak(currentUtterance);
+    }
+
+    // UI 종료 로직 (앱/웹 공통)
+    setTimeout(() => {
+        isSpeaking = false;
+        if(avatarWrap) avatarWrap.classList.remove('speaking-pulse', 'speaking-bob');
+        if(stopAudioBtn) { stopAudioBtn.disabled = true; stopAudioBtn.classList.replace('text-red-500', 'text-slate-500'); }
+        if(typeof window.updateStatus === 'function') window.updateStatus("대기 중");
+    }, 3000);
+};
         window.stopSpeaking = function() {
             if (window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); 
             else synthesis.cancel(); 
