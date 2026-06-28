@@ -360,18 +360,31 @@ window.incrementLocalUsage = function() {
             if (usageObj.count >= maxLimit) return { allowed: false, reason: 'limit_reached', tier: currentTier, count: usageObj.count, maxLimit };
             return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
         }
-
         window.checkAndBlockAPI = function() {
-            const status = checkUsageLimit();
-            let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
+    const status = checkUsageLimit(); // 한도 체크 (번개 확인)
+    let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
 
-            // 번개를 다 썼더라도 초승달이 남아있으면 통과!
-            if (!status.allowed && currentMoons <= 0) { 
-                showSubscriptionModal(status.reason); 
-                return false; 
-            }
-            return true;    
-        };
+    // 🌟 이미 번개가 남아있다면 바로 통과
+    if (status.allowed) return true; 
+
+    // 🌟 번개를 다 썼지만, 초승달이 남아있는지 다시 확인!
+    if (currentMoons > 0) {
+        // 1. 초승달을 하나 차감합니다.
+        localStorage.setItem('moon_coins', currentMoons - 1);
+        
+        // 2. 뱃지 UI를 즉시 업데이트합니다.
+        if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI();
+        
+        console.log("🌙 초승달을 사용하여 대화를 계속합니다. 잔여:", currentMoons - 1);
+        return true; // 🌟 통과 허용!
+    }
+
+    // 초승달도 없다면 결제 모달 띄우기
+    showSubscriptionModal(status.reason); 
+    return false; // 🌟 차단
+};
+
+
          window.updateBadgeUI = function() {
             if (typeof checkUsageLimit !== 'function') return;
             const isTestMode = localStorage.getItem('is_test_mode') === 'true';
