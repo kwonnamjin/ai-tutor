@@ -1179,9 +1179,27 @@ const SUPPORTED_LANGUAGES = [
             // 특수/소수 언어 영어 템플릿: 힌디어(hi), 폴란드어(pl), 스코틀랜드어(gd), 라틴어(la), 히브리어(he), 네팔어(ne), 몽골어(mn), 티베트어(bo), 스وا힐리어(sw) 등은 사용 빈도가 극히 낮고, 코드가 너무 길어져 파일이 잘리는 것을 방지하기 위해 핵심 키만 압축된 형태(영어 템플릿 기본값)
         };
 
-// 기본 언어가 없는 경우 영어를 폴백으로 사용하도록 복사
 const langs = ["es", "ja", "zh", "th", "vi", "fr", "de", "ru", "ar", "id", "hi", "pl", "gd", "la", "he", "ne", "mn", "bo", "sw"];
-langs.forEach(lang => { window.UI_DICTIONARY[lang] = { ...window.UI_DICTIONARY["en"] }; });
+
+// 1. UI_DICTIONARY 자체가 없으면 무조건 빈 바구니부터 생성!
+if (typeof window.UI_DICTIONARY === 'undefined') {
+    window.UI_DICTIONARY = {};
+}
+// 2. "en" 데이터가 없으면 역시 빈 바구니 생성! (이게 핵심 방어막)
+if (!window.UI_DICTIONARY["en"]) {
+    window.UI_DICTIONARY["en"] = {};
+}
+
+// 3. 이제 안심하고 반복문 실행
+langs.forEach(l => {
+    window.UI_DICTIONARY[l] = Object.assign({}, window.UI_DICTIONARY["en"], window.UI_DICTIONARY[l] || {});
+});
+
+// 3. 현재 언어 데이터(langData)를 안전하게 연결합니다.
+const dictionary = window.UI_DICTIONARY;
+// baseLang 변수가 선언 안 되어 있을 경우를 대비한 2차 방어막
+const currentBase = typeof baseLang !== 'undefined' ? baseLang : "en";
+const langData = dictionary[currentBase] || dictionary["en"];
 
 const NEW_MAIN_UI_TRANS = {
             "ko": { 
