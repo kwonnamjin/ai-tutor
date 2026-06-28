@@ -307,30 +307,113 @@ window.updateStatus = function(txt) {
     if(st) st.textContent = txt; 
 };
 
+        // 1. 내부 계산기 (테스트 모드 및 3일 만료 완벽 동기화)
+window.checkUsageLimit = function() {
+    const isTestMode = localStorage.getItem('is_test_mode') === 'true';
+    let currentTier = localStorage.getItem('subscription_tier') || 'free';
+    
+    if (isTestMode) currentTier = 'premium'; // 테스트 모드면 무조건 프리미엄 취급
+    
+    const maxLimit = PLAN_LIMITS[currentTier] || 50;
 
+    // 무료 유저 3일 만료 체크
+    if (currentTier === 'free') {
+        const firstUseDate = localStorage.getItem('free_trial_start');
+        if (firstUseDate) {
+            const daysPassed = (Date.now() - parseInt(firstUseDate)) / (1000 * 60 * 60 * 24);
+            // 만료되었다면 얄짤없이 허용 불가 처리
+            if (daysPassed > 3) return { allowed: false, reason: 'trial_expired', tier: currentTier, maxLimit };
+        }
+    }
+
+    const todayStr = getResetDateStr();
+    let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
+    if (usageObj.date !== todayStr) {
+        usageObj = { date: todayStr, count: 0 };
+        localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
+    }
+
+    if (usageObj.count >= maxLimit) return { allowed: false, reason: 'limit_reached', tier: currentTier, count: usageObj.count, maxLimit };
+    
+    return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
+};
+// 2. 검문소 (초승달 실시간 차감 로직 완벽 적용)
+window.checkAndBlockAPI = function() {
+    const status = checkUsageLimit();
+    let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
+
+    // 1순위: 번개가 남아있다면 당당하게 통과!
+    if (status.allowed) return true; 
+
+    // 2순위: 번개가 없거나 3일 무료가 끝났지만, 초승달이 있다면? 1개 내고 통과!
+    if (currentMoons > 0) {
+        localStorage.setItem('moon_coins', currentMoons - 1); // 초승달 1개 차감
+        if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); // 화면 즉시 갱신
+        console.log("🌙 초승달 사용! 남은 개수:", currentMoons - 1);
+        return true; 
+    }
+
+    // 3순위: 둘 다 없으면 비로소 결제창 띄우기
+    if (typeof window.showSubscriptionModal === 'function') {
+        window.showSubscriptionModal(status.reason); 
+    }
+    return false; 
+};
+
+// 3. UI 거울 (화면에 거짓말하지 않고 정확한 잔여량 표시)
+window.updateBadgeUI = function() {
+    if (typeof checkUsageLimit !== 'function') return;
+    
+    const status = checkUsageLimit();
+    let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
+    
+    // 🌟 핵심: 만료되었거나 한도를 다 쓰면 번개 잔여량을 강제로 0으로 덮어씌움!
+    let remaining = 0;
+    if (status.allowed) {
+        const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
+        remaining = Math.max(0, status.maxLimit - currentCount);
+    }
+
+    const moonHtml = `<div class="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full text-[11px] font-black border border-indigo-200 shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-moon"></i> <span>${currentMoons}</span></div>`;
+    let badgeContent = '';
+
+    if (status.tier === 'premium') {
+        badgeContent = moonHtml + `<div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-amber-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-crown text-amber-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">PREMIUM</span> <span class="text-amber-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-amber-200"></i> ${remaining}</div>`;
+    } else if (status.tier === 'basic') {
+        badgeContent = moonHtml + `<div class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-indigo-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-star text-indigo-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">BASIC</span> <span class="text-indigo-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-indigo-200"></i> ${remaining}</div>`;
+    } else {
+        badgeContent = moonHtml + `<div class="bg-white text-slate-600 px-2.5 py-1 rounded-full text-[11px] font-black border border-slate-200 shadow-sm flex items-center gap-1.5 transition hover:bg-slate-50"><i class="fa-solid fa-bolt text-yellow-500"></i> <span>${remaining}</span></div>`;
+    }
+
+    const badgeIds = ['usageBadge', 'usageBadge2'];
+    badgeIds.forEach(id => {
+        const badge = document.getElementById(id);
+        if(badge) { 
+            badge.innerHTML = badgeContent; 
+            badge.className = "flex items-center gap-1.5 shrink-0 cursor-pointer"; 
+        }
+    });
+};
+
+// 4. 카운터 (초승달 중복 차감 방지)
 window.incrementLocalUsage = function() {
-            const status = checkUsageLimit();
-            if (status.tier === 'free' && !localStorage.getItem('free_trial_start')) {
-                localStorage.setItem('free_trial_start', Date.now().toString());
-            }
+    const status = checkUsageLimit();
+    if (status.tier === 'free' && !localStorage.getItem('free_trial_start')) {
+        localStorage.setItem('free_trial_start', Date.now().toString());
+    }
 
-            if (status.allowed) {
-                // 번개가 남아있으면 기본 번개 소모 (일일 사용량 카운트 증가)
-                let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
-                usageObj.count = (usageObj.count || 0) + 1;
-                localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
-            } else {
-                // 번개를 다 썼다면 소중한 초승달 소모
-                let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
-                if (currentMoons > 0) {
-                    localStorage.setItem('moon_coins', currentMoons - 1);
-                }
-            }
-            
-            window.updateBadgeUI();
-            return true;}
+    // 초승달 차감은 위 checkAndBlockAPI에서 했으므로, 여기선 '번개'만 순수하게 카운트!
+    if (status.allowed) {
+        let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
+        usageObj.count = (usageObj.count || 0) + 1;
+        localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
+    } 
+    
+    window.updateBadgeUI();
+    return true;
+};
 
- window.enableInputs = function() {
+        window.enableInputs = function() {
             ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
             micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
             window.updateStatus("대기 중");
@@ -361,71 +444,10 @@ window.incrementLocalUsage = function() {
             return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
         }
 
-        window.checkAndBlockAPI = function() {
-    const status = checkUsageLimit();
-    let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
 
-    // 1. 번개(하루 사용량)가 남아있다면 당연히 허용
-    if (status.allowed) return true;
 
-    // 2. 번개가 부족하지만 초승달이 있다면?
-    if (currentMoons > 0) {
-        // 초승달을 사용하여 통과시킵니다.
-        // 여기서 실제로 초승달을 1개 차감합니다.
-        localStorage.setItem('moon_coins', currentMoons - 1);
-        
-        // 🌟 수정하신 updateBadgeUI()를 호출하여 상단 뱃지 숫자를 즉시 갱신합니다.
-        if (typeof window.updateBadgeUI === 'function') {
-            window.updateBadgeUI();
-        }
-        
-        console.log("🌙 초승달을 사용하여 대화를 계속합니다. 잔여 초승달:", currentMoons - 1);
-        return true; // 🌟 대화 허용!
-    }
 
-    // 3. 번개도 없고 초승달도 없으면 결제 모달 띄우기
-    showSubscriptionModal(status.reason); 
-    return false; // 🌟 대화 차단
-};
-         window.updateBadgeUI = function() {
-            if (typeof checkUsageLimit !== 'function') return;
-            const isTestMode = localStorage.getItem('is_test_mode') === 'true';
-            const status = checkUsageLimit();
-            const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
-            
-            // 🌟 1. 초승달 개수 불러오기
-            let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
-            
-            if (isTestMode) {
-                status.tier = 'premium';
-                status.maxLimit = 9999;
-            }
-            const remaining = Math.max(0, status.maxLimit - currentCount);
-
-            // 🌟 2. 초승달 뱃지 HTML (공통으로 맨 앞에 위치)
-            const moonHtml = `<div class="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full text-[11px] font-black border border-indigo-200 shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-moon"></i> <span>${currentMoons}</span></div>`;
-            
-            let badgeContent = '';
-
-            // 🌟 3. 유저 등급에 따른 우측 뱃지 HTML 설정 (결제자도 남은 ⚡번개 표시 추가!)
-            if (status.tier === 'premium') {
-                badgeContent = moonHtml + `<div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-amber-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-crown text-amber-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">PREMIUM</span> <span class="text-amber-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-amber-200"></i> ${remaining}</div>`;
-            } else if (status.tier === 'basic') {
-                badgeContent = moonHtml + `<div class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-indigo-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-star text-indigo-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">BASIC</span> <span class="text-indigo-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-indigo-200"></i> ${remaining}</div>`;
-            } else {
-                badgeContent = moonHtml + `<div class="bg-white text-slate-600 px-2.5 py-1 rounded-full text-[11px] font-black border border-slate-200 shadow-sm flex items-center gap-1.5 transition hover:bg-slate-50"><i class="fa-solid fa-bolt text-yellow-500"></i> <span>${remaining}</span></div>`;
-            }
-
-            // 🌟 4. 메인 홈 화면과 롤플레잉 화면의 뱃지에 동시에 적용
-            const badgeIds = ['usageBadge', 'usageBadge2'];
-            badgeIds.forEach(id => {
-                const badge = document.getElementById(id);
-                if(badge) { 
-                    badge.innerHTML = badgeContent; 
-                    badge.className = "flex items-center gap-1.5 shrink-0 cursor-pointer"; 
-                }
-            });
-        };
+         
         window.showSubscriptionModal = function(reason) {
             const existingModal = document.getElementById('subscriptionModal');
             if (existingModal) existingModal.remove();
