@@ -360,31 +360,33 @@ window.incrementLocalUsage = function() {
             if (usageObj.count >= maxLimit) return { allowed: false, reason: 'limit_reached', tier: currentTier, count: usageObj.count, maxLimit };
             return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
         }
+
         window.checkAndBlockAPI = function() {
-    const status = checkUsageLimit(); // 한도 체크 (번개 확인)
+    const status = checkUsageLimit();
     let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
 
-    // 🌟 이미 번개가 남아있다면 바로 통과
-    if (status.allowed) return true; 
+    // 1. 번개(하루 사용량)가 남아있다면 당연히 허용
+    if (status.allowed) return true;
 
-    // 🌟 번개를 다 썼지만, 초승달이 남아있는지 다시 확인!
+    // 2. 번개가 부족하지만 초승달이 있다면?
     if (currentMoons > 0) {
-        // 1. 초승달을 하나 차감합니다.
+        // 초승달을 사용하여 통과시킵니다.
+        // 여기서 실제로 초승달을 1개 차감합니다.
         localStorage.setItem('moon_coins', currentMoons - 1);
         
-        // 2. 뱃지 UI를 즉시 업데이트합니다.
-        if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI();
+        // 🌟 수정하신 updateBadgeUI()를 호출하여 상단 뱃지 숫자를 즉시 갱신합니다.
+        if (typeof window.updateBadgeUI === 'function') {
+            window.updateBadgeUI();
+        }
         
-        console.log("🌙 초승달을 사용하여 대화를 계속합니다. 잔여:", currentMoons - 1);
-        return true; // 🌟 통과 허용!
+        console.log("🌙 초승달을 사용하여 대화를 계속합니다. 잔여 초승달:", currentMoons - 1);
+        return true; // 🌟 대화 허용!
     }
 
-    // 초승달도 없다면 결제 모달 띄우기
+    // 3. 번개도 없고 초승달도 없으면 결제 모달 띄우기
     showSubscriptionModal(status.reason); 
-    return false; // 🌟 차단
+    return false; // 🌟 대화 차단
 };
-
-
          window.updateBadgeUI = function() {
             if (typeof checkUsageLimit !== 'function') return;
             const isTestMode = localStorage.getItem('is_test_mode') === 'true';
