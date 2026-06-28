@@ -2215,3 +2215,23 @@ window.addEventListener('flutterInAppWebViewPlatformReady', function(event) {
     window.requestVoicesFromApp();
 });
 
+
+
+
+
+
+
+
+
+
+
+
+
+window.devTestLimit = function() {
+    let todayObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
+    todayObj.count = 50; // 번개 50개 소진
+    localStorage.setItem('daily_usage_v4', JSON.stringify(todayObj));
+    localStorage.setItem('moon_coins', '3'); // 초승달 3개 줌
+    window.updateBadgeUI();
+    alert("삐빅! 번개 0, 초승달 3개로 조작 완료!");
+};
