@@ -307,12 +307,14 @@ window.updateStatus = function(txt) {
     if(st) st.textContent = txt; 
 };
 
-        // 1. 내부 계산기 (테스트 모드 및 3일 만료 완벽 동기화)
+        // 1. 내부 계산기 (에러 방어막 완벽 적용)
 window.checkUsageLimit = function() {
+    // 🌟 안전장치 1: 요금제 한도를 함수 안에 직접 명시해서 절대 못 잃어버리게 함!
+    const PLAN_LIMITS = { free: 50, basic: 150, premium: 400 }; 
     const isTestMode = localStorage.getItem('is_test_mode') === 'true';
     let currentTier = localStorage.getItem('subscription_tier') || 'free';
     
-    if (isTestMode) currentTier = 'premium'; // 테스트 모드면 무조건 프리미엄 취급
+    if (isTestMode) currentTier = 'premium'; 
     
     const maxLimit = PLAN_LIMITS[currentTier] || 50;
 
@@ -321,12 +323,12 @@ window.checkUsageLimit = function() {
         const firstUseDate = localStorage.getItem('free_trial_start');
         if (firstUseDate) {
             const daysPassed = (Date.now() - parseInt(firstUseDate)) / (1000 * 60 * 60 * 24);
-            // 만료되었다면 얄짤없이 허용 불가 처리
             if (daysPassed > 3) return { allowed: false, reason: 'trial_expired', tier: currentTier, maxLimit };
         }
     }
 
-    const todayStr = getResetDateStr();
+    // 🌟 안전장치 2: 날짜 함수 못 찾을까봐 방어 로직 추가
+    const todayStr = (typeof getResetDateStr === 'function') ? getResetDateStr() : new Date().toLocaleDateString();
     let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
     if (usageObj.date !== todayStr) {
         usageObj = { date: todayStr, count: 0 };
@@ -337,37 +339,39 @@ window.checkUsageLimit = function() {
     
     return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
 };
+
 // 2. 검문소 (초승달 실시간 차감 로직 완벽 적용)
 window.checkAndBlockAPI = function() {
-    const status = checkUsageLimit();
-    let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
+    const status = window.checkUsageLimit(); // 🌟 무조건 window. 으로 호출
+    
+    // 🌟 안전장치 3: 초승달 데이터가 'NaN(숫자아님)'으로 꼬여있으면 0으로 강제 처리
+    let currentMoons = parseInt(localStorage.getItem('moon_coins')) || 0;
 
-    // 1순위: 번개가 남아있다면 당당하게 통과!
+    // 1순위: 번개가 남아있다면 통과
     if (status.allowed) return true; 
 
-    // 2순위: 번개가 없거나 3일 무료가 끝났지만, 초승달이 있다면? 1개 내고 통과!
+    // 2순위: 초승달이 있다면 1개 내고 통과
     if (currentMoons > 0) {
-        localStorage.setItem('moon_coins', currentMoons - 1); // 초승달 1개 차감
-        if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); // 화면 즉시 갱신
+        localStorage.setItem('moon_coins', currentMoons - 1); 
+        if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
         console.log("🌙 초승달 사용! 남은 개수:", currentMoons - 1);
         return true; 
     }
 
-    // 3순위: 둘 다 없으면 비로소 결제창 띄우기
+    // 3순위: 둘 다 없으면 결제창
     if (typeof window.showSubscriptionModal === 'function') {
         window.showSubscriptionModal(status.reason); 
     }
     return false; 
 };
 
-// 3. UI 거울 (화면에 거짓말하지 않고 정확한 잔여량 표시)
+// 3. UI 거울 
 window.updateBadgeUI = function() {
-    if (typeof checkUsageLimit !== 'function') return;
+    if (typeof window.checkUsageLimit !== 'function') return;
     
-    const status = checkUsageLimit();
-    let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
+    const status = window.checkUsageLimit();
+    let currentMoons = parseInt(localStorage.getItem('moon_coins')) || 0;
     
-    // 🌟 핵심: 만료되었거나 한도를 다 쓰면 번개 잔여량을 강제로 0으로 덮어씌움!
     let remaining = 0;
     if (status.allowed) {
         const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
@@ -395,14 +399,13 @@ window.updateBadgeUI = function() {
     });
 };
 
-// 4. 카운터 (초승달 중복 차감 방지)
+// 4. 카운터
 window.incrementLocalUsage = function() {
-    const status = checkUsageLimit();
+    const status = window.checkUsageLimit();
     if (status.tier === 'free' && !localStorage.getItem('free_trial_start')) {
         localStorage.setItem('free_trial_start', Date.now().toString());
     }
 
-    // 초승달 차감은 위 checkAndBlockAPI에서 했으므로, 여기선 '번개'만 순수하게 카운트!
     if (status.allowed) {
         let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
         usageObj.count = (usageObj.count || 0) + 1;
@@ -412,6 +415,7 @@ window.incrementLocalUsage = function() {
     window.updateBadgeUI();
     return true;
 };
+
 
         window.enableInputs = function() {
             ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
