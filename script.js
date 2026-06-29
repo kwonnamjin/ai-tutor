@@ -1048,19 +1048,97 @@ window.goHome = function() { window.navigate('screen-home'); };
         window.deleteScript = function(index) { if (!confirm("이 대본을 정말 삭제하시겠습니까?")) return; savedScripts.splice(index, 1); localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts(); };
 
         window.renderScripts = function() {
-            const playerArea = document.getElementById("scriptList"); playerArea.innerHTML = "";
-            if(savedScripts.length === 0) return;
-            for (let i = savedScripts.length - 1; i >= 0; i--) {
-                const scriptItem = savedScripts[i];
-                let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm"><p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p><div class="flex gap-1.5 items-center"><button id="play-btn-${i}" onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm transition-colors duration-200"><i class="fa-solid fa-volume-high text-xs"></i></button><button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button><button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button><div class="w-px h-4 bg-indigo-200 mx-0.5"></div><button onclick="deleteScript(${i})" class="text-slate-400 hover:text-red-500 px-1 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="space-y-3">`;
-                scriptItem.scriptData.forEach((line, lineIdx) => {
-                    const isAi = line.role === 'ai';
-                    html += `<div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all"><div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div><div class="flex-1"><p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi? 'AI' : 'Me'}</p><p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all">${line.en}</p><p class="text-xs text-gray-500 mt-1">${line.ko}</p><div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden"></div></div></div>`;
-                });
-                html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
-                playerArea.insertAdjacentHTML('beforeend', html);
-            }
-        };
+    const playerArea = document.getElementById("scriptList"); playerArea.innerHTML = "";
+    if(savedScripts.length === 0) return;
+    for (let i = savedScripts.length - 1; i >= 0; i--) {
+        const scriptItem = savedScripts[i];
+        let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm"><p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p><div class="flex gap-1.5 items-center"><button id="play-btn-${i}" onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm transition-colors duration-200"><i class="fa-solid fa-volume-high text-xs"></i></button><button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button><button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button><div class="w-px h-4 bg-indigo-200 mx-0.5"></div><button onclick="deleteScript(${i})" class="text-slate-400 hover:text-red-500 px-1 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="space-y-3">`;
+        
+        scriptItem.scriptData.forEach((line, lineIdx) => {
+            const isAi = line.role === 'ai';
+            // 🌟 홑따옴표가 들어간 문장을 자바스크립트 인자로 넘기기 위한 안전 처리
+            const safeText = line.en.replace(/'/g, "\\'");
+            
+            html += `
+            <div id="script-${i}-line-${lineIdx}" class="flex gap-3 p-2 rounded-lg border border-transparent transition-all">
+                <div class="w-10 h-10 rounded-full bg-${isAi?'purple':'blue'}-100 flex items-center justify-center text-xl shrink-0">${isAi?'👱‍♀️':'👤'}</div>
+                <div class="flex-1">
+                    <p class="text-[11px] font-bold text-${isAi?'purple':'blue'}-600 mb-0.5">${isAi? 'AI' : 'Me'}</p>
+                    <p id="en-text-${i}-line-${lineIdx}" class="text-sm font-bold text-gray-800 transition-all">${line.en}</p>
+                    <p class="text-xs text-gray-500 mt-1">${line.ko}</p>
+                    
+                    <div class="flex items-center gap-2 mt-2.5">
+                        <button onclick="window.speakText('${safeText}', '${scriptItem.langCode}')" class="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold py-1.5 rounded-lg text-[10px] transition-colors border border-indigo-100 flex items-center justify-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-volume-high"></i> 다시 듣기
+                        </button>
+                        <button id="quick-mic-btn-${i}-${lineIdx}" onclick="window.quickPractice(${i}, ${lineIdx})" class="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold py-1.5 rounded-lg text-[10px] transition-colors border border-emerald-100 flex items-center justify-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-microphone"></i> 따라 하기
+                        </button>
+                    </div>
+
+                    <div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden transition-all"></div>
+                </div>
+            </div>`;
+        });
+        html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed border-t-2 my-4">`;
+        playerArea.insertAdjacentHTML('beforeend', html);
+    }
+};
+
+// 🌟 특정 문장 하나만 개별적으로 섀도잉(따라하기)하는 함수
+window.quickPractice = function(scriptIdx, lineIdx) {
+    if(!roleplayRec) { alert("마이크를 지원하지 않습니다."); return; }
+    if (isRpListening) { roleplayRec.stop(); return; }
+    
+    const targetItem = savedScripts[scriptIdx];
+    const userLine = targetItem.scriptData[lineIdx];
+    const targetText = userLine.en.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim(); // 이모지 제거
+
+    // 클릭한 버튼 스타일 빨간색(녹음 중)으로 변경
+    const btn = document.getElementById(`quick-mic-btn-${scriptIdx}-${lineIdx}`);
+    if (btn) {
+        btn.classList.replace("text-emerald-600", "text-red-500");
+        btn.classList.replace("bg-emerald-50", "bg-red-50");
+        btn.innerHTML = `<i class="fa-solid fa-ear-listen animate-pulse"></i> 듣는 중...`;
+    }
+    
+    try { 
+        roleplayRec.lang = targetItem.langCode; 
+        roleplayRec.start(); 
+        isRpListening = true; 
+    } catch(e) {
+        console.error("마이크 시작 에러", e);
+    }
+    
+    let score = 0, recognizedText = "";
+    roleplayRec.onresult = (e) => {
+        recognizedText = e.results[0][0].transcript.toLowerCase();
+        const cleanTarget = targetText.toLowerCase().replace(/[.,!?¿¡]/g, ""); 
+        // 일치하는 단어 개수로 점수 계산
+        score = Math.round((cleanTarget.split(" ").filter(w => recognizedText.split(" ").includes(w)).length / cleanTarget.split(" ").length) * 100);
+    };
+    
+    roleplayRec.onend = roleplayRec.onerror = () => { 
+        isRpListening = false; 
+        
+        // 버튼 원래 상태로 복구
+        if (btn) {
+            btn.classList.replace("text-red-500", "text-emerald-600"); 
+            btn.classList.replace("bg-red-50", "bg-emerald-50");
+            btn.innerHTML = `<i class="fa-solid fa-microphone"></i> 따라 하기`;
+        }
+        
+        // 결과 피드백 뱃지 띄워주기
+        const feedbackDiv = document.getElementById(`feedback-${scriptIdx}-line-${lineIdx}`);
+        if (feedbackDiv) {
+            feedbackDiv.innerHTML = `<span class="${score>80?'text-emerald-600 bg-emerald-50 border-emerald-200':'text-amber-600 bg-amber-50 border-amber-200'} px-2 py-1 rounded-md border inline-block shadow-sm">🎯 ${score}% 정확도 (${recognizedText||'인식 실패'})</span>`;
+            feedbackDiv.classList.remove('empty:hidden'); 
+        }
+        
+        // 점수가 0점 이상이면 퀘스트 반영
+        if(score > 0 && typeof window.addStudyMission === 'function') window.addStudyMission('script'); 
+    };
+}
         // 🎬 [수정완료] 1. 대본 생성 함수 (로딩 애니메이션 + 원본 로직 완벽 통합)
         window.generateScript = async function() {
             if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
