@@ -1086,15 +1086,15 @@ window.goHome = function() { window.navigate('screen-home'); };
 };
 
 // 🌟 특정 문장 하나만 개별적으로 섀도잉(따라하기)하는 함수
+// 🌟 특정 문장 하나만 개별적으로 섀도잉(따라하기)하는 함수
 window.quickPractice = function(scriptIdx, lineIdx) {
     if(!roleplayRec) { alert("마이크를 지원하지 않습니다."); return; }
     if (isRpListening) { roleplayRec.stop(); return; }
     
     const targetItem = savedScripts[scriptIdx];
     const userLine = targetItem.scriptData[lineIdx];
-    const targetText = userLine.en.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim(); // 이모지 제거
+    const targetText = userLine.en.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim(); 
 
-    // 클릭한 버튼 스타일 빨간색(녹음 중)으로 변경
     const btn = document.getElementById(`quick-mic-btn-${scriptIdx}-${lineIdx}`);
     if (btn) {
         btn.classList.replace("text-emerald-600", "text-red-500");
@@ -1102,40 +1102,41 @@ window.quickPractice = function(scriptIdx, lineIdx) {
         btn.innerHTML = `<i class="fa-solid fa-ear-listen animate-pulse"></i> 듣는 중...`;
     }
     
-    try { 
-        roleplayRec.lang = targetItem.langCode; 
-        roleplayRec.start(); 
-        isRpListening = true; 
-    } catch(e) {
-        console.error("마이크 시작 에러", e);
-    }
+    try { roleplayRec.lang = targetItem.langCode; roleplayRec.start(); isRpListening = true; } 
+    catch(e) { console.error("마이크 시작 에러", e); }
     
     let score = 0, recognizedText = "";
     roleplayRec.onresult = (e) => {
-        recognizedText = e.results[0][0].transcript.toLowerCase();
-        const cleanTarget = targetText.toLowerCase().replace(/[.,!?¿¡]/g, ""); 
-        // 일치하는 단어 개수로 점수 계산
-        score = Math.round((cleanTarget.split(" ").filter(w => recognizedText.split(" ").includes(w)).length / cleanTarget.split(" ").length) * 100);
+        recognizedText = e.results[0][0].transcript;
+        
+        // 🌟 [관대한 채점 로직] 띄어쓰기 무시하고 단어 포함 여부로 검사!
+        // 사용자가 말한 문장의 띄어쓰기를 싹 다 없애버립니다.
+        const recogString = recognizedText.toLowerCase().replace(/\s+/g, ""); 
+        const targetWords = targetText.toLowerCase().replace(/[.,!?¿¡]/g, "").split(" ").filter(w=>w);
+        
+        let matchCount = 0;
+        targetWords.forEach(word => {
+            // STT가 띄어쓰기를 이상하게 했어도, 발음 안에 단어가 들어있으면 정답 처리!
+            if (recogString.includes(word)) matchCount++;
+        });
+        
+        let rawScore = Math.round((matchCount / targetWords.length) * 100);
+        score = Math.min(100, rawScore + 15); // 앱의 재미를 위해 보너스 15점 후하게! (최대 100점)
     };
     
     roleplayRec.onend = roleplayRec.onerror = () => { 
         isRpListening = false; 
-        
-        // 버튼 원래 상태로 복구
         if (btn) {
             btn.classList.replace("text-red-500", "text-emerald-600"); 
             btn.classList.replace("bg-red-50", "bg-emerald-50");
             btn.innerHTML = `<i class="fa-solid fa-microphone"></i> 따라 하기`;
         }
-        
-        // 결과 피드백 뱃지 띄워주기
         const feedbackDiv = document.getElementById(`feedback-${scriptIdx}-line-${lineIdx}`);
         if (feedbackDiv) {
-            feedbackDiv.innerHTML = `<span class="${score>80?'text-emerald-600 bg-emerald-50 border-emerald-200':'text-amber-600 bg-amber-50 border-amber-200'} px-2 py-1 rounded-md border inline-block shadow-sm">🎯 ${score}% 정확도 (${recognizedText||'인식 실패'})</span>`;
+            // 80점 이상이면 초록색, 이하면 주황색으로 표시
+            feedbackDiv.innerHTML = `<span class="${score>=80?'text-emerald-600 bg-emerald-50 border-emerald-200':'text-amber-600 bg-amber-50 border-amber-200'} px-2 py-1 rounded-md border inline-block shadow-sm transition-all animate-fade-in-up">🎯 ${score}% 정확도 (${recognizedText||'인식 안 됨'})</span>`;
             feedbackDiv.classList.remove('empty:hidden'); 
         }
-        
-        // 점수가 0점 이상이면 퀘스트 반영
         if(score > 0 && typeof window.addStudyMission === 'function') window.addStudyMission('script'); 
     };
 }
@@ -1332,28 +1333,42 @@ if (window.speechSynthesis && typeof window.speechSynthesis.getVoices === 'funct
         }
 
         window.startShadowing = function() {
-            if (savedScripts.length === 0) return alert("대본이 없습니다.");
-            if (!isInteractiveTestActive) return alert("실전 대화 게임 모드를 먼저 실행하세요.");
-            const targetItem = savedScripts[activeTestScriptIdx]; const userLine = targetItem.scriptData[activeTestLineIdx];
-            if (userLine.role !== 'user') return alert("아직 AI의 턴입니다.");
-            const btn = document.getElementById("roleplayMicBtn"); 
-            if(!roleplayRec) { alert("마이크를 지원하지 않습니다."); return; }
-            if (isRpListening) { roleplayRec.stop(); return; }
-            btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); document.getElementById("roleplayMicIcon").classList.replace("fa-microphone", "fa-ear-listen");
-            try { roleplayRec.lang = targetItem.langCode; roleplayRec.start(); isRpListening = true; } catch(e) {}
-            let score = 0, recognizedText = "";
-            roleplayRec.onresult = (e) => {
-                recognizedText = e.results[0][0].transcript.toLowerCase();
-                const targetText = userLine.en.toLowerCase().replace(/[.,!?¿¡]/g, ""); 
-                score = Math.round((targetText.split(" ").filter(w => recognizedText.split(" ").includes(w)).length / targetText.split(" ").length) * 100);
-            };
-            roleplayRec.onend = roleplayRec.onerror = () => { 
-                isRpListening = false; btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); document.getElementById("roleplayMicIcon").classList.replace("fa-ear-listen", "fa-microphone");
-                document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="${score>80?'text-emerald-600 bg-emerald-50':'text-amber-600 bg-amber-50'} px-2 py-1 rounded-md border inline-block mt-1">${score}% (${recognizedText||'Fail'})</span>`;
-                if(score > 0) window.addStudyMission(); 
-                setTimeout(() => { activeTestLineIdx++; window.processNextTestLine(); }, 1500); 
-            };
-        };
+    if (savedScripts.length === 0) return alert("대본이 없습니다.");
+    if (!isInteractiveTestActive) return alert("실전 대화 게임 모드를 먼저 실행하세요.");
+    const targetItem = savedScripts[activeTestScriptIdx]; const userLine = targetItem.scriptData[activeTestLineIdx];
+    if (userLine.role !== 'user') return alert("아직 AI의 턴입니다.");
+    const btn = document.getElementById("roleplayMicBtn"); 
+    if(!roleplayRec) { alert("마이크를 지원하지 않습니다."); return; }
+    if (isRpListening) { roleplayRec.stop(); return; }
+    btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); document.getElementById("roleplayMicIcon").classList.replace("fa-microphone", "fa-ear-listen");
+    try { roleplayRec.lang = targetItem.langCode; roleplayRec.start(); isRpListening = true; } catch(e) {}
+    
+    let score = 0, recognizedText = "";
+    roleplayRec.onresult = (e) => {
+        recognizedText = e.results[0][0].transcript;
+        
+        // 🌟 [관대한 채점 로직 동일 적용]
+        const recogString = recognizedText.toLowerCase().replace(/\s+/g, ""); 
+        const targetWords = userLine.en.toLowerCase().replace(/[.,!?¿¡]/g, "").split(" ").filter(w=>w);
+        
+        let matchCount = 0;
+        targetWords.forEach(word => {
+            if (recogString.includes(word)) matchCount++;
+        });
+        
+        let rawScore = Math.round((matchCount / targetWords.length) * 100);
+        score = Math.min(100, rawScore + 15); // 보너스 15점!
+    };
+    
+    roleplayRec.onend = roleplayRec.onerror = () => { 
+        isRpListening = false; btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); document.getElementById("roleplayMicIcon").classList.replace("fa-ear-listen", "fa-microphone");
+        
+        document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="${score>=80?'text-emerald-600 bg-emerald-50':'text-amber-600 bg-amber-50'} px-2 py-1 rounded-md border inline-block mt-1 shadow-sm">🎯 ${score}% (${recognizedText||'인식 안 됨'})</span>`;
+        if(score > 0) window.addStudyMission(); 
+        
+        setTimeout(() => { activeTestLineIdx++; window.processNextTestLine(); }, 1500); 
+    };
+};
         window.renderScripts();
 
         let savedVocabs = JSON.parse(localStorage.getItem('vocab_scripts')) || [];
