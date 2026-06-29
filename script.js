@@ -452,12 +452,13 @@ window.incrementLocalUsage = function() {
 
 
          
-        window.showSubscriptionModal = function(reason) {
+window.showSubscriptionModal = function(reason) {
     const existingModal = document.getElementById('subscriptionModal');
     if (existingModal) existingModal.remove();
 
+    // 🌟 다국어 사전 불러오기
     const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-    const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY['en'];
+    const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
 
     let titleText = dict.ui_premium_title || "멤버십 업그레이드", 
         descText = dict.ui_premium_desc || "원하시는 요금제를 선택해<br>더욱 자유롭게 학습해 보세요!";
@@ -1820,10 +1821,8 @@ window.addStudyMission = function(type) {
         // 앱 켤 때 퀘스트 정보 갱신
         setTimeout(window.updateStreakUI, 500);
 
-        window.updateDashboardUI = function() {
+window.updateDashboardUI = function() {
     let stats = JSON.parse(localStorage.getItem('user_learning_stats_v1')) || { sentences: 0, words: 0 };
-    
-    // 🌟 수정: 전체 대본 개수가 아니라 '학습한 대본 기록'의 개수를 가져옴
     const learnedScripts = JSON.parse(localStorage.getItem('learned_scripts_log') || '[]');
     let scriptsLearnedCount = learnedScripts.length;
 
@@ -1833,11 +1832,12 @@ window.addStudyMission = function(type) {
 
     if(elSentences) elSentences.innerText = stats.sentences;
     if(elWords) elWords.innerText = stats.words;
-    if(elScripts) elScripts.innerText = scriptsLearnedCount; // 변경된 카운트 반영
+    if(elScripts) elScripts.innerText = scriptsLearnedCount; 
 
-    // 언어 레이블 번역 (기존 로직 유지)
+    // 🌟 다국어 번역 적용
     const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-    const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY['en'];
+    const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
+    
     const labelScript = document.getElementById('ui_home_stat_script');
     if(labelScript) labelScript.innerText = dict.ui_home_stat_script || "학습한 대본";
 };
@@ -1982,7 +1982,12 @@ window.onload = function() {
 window.updateVoiceDisplay = function(voiceName) {
     const disp = document.getElementById('disp-voiceName');
     if (disp) {
-        disp.innerText = voiceName ? voiceName : "기본 음성";
+        // 🌟 다국어 사전에서 '기본 음성' 글자 빼오기
+        const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+        const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
+        const defaultVoiceText = dict.ui_default_voice || "기본 음성";
+        
+        disp.innerText = voiceName ? voiceName : defaultVoiceText;
     }
 };
 

@@ -41,12 +41,12 @@
                  <span class="text-blue-400/80 text-[8px] font-bold"><i class="fa-solid fa-shield-halved mr-0.5"></i> DeepSeek Secure</span>
             </div>
 <div class="flex overflow-x-auto no-scrollbar w-full items-end pt-1 px-1 relative z-20">
-    <button onclick="navigate('screen-home')" data-i18n="nav_home" class="shrink-0 w-[60px] py-2 bg-[#dcdcdc] text-slate-600 text-[10px] font-black rounded-t-xl z-10 relative border border-b-0 border-slate-400/30 truncate">HOME</button>
-    <button onclick="togglePanel('inlinePagesPanel')" data-i18n="nav_pages" class="shrink-0 w-[80px] py-2 bg-[#3232ff] text-white text-[10px] font-black rounded-t-xl -ml-2 z-20 relative hover:bg-blue-500 transition-colors border border-b-0 border-white/20 truncate">Pages</button>
-    <button onclick="togglePanel('inlineReportPanel')" data-i18n="nav_report" class="shrink-0 w-[80px] py-2 bg-[#646eff] text-white text-[10px] font-black rounded-t-xl -ml-2 z-30 relative hover:bg-emerald-600 transition-colors border border-b-0 border-white/20 truncate">Report</button>
-    <button onclick="togglePanel('inlineMemoryPanel')" data-i18n="nav_mind" class="shrink-0 w-[80px] py-2 bg-[#6482ff] text-white text-[10px] font-black rounded-t-xl -ml-2 z-40 relative hover:bg-blue-600 transition-colors border border-b-0 border-white/20 truncate">AI Mind</button>
-    <button onclick="togglePanel('inlineSparePanel')" data-i18n="nav_char" class="shrink-0 w-[80px] py-2 bg-[#6496ff] text-white text-[10px] font-black rounded-t-xl -ml-2 z-50 relative hover:bg-slate-500 transition-colors border border-b-0 border-white/20 truncate">AI Character</button>
-    <button onclick="togglePanel('inlineSettingsPanel')" data-i18n="nav_setting" class="shrink-0 w-[80px] py-2 bg-[#64aaff] text-slate-500 text-[10px] font-black rounded-t-xl -ml-2 z-[60] relative hover:bg-slate-200 transition-colors border border-b-0 border-white/50 truncate">Setting</button>
+     <button onclick="navigate('screen-home')" data-i18n="nav_home" class="shrink-0 w-[60px] py-2 bg-[#dcdcdc] text-slate-600 text-[10px] font-black rounded-t-xl z-10 relative border border-b-0 border-slate-400/30 truncate">HOME</button>
+     <button onclick="togglePanel('inlinePagesPanel')" data-i18n="nav_pages" class="shrink-0 w-[80px] py-2 bg-[#3232ff] text-white text-[10px] font-black rounded-t-xl -ml-2 z-20 relative hover:bg-blue-500 transition-colors border border-b-0 border-white/20 truncate">Pages</button>
+     <button onclick="togglePanel('inlineReportPanel')" data-i18n="nav_report" class="shrink-0 w-[80px] py-2 bg-[#646eff] text-white text-[10px] font-black rounded-t-xl -ml-2 z-30 relative hover:bg-emerald-600 transition-colors border border-b-0 border-white/20 truncate">Report</button>
+     <button onclick="togglePanel('inlineMemoryPanel')" data-i18n="nav_mind" class="shrink-0 w-[80px] py-2 bg-[#6482ff] text-white text-[10px] font-black rounded-t-xl -ml-2 z-40 relative hover:bg-blue-600 transition-colors border border-b-0 border-white/20 truncate">AI Mind</button>
+     <button onclick="togglePanel('inlineSparePanel')" data-i18n="nav_char" class="shrink-0 w-[80px] py-2 bg-[#6496ff] text-white text-[10px] font-black rounded-t-xl -ml-2 z-50 relative hover:bg-slate-500 transition-colors border border-b-0 border-white/20 truncate">AI Character</button>
+     <button onclick="togglePanel('inlineSettingsPanel')" data-i18n="nav_setting" class="shrink-0 w-[80px] py-2 bg-[#64aaff] text-slate-500 text-[10px] font-black rounded-t-xl -ml-2 z-[60] relative hover:bg-slate-200 transition-colors border border-b-0 border-white/50 truncate">Setting</button>
 </div>
 
             <!-- Pages 패널 -->
@@ -178,7 +178,7 @@
     <div class="flex justify-between items-center py-2.5 px-3 cursor-pointer hover:bg-slate-100 transition-colors" onclick="document.getElementById('drop-voice').classList.toggle('hidden')">
         <span class="text-xs font-bold text-slate-500" data-i18n="set_voice_gender">AI 목소리 선택</span>
         <div class="flex items-center gap-2">
-            <span class="text-xs font-black text-purple-600 truncate max-w-[120px]" id="disp-voiceName">기본 음성</span>
+            <span class="text-xs font-black text-purple-600 truncate max-w-[120px]" id="disp-voiceName" data-i18n="ui_default_voice">기본 음성</span>
             <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
         </div>
     </div>
