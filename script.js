@@ -1086,7 +1086,6 @@ window.goHome = function() { window.navigate('screen-home'); };
 };
 
 // 🌟 특정 문장 하나만 개별적으로 섀도잉(따라하기)하는 함수
-// 🌟 특정 문장 하나만 개별적으로 섀도잉(따라하기)하는 함수
 window.quickPractice = function(scriptIdx, lineIdx) {
     if(!roleplayRec) { alert("마이크를 지원하지 않습니다."); return; }
     if (isRpListening) { roleplayRec.stop(); return; }
@@ -1109,19 +1108,33 @@ window.quickPractice = function(scriptIdx, lineIdx) {
     roleplayRec.onresult = (e) => {
         recognizedText = e.results[0][0].transcript;
         
-        // 🌟 [관대한 채점 로직] 띄어쓰기 무시하고 단어 포함 여부로 검사!
-        // 사용자가 말한 문장의 띄어쓰기를 싹 다 없애버립니다.
-        const recogString = recognizedText.toLowerCase().replace(/\s+/g, ""); 
-        const targetWords = targetText.toLowerCase().replace(/[.,!?¿¡]/g, "").split(" ").filter(w=>w);
+        // 🌟 [완벽 다국어 채점 로직] 아시아권 구두점(。、？！)까지 싹 다 무시!
+        const punctuationRegex = /[.,!?¿¡。、？！，；："''「」『』\s]/g;
+        const cleanTarget = targetText.toLowerCase().replace(punctuationRegex, "");
+        const cleanRecog = recognizedText.toLowerCase().replace(punctuationRegex, "");
         
-        let matchCount = 0;
-        targetWords.forEach(word => {
-            // STT가 띄어쓰기를 이상하게 했어도, 발음 안에 단어가 들어있으면 정답 처리!
-            if (recogString.includes(word)) matchCount++;
-        });
-        
-        let rawScore = Math.round((matchCount / targetWords.length) * 100);
-        score = Math.min(100, rawScore + 15); // 앱의 재미를 위해 보너스 15점 후하게! (최대 100점)
+        // 1. 완전히 똑같거나, 인식된 문장 안에 정답이 통째로 들어있으면 100점!
+        if (cleanTarget === cleanRecog || cleanRecog.includes(cleanTarget)) {
+            score = 100;
+        } else {
+            // 2. 한/중/일 언어인지 자동 감지 (한자, 히라가나, 가타카나, 한글 포함 여부)
+            const isAsian = /[一-龥ぁ-んァ-ン가-힣]/.test(cleanTarget);
+            
+            // 아시아어면 '글자(Character)' 단위로 쪼개고, 그 외 언어는 '단어(Word)' 단위로 쪼갬
+            let targetTokens = isAsian ? cleanTarget.split("") : targetText.toLowerCase().replace(/[.,!?¿¡]/g, "").split(" ").filter(w=>w);
+            let recogString = isAsian ? cleanRecog : recognizedText.toLowerCase();
+            
+            let matchCount = 0;
+            targetTokens.forEach(token => {
+                if (recogString.includes(token)) {
+                    matchCount++;
+                    recogString = recogString.replace(token, ""); // 중복 글자/단어 매칭 방지
+                }
+            });
+            
+            let rawScore = Math.round((matchCount / targetTokens.length) * 100);
+            score = Math.min(100, rawScore + 15); // 보너스 15점 후하게!
+        }
     };
     
     roleplayRec.onend = roleplayRec.onerror = () => { 
@@ -1133,7 +1146,6 @@ window.quickPractice = function(scriptIdx, lineIdx) {
         }
         const feedbackDiv = document.getElementById(`feedback-${scriptIdx}-line-${lineIdx}`);
         if (feedbackDiv) {
-            // 80점 이상이면 초록색, 이하면 주황색으로 표시
             feedbackDiv.innerHTML = `<span class="${score>=80?'text-emerald-600 bg-emerald-50 border-emerald-200':'text-amber-600 bg-amber-50 border-amber-200'} px-2 py-1 rounded-md border inline-block shadow-sm transition-all animate-fade-in-up">🎯 ${score}% 정확도 (${recognizedText||'인식 안 됨'})</span>`;
             feedbackDiv.classList.remove('empty:hidden'); 
         }
@@ -1340,6 +1352,9 @@ if (window.speechSynthesis && typeof window.speechSynthesis.getVoices === 'funct
     const btn = document.getElementById("roleplayMicBtn"); 
     if(!roleplayRec) { alert("마이크를 지원하지 않습니다."); return; }
     if (isRpListening) { roleplayRec.stop(); return; }
+    
+    const targetText = userLine.en.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
+
     btn.classList.replace("from-blue-600", "from-red-500"); btn.classList.replace("to-blue-500", "to-red-600"); document.getElementById("roleplayMicIcon").classList.replace("fa-microphone", "fa-ear-listen");
     try { roleplayRec.lang = targetItem.langCode; roleplayRec.start(); isRpListening = true; } catch(e) {}
     
@@ -1347,28 +1362,40 @@ if (window.speechSynthesis && typeof window.speechSynthesis.getVoices === 'funct
     roleplayRec.onresult = (e) => {
         recognizedText = e.results[0][0].transcript;
         
-        // 🌟 [관대한 채점 로직 동일 적용]
-        const recogString = recognizedText.toLowerCase().replace(/\s+/g, ""); 
-        const targetWords = userLine.en.toLowerCase().replace(/[.,!?¿¡]/g, "").split(" ").filter(w=>w);
+        // 🌟 [완벽 다국어 채점 로직 동일 적용]
+        const punctuationRegex = /[.,!?¿¡。、？！，；："''「」『』\s]/g;
+        const cleanTarget = targetText.toLowerCase().replace(punctuationRegex, "");
+        const cleanRecog = recognizedText.toLowerCase().replace(punctuationRegex, "");
         
-        let matchCount = 0;
-        targetWords.forEach(word => {
-            if (recogString.includes(word)) matchCount++;
-        });
-        
-        let rawScore = Math.round((matchCount / targetWords.length) * 100);
-        score = Math.min(100, rawScore + 15); // 보너스 15점!
+        if (cleanTarget === cleanRecog || cleanRecog.includes(cleanTarget)) {
+            score = 100;
+        } else {
+            const isAsian = /[一-龥ぁ-んァ-ン가-힣]/.test(cleanTarget);
+            let targetTokens = isAsian ? cleanTarget.split("") : targetText.toLowerCase().replace(/[.,!?¿¡]/g, "").split(" ").filter(w=>w);
+            let recogString = isAsian ? cleanRecog : recognizedText.toLowerCase();
+            
+            let matchCount = 0;
+            targetTokens.forEach(token => {
+                if (recogString.includes(token)) {
+                    matchCount++;
+                    recogString = recogString.replace(token, "");
+                }
+            });
+            let rawScore = Math.round((matchCount / targetTokens.length) * 100);
+            score = Math.min(100, rawScore + 15);
+        }
     };
     
     roleplayRec.onend = roleplayRec.onerror = () => { 
         isRpListening = false; btn.classList.replace("from-red-500", "from-blue-600"); btn.classList.replace("to-red-600", "to-blue-500"); document.getElementById("roleplayMicIcon").classList.replace("fa-ear-listen", "fa-microphone");
         
-        document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="${score>=80?'text-emerald-600 bg-emerald-50':'text-amber-600 bg-amber-50'} px-2 py-1 rounded-md border inline-block mt-1 shadow-sm">🎯 ${score}% (${recognizedText||'인식 안 됨'})</span>`;
+        document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="${score>=80?'text-emerald-600 bg-emerald-50 border-emerald-200':'text-amber-600 bg-amber-50 border-amber-200'} px-2 py-1 rounded-md border inline-block mt-1 shadow-sm">🎯 ${score}% (${recognizedText||'인식 안 됨'})</span>`;
         if(score > 0) window.addStudyMission(); 
         
         setTimeout(() => { activeTestLineIdx++; window.processNextTestLine(); }, 1500); 
     };
 };
+
         window.renderScripts();
 
         let savedVocabs = JSON.parse(localStorage.getItem('vocab_scripts')) || [];
