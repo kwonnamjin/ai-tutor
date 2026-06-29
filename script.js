@@ -453,37 +453,48 @@ window.incrementLocalUsage = function() {
 
          
         window.showSubscriptionModal = function(reason) {
-            const existingModal = document.getElementById('subscriptionModal');
-            if (existingModal) existingModal.remove();
+    const existingModal = document.getElementById('subscriptionModal');
+    if (existingModal) existingModal.remove();
 
-            let titleText = "멤버십 업그레이드", descText = "원하시는 요금제를 선택해<br>더욱 자유롭게 학습해 보세요!";
-            if (reason === 'trial_expired') { titleText = "3일 무료 체험이 종료되었습니다."; descText = "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요."; } 
-            else if (reason === 'limit_reached') { titleText = "일일 사용량을 모두 소진했습니다!"; descText = "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요."; }
+    const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+    const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY['en'];
 
-            const modalHtml = `
-            <div id="subscriptionModal" class="fixed inset-0 bg-black/70 z-[999] flex items-center justify-center p-4 backdrop-blur-sm">
-                <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative animate-fade-in-up border border-slate-100">
-                    <button onclick="document.getElementById('subscriptionModal').remove()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-2xl"></i></button>
-                    <div class="p-6 text-center">
-                        <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-100"><i class="fa-solid fa-crown text-3xl text-indigo-500"></i></div>
-                        <h2 class="text-xl font-black text-slate-800 mb-2">${titleText}</h2><p class="text-sm text-slate-500 mb-6">${descText}</p>
-                        <div class="space-y-3 text-left">
-                            <button onclick="processPayment('basic')" class="w-full border-2 border-indigo-100 hover:border-indigo-500 bg-indigo-50/50 rounded-2xl p-4 flex items-center justify-between transition-all">
-                                <div><h3 class="text-indigo-800 font-bold text-lg">베이직 (Basic)</h3><p class="text-xs text-indigo-500 font-medium">매일 150건 충전</p></div>
-                                <div class="text-right"><span class="text-slate-800 font-black text-lg">₩3,900</span><span class="text-xs text-slate-400">/월</span></div>
-                            </button>
-                            <button onclick="processPayment('premium')" class="w-full border-2 border-amber-200 hover:border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 flex items-center justify-between transition-all relative overflow-hidden">
-                                <div class="absolute top-0 right-0 bg-amber-400 text-white text-[10px] font-black px-2 py-0.5 rounded-bl-lg shadow-sm">무제한급</div>
-                                <div><h3 class="text-amber-700 font-bold text-lg">프리미엄 (Premium)</h3><p class="text-xs text-amber-600 font-medium">매일 400건 충전</p></div>
-                                <div class="text-right"><span class="text-slate-800 font-black text-lg">₩7,900</span><span class="text-xs text-slate-400">/월</span></div>
-                            </button>
-                        </div>
-                    </div>
+    let titleText = dict.ui_premium_title || "멤버십 업그레이드", 
+        descText = dict.ui_premium_desc || "원하시는 요금제를 선택해<br>더욱 자유롭게 학습해 보세요!";
+        
+    if (reason === 'trial_expired') { 
+        titleText = dict.ui_trial_end_title || "3일 무료 체험이 종료되었습니다."; 
+        descText = dict.ui_trial_end_desc || "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요."; 
+    } 
+    else if (reason === 'limit_reached') { 
+        titleText = dict.ui_limit_end_title || "일일 사용량을 모두 소진했습니다!"; 
+        descText = dict.ui_limit_end_desc || "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요."; 
+    }
+
+    const modalHtml = `
+    <div id="subscriptionModal" class="fixed inset-0 bg-black/70 z-[999] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative animate-fade-in-up border border-slate-100">
+            <button onclick="document.getElementById('subscriptionModal').remove()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-2xl"></i></button>
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-100"><i class="fa-solid fa-crown text-3xl text-indigo-500"></i></div>
+                <h2 class="text-xl font-black text-slate-800 mb-2">${titleText}</h2><p class="text-sm text-slate-500 mb-6">${descText}</p>
+                <div class="space-y-3 text-left">
+                    <button onclick="processPayment('basic')" class="w-full border-2 border-indigo-100 hover:border-indigo-500 bg-indigo-50/50 rounded-2xl p-4 flex items-center justify-between transition-all">
+                        <div><h3 class="text-indigo-800 font-bold text-lg">${dict.ui_plan_basic || "베이직 (Basic)"}</h3><p class="text-xs text-indigo-500 font-medium">${dict.ui_plan_basic_desc || "매일 150건 충전"}</p></div>
+                        <div class="text-right"><span class="text-slate-800 font-black text-lg">₩3,900</span><span class="text-xs text-slate-400">/월</span></div>
+                    </button>
+                    <button onclick="processPayment('premium')" class="w-full border-2 border-amber-200 hover:border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 flex items-center justify-between transition-all relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-amber-400 text-white text-[10px] font-black px-2 py-0.5 rounded-bl-lg shadow-sm">무제한급</div>
+                        <div><h3 class="text-amber-700 font-bold text-lg">${dict.ui_plan_premium || "프리미엄 (Premium)"}</h3><p class="text-xs text-amber-600 font-medium">${dict.ui_plan_premium_desc || "매일 400건 충전"}</p></div>
+                        <div class="text-right"><span class="text-slate-800 font-black text-lg">₩7,900</span><span class="text-xs text-slate-400">/월</span></div>
+                    </button>
                 </div>
-            </div>`;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            if(window.stopSpeaking) window.stopSpeaking();
-        }
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    if(window.stopSpeaking) window.stopSpeaking();
+}
         window.processPayment = function(plan) {
             if (window.flutter_inappwebview) {
                 window.flutter_inappwebview.callHandler('purchase', plan);
@@ -1686,74 +1697,83 @@ window.markScriptAsLearned = function(scriptIndex) {
 };
 
         // 🌟 1. 퀘스트 진행도 및 모달창 UI 업데이트 함수
-        window.updateStreakUI = function() {
-            const todayStr = new Date().toLocaleDateString();
-            let streakData = JSON.parse(localStorage.getItem('study_streak_v3')) || { lastDate: "", streak: 0, scriptCount: 0, vocabCount: 0, freeTalkCount: 0, completedToday: false };
-            
-            if (streakData.lastDate !== todayStr) {
-                const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
-                if (streakData.lastDate !== yesterday.toLocaleDateString() && streakData.lastDate !== "") streakData.streak = 0; 
-                streakData.scriptCount = 0; streakData.vocabCount = 0; streakData.freeTalkCount = 0; streakData.completedToday = false; streakData.lastDate = todayStr;
-                localStorage.setItem('study_streak_v3', JSON.stringify(streakData));
-            }
+window.updateStreakUI = function() {
+    const todayStr = new Date().toLocaleDateString();
+    let streakData = JSON.parse(localStorage.getItem('study_streak_v3')) || { lastDate: "", streak: 0, scriptCount: 0, vocabCount: 0, freeTalkCount: 0, completedToday: false };
+    
+    // 다국어 사전 가져오기
+    const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+    const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY['en'];
+    
+    if (streakData.lastDate !== todayStr) {
+        const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+        if (streakData.lastDate !== yesterday.toLocaleDateString() && streakData.lastDate !== "") streakData.streak = 0; 
+        streakData.scriptCount = 0; streakData.vocabCount = 0; streakData.freeTalkCount = 0; streakData.completedToday = false; streakData.lastDate = todayStr;
+        localStorage.setItem('study_streak_v3', JSON.stringify(streakData));
+    }
 
-            const headerStreak = document.getElementById('header-streak-count');
-            if(headerStreak) headerStreak.innerText = `${streakData.streak}일 연속`;
-            if(document.getElementById('modal-streak-count')) document.getElementById('modal-streak-count').innerText = streakData.streak;
+    const headerStreak = document.getElementById('header-streak-count');
+    if(headerStreak) headerStreak.innerText = (dict.ui_streak_days || "{n}일 연속").replace('{n}', streakData.streak);
 
-            const questContainer = document.getElementById('modal-quest-container');
-            if (questContainer) {
-                questContainer.innerHTML = `
-                    <div class="bg-emerald-50 p-3 rounded-xl border ${streakData.vocabCount>=10?'border-emerald-400 shadow-inner':'border-emerald-100'} flex items-center justify-between mb-1">
-                        <div class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-emerald-500"></i><span class="text-xs font-bold text-slate-700">단어장 학습 (필수)</span></div>
-                        <span class="text-xs font-black text-emerald-600">${Math.min(10, streakData.vocabCount)} / 10</span>
-                    </div>
-                    <div class="text-[10px] text-center text-slate-400 font-bold mb-1 mt-2">+ 아래 둘 중 하나 선택 달성 +</div>
-                    <div class="flex gap-2">
-                        <div class="flex-1 bg-blue-50 p-2.5 rounded-xl border ${streakData.freeTalkCount>=10?'border-blue-400 shadow-inner':'border-blue-100'} flex flex-col items-center justify-center">
-                            <i class="fa-solid fa-comments text-blue-500 mb-1"></i><span class="text-[10px] font-bold text-slate-700">프리토킹</span>
-                            <span class="text-xs font-black text-blue-600 mt-0.5">${Math.min(10, streakData.freeTalkCount)} / 10</span>
-                        </div>
-                        <div class="text-[10px] text-slate-300 font-black self-center">OR</div>
-                        <div class="flex-1 bg-indigo-50 p-2.5 rounded-xl border ${streakData.scriptCount>=5?'border-indigo-400 shadow-inner':'border-indigo-100'} flex flex-col items-center justify-center">
-                            <i class="fa-solid fa-headphones text-indigo-500 mb-1"></i><span class="text-[10px] font-bold text-slate-700">롤플레잉</span>
-                            <span class="text-xs font-black text-indigo-600 mt-0.5">${Math.min(5, streakData.scriptCount)} / 5</span>
-                        </div>
-                    </div>
-                `;
-            }
+    const titleWrapper = document.getElementById('streak_modal_title_wrapper');
+    if(titleWrapper) {
+        const rawTitle = dict.ui_streak_modal_title || "{n}일 연속 달성!";
+        titleWrapper.innerHTML = rawTitle.replace('{n}', `<span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">${streakData.streak}</span>`);
+    }
 
-            // 🌟 보상 타겟 로직 (테스트용: 시작하자마자 1일 타겟이 스페셜 페르소나!)
-            let nextTarget = 30, rewardText = "스페셜 페르소나 🎁";
-            if (streakData.streak >= 1 && streakData.streak < 5) { nextTarget = 5; rewardText = "초승달 10개 🌙"; }
-            else if (streakData.streak >= 5 && streakData.streak < 10) { nextTarget = 10; rewardText = "초승달 20개 🌙"; }
-            else if (streakData.streak >= 10 && streakData.streak < 20) { nextTarget = 20; rewardText = "초승달 30개 🌙"; }
-            else if (streakData.streak >= 20 && streakData.streak < 30) { nextTarget = 30; rewardText = "초승달 30개 🌙"; }
-            else if (streakData.streak >= 30) { nextTarget = streakData.streak + 10; rewardText = "초승달 30개 🌙"; } 
+    const questContainer = document.getElementById('modal-quest-container');
+    if (questContainer) {
+        questContainer.innerHTML = `
+            <div class="bg-emerald-50 p-3 rounded-xl border ${streakData.vocabCount>=10?'border-emerald-400 shadow-inner':'border-emerald-100'} flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2"><i class="fa-solid fa-layer-group text-emerald-500"></i><span class="text-xs font-bold text-slate-700">${dict.ui_streak_quest_vocab || '단어장 학습 (필수)'}</span></div>
+                <span class="text-xs font-black text-emerald-600">${Math.min(10, streakData.vocabCount)} / 10</span>
+            </div>
+            <div class="text-[10px] text-center text-slate-400 font-bold mb-1 mt-2">+ ${dict.ui_streak_choice || '아래 둘 중 하나 선택 달성'} +</div>
+            <div class="flex gap-2">
+                <div class="flex-1 bg-blue-50 p-2.5 rounded-xl border ${streakData.freeTalkCount>=10?'border-blue-400 shadow-inner':'border-blue-100'} flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-comments text-blue-500 mb-1"></i><span class="text-[10px] font-bold text-slate-700">${dict.ui_streak_freetalk || '프리토킹'}</span>
+                    <span class="text-xs font-black text-blue-600 mt-0.5">${Math.min(10, streakData.freeTalkCount)} / 10</span>
+                </div>
+                <div class="text-[10px] text-slate-300 font-black self-center">OR</div>
+                <div class="flex-1 bg-indigo-50 p-2.5 rounded-xl border ${streakData.scriptCount>=5?'border-indigo-400 shadow-inner':'border-indigo-100'} flex flex-col items-center justify-center">
+                    <i class="fa-solid fa-headphones text-indigo-500 mb-1"></i><span class="text-[10px] font-bold text-slate-700">${dict.ui_streak_roleplay || '롤플레잉'}</span>
+                    <span class="text-xs font-black text-indigo-600 mt-0.5">${Math.min(5, streakData.scriptCount)} / 5</span>
+                </div>
+            </div>
+        `;
+    }
 
-            let prevTarget = nextTarget === 1 ? 0 : (nextTarget === 5 ? 1 : (nextTarget === 10 ? 5 : (nextTarget === 20 ? 10 : (nextTarget === 30 ? 20 : nextTarget - 10))));
-            let progressPercent = Math.min(100, ((streakData.streak - prevTarget) / (nextTarget - prevTarget)) * 100);
+    let nextTarget = 30;
+    if (streakData.streak >= 1 && streakData.streak < 5) { nextTarget = 5; }
+    else if (streakData.streak >= 5 && streakData.streak < 10) { nextTarget = 10; }
+    else if (streakData.streak >= 10 && streakData.streak < 20) { nextTarget = 20; }
+    else if (streakData.streak >= 20 && streakData.streak < 30) { nextTarget = 30; }
+    else if (streakData.streak >= 30) { nextTarget = streakData.streak + 10; } 
 
-            const targetBox = document.getElementById('modal-target-box');
-            if (targetBox) {
-                targetBox.innerHTML = `
-                    <div class="flex justify-between text-[10px] font-bold mb-2"><span class="text-orange-700">다음 보상 (${nextTarget}일 연속)</span><span class="text-orange-600">진행 중</span></div>
-                    <div class="h-2 w-full bg-orange-200 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full transition-all duration-500" style="width: ${progressPercent}%;"></div></div>
-                    <p class="text-[10px] text-orange-600 mt-2 text-center font-bold">${nextTarget}일 달성 시 [ ${rewardText} ] 지급!</p>
-                `;
-            }
+    let prevTarget = nextTarget === 1 ? 0 : (nextTarget === 5 ? 1 : (nextTarget === 10 ? 5 : (nextTarget === 20 ? 10 : (nextTarget === 30 ? 20 : nextTarget - 10))));
+    let progressPercent = Math.min(100, ((streakData.streak - prevTarget) / (nextTarget - prevTarget)) * 100);
 
-            const dashQuest = document.getElementById('dash-quest-status');
-            if(dashQuest) {
-                if (streakData.completedToday) {
-                    dashQuest.innerHTML = '✨ 오늘 퀘스트 완료!';
-                    dashQuest.className = 'text-[9px] text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded-full shadow-sm border border-emerald-200 transition-colors';
-                } else {
-                    dashQuest.innerHTML = `퀘스트: 단어(${streakData.vocabCount}/10) & 톡(${streakData.freeTalkCount}/10)or극(${streakData.scriptCount}/5)`;
-                    dashQuest.className = 'text-[9px] text-orange-600 font-bold bg-orange-100 px-2 py-0.5 rounded-full shadow-sm border border-orange-200 transition-colors truncate max-w-[150px]';
-                }
-            }
-        };
+    const targetBox = document.getElementById('modal-target-box');
+    if (targetBox) {
+        const rewardTextStr = (dict.ui_next_reward || "다음 보상 ({n}일 연속)").replace('{n}', nextTarget);
+        targetBox.innerHTML = `
+            <div class="flex justify-between text-[10px] font-bold mb-2"><span class="text-orange-700">${rewardTextStr}</span><span class="text-orange-600">${dict.ui_streak_progress || '진행 중'}</span></div>
+            <div class="h-2 w-full bg-orange-200 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-orange-400 to-red-500 rounded-full transition-all duration-500" style="width: ${progressPercent}%;"></div></div>
+        `;
+    }
+
+    const dashQuest = document.getElementById('dash-quest-status');
+    if(dashQuest) {
+        if (streakData.completedToday) {
+            dashQuest.innerHTML = dict.ui_quest_done || '✨ 오늘 퀘스트 완료!';
+            dashQuest.className = 'text-[9px] text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded-full shadow-sm border border-emerald-200 transition-colors';
+        } else {
+            let qStatus = dict.ui_quest_status || "오늘 퀘스트: 대본({s}/5) 단어({v}/10)";
+            dashQuest.innerHTML = qStatus.replace('{s}', Math.min(5, streakData.scriptCount)).replace('{v}', Math.min(10, Math.max(streakData.vocabCount, streakData.freeTalkCount)));
+            dashQuest.className = 'text-[9px] text-orange-600 font-bold bg-orange-100 px-2 py-0.5 rounded-full shadow-sm border border-orange-200 transition-colors truncate max-w-[150px]';
+        }
+    }
+};
 
        // 🌟 2. 퀘스트 체크 & 보상 지급 함수 (완전 정리본)
 window.addStudyMission = function(type) {
@@ -2146,8 +2166,13 @@ window.renderCustomCharacters = function() {
     let chars = JSON.parse(localStorage.getItem('my_custom_characters') || '[]');
     listArea.innerHTML = ''; 
     
+    // 다국어 사전 가져오기
+    const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+    const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY['en'];
+    
     if(chars.length === 0) {
-        listArea.innerHTML = '<div class="text-center p-4 bg-slate-50 rounded-xl border border-slate-100 border-dashed text-slate-400 text-[10px] font-bold">생성된 나만의 AI가 없습니다.</div>';
+        // 번역 데이터 적용
+        listArea.innerHTML = `<div class="text-center p-4 bg-slate-50 rounded-xl border border-slate-100 border-dashed text-slate-400 text-[10px] font-bold">${dict.ui_no_custom_ai || "생성된 나만의 AI가 없습니다."}</div>`;
         return;
     }
 
