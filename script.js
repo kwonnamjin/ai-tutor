@@ -1015,11 +1015,7 @@ Respond EXACTLY in JSON:
         
         let parsed;
         if (jsonMatch) parsed = JSON.parse(jsonMatch[0]); else throw new Error("JSON_NOT_FOUND");
-        // --- 🌟 [여기에 추가] AI가 생성한 실시간 속마음 저장 및 UI 갱신 ---
-        if(parsed.inner_thought) {
-            localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
-            if(typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
-        }
+        
         // -------------------------------------------------------------------
         
         // 🌟🌟🌟 [여기가 추가된 철벽 방어막입니다!] 🌟🌟🌟
@@ -1908,18 +1904,30 @@ window.updateMemoryDisplay = function() {
                 let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
                 
                 if (parsed.memory) {
-    // 💡 1. 5번에 한 번씩만 'user_compressed_memory'를 업데이트
-    if (bubbleCounter % 5 === 0) {
+    // 💡 1. AI가 답변을 완료할 때마다 '실제 대화 턴(Turn)'을 1씩 증가시킵니다.
+// 💡 1. 대화 턴(Turn) 1 증가
+window.conversationTurn = (window.conversationTurn || 0) + 1;
+
+// 💡 2. 정확히 5턴(사용자 5번 + AI 5번)마다 무거운 작업 실행
+if (window.conversationTurn % 5 === 0) {
+    
+    // [기억 압축 업데이트]
+    if (parsed.memory) {
         localStorage.setItem('user_compressed_memory', parsed.memory);
-        
-        // 💡 2. 기억이 압축될 때마다 홈 화면의 노트 내용도 새로고침!
         if (typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
     }
-    
-    // 💡 3. 기록 다듬기는 매번 수행 (대화 기록을 너무 길게 가져가지 않기 위함)
-    const pureChat = conversationHistory.filter(m => m.role !== "system");
-    conversationHistory = pureChat.slice(-4);
-    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+
+    // [속마음 업데이트]
+    if (parsed.inner_thought) {
+        localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
+    }
+}
+
+// 💡 3. 이건 5턴 조건문 밖에 둡니다! (매번 실행되어 텍스트 양을 가볍게 유지)
+const pureChat = conversationHistory.filter(m => m.role !== "system");
+conversationHistory = pureChat.slice(-4);
+sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+
 }
             } catch(e) {
                 console.error("메모리 압축 실패:", e);
