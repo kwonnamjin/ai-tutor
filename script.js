@@ -1908,17 +1908,19 @@ window.updateMemoryDisplay = function() {
                 let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
                 
                 if (parsed.memory) {
-                    localStorage.setItem('user_compressed_memory', parsed.memory);
-                    
-                    // 💡 순수 대화(user/assistant) 기록만 최신 4개 남기고 깔끔하게 자르기
-                    // (시스템 프롬프트는 어차피 메시지를 보낼 때마다 위에서 새로 만들어주므로 저장할 필요가 없습니다!)
-                    const pureChat = conversationHistory.filter(m => m.role !== "system");
-                    conversationHistory = pureChat.slice(-4);
-                    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
-                    
-                    // 기억이 압축될 때마다 홈 화면의 노트 내용도 새로고침!
-                    if (typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
-                }
+    // 💡 1. 5번에 한 번씩만 'user_compressed_memory'를 업데이트
+    if (bubbleCounter % 5 === 0) {
+        localStorage.setItem('user_compressed_memory', parsed.memory);
+        
+        // 💡 2. 기억이 압축될 때마다 홈 화면의 노트 내용도 새로고침!
+        if (typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
+    }
+    
+    // 💡 3. 기록 다듬기는 매번 수행 (대화 기록을 너무 길게 가져가지 않기 위함)
+    const pureChat = conversationHistory.filter(m => m.role !== "system");
+    conversationHistory = pureChat.slice(-4);
+    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+}
             } catch(e) {
                 console.error("메모리 압축 실패:", e);
             }
