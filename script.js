@@ -958,15 +958,32 @@ Respond EXACTLY in JSON:
     // 이후 try { ... api 호출 로직 시작
         
     try {
-        let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
+        let ctx = mode==='tutor' ? [...conversationHistory] : [];
         
         if(mode==='tutor') {
-            if(ctx.length===0) ctx.push({role:"system",content:sysPrompt});
-            ctx[0] = {role:"system", content:sysPrompt}; 
-            ctx.push({role:"user",content:`[입력:${inputName}] ${text}`});
+            // 1. 방어막: 배열이 비어있거나, 첫 번째가 system이 아니면 무조건 맨 앞에 system 추가
+            if (ctx.length === 0 || ctx[0].role !== "system") {
+                ctx.unshift({role: "system", content: sysPrompt});
+            } else {
+                // 이미 첫 번째가 system이라면 최신화만 해줌
+                ctx[0].content = sysPrompt;
+            }
+
+            // 2. 슬라이딩 윈도우: 대화가 10개를 넘어가면 꼬이지 않게 가장 오래된 대화는 버림
+            if (ctx.length > 10) {
+                const sysMsg = ctx[0]; // 시스템 프롬프트는 안전하게 빼두고
+                const recentMsgs = ctx.slice(-8); // 최신 대화 8개만 가져오기
+                ctx = [sysMsg, ...recentMsgs]; // 다시 안전하게 합침
+            }
+
+            // 3. 사용자 메시지 추가
+            ctx.push({role: "user", content: `[입력:${inputName}] ${text}`});
             
             conversationHistory = ctx; 
             sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+        } else {
+            // 번역 모드일 때
+            ctx = [{role:"system", content:sysPrompt}, {role:"user", content:text}];
         }
         
         let apiMessages = JSON.parse(JSON.stringify(ctx));
@@ -1882,8 +1899,12 @@ window.updateMemoryDisplay = function() {
                 
                 if (parsed.memory) {
                     localStorage.setItem('user_compressed_memory', parsed.memory);
-                    // 압축 완료 후 오래된 대화 기록 정리
-                    conversationHistory = conversationHistory.slice(-4);
+                    // 압축 완료 후 오래된 대화 기록 정리 (💡 시스템 프롬프트 절대 수호!)
+                    const sysMsg = conversationHistory.find(m => m.role === "system");
+                    const recentMsgs = conversationHistory.slice(-4); // 최신 4개만 남기기
+                    
+                    // 시스템 프롬프트가 존재하면 맨 앞에 다시 붙여줌
+                    conversationHistory = sysMsg ? [sysMsg, ...recentMsgs] : [...recentMsgs];
                     sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
                     
                     // 기억이 압축될 때마다 홈 화면의 노트 내용도 새로고침!
