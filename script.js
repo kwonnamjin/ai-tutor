@@ -1015,6 +1015,7 @@ Respond EXACTLY in JSON:
         
         let parsed;
         if (jsonMatch) parsed = JSON.parse(jsonMatch[0]); else throw new Error("JSON_NOT_FOUND");
+        // --- 🌟 [여기에 추가] AI가 생성한 실시간 속마음 저장 및 UI 갱신 ---
         
         // -------------------------------------------------------------------
         
@@ -1904,7 +1905,8 @@ window.updateMemoryDisplay = function() {
                 let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
                 
                 if (parsed.memory) {
-    // 💡 1. 대화 턴(Turn) 1 증가
+    // 💡 1. AI가 답변을 완료할 때마다 '실제 대화 턴(Turn)'을 1씩 증가시킵니다.
+// 💡 1. 대화 턴(Turn) 1 증가
 window.conversationTurn = (window.conversationTurn || 0) + 1;
 
 // 💡 2. 정확히 5턴(사용자 5번 + AI 5번)마다 무거운 작업 실행
@@ -1934,6 +1936,7 @@ if (window.conversationTurn % 5 === 0) {
 const pureChat = conversationHistory.filter(m => m.role !== "system");
 conversationHistory = pureChat.slice(-4);
 sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+}
             } catch(e) {
                 console.error("메모리 압축 실패:", e);
             }
