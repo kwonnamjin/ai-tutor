@@ -1884,7 +1884,7 @@ window.updateMemoryDisplay = function() {
         // 🌟 [수정됨] AI 튜터의 속마음(기억)을 사용자의 언어 설정에 맞춰 다국어로 요약하는 기능
         window.compressMemory = async function() {
             // 대화가 8줄 이상 쌓였을 때만 기억 압축 실행
-            if (conversationHistory.length < 8) return; 
+            if (conversationHistory.length < 14) return; 
             const savedMem = localStorage.getItem('user_compressed_memory') || 'Empty';
             const chatLog = JSON.stringify(conversationHistory);
             
