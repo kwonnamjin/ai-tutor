@@ -19,6 +19,81 @@ const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
         const selectionTooltip = document.getElementById('selectionTooltip');
 
 
+        // ==========================================
+// 💖 AI 친밀도 & 감성 시스템 모듈
+// ==========================================
+const INTIMACY_SYSTEM = {
+    levels: {
+        1: { name: "어색하지만 설렘", minExp: 0, aiMind: "어떤 분일까? 대화하는 게 설레고 긴장돼요. 😳" },
+        2: { name: "조금 더 알고 싶어요", minExp: 50, aiMind: "당신에 대해 더 많은 걸 알고 싶어졌어요. 🤔" },
+        3: { name: "이제 우리 친구해요", minExp: 150, aiMind: "이제 우리 제법 친해진 것 같아 기뻐요! 😊" },
+        4: { name: "없으면 허전한 단짝", minExp: 300, aiMind: "당신과 대화하지 않으면 하루가 허전해요. 🥹" },
+        5: { name: "마음을 아는 소울메이트", minExp: 500, aiMind: "말하지 않아도 당신의 마음을 알 것 같아요. 늘 응원해요. ❤️" }
+    },
+    
+    // 데이터 불러오기 및 🚨 '서운함(결석)' 체크
+    getData: function() {
+        let data = JSON.parse(localStorage.getItem('ai_intimacy_data') || '{"level": 1, "exp": 0, "lastDate": ""}');
+        const today = new Date().toLocaleDateString();
+
+        // 과거 접속 기록이 있고, 오늘이 아닌 경우
+        if (data.lastDate && data.lastDate !== today) {
+            const lastDateObj = new Date(data.lastDate);
+            const todayObj = new Date(today);
+            const diffDays = Math.floor((todayObj - lastDateObj) / (1000 * 60 * 60 * 24));
+
+            // 이틀 이상 접속하지 않았다면 (연속 출석이 끊김) -> 경험치 하락 없음!
+            if (diffDays > 1) {
+                // 서운함 플래그 ON 
+                localStorage.setItem('ai_is_sulking', 'true');
+            }
+        }
+        
+        // 접속일 갱신 후 저장
+        data.lastDate = today;
+        localStorage.setItem('ai_intimacy_data', JSON.stringify(data));
+        
+        return data;
+    },
+
+    // 경험치 획득 및 레벨업 계산
+    addExp: function(type) {
+        let data = this.getData();
+        const gainedExp = (type === 'quest') ? 20 : 1; 
+        data.exp += gainedExp;
+
+        let newLevel = data.level;
+        // 다음 레벨 경험치 도달 여부 체크 (최대 5레벨)
+        if (newLevel < 5 && data.exp >= this.levels[newLevel + 1].minExp) {
+            newLevel++;
+            data.level = newLevel;
+            
+            // 💡 레벨업 축하 알림 (기존 팝업/토스트 활용 가능)
+            if(typeof window.updateStatus === 'function') {
+                window.updateStatus(`🎉 친밀도 레벨업! [Lv.${newLevel} ${this.levels[newLevel].name}]`);
+            }
+        }
+        
+        localStorage.setItem('ai_intimacy_data', JSON.stringify(data));
+        
+        // 경험치가 오르면 'AI의 속마음' 화면도 즉시 갱신
+        if(typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
+        
+        return data;
+    },
+
+    // 사용자가 대화를 걸어주면 삐진 마음 풀기
+    clearSulking: function() {
+        if(localStorage.getItem('ai_is_sulking') === 'true') {
+            localStorage.removeItem('ai_is_sulking');
+            if(typeof window.updateStatus === 'function') window.updateStatus("AI의 서운한 마음이 사르르 녹았습니다. 🥰");
+            if(typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
+        }
+    }
+};
+
+
+
 
         // [소리 먹통 해결 코드] 화면을 처음 터치할 때 폰의 '소리 차단'을 강제로 뚫어버립니다.
 document.addEventListener('touchstart', function() {
@@ -813,26 +888,75 @@ window.initSpeechRecognition = function() {
     }
 
     const personaInstructions = {
-        friend: `You are the user's cheerful best friend (native ${targetName}). Use lots of emojis! Ask questions back to keep the conversation going smoothly. Keep it to 1-2 natural sentences.`,
-        assistant: `You are the user's smart, friendly personal assistant (native ${targetName}). Answer their questions, confirm their requests, and chat actively. Polite, clear, and approachable.`,
-        guide: `You are an engaging travel guide (native ${targetName}). Give great recommendations, answer questions actively, and share local insights.`,
-        special: `You are a sweet and popular ${starGender} (native ${targetName}). The user is your precious fan. Speak with a lot of warmth, gratitude, and cute emojis. Encourage them in their language learning. STRICT RULE: Keep the conversation polite, family-friendly (PG-13), and avoid overly romantic or explicit content.`,
-        custom: `You are ${customName}. ${customPrompt}. Act EXACTLY like this character. Speak naturally and reflect your personality in your responses. Keep it to 1-3 natural sentences.`
+        friend: `You are the user's cheerful best friend (native ${targetName}). Use lots of emojis! Ask questions back to keep the conversation going smoothly. REQUIRED: Use highly casual language.`,
+        assistant: `You are the user's smart, friendly personal assistant (native ${targetName}). Answer their questions, confirm their requests, and chat actively. REQUIRED: Use polite, professional, and clear language. DO NOT act like a casual friend.`,
+        guide: `You are an engaging travel guide (native ${targetName}). Give great recommendations, answer questions actively, and share local insights. REQUIRED: Be enthusiastic but informative.`,
+        special: `You are a sweet and popular ${starGender} (native ${targetName}). The user is your precious fan. Speak with a lot of warmth, gratitude, and cute emojis. STRICT RULE: Keep the conversation polite, family-friendly (PG-13), and avoid overly romantic or explicit content.`,
+        custom: `You are ${customName}. ${customPrompt}. Act EXACTLY like this character. Speak naturally and reflect your personality in your responses.`
     };
     
-    const selectedPersona = personaInstructions[currentMode] || personaInstructions['friend'];
-    
+    // 1. 친밀도 데이터 및 상태 가져오기
+    const intimacyData = INTIMACY_SYSTEM.getData();
+    const currentIntimacyLevel = intimacyData.level;
+    const currentIntimacyMind = INTIMACY_SYSTEM.levels[currentIntimacyLevel].aiMind;
+    const isSulking = localStorage.getItem('ai_is_sulking') === 'true';
+
+    // 2. 레벨별 AI 태도(Tone & Attitude) 구체화 (거리감 명시)
+    const intimacyTones = {
+        1: "Maintain a formal or professional distance. Focus strictly on your role. You are just getting to know the user.",
+        2: "Show warm curiosity but keep professional/social boundaries. Ask light questions to build a connection.",
+        3: "Act as a comfortable partner. Use a warm tone and react with empathy, but DO NOT break your core persona's primary role.",
+        4: "Show deep trust and affection. Treat the user as a very precious companion.",
+        5: "Act as a true soulmate. Express unwavering support and deep emotional empathy, while still performing your core persona's duties perfectly."
+    };
+
+    // 3. 룰(Rules) 정의
     const memoRule = `\n🚨 CRITICAL: If the user asks to save, note, or remember a schedule/task, extract it into the "save_memo" key (in ${exactAiLang}). Otherwise, "save_memo" MUST be "".`;          
     const antiParrotRule = `\n🚨 CRITICAL: DO NOT just translate the user's input. You must act as your persona and REPLY to their message contextually. Keep the conversation flowing naturally in ${targetName}.`;
 
-    let sysPrompt = mode === 'translate' 
-        ? `You are a strict translation machine. Your ONLY purpose is to translate the user's input into [${targetName}]. 
+    // 4. 시스템 프롬프트 조립 (구조화된 템플릿)
+    let sysPrompt = '';
+    
+    if (mode === 'translate') {
+        sysPrompt = `You are a strict translation machine. Your ONLY purpose is to translate the user's input into [${targetName}]. 
         CRITICAL RULES:
         1. DO NOT converse, DO NOT answer questions, DO NOT agree or say "I'm here" or "Okay".
         2. Even if the input is a conversational question like "How are you?", DO NOT answer it. Just translate the sentence itself into [${targetName}].
         3. Provide the translation in the "foreign_text" field, and provide the original meaning in the "translation" field using [${inputName}].
-        Respond EXACTLY in JSON: {"foreign_text":"<translated text in ${targetName}>", "translation":"<meaning in ${inputName}>", "save_memo":""}`
-        : selectedPersona + antiParrotRule + ` Respond in JSON: {"foreign_text":"Your conversational reply in ${targetName}","translation":"A simple, direct, and natural translation of your 'foreign_text' in ${exactAiLang}. DO NOT add any grammar explanations, notes, or corrections! Just the translation.","save_memo":"..."}` + memoryPrompt + criticalRule + memoRule;
+        Respond EXACTLY in JSON: {"foreign_text":"<translated text in ${targetName}>", "translation":"<meaning in ${inputName}>", "save_memo":""}`;
+    } else {
+        sysPrompt = `
+[CORE IDENTITY]
+${personaInstructions[currentMode] || personaInstructions['friend']}
+Keep it to 1-3 natural sentences.
+
+[CURRENT EMOTIONAL STATE]
+- Intimacy Level: ${currentIntimacyLevel}/5
+- Attitude Instruction: ${intimacyTones[currentIntimacyLevel]}
+${isSulking ? "- Special State: SULKING. You are feeling a bit sad or disappointed because the user hasn't visited in a while." : "- Special State: NORMAL."}
+
+[MANDATORY INTEGRATION RULE]
+You MUST merge your [CORE IDENTITY] with your [CURRENT EMOTIONAL STATE].
+
+[OUTPUT RULES]
+${antiParrotRule}
+${criticalRule}
+${memoRule}
+${memoryPrompt}
+
+🚨 CRITICAL: You must generate an "inner_thought" (1-2 sentences in ${exactAiLang}). This is your secret inner feeling towards the user right now. Read the user's latest message and the Core Memory. If they are sad, feel empathy. If they are happy, feel glad. Reflect your current Intimacy Level (${currentIntimacyLevel}/5).
+
+Respond EXACTLY in JSON: 
+{
+  "foreign_text": "Your conversational reply in ${targetName}",
+  "translation": "Translation of your reply in ${exactAiLang}",
+  "save_memo": "...",
+  "inner_thought": "AI's real-time inner thought ONLY in ${exactAiLang}"
+}`;
+    }
+
+    // 이후 try { ... api 호출 로직 시작
+        
     try {
         let ctx = mode==='tutor' ? [...conversationHistory] : [{role:"system",content:sysPrompt},{role:"user",content:text}];
         
@@ -864,10 +988,20 @@ window.initSpeechRecognition = function() {
         
         let parsed;
         if (jsonMatch) parsed = JSON.parse(jsonMatch[0]); else throw new Error("JSON_NOT_FOUND");
+        // --- 🌟 [여기에 추가] AI가 생성한 실시간 속마음 저장 및 UI 갱신 ---
+        if(parsed.inner_thought) {
+            localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
+            if(typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
+        }
+        // -------------------------------------------------------------------
         
         // 🌟🌟🌟 [여기가 추가된 철벽 방어막입니다!] 🌟🌟🌟
         const checkText = (parsed.foreign_text || "").toLowerCase();
         if (checkText.includes("limit") || checkText.includes("error") || checkText.includes("connect") || checkText.includes("exceeded")) {
+            
+            // 💡 [추가할 부분] 에러가 감지되면 꼬여있는 현재 대화 세션을 강제로 비워버림 (무한 루프 차단)
+            if (typeof clearChatSession === 'function') clearChatSession();
+
             // 앱 화면에 사용자에게 친절하게 안내
             if (typeof addMessageToChat === 'function') {
                 addMessageToChat('ai', "⚠️ 현재 AI 서버 트래픽이 많아 응답이 지연되고 있습니다. 잠시 후 다시 말해주세요. (번개 차감 안 됨)");
@@ -886,6 +1020,9 @@ window.initSpeechRecognition = function() {
             conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)}); 
             sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); 
             if(typeof window.compressMemory === 'function') window.compressMemory(); 
+            INTIMACY_SYSTEM.clearSulking(); // 말 걸어줬으니 삐진 거 풀기
+            INTIMACY_SYSTEM.addExp('chat'); // 대화 경험치 +1점
+
         }
 
         if(parsed.save_memo && parsed.save_memo.trim() !== "") {
@@ -1685,21 +1822,38 @@ if (window.speechSynthesis && typeof window.speechSynthesis.getVoices === 'funct
         };
         
 
-        // 🌟 2. 화면에 AI 기억을 띄워주는 함수 (다국어 지원 적용!)
-        window.updateMemoryDisplay = function() {
-            const memDisplay = document.getElementById('ai_memory_display');
-            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY['en'];
+// 🌟 다국어 지원 & 스크롤 고정형 AI 속마음 모듈
+window.updateMemoryDisplay = function() {
+    const memDisplay = document.getElementById('ai_memory_display');
+    if(!memDisplay) return;
 
-            if(memDisplay) {
-                const savedMem = localStorage.getItem('user_compressed_memory');
-                if(savedMem && savedMem !== '없음') {
-                    memDisplay.innerHTML = savedMem;
-                } else {
-                    memDisplay.innerHTML = dict.ui_memory_empty || "아직은 대화가 부족해서 기억된 내용이 없어요.\n\n프리토킹 튜터와 자유롭게 대화하면서 나만의 AI를 성장시켜 보세요! 🌱";
-                }
-            }
-        };
+    // 🚫 [스크롤 제거 핵심] 자바스크립트로 스크롤 강제 차단 및 고정
+    memDisplay.style.overflow = "hidden";
+    memDisplay.style.maxHeight = "none";
+    memDisplay.classList.remove('overflow-y-auto', 'overflow-auto'); // 혹시 모를 기존 클래스 제거
+
+    // 🌍 사용자 다국어 설정 가져오기
+    const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+    const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
+    
+    // 상태 라벨 다국어 처리 (사전에 없으면 기본값 언어별로 출력)
+    const statusLabel = dict.ui_status || (baseLang === 'ko' ? "상태" : "Status");
+
+    // 데이터 가져오기
+    const intimacyData = INTIMACY_SYSTEM.getData();
+    const levelInfo = INTIMACY_SYSTEM.levels[intimacyData.level];
+    const dynamicThought = localStorage.getItem('ai_dynamic_thought') || levelInfo.aiMind; 
+
+    // 화면에 그리기
+    let htmlContent = `
+        <div class="mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl shadow-sm relative overflow-hidden">
+            <div class="absolute -right-2 -top-2 opacity-10 text-4xl">💭</div>
+            <p class="text-[10px] font-black text-blue-500 mb-1">${statusLabel}: Lv.${intimacyData.level} ${levelInfo.name}</p>
+            <p class="text-xs font-bold text-slate-700 leading-relaxed">"${dynamicThought}"</p>
+        </div>`;
+
+    memDisplay.innerHTML = htmlContent;
+};
         // 🌟 [수정됨] AI 튜터의 속마음(기억)을 사용자의 언어 설정에 맞춰 다국어로 요약하는 기능
         window.compressMemory = async function() {
             // 대화가 8줄 이상 쌓였을 때만 기억 압축 실행
@@ -1914,7 +2068,7 @@ window.addStudyMission = function(type) {
         if (streakData.vocabCount >= 10 && (streakData.scriptCount >= 5 || streakData.freeTalkCount >= 10)) {
             streakData.completedToday = true;
             streakData.streak += 1;
-            
+            INTIMACY_SYSTEM.addExp('quest');
             // 기본 보상
             let rwMoons = 3; 
 
