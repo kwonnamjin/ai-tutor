@@ -1015,7 +1015,33 @@ Respond EXACTLY in JSON:
         
         let parsed;
         if (jsonMatch) parsed = JSON.parse(jsonMatch[0]); else throw new Error("JSON_NOT_FOUND");
-        // --- 🌟 [여기에 추가] AI가 생성한 실시간 속마음 저장 및 UI 갱신 ---
+        // 💡 1. 속마음 업데이트: 핵심 기능이므로 대화할 때마다 '즉시' 갱신!
+if (parsed.inner_thought) {
+    localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
+    if (typeof window.updateMemoryDisplay === 'function') {
+        window.updateMemoryDisplay(); 
+    }
+}
+
+// 💡 2. 대화 턴(Turn) 계산
+window.conversationTurn = (window.conversationTurn || 0) + 1;
+
+// 💡 3. 기억 압축: 서버 부하가 크므로 정확히 5번에 1번만 실행!
+if (window.conversationTurn % 5 === 0) {
+    if (parsed.memory) {
+        localStorage.setItem('user_compressed_memory', parsed.memory);
+        if (typeof window.updateMemoryDisplay === 'function') {
+            window.updateMemoryDisplay();
+        }
+    }
+}
+
+// 💡 4. 대화 기록 가볍게 유지 (매번 실행)
+if (Array.isArray(conversationHistory)) {
+    const pureChat = conversationHistory.filter(m => m.role !== "system");
+    conversationHistory = pureChat.slice(-4);
+    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+}
         
         // -------------------------------------------------------------------
         
