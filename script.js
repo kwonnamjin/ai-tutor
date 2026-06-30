@@ -583,27 +583,37 @@ window.showSubscriptionModal = function(reason) {
                 alert("결제가 반영되었습니다. 대화를 다시 시작해 보세요!");
             }
         }
-        // [script.js 수정]
-async function fetchAPI(url, options) {
-    let delay = 2000; // 💡 2초 대기부터 시작
-    let lastStatus = "네트워크 오류";
-    for(let i=0; i<3; i++) { 
-        try { 
-            const res = await fetch(url, options); 
-            if(res.ok) return res; 
-            lastStatus = res.status; 
-            await new Promise(r => setTimeout(r, delay)); 
-            delay *= 2; // 2초 -> 4초 -> 8초
-        } catch(e) { 
-            if(i === 2) {
-                alert("📡 인터넷 연결이 불안정합니다.");
-                throw e; 
+        async function fetchAPI(url, options) {
+            let delay = 2000; // 💡 첫 재시도 대기 시간을 0.5초에서 2초로 대폭 늘림 (AI 서버 과부하 배려)
+            let lastStatus = "네트워크 오류";
+            
+            for(let i=0; i<3; i++) { 
+                try { 
+                    const res = await fetch(url, options); 
+                    
+                    // 정상 응답이면 바로 반환
+                    if(res.ok) return res; 
+                    
+                    lastStatus = res.status; 
+                    console.warn(`[API 통신 지연] 서버 상태 코드: ${lastStatus}. ${delay/1000}초 후 재시도합니다...`);
+                    
+                    // 💡 429(Too Many Requests)나 5xx(서버 에러)일 때는 더 오래 기다리게 함
+                    await new Promise(r => setTimeout(r, delay)); 
+                    delay *= 2; // 2초 -> 4초 -> 8초 간격으로 지수 백오프(Exponential Backoff)
+                    
+                } catch(e) { 
+                    if(i === 2) { // 3번 다 실패했을 때만 최후의 에러를 던짐
+                        if (typeof updateStatus === 'function') updateStatus("네트워크 연결 불안정");
+                        alert("📡 인터넷 연결이 불안정하여 통신에 실패했습니다.");
+                        throw e; 
+                    }
+                } 
             }
-        } 
-    }
-    alert(`📡 서버가 매우 바쁩니다. 잠시 후 다시 시도해 주세요! (코드: ${lastStatus})`);
-    throw new Error("HTTP_ERROR_" + lastStatus);
-}
+            
+            // 💡 3번의 여유로운 재시도(총 14초 대기) 후에도 실패하면 사용자에게 친절하게 안내
+            alert(`📡 현재 AI 서버에 전 세계적으로 트래픽이 몰려 응답이 지연되고 있습니다.\n(에러 코드: ${lastStatus})\n\n잠시 후 다시 말을 걸어주시면 정상적으로 대화가 이어집니다!`);
+            throw new Error("HTTP_ERROR_" + lastStatus);
+        }
 
        
 // 🌟 서로 말하는 언어를 맞바꾸는 기능 (Me <-> AI)
