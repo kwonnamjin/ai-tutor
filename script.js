@@ -976,7 +976,7 @@ Respond EXACTLY in JSON:
             const pureChat = ctx.filter(m => m.role !== "system");
             
             // 💡 2. 슬라이딩 윈도우: 가장 최신 대화 8개만 가져옵니다.
-            const recentMsgs = pureChat.slice(-8);
+            const recentMsgs = pureChat.slice(-4);
             
             // 💡 3. 최신 기억이 반영된 '새 시스템 프롬프트'를 맨 앞에 무조건 1순위로 강제 장착합니다.
             ctx = [{ role: "system", content: sysPrompt }, ...recentMsgs];
