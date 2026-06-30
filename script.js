@@ -1042,6 +1042,22 @@ if (Array.isArray(conversationHistory)) {
     conversationHistory = pureChat.slice(-4);
     sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
 }
+// 🚀 [신규 추가] 40번 대화마다 서버를 속이는 '소프트 리셋'
+if (window.conversationTurn > 0 && window.conversationTurn % 40 === 0) {
+    // 1. 대화 기록을 강제로 완전히 비워버립니다.
+    conversationHistory = [];
+    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+    
+    // 2. 💡 기존 결제용 myDeviceId는 절대 건드리지 않고, API 통신용 변수만 따로 갱신합니다.
+    // (apiSessionId는 딥시크 fetch() 함수의 X-Device-ID 헤더 등에 넣어주시면 됩니다)
+    window.apiSessionId = 'reset-' + Math.random().toString(36).substr(2, 9);
+    
+    // 3. 유저에게 자연스러운 안내
+    const resetMsg = document.createElement('div');
+    resetMsg.className = "text-center text-xs text-slate-400 my-4 bg-slate-50 py-1 rounded-full mx-8";
+    resetMsg.innerText = "♻️ AI가 기억을 정리하고 숨을 고르고 왔습니다.";
+    document.getElementById('chat-container').appendChild(resetMsg);
+}
         
         // -------------------------------------------------------------------
         
@@ -1149,7 +1165,22 @@ if (Array.isArray(conversationHistory)) {
             const userPrompt = `Analyze:\n- Learning Language: ${targetLangName}\n- Context: "${fullText}"\n- Target: "${targetText}"`;
 
             try {
-                let res = await fetchAPI(WORKER_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, body: JSON.stringify({ model: "deepseek-chat", messages: [{role: "system", content: systemPrompt}, {role: "user", content: userPrompt}], response_format: { type: "json_object" } }) });
+                let res = await fetchAPI(WORKER_URL, { 
+    method: 'POST', 
+    headers: { 
+        'Content-Type': 'application/json', 
+        // 💡 핵심 수정: 새로 갱신된 apiSessionId가 있으면 우선 사용하고, 없으면 기존 myDeviceId 사용
+        'X-Device-ID': window.apiSessionId || myDeviceId 
+    }, 
+    body: JSON.stringify({ 
+        model: "deepseek-chat", 
+        messages: [
+            {role: "system", content: systemPrompt}, 
+            {role: "user", content: userPrompt}
+        ], 
+        response_format: { type: "json_object" } 
+    }) 
+});
                 let data = await res.json();
                 let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
                 const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
