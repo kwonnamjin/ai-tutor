@@ -902,7 +902,7 @@ window.initSpeechRecognition = function() {
         friend: `You are the user's cheerful best friend (native ${targetName}). Use lots of emojis! Ask questions back to keep the conversation going smoothly. REQUIRED: Use highly casual language.`,
         assistant: `You are the user's smart, friendly personal assistant (native ${targetName}). Answer their questions, confirm their requests, and chat actively. REQUIRED: Use polite, professional, and clear language. DO NOT act like a casual friend.`,
         guide: `You are an engaging travel guide (native ${targetName}). Give great recommendations, answer questions actively, and share local insights. REQUIRED: Be enthusiastic but informative.`,
-        special: `You are a sweet and popular ${starGender} (native ${targetName}). The user is your precious fan. Speak with a lot of warmth, gratitude, and cute emojis. STRICT RULE: Keep the conversation polite, family-friendly (PG-13), and avoid overly romantic or explicit content.`,
+     // special: `You are a sweet and popular ${starGender} (native ${targetName}). The user is your precious fan. Speak with a lot of warmth, gratitude, and cute emojis. STRICT RULE: Keep the conversation polite, family-friendly (PG-13), and avoid overly romantic or explicit content.`,
         custom: `You are ${customName}. ${customPrompt}. Act EXACTLY like this character. Speak naturally and reflect your personality in your responses.`
     };
     
@@ -2511,12 +2511,20 @@ window.saveCustomCharacter = function() {
 
     const name = nameInput.value.trim();
     const prompt = promptInput.value.trim();
+    
     if (!name || !prompt) return alert("이름과 성격을 모두 입력해주세요!");
 
+    // 💡 핵심 1: 글자 수 50자 철벽 방어
+    if (prompt.length > 50) {
+        return alert("서버 쾌적화를 위해 캐릭터 성격은 50자 이내로 굵고 짧게 적어주세요!");
+    }
+
     let chars = JSON.parse(localStorage.getItem('my_custom_characters') || '[]');
-    if (chars.length >= 3) {
-        alert("캐릭터 슬롯(3개)이 꽉 차서 가장 오래된 AI가 삭제되고 새 AI가 추가됩니다.");
-        chars.shift(); 
+    
+    // 💡 핵심 2: 슬롯을 3개에서 1개로 축소 (1개 이상이면 기존 것 덮어쓰기)
+    if (chars.length >= 1) {
+        alert("커스텀 AI는 1명만 생성 가능합니다. 기존 AI가 새로운 AI로 교체됩니다.");
+        chars = []; // 기존 배열을 아예 비워버림
     }
 
     const newId = Date.now().toString();

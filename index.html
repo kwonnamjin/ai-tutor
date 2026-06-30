@@ -117,13 +117,14 @@
             <button id="btn_persona_friend" onclick="window.selectPersona('friend')" class="persona-btn shrink-0 py-2 rounded-xl border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all shadow-sm"><span data-i18n="ui_char_friend">친구</span></button>
             <button id="btn_persona_assistant" onclick="window.selectPersona('assistant')" class="persona-btn shrink-0 py-2 rounded-xl border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all shadow-sm"><span data-i18n="ui_char_assistant">비서</span></button>
             <button id="btn_persona_guide" onclick="window.selectPersona('guide')" class="persona-btn shrink-0 py-2 rounded-xl border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all shadow-sm"><span data-i18n="ui_char_guide">가이드</span></button>
-            <button id="btn_persona_special" onclick="window.selectPersona('special')" class="persona-btn shrink-0 py-2 rounded-xl border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all shadow-sm"><span data-i18n="ui_char_idol">아이돌</span></button>
+            <!--아이돌 페르소나 비활성 처리-->
+         <!--  <button id="btn_persona_special" onclick="window.selectPersona('special')" class="persona-btn shrink-0 py-2 rounded-xl border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all shadow-sm"><span data-i18n="ui_char_idol">아이돌</span></button> -->
         </div>
     </div>
 
     <div class="border-t border-slate-100 pt-3">
         <h3 class="text-[10px] font-bold text-slate-400 mb-2 px-1 flex justify-between">
-            <span data-i18n="ui_custom_ai_list">나만의 AI 도감 (최대 3개)</span>
+            <span data-i18n="ui_custom_ai_list">나만의 AI 도감</span>
         </h3>
         <div id="customCharacterList" class="flex flex-col gap-2"></div>
     </div>
@@ -134,12 +135,15 @@
         </button>
         
         <div id="newCharacterForm" class="hidden mt-2 p-3 bg-white border border-rose-100 rounded-xl shadow-inner flex flex-col gap-2 relative">
-            <div class="absolute top-0 right-0 bg-rose-400 text-white text-[9px] px-2 py-0.5 rounded-bl-lg font-black">SLOT LIMIT: 3</div>
-            <input type="text" id="newCharName" data-i18n-ph="ui_ph_custom_name" placeholder="이름 (예: 로버트)" class="w-full p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-rose-400 bg-slate-50">
-            <textarea id="newCharPrompt" data-i18n-ph="ui_ph_custom_prompt" placeholder="직업/성격 (예: 10년차 영어 강사...)" class="w-full p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-rose-400 h-16 resize-none bg-slate-50"></textarea>
-            <button onclick="window.saveCustomCharacter();" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs py-2.5 rounded-lg transition-colors shadow-sm">
-                <span data-i18n="ui_save_custom_char">캐릭터 저장하고 바로 대화하기</span>
-            </button>
+            <div class="absolute top-0 right-0 bg-rose-400 text-white text-[9px] px-2 py-0.5 rounded-bl-lg font-black">SLOT LIMIT: 1</div>
+    
+<input type="text" id="newCharName" data-i18n-ph="ui_ph_custom_name" placeholder="이름 (예: 로버트)" class="w-full p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-rose-400 bg-slate-50">
+
+<textarea id="newCharPrompt" maxlength="50" data-i18n-ph="ui_ph_custom_prompt" placeholder="직업/성격 (예: 10년차 영어 강사...)" class="w-full p-2 text-[11px] border border-slate-200 rounded-lg outline-none focus:border-rose-400 h-16 resize-none bg-slate-50"></textarea>
+
+<button onclick="window.saveCustomCharacter();" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs py-2.5 rounded-lg transition-colors shadow-sm">
+    <span data-i18n="ui_save_custom_char">캐릭터 저장하고 바로 대화하기</span>
+</button>
         </div>
     </div>
 </div>
