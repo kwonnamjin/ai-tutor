@@ -1060,23 +1060,23 @@ if (window.conversationTurn > 0 && window.conversationTurn % 40 === 0) {
 }
         
         // -------------------------------------------------------------------
-        
+        //
         // 🌟🌟🌟 [여기가 추가된 철벽 방어막입니다!] 🌟🌟🌟
-        const checkText = (parsed.foreign_text || "").toLowerCase();
-        if (checkText.includes("limit") || checkText.includes("error") || checkText.includes("connect") || checkText.includes("exceeded")) {
-            
-            // 💡 [추가할 부분] 에러가 감지되면 꼬여있는 현재 대화 세션을 강제로 비워버림 (무한 루프 차단)
-            if (typeof clearChatSession === 'function') clearChatSession();
-
+      //  const checkText = (parsed.foreign_text || "").toLowerCase();
+      //  if (checkText.includes("limit") || checkText.includes("error") || checkText.includes("connect") || checkText.includes("exceeded")) {
+      //      
+       //     // 💡 [추가할 부분] 에러가 감지되면 꼬여있는 현재 대화 세션을 강제로 비워버림 (무한 루프 차단)
+       //     if (typeof clearChatSession === 'function') clearChatSession();
+       //
             // 앱 화면에 사용자에게 친절하게 안내
-            if (typeof addMessageToChat === 'function') {
-                addMessageToChat('ai', "⚠️ 현재 AI 서버 트래픽이 많아 응답이 지연되고 있습니다. 잠시 후 다시 말해주세요. (번개 차감 안 됨)");
-            }
-            if (typeof updateStatus === 'function') updateStatus("서버 지연");
-            if (avatarWrap) avatarWrap.style.borderColor = "#f87171"; // 빨간색 테두리로 경고 표시
-            
-            return; // 🛑 여기서 함수를 끝내버림! (아래에 있는 번개 차감 로직까지 절대 못 내려갑니다)
-        }
+       //     if (typeof addMessageToChat === 'function') {
+       //         addMessageToChat('ai', "⚠️ 현재 AI 서버 트래픽이 많아 응답이 지연되고 있습니다. 잠시 후 다시 말해주세요. (번개 차감 안 됨)");
+       //     }
+       //     if (typeof updateStatus === 'function') updateStatus("서버 지연");
+        //    if (avatarWrap) avatarWrap.style.borderColor = "#f87171"; // 빨간색 테두리로 경고 표시
+        //    
+        //    return; // 🛑 여기서 함수를 끝내버림! (아래에 있는 번개 차감 로직까지 절대 못 내려갑니다)
+       //}
         // 🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟
 
         // 위 방어막을 무사히 통과한 정상 대화일 때만 비로소 차감!
