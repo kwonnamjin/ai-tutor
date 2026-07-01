@@ -955,7 +955,7 @@ ${criticalRule}
 ${memoRule}
 ${memoryPrompt}
 
-🚨 CRITICAL: You must generate an "inner_thought" (1-2 sentences in ${exactAiLang}). This is your secret inner feeling towards the user right now. Read the user's latest message and the Core Memory. If they are sad, feel empathy. If they are happy, feel glad. Reflect your current Intimacy Level (${currentIntimacyLevel}/5).
+🚨 CRITICAL: You must generate an "inner_thought" (around 50 characters, 1-2 emotional sentences in ${exactAiLang}). This is your secret inner feeling towards the user right now. Read the user's latest message and the Core Memory. If they are sad, feel empathy. If they are happy, feel glad. Reflect your current Intimacy Level (${currentIntimacyLevel}/5).
 
 Respond EXACTLY in JSON: 
 {
