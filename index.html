@@ -293,7 +293,7 @@
                 </div>
             </div>
 
-          <!-- 🌟 하단 제어부 영역 (자동전송 버튼 확장으로 좌우 밸런스 완벽 일치) -->
+         <!-- 🌟 하단 제어부 영역 시작 -->
 <div class="flex-none bg-white border-t border-slate-200 pt-2.5 pb-2 px-3 flex flex-col z-20 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
     
     <!-- 1. 탭 및 언어 스왑 -->
@@ -321,17 +321,17 @@
         <button id="sendMsgBtn" class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white flex items-center justify-center hover:from-blue-700 shadow-md outline-none" onclick="sendTextMessage()"><i class="fa-solid fa-paper-plane text-xs"></i></button>
     </div>
 
-    <!-- 3. 하단 4버튼 라인 (마이크 정중앙 및 좌우 밸런스 매칭) -->
+    <!-- 3. 하단 4버튼 라인 (마이크 절대 중앙 & 좌우 영역 40% 고정) -->
     <div class="relative flex justify-between items-center w-full h-16 mt-0.5">
         
-        <!-- 왼쪽 영역 (pr-10 보호구역 설정 후 내부를 꽉 채움) -->
-        <div class="flex-1 flex items-center gap-1.5 pr-10">
-            <!-- 🚀 자동 전송 (flex-1로 남는 여백을 시원하게 꽉 채움) -->
+        <!-- 왼쪽 영역 (무조건 화면의 40% 너비만 차지하여 마이크 침범 불가) -->
+        <div class="w-[42%] flex items-center gap-1.5">
+            <!-- 자동 전송 (남는 공간 꽉 채움) -->
             <button id="autoSendToggleBtn" onclick="window.toggleAutoSend()" class="flex-1 h-12 rounded-xl bg-slate-100 text-slate-500 font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200 min-w-0">
                 <i id="autoSendIcon" class="fa-solid fa-toggle-off text-[14px]"></i>
                 <span class="text-[10px] sm:text-[11px] truncate mt-0.5">자동 전송</span>
             </button>
-            <!-- 스피커 중지 (크기 고정, 마이크 쪽으로 붙음) -->
+            <!-- 스피커 중지 (고정 크기) -->
             <button id="stopAudioBtn" class="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200 shrink-0" onclick="stopSpeaking()" disabled>
                 <i class="fa-solid fa-volume-xmark text-lg"></i>
             </button>
@@ -344,17 +344,18 @@
             </button>
         </div>
         
-        <!-- 오른쪽 영역 (pl-10 보호구역 설정 후 남은 공간 꽉 채우기) -->
-        <div class="flex-1 flex justify-end items-center pl-10">
-            <!-- 과외 해설 -->
+        <!-- 오른쪽 영역 (무조건 화면의 42% 너비만 차지하여 마이크 침범 불가) -->
+        <div class="w-[42%] flex justify-end items-center">
+            <!-- 과외 해설 (오른쪽 구역 꽉 채움) -->
             <button id="expGlobalBtn" class="w-full h-12 rounded-xl bg-amber-50 text-amber-700 font-bold text-[10px] sm:text-[11px] flex items-center justify-center gap-1.5 hover:bg-amber-100 transition-colors shadow-sm outline-none border border-amber-200" onclick="requestExplanationGlobal()">
                 <i class="fa-solid fa-lightbulb text-amber-500 text-sm shrink-0"></i> 
                 <span id="expGlobalBtnText" class="truncate">과외 해설</span>
             </button>
-        </div>
-        
+        </div>   
+      </div>
     </div>
-</div>
+</div> 
+<!-- 🚨 가장 중요: 바로 위 </div> 태그가 메인 뼈대를 닫아주는 핵심 태그입니다! 절대 지워지면 안 됩니다. -->
 
         <!-- 상황별 롤플레잉 스크린 -->
         <div id="screen-roleplay" class="absolute top-0 left-0 w-full h-full flex flex-col z-20 bg-[#f3f4f6] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); box-shadow: -10px 0 25px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
