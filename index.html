@@ -293,10 +293,10 @@
                 </div>
             </div>
 
-            <!-- 🌟 하단 제어부 영역 (박살나지 않는 고정 그리드형 구조) -->
-            
-            <div class="flex-none bg-white border-t border-slate-200 pt-2.5 px-3 flex flex-col z-20 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]" style="padding-bottom: max(6px, env(safe-area-inset-bottom));">
-    <!-- 1. 오리지널 레이아웃 복원 (대화/번역 탭 및 언어 스왑) -->
+           <!-- 🌟 하단 제어부 영역 (하단 여백 삭제 및 마이크 절대 중앙 정렬) -->
+<div class="flex-none bg-white border-t border-slate-200 pt-2.5 pb-2 px-3 flex flex-col z-20 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
+    
+    <!-- 1. 탭 및 언어 스왑 -->
     <div class="flex justify-between items-center gap-2 mb-2">
         <div class="bg-slate-100 rounded-xl flex-1 min-w-0 border border-slate-200 shadow-sm overflow-hidden flex flex-row p-0.5">
              <button id="modeTutorBtn" onclick="changeAppMode('tutor')" class="flex-1 py-1.5 text-[11px] font-black rounded-lg border border-blue-600 bg-blue-600 text-white shadow-md transition-all">
@@ -315,34 +315,44 @@
         </div>
     </div>
     
-    <!-- 2. 텍스트 입력창 (글자수 300자 반영) -->
-    <div class="flex gap-2 mb-3">
+    <!-- 2. 텍스트 입력창 -->
+    <div class="flex gap-2 mb-2">
         <input type="text" id="textInput" maxlength="300" data-i18n-ph="ui_ph_chat" placeholder="마이크가 안 될 때는 직접 입력해 보세요..." class="flex-1 min-w-0 h-10 rounded-xl bg-slate-50 border border-slate-300 px-4 text-[11px] sm:text-xs outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-inner" onkeypress="if(event.key==='Enter') sendTextMessage()">
         <button id="sendMsgBtn" class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-br from-blue-600 to-blue-800 text-white flex items-center justify-center hover:from-blue-700 shadow-md outline-none" onclick="sendTextMessage()"><i class="fa-solid fa-paper-plane text-xs"></i></button>
     </div>
 
-    <!-- 3. 하단 4버튼 라인 (토글 버튼 추가 및 크기 조정) -->
-    <div class="flex justify-between items-center gap-1.5 w-full">
+    <!-- 3. 하단 4버튼 라인 (마이크 정중앙 절대 고정) -->
+    <div class="relative flex justify-between items-center w-full h-16">
         
-        <!-- 자동 전송 토글 (공간 분할) -->
-        <button id="autoSendToggleBtn" onclick="window.toggleAutoSend()" class="flex-1 h-12 rounded-xl bg-slate-100 text-slate-500 font-bold text-[10px] flex flex-col items-center justify-center gap-0.5 hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200">
-            <i id="autoSendIcon" class="fa-solid fa-toggle-off text-sm"></i>
-            <span class="truncate leading-none mt-0.5">자동 전송</span>
-        </button>
+        <!-- 왼쪽 영역 (자동전송 + 스피커) -->
+        <div class="flex items-center gap-1.5">
+            <!-- 자동 전송 (w-12 h-12 정사각형) -->
+            <button id="autoSendToggleBtn" onclick="window.toggleAutoSend()" class="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 font-bold flex flex-col items-center justify-center gap-0.5 hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200 shrink-0">
+                <i id="autoSendIcon" class="fa-solid fa-toggle-off text-[13px]"></i>
+                <span class="text-[9px] leading-none mt-0.5">자동</span>
+            </button>
+            <!-- 스피커 중지 (w-12 h-12 정사각형) -->
+            <button id="stopAudioBtn" class="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200 shrink-0" onclick="stopSpeaking()" disabled>
+                <i class="fa-solid fa-volume-xmark text-lg"></i>
+            </button>
+        </div>
 
-        <!-- 스피커 중지 (크기 고정) -->
-        <button id="stopAudioBtn" class="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200 shrink-0" onclick="stopSpeaking()" disabled><i class="fa-solid fa-volume-xmark text-lg"></i></button>
-
-        <!-- 중앙 마이크 -->
-        <button id="micBtn" class="w-16 h-16 shrink-0 rounded-full bg-gradient-to-b from-blue-400 to-blue-600 text-white flex items-center justify-center text-2xl hover:from-blue-500 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/40 outline-none border-4 border-white mx-0.5" onclick="toggleListening()"><i id="micIcon" class="fa-solid fa-microphone drop-shadow-md"></i></button>
+        <!-- 🚀 중앙 마이크 (absolute 속성으로 무조건 화면 정중앙 배치) -->
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex justify-center items-center">
+            <button id="micBtn" class="w-16 h-16 shrink-0 rounded-full bg-gradient-to-b from-blue-400 to-blue-600 text-white flex items-center justify-center text-2xl hover:from-blue-500 transition-all transform hover:scale-105 shadow-lg shadow-blue-500/40 outline-none border-4 border-white" onclick="toggleListening()">
+                <i id="micIcon" class="fa-solid fa-microphone drop-shadow-md"></i>
+            </button>
+        </div>
         
-        <!-- 과외 해설 (공간 분할) -->
-        <button id="expGlobalBtn" class="flex-1 h-12 rounded-xl bg-amber-50 text-amber-700 font-bold text-[10px] flex items-center justify-center gap-1 hover:bg-amber-100 transition-colors shadow-sm outline-none border border-amber-200" onclick="requestExplanationGlobal()">
-            <i class="fa-solid fa-lightbulb text-amber-500 text-sm shrink-0"></i> 
-            <span id="expGlobalBtnText" class="truncate">해설</span>
-        </button>
+        <!-- 오른쪽 영역 (과외 해설) -->
+        <div class="flex items-center justify-end w-[85px] sm:w-[100px]">
+            <button id="expGlobalBtn" class="w-full h-12 rounded-xl bg-amber-50 text-amber-700 font-bold text-[10px] flex items-center justify-center gap-1 hover:bg-amber-100 transition-colors shadow-sm outline-none border border-amber-200" onclick="requestExplanationGlobal()">
+                <i class="fa-solid fa-lightbulb text-amber-500 text-sm shrink-0"></i> 
+                <span id="expGlobalBtnText" class="truncate">해설</span>
+            </button>
+        </div>
+        
     </div>
-    
 </div>
 
         <!-- 상황별 롤플레잉 스크린 -->
