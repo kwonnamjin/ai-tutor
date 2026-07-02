@@ -673,33 +673,89 @@ window.swapLanguages = function() {
         }
         initDeviceID();
 
+// ==========================================
+// 🚀 자동 전송 토글 기능 추가
+// ==========================================
+window.isAutoSend = false; // 기본값: 안전하게 텍스트창에서 검토하는 모드
+
+window.toggleAutoSend = function() {
+    window.isAutoSend = !window.isAutoSend; // 상태 반전
+    const btn = document.getElementById('autoSendToggleBtn');
+    const icon = document.getElementById('autoSendIcon');
+    
+    if(window.isAutoSend) {
+        // ON 상태 디자인 (파란색 불 켜짐)
+        btn.classList.replace('bg-slate-100', 'bg-blue-50');
+        btn.classList.replace('text-slate-500', 'text-blue-600');
+        btn.classList.replace('border-slate-200', 'border-blue-200');
+        icon.classList.replace('fa-toggle-off', 'fa-toggle-on');
+        window.updateStatus("자동 전송 ON");
+    } else {
+        // OFF 상태 디자인 (회색 불 꺼짐)
+        btn.classList.replace('bg-blue-50', 'bg-slate-100');
+        btn.classList.replace('text-blue-600', 'text-slate-500');
+        btn.classList.replace('border-blue-200', 'border-slate-200');
+        icon.classList.replace('fa-toggle-on', 'fa-toggle-off');
+        window.updateStatus("자동 전송 OFF");
+    }
+};
+
+// ==========================================
+// 🎤 마이크 인식 및 전송 처리 (이중 방어막 및 자동전송 지원)
+// ==========================================
 window.initSpeechRecognition = function() {
-            if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-                recognition.onstart = () => {
-                    isListening = true; 
-                    if(window.stopSpeaking) window.stopSpeaking(); 
-                    if(micBtn) { micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); }
-                    if(micIcon) { micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); }
-                    window.updateStatus("듣는 중...");
-                };
-                recognition.onresult = (e) => {
-                    resetMic();
-                    if(e.results && e.results[0] && e.results[0][0]) {
-                        handleUserMessage(e.results[0][0].transcript);
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        
+        recognition.onstart = () => {
+            isListening = true; 
+            if(window.stopSpeaking) window.stopSpeaking(); 
+            if(micBtn) { micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); }
+            if(micIcon) { micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); }
+            window.updateStatus("듣는 중...");
+        };
+        
+        recognition.onresult = (e) => {
+            resetMic();
+            if(e.results && e.results[0] && e.results[0][0]) {
+                let transcript = e.results[0][0].transcript;
+                let inputField = document.getElementById('textInput');
+                const MAX_CHARS = 300; // 글자수 제한 300자로 넉넉하게 확장
+                
+                if (inputField) {
+                    let currentText = inputField.value.trim();
+                    let newText = currentText !== '' ? currentText + ' ' + transcript : transcript;
+                    
+                    // 글자수 자르기 방어막
+                    if (newText.length > MAX_CHARS) {
+                        newText = newText.substring(0, MAX_CHARS);
                     }
-                };
-                recognition.onerror = (e) => { 
-                    resetMic(); 
-                    window.updateStatus("마이크 인식 실패"); 
-                    console.error("Mic Error:", e.error);
-                };
-                recognition.onend = () => resetMic();
+
+                    inputField.value = newText;
+                    
+                    // 🚨 핵심 분기점: 스위치 상태에 따라 다르게 작동
+                    if (window.isAutoSend) {
+                        window.updateStatus("메시지 전송 중...");
+                        if (typeof sendTextMessage === 'function') sendTextMessage(); // 즉시 전송 발사!
+                    } else {
+                        inputField.focus(); // 텍스트창에 멈춰서 검토 대기
+                        window.updateStatus("확인 후 전송하세요"); 
+                    }
+                }
             }
-        }
-        initSpeechRecognition();
+        };
+        
+        recognition.onerror = (e) => { 
+            resetMic(); 
+            window.updateStatus("마이크 인식 실패"); 
+        };
+        
+        recognition.onend = () => resetMic();
+    }
+}
+initSpeechRecognition();
 
         window.resetMic = function() { 
             isListening = false; 
