@@ -124,11 +124,12 @@
     </div>
 
     <div class="border-t border-slate-100 pt-3">
-        <h3 class="text-[10px] font-bold text-slate-400 mb-2 px-1 flex justify-between">
-            <span data-i18n="ui_custom_ai_list">나만의 AI 도감</span>
-        </h3>
-        <div id="customCharacterList" class="flex flex-col gap-2"></div>
-    </div>
+            <h3 class="text-[10px] font-bold text-slate-400 mb-2 px-1 flex justify-between">
+                <span data-i18n="ui_custom_ai_list">나만의 AI 도감</span>
+            </h3>
+            <!-- 💡 수정된 부분: 한 줄에 3개씩(33%) 배치되도록 grid-cols-3 적용 -->
+            <div id="customCharacterList" class="grid grid-cols-3 gap-1.5"></div>
+        </div>
 
     <!-- 💡 수정된 부분: 내부 여백(padding)과 높이(height)를 확 줄였습니다. -->
     <div class="mt-2 shrink-0" onclick="event.stopPropagation();">
