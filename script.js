@@ -3090,15 +3090,20 @@ window.openInterpreter = function() {
         document.getElementById('interp-lang-bottom').innerText = typeof window.getLangName === 'function' ? window.getLangName(sLangValue) : "내 언어";
     } catch(e) {}
     
+    // 🌟 핵심: 설정값(localStorage)에 있는 언어를 마이크 엔진에 직접 주입!
+    const sLangCode = localStorage.getItem('stt_input_language') || 'ko-KR'; 
+    
     if (!window.interpRec) {
         if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
             window.interpRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            window.interpRec.continuous = true; 
+            window.interpRec.continuous = true;
             window.interpRec.interimResults = false;
             
+            // 🌟 마이크 엔진에 설정된 언어 강제 주입
+            window.interpRec.lang = sLangCode; 
+            
             window.interpRec.onresult = (e) => {
-                const lastIdx = e.results.length - 1;
-                const transcript = e.results[lastIdx][0].transcript;
+                const transcript = e.results[e.results.length - 1][0].transcript;
                 if(transcript.trim()) {
                     window.processInterpTranslation(transcript);
                 }
@@ -3115,7 +3120,8 @@ window.openInterpreter = function() {
             };
             window.interpRec.onerror = (e) => { console.log("마이크 대기..."); };
         } else {
-            alert("이 기기에서는 음성 인식을 지원하지 않습니다.");
+            // 이미 생성된 마이크라면 언어만 즉시 업데이트
+        window.interpRec.lang = sLangCode;
         }
     }
 };
