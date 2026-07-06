@@ -3113,18 +3113,18 @@ window.closeInterpreter = function() {
 // ==========================================
 window.activeMicSpeaker = null;
 
-// UI를 기본 상태로 돌리는 함수
+// UI를 기본 상태(긴 바 형태)로 돌리는 함수
 window.resetMicUI = function() {
     const btnTop = document.getElementById('btn-mic-top');
     const btnBottom = document.getElementById('btn-mic-bottom');
     
     if(btnTop) {
-        btnTop.className = "w-16 h-16 rounded-full bg-slate-200 text-slate-600 flex flex-col items-center justify-center shadow-md transition-all duration-300 active:scale-95";
-        btnTop.innerHTML = `<i class="fa-solid fa-microphone text-xl mb-1"></i><span class="text-[10px] font-bold">상대방</span>`;
+        btnTop.className = "w-full py-3.5 rounded-xl bg-orange-100 text-orange-600 border border-orange-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]";
+        btnTop.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">상대방 마이크 (터치하여 말하기)</span>`;
     }
     if(btnBottom) {
-        btnBottom.className = "w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex flex-col items-center justify-center shadow-md transition-all duration-300 active:scale-95";
-        btnBottom.innerHTML = `<i class="fa-solid fa-microphone text-xl mb-1"></i><span class="text-[10px] font-bold">내 마이크</span>`;
+        btnBottom.className = "w-full py-3.5 rounded-xl bg-blue-100 text-blue-600 border border-blue-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]";
+        btnBottom.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">내 마이크 (터치하여 말하기)</span>`;
     }
     
     const status = document.getElementById('interp-status');
@@ -3134,17 +3134,15 @@ window.resetMicUI = function() {
 
 // 버튼을 눌렀을 때 실행되는 메인 함수
 window.toggleMic = function(speaker) {
-    // 1. 이미 켜진 마이크를 다시 누르면 -> "취소(종료)"
     if (window.activeMicSpeaker === speaker) {
         if (window.interpRec) {
             window.interpRec.onend = null;
             try { window.interpRec.stop(); } catch(e) {}
         }
         window.resetMicUI();
-        return; // 여기서 함수 종료
+        return; 
     }
 
-    // 2. 기존 마이크가 돌고 있다면 강제 종료
     if (window.interpRec) {
         window.interpRec.onend = null;
         try { window.interpRec.stop(); } catch(e) {}
@@ -3153,12 +3151,11 @@ window.toggleMic = function(speaker) {
     window.resetMicUI();
     window.activeMicSpeaker = speaker;
 
-    // 3. 누른 마이크를 "빨간색 (녹음중)" 상태로 UI 변경
+    // 누른 마이크를 "빨간색 (녹음중) 긴 바" 상태로 UI 변경
     const activeBtn = speaker === 'OTHER' ? document.getElementById('btn-mic-top') : document.getElementById('btn-mic-bottom');
     if (activeBtn) {
-        // 애니메이션 효과 추가 (빨간색 & 펄스)
-        activeBtn.className = "w-16 h-16 rounded-full bg-red-500 text-white flex flex-col items-center justify-center shadow-lg transition-all duration-300 animate-pulse scale-105";
-        activeBtn.innerHTML = `<i class="fa-solid fa-stop text-xl mb-1"></i><span class="text-[10px] font-bold">듣는 중...</span>`;
+        activeBtn.className = "w-full py-3.5 rounded-xl bg-red-500 text-white border border-red-600 flex items-center justify-center gap-2 shadow-md transition-all duration-300 animate-pulse scale-[1.02]";
+        activeBtn.innerHTML = `<i class="fa-solid fa-stop text-lg"></i><span class="text-sm font-bold">듣는 중... (터치 시 취소)</span>`;
     }
 
     const langCode = speaker === 'ME' ? (localStorage.getItem('stt_input_language') || 'ko-KR') : (localStorage.getItem('target_language') || 'en-US');
@@ -3180,16 +3177,15 @@ window.toggleMic = function(speaker) {
             if(transcript.trim()) {
                 window.processInterpTranslationExplicit(transcript, speaker);
             }
-            window.resetMicUI(); // 말하기가 끝나면 버튼 색상 원상복구
+            window.resetMicUI(); 
         };
 
         window.interpRec.onerror = (e) => {
             console.error("마이크 에러:", e);
-            window.resetMicUI(); // 에러 발생 시 원래대로
+            window.resetMicUI(); 
         };
 
         window.interpRec.onend = () => {
-            // 침묵 등으로 스스로 꺼졌을 때만 원래대로 복구
             if (window.activeMicSpeaker === speaker) window.resetMicUI();
         };
 

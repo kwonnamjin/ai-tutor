@@ -646,32 +646,32 @@
         <!-- 🌟 스크롤 텍스트 영역 -->
         <div id="interp-text-top" class="flex-1 overflow-y-auto no-scrollbar px-5 pb-4 scroll-smooth"></div>
         
-        <!-- 🎤 상대방 마이크 (위쪽 화면 하단에 배치) -->
-        <div class="w-full flex justify-center pb-6">
-            <button id="btn-mic-top" onclick="toggleMic('OTHER')" class="w-16 h-16 rounded-full bg-slate-200 text-slate-600 flex flex-col items-center justify-center shadow-md transition-all duration-300 active:scale-95">
-                <i class="fa-solid fa-microphone text-xl mb-1"></i>
-                <span class="text-[10px] font-bold">상대방</span>
+        <!-- 🎤 상대방 마이크 (얇고 긴 주황색 바) -->
+        <div class="w-full px-4 pb-4">
+            <button id="btn-mic-top" onclick="toggleMic('OTHER')" class="w-full py-3.5 rounded-xl bg-orange-100 text-orange-600 border border-orange-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]">
+                <i class="fa-solid fa-microphone text-lg"></i>
+                <span class="text-sm font-bold">상대방 마이크 (터치하여 말하기)</span>
             </button>
         </div>
     </div>
     
     <!-- 🎛️ 중앙 바 (상태창 & 닫기 버튼) -->
     <div class="bg-white border-y border-slate-200 py-2 px-4 shadow-sm z-20 flex justify-between items-center">
-        <div id="interp-status" class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+        <div id="interp-status" class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-md flex-1 text-center mr-3">
             마이크를 선택하세요 🎙️
         </div>
-        <button onclick="closeInterpreter()" class="w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center shadow-inner border border-red-100 active:scale-95 transition-transform">
+        <button onclick="closeInterpreter()" class="w-9 h-9 rounded-full bg-red-50 text-red-400 flex items-center justify-center shadow-inner border border-red-100 active:scale-95 transition-transform shrink-0">
             <i class="fa-solid fa-xmark"></i>
         </button>
     </div>
     
     <!-- ⬇️ 하단 화면 (사용자) -->
     <div class="flex-1 relative bg-slate-50 flex flex-col overflow-hidden pb-14">
-        <!-- 🎤 내 마이크 (아래쪽 화면 상단에 배치) -->
-        <div class="w-full flex justify-center pt-6">
-            <button id="btn-mic-bottom" onclick="toggleMic('ME')" class="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex flex-col items-center justify-center shadow-md transition-all duration-300 active:scale-95">
-                <i class="fa-solid fa-microphone text-xl mb-1"></i>
-                <span class="text-[10px] font-bold">내 마이크</span>
+        <!-- 🎤 내 마이크 (얇고 긴 파란색 바) -->
+        <div class="w-full px-4 pt-4">
+            <button id="btn-mic-bottom" onclick="toggleMic('ME')" class="w-full py-3.5 rounded-xl bg-blue-100 text-blue-600 border border-blue-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]">
+                <i class="fa-solid fa-microphone text-lg"></i>
+                <span class="text-sm font-bold">내 마이크 (터치하여 말하기)</span>
             </button>
         </div>
         
