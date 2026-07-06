@@ -3064,22 +3064,19 @@ window.manualStop = false;
 window.hasSpoken = false;  
 
 // ==========================================
-// 1. 언어 변경 시 처리 로직 (설정 동기화 완벽 해결)
+// 1. 언어 변경 시 처리 로직 (양방향 동기화 완벽 적용)
 // ==========================================
 window.changeInterpLang = function(settingKey, langCode) {
-    // 1. 로컬 스토리지 업데이트
     localStorage.setItem(settingKey, langCode);
     
-    // 🌟 2. 진짜 설정창 ID(대문자 카멜케이스)에 맞춰서 화면 동기화
+    // 설정창 ID와 정확히 일치시켜 동기화
     const targetId = (settingKey === 'target_language') ? 'targetLanguage' : 'sttInputLanguage';
     const originSelect = document.getElementById(targetId);
     if(originSelect) {
         originSelect.value = langCode;
-        // 설정 메뉴 글씨도 즉시 바뀌도록 기존 업데이트 함수 호출
         if(typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
     }
     
-    // 3. 마이크 리셋
     window.manualStop = true; 
     if (window.interpRec) {
         window.interpRec.onend = null;
@@ -3093,7 +3090,7 @@ window.changeInterpLang = function(settingKey, langCode) {
 };
 
 // ==========================================
-// 2. 통역기 창 열기 (언어 목록 복사 버그 완벽 해결)
+// 2. 통역기 창 열기 (빈 박스 버그 완벽 해결)
 // ==========================================
 window.openInterpreter = function() {
     if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
@@ -3112,14 +3109,12 @@ window.openInterpreter = function() {
     if(topText) topText.innerHTML = '';
     if(bottomText) bottomText.innerHTML = '';
     
-    // 🌟 정확한 HTML ID(targetLanguage)로 목록 가져오기 성공!
     const settingTarget = document.getElementById('targetLanguage'); 
     const settingInput = document.getElementById('sttInputLanguage'); 
     
     const topSelect = document.getElementById('interp-lang-top-sel');
     const bottomSelect = document.getElementById('interp-lang-bottom-sel');
 
-    // 🌟 HTML에서 통째로 훔쳐 와서 복붙!
     if (settingTarget && topSelect) {
         topSelect.innerHTML = settingTarget.innerHTML;
     }
@@ -3127,7 +3122,6 @@ window.openInterpreter = function() {
         bottomSelect.innerHTML = settingInput.innerHTML;
     }
 
-    // 🌟 저장된 설정값으로 셋팅
     try {
         const tLangValue = localStorage.getItem('target_language') || 'en-US';
         const sLangValue = localStorage.getItem('stt_input_language') || 'ko-KR';
@@ -3159,7 +3153,7 @@ window.closeInterpreter = function() {
 };
 
 // ==========================================
-// 4. 마이크 UI 리셋 함수
+// 4. 마이크 UI 리셋
 // ==========================================
 window.resetMicUI = function() {
     const btnTop = document.getElementById('btn-mic-top');
@@ -3180,7 +3174,7 @@ window.resetMicUI = function() {
 };
 
 // ==========================================
-// 5. 사용자가 마이크 버튼을 눌렀을 때 (턴 뺏기 / 일시정지)
+// 5. 버튼 터치 시 턴 뺏기 / 수동 제어
 // ==========================================
 window.toggleMic = function(speaker) {
     const status = document.getElementById('interp-status');
@@ -3205,14 +3199,11 @@ window.toggleMic = function(speaker) {
     }
 
     if(status) status.innerHTML = "턴을 가져오는 중... ⚡";
-
-    setTimeout(() => {
-        window.startPingPongMic(speaker);
-    }, 250);
+    setTimeout(() => { window.startPingPongMic(speaker); }, 250);
 };
 
 // ==========================================
-// 6. 핑퐁 사이클 핵심 엔진
+// 6. 핑퐁 사이클 핵심 엔진 (대표님이 원하시는 오리지널 방식 복구!)
 // ==========================================
 window.startPingPongMic = function(speaker) {
     window.manualStop = false; 
@@ -3258,12 +3249,14 @@ window.startPingPongMic = function(speaker) {
 
         window.interpRec.onend = () => {
             if (window.manualStop) {
-                // 수동 개입 시 아무것도 안함
+                // 수동으로 멈췄을 때는 가만히 있음
             } else if (window.hasSpoken) {
+                // 🌟 말을 성공적으로 마침 -> 빠릿빠릿하게 반대쪽 턴으로 넘김! (원본의 300ms 딜레이 유지)
                 const nextSpeaker = speaker === 'ME' ? 'OTHER' : 'ME';
                 if(status) status.innerHTML = "턴 교체 중... 🏓";
                 setTimeout(() => { window.startPingPongMic(nextSpeaker); }, 300);
             } else {
+                // 🌟 말을 안 하고 끊겼을 때 -> 끄지 말고 내 차례 마이크를 다시 강제로 켬! (원본의 100ms 딜레이 유지)
                 if(status) status.innerHTML = "계속 듣고 있습니다... 👂";
                 setTimeout(() => { window.startPingPongMic(speaker); }, 100);
             }
@@ -3348,18 +3341,6 @@ window.renderInterpBottom = function() {
         </div>
     `).join('');
     setTimeout(() => { container.scrollTop = 0; }, 50);
-};
-
-
-window.toggleTranslateMenu = function() {
-    const menu = document.getElementById('translateModeMenu');
-    menu.classList.toggle('hidden');
-};
-
-window.activateSmartTranslate = function() {
-    window.changeAppMode('translate');
-    window.navigate('screen-main');
-    window.updateStatus("스마트 번역 모드로 전환되었습니다.");
 };
 
 
