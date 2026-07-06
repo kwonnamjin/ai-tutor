@@ -3109,11 +3109,13 @@ window.closeInterpreter = function() {
 };
 
 // ==========================================
-// 🎤 마이크 제어 (빨간색 상태 변경 & 취소 기능 완벽 적용)
+// 🏓 반자동 핑퐁 대면 통역기 (턴 뺏기 기능 포함)
 // ==========================================
 window.activeMicSpeaker = null;
+window.manualStop = false; // 사용자의 강제 개입(버튼 터치) 여부
+window.hasSpoken = false;  // 의미 있는 말소리가 인식되었는지 여부
 
-// UI를 기본 상태(긴 바 형태)로 돌리는 함수
+// UI를 기본 상태(대기)로 돌리는 함수
 window.resetMicUI = function() {
     const btnTop = document.getElementById('btn-mic-top');
     const btnBottom = document.getElementById('btn-mic-bottom');
@@ -3127,35 +3129,50 @@ window.resetMicUI = function() {
         btnBottom.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">내 마이크 (터치하여 말하기)</span>`;
     }
     
-    const status = document.getElementById('interp-status');
-    if(status) status.innerHTML = "마이크를 선택하세요 🎙️";
     window.activeMicSpeaker = null;
 };
 
-// 버튼을 눌렀을 때 실행되는 메인 함수
+// 👆 사용자가 마이크 버튼을 눌렀을 때 (턴 뺏기 or 일시정지)
 window.toggleMic = function(speaker) {
+    const status = document.getElementById('interp-status');
+
+    // 1. 이미 켜진 마이크(내 턴)를 다시 누름 -> "대화 일시 정지(Pause)"
     if (window.activeMicSpeaker === speaker) {
+        window.manualStop = true; // 자동 전환 방지
         if (window.interpRec) {
             window.interpRec.onend = null;
             try { window.interpRec.stop(); } catch(e) {}
         }
         window.resetMicUI();
+        if(status) status.innerHTML = "대화 일시 정지 ⏸️";
         return; 
     }
 
+    // 2. 다른 마이크를 누름 -> "강제 턴 뺏기(Override) & 핑퐁 시작"
+    window.manualStop = true; // 돌고 있던 마이크의 자동 전환을 막음
     if (window.interpRec) {
         window.interpRec.onend = null;
         try { window.interpRec.stop(); } catch(e) {}
     }
 
+    // 마이크 하드웨어 리셋을 위해 0.1초 딜레이 후 강제 실행
+    setTimeout(() => {
+        window.startPingPongMic(speaker);
+    }, 100);
+};
+
+// 🔄 핑퐁 사이클을 돌리는 핵심 엔진
+window.startPingPongMic = function(speaker) {
+    window.manualStop = false; 
+    window.hasSpoken = false; // 말을 했는지 초기화
     window.resetMicUI();
     window.activeMicSpeaker = speaker;
 
-    // 누른 마이크를 "빨간색 (녹음중) 긴 바" 상태로 UI 변경
+    // 누른(혹은 턴이 넘어온) 마이크를 빨간색(녹음 중)으로 UI 변경
     const activeBtn = speaker === 'OTHER' ? document.getElementById('btn-mic-top') : document.getElementById('btn-mic-bottom');
     if (activeBtn) {
         activeBtn.className = "w-full py-3.5 rounded-xl bg-red-500 text-white border border-red-600 flex items-center justify-center gap-2 shadow-md transition-all duration-300 animate-pulse scale-[1.02]";
-        activeBtn.innerHTML = `<i class="fa-solid fa-stop text-lg"></i><span class="text-sm font-bold">듣는 중... (터치 시 취소)</span>`;
+        activeBtn.innerHTML = `<i class="fa-solid fa-bolt text-lg"></i><span class="text-sm font-bold">듣는 중... (터치 시 턴 뺏기)</span>`;
     }
 
     const langCode = speaker === 'ME' ? (localStorage.getItem('stt_input_language') || 'ko-KR') : (localStorage.getItem('target_language') || 'en-US');
@@ -3169,30 +3186,45 @@ window.toggleMic = function(speaker) {
         const status = document.getElementById('interp-status');
 
         window.interpRec.onstart = () => {
-            if(status) status.innerHTML = speaker === 'ME' ? `<span class="text-red-500 font-bold">내 마이크 듣는 중... 🎙️</span>` : `<span class="text-red-500 font-bold">상대방 듣는 중... 🎙️</span>`;
+            if(status) status.innerHTML = speaker === 'ME' ? `<span class="text-blue-600 font-bold">내 차례입니다 🎙️</span>` : `<span class="text-orange-600 font-bold">상대방 차례입니다 🎙️</span>`;
         };
 
         window.interpRec.onresult = (e) => {
             const transcript = e.results[e.results.length - 1][0].transcript;
             if(transcript.trim()) {
+                window.hasSpoken = true; // 🌟 의미 있는 말을 했다는 표식!
                 window.processInterpTranslationExplicit(transcript, speaker);
             }
-            window.resetMicUI(); 
         };
 
         window.interpRec.onerror = (e) => {
             console.error("마이크 에러:", e);
-            window.resetMicUI(); 
+            window.manualStop = true; // 에러 시 무한 루프 방지
+            window.resetMicUI();
+            if(status) status.innerHTML = "오류 발생. 마이크를 다시 누르세요.";
         };
 
+        // 🌟 여기가 핑퐁의 핵심입니다! 마이크가 꺼졌을 때 작동
         window.interpRec.onend = () => {
-            if (window.activeMicSpeaker === speaker) window.resetMicUI();
+            if (window.manualStop) {
+                // 1. 내가 버튼을 눌러서 강제로 끄거나 턴을 뺏은 경우 (조용히 멈춤)
+            } else if (window.hasSpoken) {
+                // 2. 정상적으로 말을 마친 경우 -> 0.3초 후 반대쪽으로 턴 자동 교체!
+                const nextSpeaker = speaker === 'ME' ? 'OTHER' : 'ME';
+                if(status) status.innerHTML = "턴 교체 중... 🏓";
+                setTimeout(() => {
+                    window.startPingPongMic(nextSpeaker);
+                }, 300);
+            } else {
+                // 3. 침묵만 하다가 기계가 알아서 꺼진 경우 -> 핑퐁 중지 (배터리/무한루프 방지)
+                window.resetMicUI();
+                if(status) status.innerHTML = "대기 중 (마이크를 눌러 재개) ⏸️";
+            }
         };
 
         try { window.interpRec.start(); } catch(e) { window.resetMicUI(); }
     }
 };
-
 
 
 // ==========================================
