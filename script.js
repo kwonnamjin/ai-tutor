@@ -3064,14 +3064,22 @@ window.manualStop = false;
 window.hasSpoken = false;  
 
 // ==========================================
-// 1. 언어 변경 시 처리 로직 (설정 동기화)
+// 1. 언어 변경 시 처리 로직 (설정 동기화 완벽 해결)
 // ==========================================
 window.changeInterpLang = function(settingKey, langCode) {
+    // 1. 로컬 스토리지 업데이트
     localStorage.setItem(settingKey, langCode);
     
-    const originSelect = document.getElementById(settingKey);
-    if(originSelect) originSelect.value = langCode;
+    // 🌟 2. 진짜 설정창 ID(대문자 카멜케이스)에 맞춰서 화면 동기화
+    const targetId = (settingKey === 'target_language') ? 'targetLanguage' : 'sttInputLanguage';
+    const originSelect = document.getElementById(targetId);
+    if(originSelect) {
+        originSelect.value = langCode;
+        // 설정 메뉴 글씨도 즉시 바뀌도록 기존 업데이트 함수 호출
+        if(typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
+    }
     
+    // 3. 마이크 리셋
     window.manualStop = true; 
     if (window.interpRec) {
         window.interpRec.onend = null;
@@ -3085,7 +3093,7 @@ window.changeInterpLang = function(settingKey, langCode) {
 };
 
 // ==========================================
-// 2. 통역기 창 열기 (언어 목록 복사 & 안전장치 추가)
+// 2. 통역기 창 열기 (언어 목록 복사 버그 완벽 해결)
 // ==========================================
 window.openInterpreter = function() {
     if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
@@ -3104,45 +3112,22 @@ window.openInterpreter = function() {
     if(topText) topText.innerHTML = '';
     if(bottomText) bottomText.innerHTML = '';
     
-    // 🌟 오류 해결: 설정창 ID를 못 찾았을 때를 대비한 '예비 언어 목록 (안전장치)'
-    const defaultOptions = `
-        <option value="ko-KR">🇰🇷 한국어</option>
-        <option value="en-US">🇺🇸 English</option>
-        <option value="ja-JP">🇯🇵 日本語</option>
-        <option value="zh-CN">🇨🇳 中文</option>
-        <option value="es-ES">🇪🇸 Español</option>
-        <option value="th-TH">🇹🇭 ภาษาไทย</option>
-        <option value="vi-VN">🇻🇳 Tiếng Việt</option>
-    `;
-
+    // 🌟 정확한 HTML ID(targetLanguage)로 목록 가져오기 성공!
+    const settingTarget = document.getElementById('targetLanguage'); 
+    const settingInput = document.getElementById('sttInputLanguage'); 
+    
     const topSelect = document.getElementById('interp-lang-top-sel');
     const bottomSelect = document.getElementById('interp-lang-bottom-sel');
 
-    // 대표님 설정창의 <select> ID가 'target_language'가 아닐 수 있습니다.
-    const settingTarget = document.getElementById('target_language'); 
-    const settingInput = document.getElementById('stt_input_language'); 
-
-    // 상단(상대방) 언어 박스 채우기
-    if (topSelect) {
-        // 설정창에서 목록을 찾았고, 비어있지 않다면 복사!
-        if (settingTarget && settingTarget.innerHTML.trim() !== '') {
-            topSelect.innerHTML = settingTarget.innerHTML;
-        } else {
-            // 못 찾았으면 안전장치 목록 강제 주입!
-            topSelect.innerHTML = defaultOptions; 
-        }
+    // 🌟 HTML에서 통째로 훔쳐 와서 복붙!
+    if (settingTarget && topSelect) {
+        topSelect.innerHTML = settingTarget.innerHTML;
+    }
+    if (settingInput && bottomSelect) {
+        bottomSelect.innerHTML = settingInput.innerHTML;
     }
 
-    // 하단(내) 언어 박스 채우기
-    if (bottomSelect) {
-        if (settingInput && settingInput.innerHTML.trim() !== '') {
-            bottomSelect.innerHTML = settingInput.innerHTML;
-        } else {
-            bottomSelect.innerHTML = defaultOptions; 
-        }
-    }
-
-    // 🌟 2. 현재 localStorage에 저장된 설정값으로 선택 항목을 맞춥니다.
+    // 🌟 저장된 설정값으로 셋팅
     try {
         const tLangValue = localStorage.getItem('target_language') || 'en-US';
         const sLangValue = localStorage.getItem('stt_input_language') || 'ko-KR';
@@ -3364,94 +3349,7 @@ window.renderInterpBottom = function() {
     `).join('');
     setTimeout(() => { container.scrollTop = 0; }, 50);
 };
-// ==========================================
-// 🧠 100% 명확한 번역 엔진 (새로 교체됨)
-// ==========================================
-window.processInterpTranslationExplicit = async function(text, speaker) {
-    if (!text.trim()) return;
-    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
-    if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-    
-    const status = document.getElementById('interp-status');
-    if(status) status.innerHTML = "번역 중... ⏳";
 
-    const langA = localStorage.getItem('stt_input_language') || 'ko-KR'; 
-    const langB = localStorage.getItem('target_language') || 'en-US';
-
-    // 버튼을 누른 주체에 따라 출발 언어와 도착 언어가 100% 확정됨
-    const sourceLang = speaker === 'ME' ? langA : langB;
-    const targetLang = speaker === 'ME' ? langB : langA;
-
-    // 🌟 프롬프트가 미친 듯이 단순해집니다! (오류 발생 확률 0%)
-    const sysPrompt = `You are a strict, professional translator.
-    Source language: [${sourceLang}]
-    Target language: [${targetLang}]
-
-    RULE: Translate the input text directly into the Target language.
-    NO explanations, NO notes. Output ONLY JSON.
-
-    Respond in JSON format EXACTLY like this:
-    {
-       "text_original": "The corrected spelling of the input in [${sourceLang}]",
-       "text_translated": "The translated text in [${targetLang}]"
-    }`;
-
-    try {
-        let res = await fetchAPI(WORKER_URL + 'translate-interp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Device-ID': typeof myDeviceId !== 'undefined' ? myDeviceId : "unknown" },
-            body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: sysPrompt }, { role: "user", content: text }], response_format: { type: "json_object" } })
-        });
-        
-        let data = await res.json();
-        let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
-        let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
-        
-        // 화면 배분 로직
-        if (speaker === "ME") {
-            // 내가 말함 -> 위쪽(상대방) 화면에 외국어 띄우기
-            window.interpHistoryTop.push({ translated: parsed.text_translated, original: parsed.text_original });
-            if(window.interpHistoryTop.length > 20) window.interpHistoryTop.shift();
-            window.renderInterpTop();
-        } else {
-            // 상대방이 말함 -> 아래쪽(내) 화면에 한국어 띄우기
-            window.interpHistoryBottom.unshift({ translated: parsed.text_translated, original: parsed.text_original });
-            if(window.interpHistoryBottom.length > 20) window.interpHistoryBottom.pop();
-            window.renderInterpBottom();
-        }
-    } catch(e) {
-        console.error("통역 에러:", e);
-    } finally {
-        if(status) status.innerHTML = "마이크 버튼을 눌러주세요 🎙️";
-    }
-};
-
-// ==========================================
-// 🎨 화면 렌더링 및 기타 기능 (기존 유지)
-// ==========================================
-window.renderInterpTop = function() {
-    const container = document.getElementById('interp-text-top');
-    if(!container) return;
-    container.innerHTML = window.interpHistoryTop.map((msg, i) => `
-        <div class="mb-5 ${i === window.interpHistoryTop.length - 1 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-start w-full">
-            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep">${msg.translated}</span>
-            <span class="text-xs font-bold text-blue-600 mt-1 border-l-[3px] border-blue-400 pl-2 bg-blue-50/50 pr-3 py-0.5 rounded-r-lg">${msg.original}</span>
-        </div>
-    `).join('');
-    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
-};
-
-window.renderInterpBottom = function() {
-    const container = document.getElementById('interp-text-bottom');
-    if(!container) return;
-    container.innerHTML = window.interpHistoryBottom.map((msg, i) => `
-        <div class="mb-5 ${i === 0 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-end w-full">
-            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep text-right">${msg.translated}</span>
-            <span class="text-xs font-bold text-orange-600 mt-1 border-r-[3px] border-orange-400 pr-2 bg-orange-50/50 pl-3 py-0.5 rounded-l-lg text-right">${msg.original}</span>
-        </div>
-    `).join('');
-    setTimeout(() => { container.scrollTop = 0; }, 50);
-};
 
 window.toggleTranslateMenu = function() {
     const menu = document.getElementById('translateModeMenu');
