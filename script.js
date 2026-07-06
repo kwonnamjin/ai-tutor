@@ -3109,63 +3109,95 @@ window.closeInterpreter = function() {
 };
 
 // ==========================================
-// 🎤 듀얼 마이크 제어 로직 (새로 추가됨)
+// 🎤 마이크 제어 (빨간색 상태 변경 & 취소 기능 완벽 적용)
 // ==========================================
+window.activeMicSpeaker = null;
 
-// 🎤 내 마이크 켜기 (한국어 고정)
-window.startSourceMic = function() { 
-    window.startSpecificMic('ME', localStorage.getItem('stt_input_language') || 'ko-KR');
+// UI를 기본 상태로 돌리는 함수
+window.resetMicUI = function() {
+    const btnTop = document.getElementById('btn-mic-top');
+    const btnBottom = document.getElementById('btn-mic-bottom');
+    
+    if(btnTop) {
+        btnTop.className = "w-16 h-16 rounded-full bg-slate-200 text-slate-600 flex flex-col items-center justify-center shadow-md transition-all duration-300 active:scale-95";
+        btnTop.innerHTML = `<i class="fa-solid fa-microphone text-xl mb-1"></i><span class="text-[10px] font-bold">상대방</span>`;
+    }
+    if(btnBottom) {
+        btnBottom.className = "w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex flex-col items-center justify-center shadow-md transition-all duration-300 active:scale-95";
+        btnBottom.innerHTML = `<i class="fa-solid fa-microphone text-xl mb-1"></i><span class="text-[10px] font-bold">내 마이크</span>`;
+    }
+    
+    const status = document.getElementById('interp-status');
+    if(status) status.innerHTML = "마이크를 선택하세요 🎙️";
+    window.activeMicSpeaker = null;
 };
 
-// 🎤 상대방 마이크 켜기 (외국어 고정)
-window.startTargetMic = function() { 
-    window.startSpecificMic('OTHER', localStorage.getItem('target_language') || 'en-US');
-};
+// 버튼을 눌렀을 때 실행되는 메인 함수
+window.toggleMic = function(speaker) {
+    // 1. 이미 켜진 마이크를 다시 누르면 -> "취소(종료)"
+    if (window.activeMicSpeaker === speaker) {
+        if (window.interpRec) {
+            window.interpRec.onend = null;
+            try { window.interpRec.stop(); } catch(e) {}
+        }
+        window.resetMicUI();
+        return; // 여기서 함수 종료
+    }
 
-// ⚙️ 공통 마이크 실행 로직
-window.startSpecificMic = function(speaker, langCode) {
-    // 기존에 돌고 있던 마이크가 있다면 무조건 종료
+    // 2. 기존 마이크가 돌고 있다면 강제 종료
     if (window.interpRec) {
-        window.interpRec.onend = null; 
+        window.interpRec.onend = null;
         try { window.interpRec.stop(); } catch(e) {}
     }
 
-    window.currentSpeaker = speaker;
-    const status = document.getElementById('interp-status');
-    
+    window.resetMicUI();
+    window.activeMicSpeaker = speaker;
+
+    // 3. 누른 마이크를 "빨간색 (녹음중)" 상태로 UI 변경
+    const activeBtn = speaker === 'OTHER' ? document.getElementById('btn-mic-top') : document.getElementById('btn-mic-bottom');
+    if (activeBtn) {
+        // 애니메이션 효과 추가 (빨간색 & 펄스)
+        activeBtn.className = "w-16 h-16 rounded-full bg-red-500 text-white flex flex-col items-center justify-center shadow-lg transition-all duration-300 animate-pulse scale-105";
+        activeBtn.innerHTML = `<i class="fa-solid fa-stop text-xl mb-1"></i><span class="text-[10px] font-bold">듣는 중...</span>`;
+    }
+
+    const langCode = speaker === 'ME' ? (localStorage.getItem('stt_input_language') || 'ko-KR') : (localStorage.getItem('target_language') || 'en-US');
+
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
         window.interpRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        window.interpRec.continuous = false; // 무전기처럼 한 번 말하고 꺼지도록 설정
+        window.interpRec.continuous = false; 
         window.interpRec.interimResults = false;
-        
-        // 🌟 마이크 엔진에 버튼에 맞는 언어코드를 100% 명확하게 주입!
         window.interpRec.lang = langCode;
 
+        const status = document.getElementById('interp-status');
+
         window.interpRec.onstart = () => {
-            if(status) {
-                status.innerHTML = speaker === 'ME' 
-                    ? `<span class="text-blue-500 font-bold">내 마이크 듣는 중... 🎙️</span>` 
-                    : `<span class="text-orange-500 font-bold">상대방 마이크 듣는 중... 🎙️</span>`;
-            }
+            if(status) status.innerHTML = speaker === 'ME' ? `<span class="text-red-500 font-bold">내 마이크 듣는 중... 🎙️</span>` : `<span class="text-red-500 font-bold">상대방 듣는 중... 🎙️</span>`;
         };
 
         window.interpRec.onresult = (e) => {
             const transcript = e.results[e.results.length - 1][0].transcript;
             if(transcript.trim()) {
-                // 어떤 언어인지 고민할 필요 없이 텍스트와 주체를 바로 번역기로 넘김
-                window.processInterpTranslationExplicit(transcript, window.currentSpeaker);
+                window.processInterpTranslationExplicit(transcript, speaker);
             }
+            window.resetMicUI(); // 말하기가 끝나면 버튼 색상 원상복구
         };
-        
-        window.interpRec.onerror = (e) => { 
-            console.error("마이크 에러:", e); 
-            if(status) status.innerHTML = "마이크 오류. 다시 눌러주세요.";
+
+        window.interpRec.onerror = (e) => {
+            console.error("마이크 에러:", e);
+            window.resetMicUI(); // 에러 발생 시 원래대로
         };
-        window.interpRec.start();
-    } else {
-        alert("이 브라우저에서는 음성 인식을 지원하지 않습니다.");
+
+        window.interpRec.onend = () => {
+            // 침묵 등으로 스스로 꺼졌을 때만 원래대로 복구
+            if (window.activeMicSpeaker === speaker) window.resetMicUI();
+        };
+
+        try { window.interpRec.start(); } catch(e) { window.resetMicUI(); }
     }
 };
+
+
 
 // ==========================================
 // 🧠 100% 명확한 번역 엔진 (새로 교체됨)
