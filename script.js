@@ -1,25 +1,25 @@
 // 🌟 1. 전역 변수 초기화
-const WORKER_URL = "https://talkaitest.thin770.workers.dev/";
+const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
 
-let isListening = false, isSpeaking = false, recognition = null;
-const synthesis = window.speechSynthesis;
-let conversationHistory = JSON.parse(sessionStorage.getItem('llmHistory')) || []; 
-let uiChatHistory = JSON.parse(sessionStorage.getItem('uiHistory')) || []; 
-let bubbleCounter = parseInt(sessionStorage.getItem('bubbleCounter')) || 0; 
+        let isListening = false, isSpeaking = false, recognition = null;
+        const synthesis = window.speechSynthesis;
+        let conversationHistory = JSON.parse(sessionStorage.getItem('llmHistory')) || []; 
+        let uiChatHistory = JSON.parse(sessionStorage.getItem('uiHistory')) || []; 
+        let bubbleCounter = parseInt(sessionStorage.getItem('bubbleCounter')) || 0; 
+        
+        let currentUtterance = null; 
+        let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
+        let tempGender = currentVoiceGender; 
 
-let currentUtterance = null; 
-let currentVoiceGender = localStorage.getItem('voice_gender') || 'female';
-let tempGender = currentVoiceGender; 
+        let currentBubbleId = null, startIndex = -1, endIndex = -1, myDeviceId = "unknown";
 
-let currentBubbleId = null, startIndex = -1, endIndex = -1, myDeviceId = "unknown";
-
-const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
-const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
-const avatarWrap = document.getElementById('avatarWrap'), stopAudioBtn = document.getElementById('stopAudioBtn');
-const selectionTooltip = document.getElementById('selectionTooltip');
+        const micBtn = document.getElementById('micBtn'), micIcon = document.getElementById('micIcon');
+        const statusText = document.getElementById('statusText'), chatContainer = document.getElementById('chatContainer');
+        const avatarWrap = document.getElementById('avatarWrap'), stopAudioBtn = document.getElementById('stopAudioBtn');
+        const selectionTooltip = document.getElementById('selectionTooltip');
 
 
-// ==========================================
+        // ==========================================
 // 💖 AI 친밀도 & 감성 시스템 모듈
 // ==========================================
 const INTIMACY_SYSTEM = {
@@ -92,7 +92,10 @@ const INTIMACY_SYSTEM = {
     }
 };
 
-// [소리 먹통 해결 코드] 화면을 처음 터치할 때 폰의 '소리 차단'을 강제로 뚫어버립니다.
+
+
+
+        // [소리 먹통 해결 코드] 화면을 처음 터치할 때 폰의 '소리 차단'을 강제로 뚫어버립니다.
 document.addEventListener('touchstart', function() {
     // 아무 소리도 안 나는 투명한 음성을 0.1초 재생해서 폰에게 허락을 받아냄
     var silentUtt = new SpeechSynthesisUtterance('');
@@ -100,7 +103,6 @@ document.addEventListener('touchstart', function() {
     window.speechSynthesis.speak(silentUtt);
     console.log("웹뷰 소리 차단 해제 완료!");
 }, { once: true }); // 딱 한 번만 실행됨
-
 // ==========================================================
 // 🌟 [필수 추가] 모바일/PC 웹 브라우저 AI 목소리 차단 해제 마법사
 // ==========================================================
@@ -123,6 +125,8 @@ function unlockTtsEngine() {
 document.addEventListener('click', unlockTtsEngine);
 document.addEventListener('touchstart', unlockTtsEngine);
 // ==========================================================
+
+
 
 
 // 🌟 2. 공통 UI 조작 함수
@@ -293,26 +297,21 @@ window.populateDropdowns = function() {
                     window.changeUILanguage(lang.code);
                 }
                 if (setup.target === 'targetLanguage') {
-                    localStorage.setItem('target_language', lang.code);
-                    
-                    // 🌟 언어가 바뀌면 기존 목소리 기억을 싹 지워버립니다.
-                    window.selectedTtsVoiceName = "";
-                    localStorage.removeItem('saved_voice_name');
-                    localStorage.removeItem('selected_voice_name');
-                    
-                    // UI에 표시되는 이름도 즉시 '기본 음성'으로 바꿔줍니다.
-                    if (typeof window.updateVoiceDisplay === 'function') {
-                        window.updateVoiceDisplay("기본 음성");
-                    }
-                    
-                    // 🌟 리스트 새로고침
-                    window.requestVoicesFromApp(); 
-
-                    // 🌟 [복구된 핵심 코드] 타겟 언어가 바뀌면 기초발음 페이지도 즉시 새로고침!
-                    if (typeof window.autoLoadAlphabet === 'function') {
-                        window.autoLoadAlphabet();
-                    }
-                }
+    localStorage.setItem('target_language', lang.code);
+    
+    // 🌟 [여기가 추가된 핵심!] 언어가 바뀌면 기존 목소리 기억을 싹 지워버립니다.
+    window.selectedTtsVoiceName = "";
+    localStorage.removeItem('saved_voice_name');
+    localStorage.removeItem('selected_voice_name');
+    
+    // UI에 표시되는 이름도 즉시 '기본 음성'으로 바꿔줍니다.
+    if (typeof window.updateVoiceDisplay === 'function') {
+        window.updateVoiceDisplay("기본 음성");
+    }
+    
+    // 🌟 리스트 새로고침
+    window.requestVoicesFromApp(); 
+}
                 if (setup.target === 'sttInputLanguage') {
                     localStorage.setItem('stt_input_language', lang.code);
                 }
@@ -325,13 +324,13 @@ window.populateDropdowns = function() {
     });
 };
 
-window.getLangName = function(code) {
-    const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-    const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-    return dict["lang_" + code] || SUPPORTED_LANGUAGES.find(l => l.code === code).name;
-}
+        window.getLangName = function(code) {
+            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+            return dict["lang_" + code] || SUPPORTED_LANGUAGES.find(l => l.code === code).name;
+        }
 
-// 🌟 1. 언어 옵션 렌더링 (에러 방지 코드 추가)
+        // 🌟 1. 언어 옵션 렌더링 (에러 방지 코드 추가)
 window.renderLanguageSelects = function() {
     if (typeof SUPPORTED_LANGUAGES === 'undefined') return; // 데이터가 없으면 중단
 
@@ -383,7 +382,7 @@ window.updateStatus = function(txt) {
     if(st) st.textContent = txt; 
 };
 
-// 1. 내부 계산기 (에러 방어막 완벽 적용)
+        // 1. 내부 계산기 (에러 방어막 완벽 적용)
 window.checkUsageLimit = function() {
     // 🌟 안전장치 1: 요금제 한도를 함수 안에 직접 명시해서 절대 못 잃어버리게 함!
     const PLAN_LIMITS = { free: 50, basic: 150, premium: 400 }; 
@@ -416,22 +415,25 @@ window.checkUsageLimit = function() {
     return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
 };
 
+// 2. 검문소 (초승달 실시간 차감 로직 완벽 적용)
 window.checkAndBlockAPI = function() {
-    const status = window.checkUsageLimit(); 
+    const status = window.checkUsageLimit(); // 🌟 무조건 window. 으로 호출
     
-    // 1순위: 기본 요금제(무료/베이직/프리미엄) 한도가 남아있다면 통과!
+    // 🌟 안전장치 3: 초승달 데이터가 'NaN(숫자아님)'으로 꼬여있으면 0으로 강제 처리
+    let currentMoons = parseInt(localStorage.getItem('moon_coins')) || 0;
+
+    // 1순위: 번개가 남아있다면 통과
     if (status.allowed) return true; 
 
-    // 2순위: 퀘스트로 모아둔 '번개'가 있다면 1개 내고 통과! (초승달 건드리지 않음)
-    let currentLightning = parseInt(localStorage.getItem('lightning_coins')) || 0;
-    if (currentLightning > 0) {
-        localStorage.setItem('lightning_coins', currentLightning - 1); 
+    // 2순위: 초승달이 있다면 1개 내고 통과
+    if (currentMoons > 0) {
+        localStorage.setItem('moon_coins', currentMoons - 1); 
         if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
-        console.log("⚡ 번개 사용! 남은 퀘스트 번개:", currentLightning - 1);
+        console.log("🌙 초승달 사용! 남은 개수:", currentMoons - 1);
         return true; 
     }
 
-    // 3순위: 기본 한도도 없고 번개도 없으면 멤버십 결제창 띄우기
+    // 3순위: 둘 다 없으면 결제창
     if (typeof window.showSubscriptionModal === 'function') {
         window.showSubscriptionModal(status.reason); 
     }
@@ -444,26 +446,22 @@ window.updateBadgeUI = function() {
     
     const status = window.checkUsageLimit();
     let currentMoons = parseInt(localStorage.getItem('moon_coins')) || 0;
-    let savedLightning = parseInt(localStorage.getItem('lightning_coins')) || 0; // 퀘스트로 모은 번개
     
-    let remainingDaily = 0;
+    let remaining = 0;
     if (status.allowed) {
         const currentCount = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}').count || 0;
-        remainingDaily = Math.max(0, status.maxLimit - currentCount);
+        remaining = Math.max(0, status.maxLimit - currentCount);
     }
-
-    // ⚡ 번개 표시: (오늘 남은 기본량 + 모아둔 번개) 합산하여 표시
-    let totalLightning = remainingDaily + savedLightning;
 
     const moonHtml = `<div class="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full text-[11px] font-black border border-indigo-200 shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-moon"></i> <span>${currentMoons}</span></div>`;
     let badgeContent = '';
 
     if (status.tier === 'premium') {
-        badgeContent = moonHtml + `<div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-amber-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-crown text-amber-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">PREMIUM</span> <span class="text-amber-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-amber-200"></i> ${totalLightning}</div>`;
+        badgeContent = moonHtml + `<div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-amber-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-crown text-amber-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">PREMIUM</span> <span class="text-amber-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-amber-200"></i> ${remaining}</div>`;
     } else if (status.tier === 'basic') {
-        badgeContent = moonHtml + `<div class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-indigo-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-star text-indigo-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">BASIC</span> <span class="text-indigo-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-indigo-200"></i> ${totalLightning}</div>`;
+        badgeContent = moonHtml + `<div class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-indigo-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-star text-indigo-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">BASIC</span> <span class="text-indigo-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-indigo-200"></i> ${remaining}</div>`;
     } else {
-        badgeContent = moonHtml + `<div class="bg-white text-slate-600 px-2.5 py-1 rounded-full text-[11px] font-black border border-slate-200 shadow-sm flex items-center gap-1.5 transition hover:bg-slate-50"><i class="fa-solid fa-bolt text-yellow-500"></i> <span>${totalLightning}</span></div>`;
+        badgeContent = moonHtml + `<div class="bg-white text-slate-600 px-2.5 py-1 rounded-full text-[11px] font-black border border-slate-200 shadow-sm flex items-center gap-1.5 transition hover:bg-slate-50"><i class="fa-solid fa-bolt text-yellow-500"></i> <span>${remaining}</span></div>`;
     }
 
     const badgeIds = ['usageBadge', 'usageBadge2'];
@@ -494,37 +492,41 @@ window.incrementLocalUsage = function() {
 };
 
 
-window.enableInputs = function() {
-    ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
-    micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
-    window.updateStatus("대기 중");
-}
-const PLAN_LIMITS = { 'free': 50, 'basic': 150, 'premium': 400 };
-function getResetDateStr() { return new Date().toISOString().split('T')[0]; }
-
-function checkUsageLimit() {
-    const currentTier = localStorage.getItem('subscription_tier') || 'free';
-    const maxLimit = PLAN_LIMITS[currentTier];
-
-    if (currentTier === 'free') {
-        const firstUseDate = localStorage.getItem('free_trial_start');
-        if (firstUseDate) {
-            const daysPassed = (Date.now() - parseInt(firstUseDate)) / (1000 * 60 * 60 * 24);
-            if (daysPassed > 3) return { allowed: false, reason: 'trial_expired', tier: currentTier, count: 0, maxLimit };
+        window.enableInputs = function() {
+            ['textInput','sendMsgBtn','micBtn','expGlobalBtn'].forEach(id => document.getElementById(id).disabled = false);
+            micBtn.classList.replace('from-slate-400', 'from-blue-400'); micBtn.classList.replace('to-slate-600', 'to-blue-600');
+            window.updateStatus("대기 중");
         }
-    }
+        const PLAN_LIMITS = { 'free': 50, 'basic': 150, 'premium': 400 };
+        function getResetDateStr() { return new Date().toISOString().split('T')[0]; }
 
-    const todayStr = getResetDateStr();
-    let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
-    if (usageObj.date !== todayStr) {
-        usageObj = { date: todayStr, count: 0 };
-        localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
-    }
+        function checkUsageLimit() {
+            const currentTier = localStorage.getItem('subscription_tier') || 'free';
+            const maxLimit = PLAN_LIMITS[currentTier];
 
-    if (usageObj.count >= maxLimit) return { allowed: false, reason: 'limit_reached', tier: currentTier, count: usageObj.count, maxLimit };
-    return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
-}
+            if (currentTier === 'free') {
+                const firstUseDate = localStorage.getItem('free_trial_start');
+                if (firstUseDate) {
+                    const daysPassed = (Date.now() - parseInt(firstUseDate)) / (1000 * 60 * 60 * 24);
+                    if (daysPassed > 3) return { allowed: false, reason: 'trial_expired', tier: currentTier, count: 0, maxLimit };
+                }
+            }
 
+            const todayStr = getResetDateStr();
+            let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
+            if (usageObj.date !== todayStr) {
+                usageObj = { date: todayStr, count: 0 };
+                localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
+            }
+
+            if (usageObj.count >= maxLimit) return { allowed: false, reason: 'limit_reached', tier: currentTier, count: usageObj.count, maxLimit };
+            return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
+        }
+
+
+
+
+         
 window.showSubscriptionModal = function(reason) {
     const existingModal = document.getElementById('subscriptionModal');
     if (existingModal) existingModal.remove();
@@ -569,51 +571,51 @@ window.showSubscriptionModal = function(reason) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     if(window.stopSpeaking) window.stopSpeaking();
 }
-window.processPayment = function(plan) {
-    if (window.flutter_inappwebview) {
-        window.flutter_inappwebview.callHandler('purchase', plan);
-    } else {
-        localStorage.setItem('subscription_tier', plan);
-        let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
-        usageObj.count = 0; localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
-        document.getElementById('subscriptionModal').remove();
-        window.updateBadgeUI(); window.enableInputs();
-        alert("결제가 반영되었습니다. 대화를 다시 시작해 보세요!");
-    }
-}
-
-async function fetchAPI(url, options) {
-    let delay = 2000; // 💡 첫 재시도 대기 시간을 0.5초에서 2초로 대폭 늘림 (AI 서버 과부하 배려)
-    let lastStatus = "네트워크 오류";
-    
-    for(let i=0; i<3; i++) { 
-        try { 
-            const res = await fetch(url, options); 
-            
-            // 정상 응답이면 바로 반환
-            if(res.ok) return res; 
-            
-            lastStatus = res.status; 
-            console.warn(`[API 통신 지연] 서버 상태 코드: ${lastStatus}. ${delay/1000}초 후 재시도합니다...`);
-            
-            // 💡 429(Too Many Requests)나 5xx(서버 에러)일 때는 더 오래 기다리게 함
-            await new Promise(r => setTimeout(r, delay)); 
-            delay *= 2; // 2초 -> 4초 -> 8초 간격으로 지수 백오프(Exponential Backoff)
-            
-        } catch(e) { 
-            if(i === 2) { // 3번 다 실패했을 때만 최후의 에러를 던짐
-                if (typeof updateStatus === 'function') updateStatus("네트워크 연결 불안정");
-                alert("📡 인터넷 연결이 불안정하여 통신에 실패했습니다.");
-                throw e; 
+        window.processPayment = function(plan) {
+            if (window.flutter_inappwebview) {
+                window.flutter_inappwebview.callHandler('purchase', plan);
+            } else {
+                localStorage.setItem('subscription_tier', plan);
+                let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
+                usageObj.count = 0; localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
+                document.getElementById('subscriptionModal').remove();
+                window.updateBadgeUI(); window.enableInputs();
+                alert("결제가 반영되었습니다. 대화를 다시 시작해 보세요!");
             }
-        } 
-    }
-    
-    // 💡 3번의 여유로운 재시도(총 14초 대기) 후에도 실패하면 사용자에게 친절하게 안내
-    alert(`📡 현재 AI 서버에 전 세계적으로 트래픽이 몰려 응답이 지연되고 있습니다.\n(에러 코드: ${lastStatus})\n\n잠시 후 다시 말을 걸어주시면 정상적으로 대화가 이어집니다!`);
-    throw new Error("HTTP_ERROR_" + lastStatus);
-}
+        }
+        async function fetchAPI(url, options) {
+            let delay = 2000; // 💡 첫 재시도 대기 시간을 0.5초에서 2초로 대폭 늘림 (AI 서버 과부하 배려)
+            let lastStatus = "네트워크 오류";
+            
+            for(let i=0; i<3; i++) { 
+                try { 
+                    const res = await fetch(url, options); 
+                    
+                    // 정상 응답이면 바로 반환
+                    if(res.ok) return res; 
+                    
+                    lastStatus = res.status; 
+                    console.warn(`[API 통신 지연] 서버 상태 코드: ${lastStatus}. ${delay/1000}초 후 재시도합니다...`);
+                    
+                    // 💡 429(Too Many Requests)나 5xx(서버 에러)일 때는 더 오래 기다리게 함
+                    await new Promise(r => setTimeout(r, delay)); 
+                    delay *= 2; // 2초 -> 4초 -> 8초 간격으로 지수 백오프(Exponential Backoff)
+                    
+                } catch(e) { 
+                    if(i === 2) { // 3번 다 실패했을 때만 최후의 에러를 던짐
+                        if (typeof updateStatus === 'function') updateStatus("네트워크 연결 불안정");
+                        alert("📡 인터넷 연결이 불안정하여 통신에 실패했습니다.");
+                        throw e; 
+                    }
+                } 
+            }
+            
+            // 💡 3번의 여유로운 재시도(총 14초 대기) 후에도 실패하면 사용자에게 친절하게 안내
+            alert(`📡 현재 AI 서버에 전 세계적으로 트래픽이 몰려 응답이 지연되고 있습니다.\n(에러 코드: ${lastStatus})\n\n잠시 후 다시 말을 걸어주시면 정상적으로 대화가 이어집니다!`);
+            throw new Error("HTTP_ERROR_" + lastStatus);
+        }
 
+       
 // 🌟 서로 말하는 언어를 맞바꾸는 기능 (Me <-> AI)
 window.swapLanguages = function() {
     // 1. 기존 언어 교환 로직
@@ -643,169 +645,227 @@ window.swapLanguages = function() {
 };
 
 
-// 🌟 치트키 입력 기능
-window.sendTextMessage = function() {
-    const input = document.getElementById('textInput'); 
-    const text = input.value.trim();
-
-    if (text === "testmode999") { 
-        localStorage.setItem('subscription_tier', 'premium');
-        localStorage.setItem('is_test_mode', 'true');
-        const testData = { count: 0, date: new Date().toLocaleDateString() };
-        localStorage.setItem('daily_usage_v4', JSON.stringify(testData));
-        alert("프리미엄 테스트 모드가 활성화되었습니다! 🚀");
-        input.value = ''; 
-        if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
-        if (typeof window.enableInputs === 'function') window.enableInputs();
-        return; 
-    }
-    if (text) { input.value = ''; handleUserMessage(text); }
-}
-
-async function initDeviceID() {
-    let localId = localStorage.getItem('web_device_id');
-    if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
-    myDeviceId = localId; 
-    setTimeout(() => { if(typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); }, 100);
-}
-initDeviceID();
 
 
+ // 🌟 치트키 입력 기능
+ window.sendTextMessage = function() {
+            const input = document.getElementById('textInput'); 
+            const text = input.value.trim();
 
-window.resetMic = function() { 
-    isListening = false; 
-    if(micBtn) { micBtn.classList.replace('from-red-400', 'from-blue-400'); micBtn.classList.replace('to-red-600', 'to-blue-600'); }
-    if(micIcon) { micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); }
-    if(typeof isSpeaking !== 'undefined' && !isSpeaking) window.updateStatus("대기 중"); 
-}
+            if (text === "testmode999") { 
+                localStorage.setItem('subscription_tier', 'premium');
+                localStorage.setItem('is_test_mode', 'true');
+                const testData = { count: 0, date: new Date().toLocaleDateString() };
+                localStorage.setItem('daily_usage_v4', JSON.stringify(testData));
+                alert("프리미엄 테스트 모드가 활성화되었습니다! 🚀");
+                input.value = ''; 
+                if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
+                if (typeof window.enableInputs === 'function') window.enableInputs();
+                return; 
+            }
+            if (text) { input.value = ''; handleUserMessage(text); }
+        }
+ async function initDeviceID() {
+            let localId = localStorage.getItem('web_device_id');
+            if (!localId) { localId = 'web-' + Math.random().toString(36).substr(2, 9); localStorage.setItem('web_device_id', localId); }
+            myDeviceId = localId; 
+            setTimeout(() => { if(typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); }, 100);
+        }
+        initDeviceID();
 
-window.toggleListening = function() {
-    const lang = document.getElementById('sttInputLanguage').value;
-    if(!recognition) {
-        window.updateStatus("마이크를 사용할 수 없습니다.");
-        return;
-    }
-    if(isListening) {
-        recognition.stop();
+// ==========================================
+// 🚀 자동 전송 토글 기능 추가
+// ==========================================
+window.isAutoSend = false; // 기본값: 안전하게 텍스트창에서 검토하는 모드
+
+window.toggleAutoSend = function() {
+    window.isAutoSend = !window.isAutoSend; // 상태 반전
+    const btn = document.getElementById('autoSendToggleBtn');
+    const icon = document.getElementById('autoSendIcon');
+    
+    if(window.isAutoSend) {
+        // ON 상태 디자인 (파란색 불 켜짐)
+        btn.classList.replace('bg-slate-100', 'bg-blue-50');
+        btn.classList.replace('text-slate-500', 'text-blue-600');
+        btn.classList.replace('border-slate-200', 'border-blue-200');
+        icon.classList.replace('fa-toggle-off', 'fa-toggle-on');
+        window.updateStatus("자동 전송 ON");
     } else {
-        recognition.lang = lang;
-        try { recognition.start(); } catch(e) { window.updateStatus("마이크 시작 오류"); }
+        // OFF 상태 디자인 (회색 불 꺼짐)
+        btn.classList.replace('bg-blue-50', 'bg-slate-100');
+        btn.classList.replace('text-blue-600', 'text-slate-500');
+        btn.classList.replace('border-blue-200', 'border-slate-200');
+        icon.classList.replace('fa-toggle-on', 'fa-toggle-off');
+        window.updateStatus("자동 전송 OFF");
     }
 };
 
-window.handleWordClick = function(event, bubbleId, wordIndex, isExplanation = false) {
-    event.stopPropagation(); 
-    if (currentBubbleId !== null && currentBubbleId !== bubbleId) clearSelection();
-    currentBubbleId = bubbleId;
-    if (startIndex === -1) { startIndex = wordIndex; endIndex = wordIndex; } 
-    else if (startIndex === wordIndex && endIndex === wordIndex) { clearSelection(); return; } 
-    else { endIndex = wordIndex; if (startIndex > endIndex) { let temp = startIndex; startIndex = endIndex; endIndex = temp; } }
-
-    const container = document.getElementById(`bubble-${bubbleId}`); let lastSelectedSpan = null;
-    container.querySelectorAll(isExplanation ? '.exp-word-span' : '.word-span').forEach(span => {
-        const idx = parseInt(span.getAttribute('data-index'));
-        if (idx >= startIndex && idx <= endIndex) { span.classList.add('selected'); lastSelectedSpan = span; } else span.classList.remove('selected');
-    });
-
-    if (lastSelectedSpan) {
-        const containerRect = chatContainer.getBoundingClientRect(); const rect = lastSelectedSpan.getBoundingClientRect();
-        selectionTooltip.style.top = `${rect.top - containerRect.top + chatContainer.scrollTop}px`; selectionTooltip.style.left = `${rect.left - containerRect.left + (rect.width / 2)}px`;
-        selectionTooltip.classList.remove('hidden'); setTimeout(() => selectionTooltip.classList.remove('opacity-0', 'pointer-events-none'), 10);
-    }
-}
-
-window.getSelectedTextFromBubble = function(bubbleId, isExplanation = false) {
-    if(startIndex === -1) return null; let textArr = [];
-    document.getElementById(`bubble-${bubbleId}`).querySelectorAll(isExplanation ? '.exp-word-span' : '.word-span').forEach(span => {
-        const idx = parseInt(span.getAttribute('data-index')); if (idx >= startIndex && idx <= endIndex) textArr.push(span.textContent);
-    }); return textArr.join(' ');
-}
-
-window.createSpansForText = function(text, bubbleId, isExplanation = false) {
-    const visualDesign = "inline-block cursor-pointer hover:bg-yellow-200 hover:text-blue-800 rounded px-[2px] transition-colors duration-200 ";
-    const spanClass = isExplanation ? visualDesign + 'exp-word-span' : visualDesign + 'word-span';
-    const langCode = isExplanation ? (document.getElementById('explanationLanguage').value || 'ko-KR') : (document.getElementById('targetLanguage').value || 'en-US');
-    
-    const tempDiv = document.createElement('div'); tempDiv.innerHTML = text; let wordIndex = 0;
-    
-    function processNode(node) {
-        if (node.nodeType === 3) { 
-            let nodeText = node.nodeValue;
-            if (window.Intl && Intl.Segmenter && (langCode.startsWith('ja') || langCode.startsWith('zh') || langCode.startsWith('th'))) {
-                const segmenter = new Intl.Segmenter(langCode, { granularity: 'word' });
-                nodeText = Array.from(segmenter.segment(nodeText)).map(seg => seg.segment).join(' ');
-            } else if (langCode.startsWith('ja') || langCode.startsWith('zh')) { 
-                nodeText = nodeText.replace(/([一-龥ぁ-んァ-ン])/g, ' $1 '); 
-            }
-            
-            const words = nodeText.trim().split(/\s+/); 
-            const fragment = document.createDocumentFragment();
-            
-            words.forEach((word, i) => {
-                if (!word) return;
-                const span = document.createElement('span'); 
-                span.className = spanClass; 
-                span.setAttribute('data-index', wordIndex++);
-                span.setAttribute('onclick', `handleWordClick(event, '${bubbleId}', ${span.getAttribute('data-index')}, ${isExplanation})`);
-                span.textContent = word; 
-                fragment.appendChild(span);
-                if (i < words.length - 1) fragment.appendChild(document.createTextNode(' '));
-            });
-            node.parentNode.replaceChild(fragment, node);
-        } else if (node.nodeType === 1) { 
-            Array.from(node.childNodes).forEach(processNode); 
-        }
-    }
-    Array.from(tempDiv.childNodes).forEach(processNode); 
-    return tempDiv.innerHTML;
-}
-
-window.readSelectedText = function() {
-    if (!currentBubbleId) return; const text = getSelectedTextFromBubble(currentBubbleId, currentBubbleId.startsWith('exp-'));
-    if (text) window.speakText(text, document.getElementById('targetLanguage').value);
-}
-
-window.explainSelectedText = function() {
-    if (!currentBubbleId) return; const isExp = currentBubbleId.startsWith('exp-');
-    const fullTxt = Array.from(document.getElementById(`bubble-${currentBubbleId}`).querySelectorAll('span')).map(s=>s.textContent).join(' ');
-    window.requestExplanationFromBubble(currentBubbleId, fullTxt, isExp, getSelectedTextFromBubble(currentBubbleId, isExp)); clearSelection();
-}
-
-// 🌟 프리토킹 저장 기능 포함
-window.addMessageToChat = function(sender, text, translation = null, targetLangCode = null, isRestore = false) {
-    const msgDiv = document.createElement('div'); msgDiv.className = "flex flex-col space-y-1 mt-4";
-    if (sender === 'user') {
-        msgDiv.innerHTML = `<div class="bg-gradient-to-tr from-blue-600 to-blue-500 text-white rounded-2xl rounded-tr-none p-3.5 max-w-[85%] self-end chat-text-dynamic shadow-md font-medium tracking-wide leading-relaxed">${text}</div>`;
-    } else {
-        if(!isRestore) bubbleCounter++; 
-        const bId = `ai-msg-${bubbleCounter}`; 
-        const safeText = encodeURIComponent(text.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
-        const safeTrans = translation ? encodeURIComponent(translation).replace(/'/g, "%27") : '';
+// ==========================================
+// 🎤 마이크 인식 및 전송 처리 (이중 방어막 및 자동전송 지원)
+// ==========================================
+window.initSpeechRecognition = function() {
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = false;
+        recognition.interimResults = false;
         
-        msgDiv.innerHTML = `<div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[90%] shadow-md shadow-blue-900/5 self-start relative">
-            <div class="flex items-start justify-between gap-2">
-                <p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${window.createSpansForText(text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'), bId)}</p>
-                <div class="flex gap-1 ml-2 shrink-0">
-                    <button onclick="window.requestExplanationFromBubble('${bId}', decodeURIComponent('${safeText}'), false)" class="text-emerald-500 w-7 h-7 rounded-full bg-white shadow-sm border border-emerald-100"><i class="fa-solid fa-lightbulb"></i></button>
-                    <button onclick="window.speakText(decodeURIComponent('${safeText}'), '${targetLangCode}')" class="text-blue-500 w-7 h-7 rounded-full bg-white shadow-sm border border-blue-100"><i class="fa-solid fa-volume-high"></i></button>
-                </div>
-            </div>
-            ${translation ? `<p class="text-slate-500 mt-2 border-t pt-2 border-slate-100 font-medium" style="font-size: calc(var(--chat-font-size) - 3px);">${translation}</p>` : ''}
-            
-            <!-- 📥 프리토킹 보관함 버튼 -->
-            <div class="mt-3 pt-2.5 border-t border-slate-100/80">
-                <button onclick="window.saveToArchive('freetalk', { original: decodeURIComponent('${safeText}'), translation: decodeURIComponent('${safeTrans}'), langCode: '${targetLangCode}' })" class="w-full py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 text-[11px] font-bold shadow-sm hover:bg-slate-100 flex items-center justify-center gap-1.5 transition-all">
-                    <i class="fa-solid fa-bookmark text-slate-400"></i> 내 보관함에 저장하기
-                </button>
-            </div>
-        </div>`;
-    }
-    chatContainer.appendChild(msgDiv); setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
-    if (!isRestore) { uiChatHistory.push({sender, text, translation, targetLangCode}); sessionStorage.setItem('uiHistory', JSON.stringify(uiChatHistory)); sessionStorage.setItem('bubbleCounter', bubbleCounter.toString()); }
-}
+        recognition.onstart = () => {
+            isListening = true; 
+            if(window.stopSpeaking) window.stopSpeaking(); 
+            if(micBtn) { micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); }
+            if(micIcon) { micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); }
+            window.updateStatus("듣는 중...");
+        };
+        
+        recognition.onresult = (e) => {
+            resetMic();
+            if(e.results && e.results[0] && e.results[0][0]) {
+                let transcript = e.results[0][0].transcript;
+                let inputField = document.getElementById('textInput');
+                const MAX_CHARS = 300; // 글자수 제한 300자로 넉넉하게 확장
+                
+                if (inputField) {
+                    let currentText = inputField.value.trim();
+                    let newText = currentText !== '' ? currentText + ' ' + transcript : transcript;
+                    
+                    // 글자수 자르기 방어막
+                    if (newText.length > MAX_CHARS) {
+                        newText = newText.substring(0, MAX_CHARS);
+                    }
 
-// 🌟 1. 프리토킹: 화면엔 이모지가 보이지만, 읽을 때는 이모지 필터링!
-window.speakText = function(text, langCode) {
+                    inputField.value = newText;
+                    
+                    // 🚨 핵심 분기점: 스위치 상태에 따라 다르게 작동
+                    if (window.isAutoSend) {
+                        window.updateStatus("메시지 전송 중...");
+                        if (typeof sendTextMessage === 'function') sendTextMessage(); // 즉시 전송 발사!
+                    } else {
+                        inputField.focus(); // 텍스트창에 멈춰서 검토 대기
+                        window.updateStatus("확인 후 전송하세요"); 
+                    }
+                }
+            }
+        };
+        
+        recognition.onerror = (e) => { 
+            resetMic(); 
+            window.updateStatus("마이크 인식 실패"); 
+        };
+        
+        recognition.onend = () => resetMic();
+    }
+}
+initSpeechRecognition();
+
+        window.resetMic = function() { 
+            isListening = false; 
+            if(micBtn) { micBtn.classList.replace('from-red-400', 'from-blue-400'); micBtn.classList.replace('to-red-600', 'to-blue-600'); }
+            if(micIcon) { micIcon.classList.replace('fa-ear-listen', 'fa-microphone'); }
+            if(typeof isSpeaking !== 'undefined' && !isSpeaking) window.updateStatus("대기 중"); 
+        }
+
+        window.toggleListening = function() {
+            const lang = document.getElementById('sttInputLanguage').value;
+            if(!recognition) {
+                window.updateStatus("마이크를 사용할 수 없습니다.");
+                return;
+            }
+            if(isListening) {
+                recognition.stop();
+            } else {
+                recognition.lang = lang;
+                try { recognition.start(); } catch(e) { window.updateStatus("마이크 시작 오류"); }
+            }
+        };
+        window.handleWordClick = function(event, bubbleId, wordIndex, isExplanation = false) {
+            event.stopPropagation(); 
+            if (currentBubbleId !== null && currentBubbleId !== bubbleId) clearSelection();
+            currentBubbleId = bubbleId;
+            if (startIndex === -1) { startIndex = wordIndex; endIndex = wordIndex; } 
+            else if (startIndex === wordIndex && endIndex === wordIndex) { clearSelection(); return; } 
+            else { endIndex = wordIndex; if (startIndex > endIndex) { let temp = startIndex; startIndex = endIndex; endIndex = temp; } }
+
+            const container = document.getElementById(`bubble-${bubbleId}`); let lastSelectedSpan = null;
+            container.querySelectorAll(isExplanation ? '.exp-word-span' : '.word-span').forEach(span => {
+                const idx = parseInt(span.getAttribute('data-index'));
+                if (idx >= startIndex && idx <= endIndex) { span.classList.add('selected'); lastSelectedSpan = span; } else span.classList.remove('selected');
+            });
+
+            if (lastSelectedSpan) {
+                const containerRect = chatContainer.getBoundingClientRect(); const rect = lastSelectedSpan.getBoundingClientRect();
+                selectionTooltip.style.top = `${rect.top - containerRect.top + chatContainer.scrollTop}px`; selectionTooltip.style.left = `${rect.left - containerRect.left + (rect.width / 2)}px`;
+                selectionTooltip.classList.remove('hidden'); setTimeout(() => selectionTooltip.classList.remove('opacity-0', 'pointer-events-none'), 10);
+            }
+        }
+        window.getSelectedTextFromBubble = function(bubbleId, isExplanation = false) {
+            if(startIndex === -1) return null; let textArr = [];
+            document.getElementById(`bubble-${bubbleId}`).querySelectorAll(isExplanation ? '.exp-word-span' : '.word-span').forEach(span => {
+                const idx = parseInt(span.getAttribute('data-index')); if (idx >= startIndex && idx <= endIndex) textArr.push(span.textContent);
+            }); return textArr.join(' ');
+        }
+
+        window.createSpansForText = function(text, bubbleId, isExplanation = false) {
+            const visualDesign = "inline-block cursor-pointer hover:bg-yellow-200 hover:text-blue-800 rounded px-[2px] transition-colors duration-200 ";
+            const spanClass = isExplanation ? visualDesign + 'exp-word-span' : visualDesign + 'word-span';
+            const langCode = isExplanation ? (document.getElementById('explanationLanguage').value || 'ko-KR') : (document.getElementById('targetLanguage').value || 'en-US');
+            
+            const tempDiv = document.createElement('div'); tempDiv.innerHTML = text; let wordIndex = 0;
+            
+            function processNode(node) {
+                if (node.nodeType === 3) { 
+                    let nodeText = node.nodeValue;
+                    if (window.Intl && Intl.Segmenter && (langCode.startsWith('ja') || langCode.startsWith('zh') || langCode.startsWith('th'))) {
+                        const segmenter = new Intl.Segmenter(langCode, { granularity: 'word' });
+                        nodeText = Array.from(segmenter.segment(nodeText)).map(seg => seg.segment).join(' ');
+                    } else if (langCode.startsWith('ja') || langCode.startsWith('zh')) { 
+                        nodeText = nodeText.replace(/([一-龥ぁ-んァ-ン])/g, ' $1 '); 
+                    }
+                    
+                    const words = nodeText.trim().split(/\s+/); 
+                    const fragment = document.createDocumentFragment();
+                    
+                    words.forEach((word, i) => {
+                        if (!word) return;
+                        const span = document.createElement('span'); 
+                        span.className = spanClass; 
+                        span.setAttribute('data-index', wordIndex++);
+                        span.setAttribute('onclick', `handleWordClick(event, '${bubbleId}', ${span.getAttribute('data-index')}, ${isExplanation})`);
+                        span.textContent = word; 
+                        fragment.appendChild(span);
+                        if (i < words.length - 1) fragment.appendChild(document.createTextNode(' '));
+                    });
+                    node.parentNode.replaceChild(fragment, node);
+                } else if (node.nodeType === 1) { 
+                    Array.from(node.childNodes).forEach(processNode); 
+                }
+            }
+            Array.from(tempDiv.childNodes).forEach(processNode); 
+            return tempDiv.innerHTML;
+        }
+        window.readSelectedText = function() {
+            if (!currentBubbleId) return; const text = getSelectedTextFromBubble(currentBubbleId, currentBubbleId.startsWith('exp-'));
+            if (text) window.speakText(text, document.getElementById('targetLanguage').value);
+        }
+
+        window.explainSelectedText = function() {
+            if (!currentBubbleId) return; const isExp = currentBubbleId.startsWith('exp-');
+            const fullTxt = Array.from(document.getElementById(`bubble-${currentBubbleId}`).querySelectorAll('span')).map(s=>s.textContent).join(' ');
+            window.requestExplanationFromBubble(currentBubbleId, fullTxt, isExp, getSelectedTextFromBubble(currentBubbleId, isExp)); clearSelection();
+        }
+        window.addMessageToChat = function(sender, text, translation = null, targetLangCode = null, isRestore = false) {
+            const msgDiv = document.createElement('div'); msgDiv.className = "flex flex-col space-y-1 mt-4";
+            if (sender === 'user') {
+                msgDiv.innerHTML = `<div class="bg-gradient-to-tr from-blue-600 to-blue-500 text-white rounded-2xl rounded-tr-none p-3.5 max-w-[85%] self-end chat-text-dynamic shadow-md font-medium tracking-wide leading-relaxed">${text}</div>`;
+            } else {
+                if(!isRestore) bubbleCounter++; 
+                const bId = `ai-msg-${bubbleCounter}`; const safeText = encodeURIComponent(text.replace(/[\*\#\`]/g, '')).replace(/'/g, "%27");
+                msgDiv.innerHTML = `<div class="bg-white border border-blue-100 rounded-2xl rounded-tl-none p-4 max-w-[90%] shadow-md shadow-blue-900/5 self-start relative"><div class="flex items-start justify-between gap-2"><p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${createSpansForText(text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'), bId)}</p><div class="flex gap-1 ml-2 shrink-0"><button onclick="requestExplanationFromBubble('${bId}', decodeURIComponent('${safeText}'), false)" class="text-emerald-500 w-7 h-7 rounded-full bg-white shadow-sm border border-emerald-100"><i class="fa-solid fa-lightbulb"></i></button><button onclick="speakText(decodeURIComponent('${safeText}'), '${targetLangCode}')" class="text-blue-500 w-7 h-7 rounded-full bg-white shadow-sm border border-blue-100"><i class="fa-solid fa-volume-high"></i></button></div></div>${translation ? `<p class="text-slate-500 mt-2 border-t pt-2 border-slate-100 font-medium" style="font-size: calc(var(--chat-font-size) - 3px);">${translation}</p>` : ''}</div>`;
+            }
+            chatContainer.appendChild(msgDiv); setTimeout(() => chatContainer.scrollTop = chatContainer.scrollHeight, 50);
+            if (!isRestore) { uiChatHistory.push({sender, text, translation, targetLangCode}); sessionStorage.setItem('uiHistory', JSON.stringify(uiChatHistory)); sessionStorage.setItem('bubbleCounter', bubbleCounter.toString()); }
+        }
+        // 🌟 1. 프리토킹: 화면엔 이모지가 보이지만, 읽을 때는 이모지 필터링!
+        window.speakText = function(text, langCode) {
     if(!text) return;
     const clean = text.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim(); 
     if(!clean) return;
@@ -832,6 +892,7 @@ window.speakText = function(text, langCode) {
         if(synthesis) synthesis.cancel();
         currentUtterance = new SpeechSynthesisUtterance(clean);
         currentUtterance.lang = targetLangCode;
+        // ... (기존 웹 보이스 찾기 로직)
         synthesis.speak(currentUtterance);
     }
 
@@ -843,17 +904,15 @@ window.speakText = function(text, langCode) {
         if(typeof window.updateStatus === 'function') window.updateStatus("대기 중");
     }, 3000);
 };
-
-window.stopSpeaking = function() {
-    if (window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); 
-    else synthesis.cancel(); 
-}
-
-async function handleUserMessage(text) {
+        window.stopSpeaking = function() {
+            if (window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); 
+            else synthesis.cancel(); 
+        }
+        async function handleUserMessage(text) {
     if(!text) return;
     if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
 
-    window.addMessageToChat('user', text);
+    addMessageToChat('user', text);
     if (typeof updateStatus === 'function') updateStatus("생각하는 중..."); 
     const avatarWrap = document.getElementById('avatarWrap');
     if(avatarWrap) avatarWrap.style.borderColor = "#94a3b8";
@@ -874,6 +933,8 @@ async function handleUserMessage(text) {
     const memoryPrompt = savedMemory ? `\n\n[User's Core Memory: ${savedMemory}]` : '';
     const criticalRule = `\n\n🚨 CRITICAL RULE: The 'translation' MUST be in ${exactAiLang}.`;
 
+    const starGender = (typeof currentVoiceGender !== 'undefined' && currentVoiceGender === 'male') ? "male idol/actor" : "female idol/actress";
+    
     const currentMode = localStorage.getItem('current_persona') || localStorage.getItem('currentPersona') || 'friend';
     
     let customName = 'AI 튜터';
@@ -889,19 +950,25 @@ async function handleUserMessage(text) {
             customName = localStorage.getItem('custom_persona_name') || localStorage.getItem('customPersonaName') || customName;
             customPrompt = localStorage.getItem('custom_persona_prompt') || localStorage.getItem('customPersonaPrompt') || customPrompt;
         }
-    } catch(e) {}
+    } catch(e) {
+        console.warn("커스텀 데이터 읽기 오류, 기본값 사용");
+    }
 
     const personaInstructions = {
         friend: `You are the user's cheerful best friend (native ${targetName}). Use lots of emojis! Ask questions back to keep the conversation going smoothly. REQUIRED: Use highly casual language.`,
         assistant: `You are the user's smart, friendly personal assistant (native ${targetName}). Answer their questions, confirm their requests, and chat actively. REQUIRED: Use polite, professional, and clear language. DO NOT act like a casual friend.`,
         guide: `You are an engaging travel guide (native ${targetName}). Give great recommendations, answer questions actively, and share local insights. REQUIRED: Be enthusiastic but informative.`,
+     // special: `You are a sweet and popular ${starGender} (native ${targetName}). The user is your precious fan. Speak with a lot of warmth, gratitude, and cute emojis. STRICT RULE: Keep the conversation polite, family-friendly (PG-13), and avoid overly romantic or explicit content.`,
         custom: `You are ${customName}. ${customPrompt}. Act EXACTLY like this character. Speak naturally and reflect your personality in your responses.`
     };
     
+    // 1. 친밀도 데이터 및 상태 가져오기
     const intimacyData = INTIMACY_SYSTEM.getData();
     const currentIntimacyLevel = intimacyData.level;
+    const currentIntimacyMind = INTIMACY_SYSTEM.levels[currentIntimacyLevel].aiMind;
     const isSulking = localStorage.getItem('ai_is_sulking') === 'true';
 
+    // 2. 레벨별 AI 태도(Tone & Attitude) 구체화 (거리감 명시)
     const intimacyTones = {
         1: "Maintain a formal or professional distance. Focus strictly on your role. You are just getting to know the user.",
         2: "Show warm curiosity but keep professional/social boundaries. Ask light questions to build a connection.",
@@ -910,9 +977,11 @@ async function handleUserMessage(text) {
         5: "Act as a true soulmate. Express unwavering support and deep emotional empathy, while still performing your core persona's duties perfectly."
     };
 
+    // 3. 룰(Rules) 정의
     const memoRule = `\n🚨 CRITICAL: If the user asks to save, note, or remember a schedule/task, extract it into the "save_memo" key (in ${exactAiLang}). Otherwise, "save_memo" MUST be "".`;          
     const antiParrotRule = `\n🚨 CRITICAL: DO NOT just translate the user's input. You must act as your persona and REPLY to their message contextually. Keep the conversation flowing naturally in ${targetName}.`;
 
+    // 4. 시스템 프롬프트 조립 (구조화된 템플릿)
     let sysPrompt = '';
     
     if (mode === 'translate') {
@@ -953,18 +1022,28 @@ Respond EXACTLY in JSON:
 }`;
     }
 
+    // 이후 try { ... api 호출 로직 시작
+        
     try {
         let ctx = mode === 'tutor' ? [...conversationHistory] : [];
         
         if (mode === 'tutor') {
+            // 💡 1. 꼬인 데이터 자동 정화: 기존 배열에서 낡은 시스템 프롬프트를 싹 다 제거하고 순수 대화만 남깁니다.
             const pureChat = ctx.filter(m => m.role !== "system");
+            
+            // 💡 2. 슬라이딩 윈도우: 가장 최신 대화 8개만 가져옵니다.
             const recentMsgs = pureChat.slice(-4);
+            
+            // 💡 3. 최신 기억이 반영된 '새 시스템 프롬프트'를 맨 앞에 무조건 1순위로 강제 장착합니다.
             ctx = [{ role: "system", content: sysPrompt }, ...recentMsgs];
+            
+            // 💡 4. 현재 사용자가 입력한 메시지를 맨 끝에 추가합니다.
             ctx.push({ role: "user", content: `[입력:${inputName}] ${text}` });
             
             conversationHistory = ctx; 
             sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
         } else {
+            // 번역 모드일 때
             ctx = [{ role: "system", content: sysPrompt }, { role: "user", content: text }];
         }
         
@@ -976,15 +1055,15 @@ Respond EXACTLY in JSON:
         }
 
         let res = await fetchAPI(WORKER_URL, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
-            body: JSON.stringify({ 
-                model: "deepseek-chat", 
-                messages: apiMessages, 
-                response_format: { type: "json_object" },
-                userLocalTime: new Date().toLocaleString() 
-            }) 
-        });
+    method: 'POST', 
+    headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
+    body: JSON.stringify({ 
+        model: "deepseek-chat", 
+        messages: apiMessages, 
+        response_format: { type: "json_object" },
+        userLocalTime: new Date().toLocaleString() // 💡 핸드폰 시간 추가
+    }) 
+});
         
         let data = await res.json();
         let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -992,50 +1071,80 @@ Respond EXACTLY in JSON:
         
         let parsed;
         if (jsonMatch) parsed = JSON.parse(jsonMatch[0]); else throw new Error("JSON_NOT_FOUND");
-        
-        if (parsed.inner_thought) {
-            localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
-            if (typeof window.updateMemoryDisplay === 'function') {
-                window.updateMemoryDisplay(); 
-            }
-        }
+        // 💡 1. 속마음 업데이트: 핵심 기능이므로 대화할 때마다 '즉시' 갱신!
+if (parsed.inner_thought) {
+    localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
+    if (typeof window.updateMemoryDisplay === 'function') {
+        window.updateMemoryDisplay(); 
+    }
+}
 
-        window.conversationTurn = (window.conversationTurn || 0) + 1;
+// 💡 2. 대화 턴(Turn) 계산
+window.conversationTurn = (window.conversationTurn || 0) + 1;
 
-        if (window.conversationTurn % 5 === 0) {
-            if (parsed.memory) {
-                localStorage.setItem('user_compressed_memory', parsed.memory);
-                if (typeof window.updateMemoryDisplay === 'function') {
-                    window.updateMemoryDisplay();
-                }
-            }
+// 💡 3. 기억 압축: 서버 부하가 크므로 정확히 5번에 1번만 실행!
+if (window.conversationTurn % 5 === 0) {
+    if (parsed.memory) {
+        localStorage.setItem('user_compressed_memory', parsed.memory);
+        if (typeof window.updateMemoryDisplay === 'function') {
+            window.updateMemoryDisplay();
         }
+    }
+}
 
-        if (Array.isArray(conversationHistory)) {
-            const pureChat = conversationHistory.filter(m => m.role !== "system");
-            conversationHistory = pureChat.slice(-4);
-            sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
-        }
+// 💡 4. 대화 기록 가볍게 유지 (매번 실행)
+if (Array.isArray(conversationHistory)) {
+    const pureChat = conversationHistory.filter(m => m.role !== "system");
+    conversationHistory = pureChat.slice(-4);
+    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+}
+// 🚀 [신규 추가] 40번 대화마다 서버를 속이는 '소프트 리셋'
+if (window.conversationTurn > 0 && window.conversationTurn % 40 === 0) {
+    // 1. 대화 기록을 강제로 완전히 비워버립니다.
+    conversationHistory = [];
+    sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+    
+    // 2. 💡 기존 결제용 myDeviceId는 절대 건드리지 않고, API 통신용 변수만 따로 갱신합니다.
+    // (apiSessionId는 딥시크 fetch() 함수의 X-Device-ID 헤더 등에 넣어주시면 됩니다)
+    window.apiSessionId = 'reset-' + Math.random().toString(36).substr(2, 9);
+    
+    // 3. 유저에게 자연스러운 안내
+    const resetMsg = document.createElement('div');
+    resetMsg.className = "text-center text-xs text-slate-400 my-4 bg-slate-50 py-1 rounded-full mx-8";
+    resetMsg.innerText = "♻️ AI가 기억을 정리하고 숨을 고르고 왔습니다.";
+    document.getElementById('chat-container').appendChild(resetMsg);
+}
         
-        if (window.conversationTurn > 0 && window.conversationTurn % 40 === 0) {
-            conversationHistory = [];
-            sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
-            window.apiSessionId = 'reset-' + Math.random().toString(36).substr(2, 9);
-            
-            const resetMsg = document.createElement('div');
-            resetMsg.className = "text-center text-xs text-slate-400 my-4 bg-slate-50 py-1 rounded-full mx-8";
-            resetMsg.innerText = "♻️ AI가 기억을 정리하고 숨을 고르고 왔습니다.";
-            document.getElementById('chatContainer').appendChild(resetMsg);
-        }
-        
+        // -------------------------------------------------------------------
+        //
+        // 🌟🌟🌟 [여기가 추가된 철벽 방어막입니다!] 🌟🌟🌟
+      //  const checkText = (parsed.foreign_text || "").toLowerCase();
+      //  if (checkText.includes("limit") || checkText.includes("error") || checkText.includes("connect") || checkText.includes("exceeded")) {
+      //      
+       //     // 💡 [추가할 부분] 에러가 감지되면 꼬여있는 현재 대화 세션을 강제로 비워버림 (무한 루프 차단)
+       //     if (typeof clearChatSession === 'function') clearChatSession();
+       //
+            // 앱 화면에 사용자에게 친절하게 안내
+       //     if (typeof addMessageToChat === 'function') {
+       //         addMessageToChat('ai', "⚠️ 현재 AI 서버 트래픽이 많아 응답이 지연되고 있습니다. 잠시 후 다시 말해주세요. (번개 차감 안 됨)");
+       //     }
+       //     if (typeof updateStatus === 'function') updateStatus("서버 지연");
+        //    if (avatarWrap) avatarWrap.style.borderColor = "#f87171"; // 빨간색 테두리로 경고 표시
+        //    
+        //    return; // 🛑 여기서 함수를 끝내버림! (아래에 있는 번개 차감 로직까지 절대 못 내려갑니다)
+       //}
+        // 🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟
+
+        // 위 방어막을 무사히 통과한 정상 대화일 때만 비로소 차감!
         if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
         
         if(mode==='tutor') { 
             conversationHistory.push({role:"assistant",content:JSON.stringify(parsed)}); 
             sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory)); 
             if(typeof window.compressMemory === 'function') window.compressMemory(); 
-            INTIMACY_SYSTEM.clearSulking(); 
-            INTIMACY_SYSTEM.addExp('chat'); 
+            INTIMACY_SYSTEM.clearSulking(); // 말 걸어줬으니 삐진 거 풀기
+            INTIMACY_SYSTEM.addExp('chat'); // 대화 경험치 +1점
+
         }
 
         if(parsed.save_memo && parsed.save_memo.trim() !== "") {
@@ -1065,8 +1174,8 @@ Respond EXACTLY in JSON:
         }
         
         if(parsed.foreign_text) { 
-            window.addMessageToChat('ai', parsed.foreign_text, parsed.translation || parsed.korean_translation, targetLang); 
-            if (typeof window.speakText === 'function') window.speakText(parsed.foreign_text, targetLang); 
+            if (typeof addMessageToChat === 'function') addMessageToChat('ai', parsed.foreign_text, parsed.translation || parsed.korean_translation, targetLang); 
+            if (typeof speakText === 'function') speakText(parsed.foreign_text, targetLang); 
             if (typeof window.addLearningStat === 'function') window.addLearningStat('sentence', 2);
             if (typeof window.addStudyMission === 'function') window.addStudyMission('freeTalk'); 
         }
@@ -1076,114 +1185,116 @@ Respond EXACTLY in JSON:
         if(avatarWrap) avatarWrap.style.borderColor="#f87171"; 
     }
 }
-window.handleUserMessage = handleUserMessage;
+        window.handleUserMessage = handleUserMessage;
+        window.requestExplanationGlobal = function() { 
+            let lastAiMsg = "";
+            for(let i = uiChatHistory.length - 1; i >= 0; i--) { if(uiChatHistory[i].sender === 'ai') { lastAiMsg = uiChatHistory[i].text; break; } }
+            if(!lastAiMsg) { alert("해설할 대화가 없습니다."); return; }
+            window.requestExplanationFromBubble(`global`, lastAiMsg, false, lastAiMsg);
+        };
 
-window.requestExplanationGlobal = function() { 
-    let lastAiMsg = "";
-    for(let i = uiChatHistory.length - 1; i >= 0; i--) { if(uiChatHistory[i].sender === 'ai') { lastAiMsg = uiChatHistory[i].text; break; } }
-    if(!lastAiMsg) { alert("해설할 대화가 없습니다."); return; }
-    window.requestExplanationFromBubble(`global`, lastAiMsg, false, lastAiMsg);
-};
+        window.requestExplanationFromBubble = async function(bubbleId, fullText, isExp, selectedText) { 
+            const targetText = selectedText || fullText;
+            if(!targetText) return;
+            if (!window.checkAndBlockAPI()) return;
 
-window.requestExplanationFromBubble = async function(bubbleId, fullText, isExp, selectedText) { 
-    const targetText = selectedText || fullText;
-    if(!targetText) return;
-    if (!window.checkAndBlockAPI()) return;
+            const tLang = document.getElementById('targetLanguage');
+            const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            
+            window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); document.getElementById('avatarWrap').style.borderColor = "#f59e0b"; 
 
-    const tLang = document.getElementById('targetLanguage');
-    const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
-    const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-    
-    window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); document.getElementById('avatarWrap').style.borderColor = "#f59e0b"; 
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi", "id-ID": "Indonesian" };
+            const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
-    const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi", "id-ID": "Indonesian" };
-    const exactAiLang = aiLangNames[expLangCode] || expLangCode;
+            // 🌟 [핵심] AI가 답변 예시와 해석을 절대 빼먹지 못하도록 멱살 잡는 강력한 프롬프트!
+            const systemPrompt = `You are an expert language tutor. Analyze the given text and provide a helpful tutoring response.
+                  STRICT RULES:
+                  1. Briefly explain the core meaning and grammar of the text ONLY in ${exactAiLang}.
+                  2. Provide 2 to 3 natural conversational replies in ${targetLangName} that the user could say back to the AI.
+                  3. Provide the exact translation of each reply example in ${exactAiLang}.
+                  4. Output ONLY a JSON object with the key "explanation". Use '\\n' for line breaks.
 
-    const systemPrompt = `You are an expert language tutor. Analyze the given text and provide a helpful tutoring response.
-          STRICT RULES:
-          1. Briefly explain the core meaning and grammar of the text ONLY in ${exactAiLang}.
-          2. Provide 2 to 3 natural conversational replies in ${targetLangName} that the user could say back to the AI.
-          3. Provide the exact translation of each reply example in ${exactAiLang}.
-          4. Output ONLY a JSON object with the key "explanation". Use '\\n' for line breaks.
+                  Respond EXACTLY in this JSON format:
+                  {"explanation": "[Grammar & Meaning in ${exactAiLang}]\\n\\n💡 [Header in ${exactAiLang}, e.g., '이렇게 대답해 보세요:']\\n1. [Reply in ${targetLangName}] - [Meaning in ${exactAiLang}]\\n2. [Reply in ${targetLangName}] - [Meaning in ${exactAiLang}]"}`;
+            
+            const userPrompt = `Analyze:\n- Learning Language: ${targetLangName}\n- Context: "${fullText}"\n- Target: "${targetText}"`;
 
-          Respond EXACTLY in this JSON format:
-          {"explanation": "[Grammar & Meaning in ${exactAiLang}]\\n\\n💡 [Header in ${exactAiLang}, e.g., '이렇게 대답해 보세요:']\\n1. [Reply in ${targetLangName}] - [Meaning in ${exactAiLang}]\\n2. [Reply in ${targetLangName}] - [Meaning in ${exactAiLang}]"}`;
-    
-    const userPrompt = `Analyze:\n- Learning Language: ${targetLangName}\n- Context: "${fullText}"\n- Target: "${targetText}"`;
-
-    try {
-        let res = await fetchAPI(WORKER_URL, { 
-            method: 'POST', 
-            headers: { 
-                'Content-Type': 'application/json', 
-                'X-Device-ID': window.apiSessionId || myDeviceId 
-            }, 
-            body: JSON.stringify({ 
-                model: "deepseek-chat", 
-                messages: [
-                    {role: "system", content: systemPrompt}, 
-                    {role: "user", content: userPrompt}
-                ], 
-                response_format: { type: "json_object" } 
-            }) 
-        });
-        let data = await res.json();
-        let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
-        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-        let parsed;
-        if (jsonMatch) parsed = JSON.parse(jsonMatch[0]); else throw new Error("JSON_NOT_FOUND");
-        
-        window.incrementLocalUsage();
-        
-        const msgDiv = document.createElement('div'); msgDiv.className = "flex flex-col space-y-1 mt-4"; bubbleCounter++; const bId = `exp-msg-${bubbleCounter}`; 
-        let explanationText = parsed.explanation || parsed.translation;
-        if (window.Intl && Intl.Segmenter && (expLangCode.startsWith('ja') || expLangCode.startsWith('zh') || expLangCode.startsWith('th'))) {
-            const segmenter = new Intl.Segmenter(expLangCode, { granularity: 'word' }); explanationText = Array.from(segmenter.segment(explanationText)).map(seg => seg.segment).join(' ');
+            try {
+                let res = await fetchAPI(WORKER_URL, { 
+    method: 'POST', 
+    headers: { 
+        'Content-Type': 'application/json', 
+        // 💡 핵심 수정: 새로 갱신된 apiSessionId가 있으면 우선 사용하고, 없으면 기존 myDeviceId 사용
+        'X-Device-ID': window.apiSessionId || myDeviceId 
+    }, 
+    body: JSON.stringify({ 
+        model: "deepseek-chat", 
+        messages: [
+            {role: "system", content: systemPrompt}, 
+            {role: "user", content: userPrompt}
+        ], 
+        response_format: { type: "json_object" } 
+    }) 
+});
+                let data = await res.json();
+                let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+                const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+                let parsed;
+                if (jsonMatch) parsed = JSON.parse(jsonMatch[0]); else throw new Error("JSON_NOT_FOUND");
+                
+                window.incrementLocalUsage();
+                
+                const msgDiv = document.createElement('div'); msgDiv.className = "flex flex-col space-y-1 mt-4"; bubbleCounter++; const bId = `exp-msg-${bubbleCounter}`; 
+                let explanationText = parsed.explanation || parsed.translation;
+                if (window.Intl && Intl.Segmenter && (expLangCode.startsWith('ja') || expLangCode.startsWith('zh') || expLangCode.startsWith('th'))) {
+                    const segmenter = new Intl.Segmenter(expLangCode, { granularity: 'word' }); explanationText = Array.from(segmenter.segment(explanationText)).map(seg => seg.segment).join(' ');
+                }
+                const safeExplanation = explanationText.replace(/\n/g, ' <br> ');
+                msgDiv.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md self-start relative"><p class="text-[11px] font-extrabold text-amber-600 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-lightbulb"></i> [집중 해설] ${targetText}</p><p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${createSpansForText(safeExplanation, bId, true)}</p></div>`;
+                document.getElementById('chatContainer').appendChild(msgDiv); setTimeout(() => document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight, 50);
+                window.updateStatus("대기 중"); document.getElementById('avatarWrap').style.borderColor = "#60a5fa"; 
+            } catch(e) { console.error(e); window.updateStatus("해설 통신 에러"); document.getElementById('avatarWrap').style.borderColor = "#f87171"; }
+        };
+        window.clearChatSession =function() { 
+            conversationHistory=[]; uiChatHistory=[]; sessionStorage.clear(); 
+            document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el => { 
+                if(el.id !== 'welcomeWrapper') el.remove();
+             });
         }
-        const safeExplanation = explanationText.replace(/\n/g, ' <br> ');
-        msgDiv.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md self-start relative"><p class="text-[11px] font-extrabold text-amber-600 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-lightbulb"></i> [집중 해설] ${targetText}</p><p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${window.createSpansForText(safeExplanation, bId, true)}</p></div>`;
-        document.getElementById('chatContainer').appendChild(msgDiv); setTimeout(() => document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight, 50);
-        window.updateStatus("대기 중"); document.getElementById('avatarWrap').style.borderColor = "#60a5fa"; 
-    } catch(e) { console.error(e); window.updateStatus("해설 통신 에러"); document.getElementById('avatarWrap').style.borderColor = "#f87171"; }
-};
+        window.currentPersona = localStorage.getItem('ai_persona') || 'friend';
+       
 
-window.clearChatSession = function() { 
-    conversationHistory=[]; uiChatHistory=[]; sessionStorage.clear(); 
-    document.querySelectorAll('#chatContainer > div.flex.flex-col').forEach(el => { 
-        if(el.id !== 'welcomeWrapper') el.remove();
-     });
-}
-
-window.currentPersona = localStorage.getItem('ai_persona') || 'friend';
-
-window.saveSettings = function() { 
-    localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); 
-    const oldExpLang = localStorage.getItem('explanation_language'); const newExpLang = document.getElementById('explanationLanguage').value;
-    localStorage.setItem('explanation_language', newExpLang); currentVoiceGender = tempGender; localStorage.setItem('voice_gender', currentVoiceGender);
-    document.documentElement.style.setProperty('--chat-font-size', (localStorage.getItem('chat_font_size') || 14) + 'px');
-    window.changeUILanguage(newExpLang); window.updateLangDisplays(); window.toggleSettingsModal(false); 
-    if (oldExpLang !== newExpLang) { window.clearChatSession(); window.updateStatus("언어 설정이 변경되어 대화가 초기화되었습니다."); }
-}
-
-// 🌟 완벽하게 통합된 화면 이동 함수
+        window.saveSettings = function() { 
+            localStorage.setItem('chat_font_size', document.getElementById('fontSizeSlider').value); 
+            const oldExpLang = localStorage.getItem('explanation_language'); const newExpLang = document.getElementById('explanationLanguage').value;
+            localStorage.setItem('explanation_language', newExpLang); currentVoiceGender = tempGender; localStorage.setItem('voice_gender', currentVoiceGender);
+            document.documentElement.style.setProperty('--chat-font-size', (localStorage.getItem('chat_font_size') || 14) + 'px');
+            window.changeUILanguage(newExpLang); window.updateLangDisplays(); window.toggleSettingsModal(false); 
+            if (oldExpLang !== newExpLang) { clearChatSession(); window.updateStatus("언어 설정이 변경되어 대화가 초기화되었습니다."); }
+        }
+        // 🌟 완벽하게 통합된 화면 이동 함수
 window.navigate = function(screenId) {
+    // 1. 열려있는 드롭다운/메뉴 패널 모두 닫기
     ['inlinePagesPanel', 'inlineReportPanel', 'inlineMemoryPanel', 'inlineSparePanel', 'inlineSettingsPanel'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
     });
 
-    const allScreens = ['screen-home', 'screen-main', 'screen-roleplay', 'screen-vocab', 'screen-alphabet', 'screen-archive'];
+    // 2. 서브 화면들 이동 처리
+    const allScreens = ['screen-home', 'screen-main', 'screen-roleplay', 'screen-vocab', 'screen-alphabet'];
     allScreens.forEach(id => {
         const el = document.getElementById(id);
         if (!el) return;
         
         if (id === screenId) {
-            el.style.transform = 'translateX(0%)'; 
+            el.style.transform = 'translateX(0%)'; // 목적지 화면은 중앙으로
         } else if (id !== 'screen-home') {
-            el.style.transform = 'translateX(100%)'; 
+            el.style.transform = 'translateX(100%)'; // 나머지 서브 화면은 오른쪽으로 숨김
         }
     });
 
+    // 3. 홈 화면 특수 처리 (서브 화면일 땐 왼쪽으로 밀어두고, 홈일 땐 다시 중앙으로)
     const home = document.getElementById('screen-home');
     if (home) {
         if (screenId === 'screen-home') {
@@ -1194,29 +1305,32 @@ window.navigate = function(screenId) {
     }
 };
 
+// 버튼들에서 부르는 다른 이름들도 모두 navigate로 통일
 window.openPage = window.navigate;
 window.goHome = function() { window.navigate('screen-home'); };
+       
 
-let savedScripts = JSON.parse(localStorage.getItem('roleplay_scripts')) || [];
-let roleplayRec = null, isRpListening = false;
-let activeTestScriptIdx = -1, activeTestLineIdx = -1, isInteractiveTestActive = false;
 
-document.querySelectorAll('.level-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
-window.setRandomSituation = function(element) { document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); element.classList.add('selected-card'); };
-document.querySelectorAll('.sit-card').forEach(card => card.onclick = (e) => window.setRandomSituation(e.currentTarget));
+        let savedScripts = JSON.parse(localStorage.getItem('roleplay_scripts')) || [];
+        let roleplayRec = null, isRpListening = false;
+        let activeTestScriptIdx = -1, activeTestLineIdx = -1, isInteractiveTestActive = false;
 
-window.deleteScript = function(index) { if (!confirm("이 대본을 정말 삭제하시겠습니까?")) return; savedScripts.splice(index, 1); localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts(); };
+        document.querySelectorAll('.level-btn').forEach(btn => btn.onclick = (e) => { document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('selected-card')); e.currentTarget.classList.add('selected-card'); });
+        window.setRandomSituation = function(element) { document.querySelectorAll('.sit-card').forEach(c => c.classList.remove('selected-card')); element.classList.add('selected-card'); };
+        document.querySelectorAll('.sit-card').forEach(card => card.onclick = (e) => setRandomSituation(e.currentTarget));
 
-// 🌟 롤플레잉 저장 버튼 포함
-window.renderScripts = function() {
+        window.deleteScript = function(index) { if (!confirm("이 대본을 정말 삭제하시겠습니까?")) return; savedScripts.splice(index, 1); localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); window.renderScripts(); };
+
+        window.renderScripts = function() {
     const playerArea = document.getElementById("scriptList"); playerArea.innerHTML = "";
     if(savedScripts.length === 0) return;
     for (let i = savedScripts.length - 1; i >= 0; i--) {
         const scriptItem = savedScripts[i];
-        let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm"><p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p><div class="flex gap-1.5 items-center"><button id="play-btn-${i}" onclick="window.playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm transition-colors duration-200"><i class="fa-solid fa-volume-high text-xs"></i></button><button onclick="window.startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button><button id="quiz-btn-${i}" onclick="window.toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button><div class="w-px h-4 bg-indigo-200 mx-0.5"></div><button onclick="window.deleteScript(${i})" class="text-slate-400 hover:text-red-500 px-1 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="space-y-3">`;
+        let html = `<div class="mb-5"><div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 mb-3 flex items-center justify-between shadow-sm"><p class="text-[11px] font-extrabold text-indigo-700">📚 ${i + 1}: [${scriptItem.level}] ${scriptItem.situation} (${scriptItem.langName})</p><div class="flex gap-1.5 items-center"><button id="play-btn-${i}" onclick="playSpecificScript(${i})" class="w-8 h-8 rounded-full bg-white text-indigo-600 border border-indigo-200 shadow-sm transition-colors duration-200"><i class="fa-solid fa-volume-high text-xs"></i></button><button onclick="startInteractiveTest(${i})" class="w-8 h-8 rounded-full bg-indigo-600 text-white shadow-sm"><i class="fa-solid fa-gamepad text-xs"></i></button><button id="quiz-btn-${i}" onclick="toggleQuizMode(${i})" class="w-8 h-8 rounded-full bg-white text-amber-500 border border-amber-200 shadow-sm"><i class="fa-solid fa-puzzle-piece text-xs"></i></button><div class="w-px h-4 bg-indigo-200 mx-0.5"></div><button onclick="deleteScript(${i})" class="text-slate-400 hover:text-red-500 px-1 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button></div></div><div class="space-y-3">`;
         
         scriptItem.scriptData.forEach((line, lineIdx) => {
             const isAi = line.role === 'ai';
+            // 🌟 홑따옴표가 들어간 문장을 자바스크립트 인자로 넘기기 위한 안전 처리
             const safeText = line.en.replace(/'/g, "\\'");
             
             html += `
@@ -1235,13 +1349,6 @@ window.renderScripts = function() {
                             <i class="fa-solid fa-microphone"></i> 따라 하기
                         </button>
                     </div>
-                    
-                   <!-- 📥 롤플레잉 보관함 버튼 -->
-                    <div class="mt-2.5 pt-2.5 border-t border-slate-100/80">
-                        <button onclick="window.saveToArchive('script', { original: '${safeText}', translation: '${line.ko.replace(/'/g, "\\'")}', langCode: '${scriptItem.langCode}' })" class="w-full py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 text-[11px] font-bold shadow-sm hover:bg-slate-100 flex items-center justify-center gap-1.5 transition-all">
-                            <i class="fa-solid fa-bookmark text-slate-400"></i> 내 보관함에 저장하기
-                        </button>
-                    </div>
 
                     <div id="feedback-${i}-line-${lineIdx}" class="mt-2 text-[11px] font-bold empty:hidden transition-all"></div>
                 </div>
@@ -1252,6 +1359,7 @@ window.renderScripts = function() {
     }
 };
 
+// 🌟 특정 문장 하나만 개별적으로 섀도잉(따라하기)하는 함수
 window.quickPractice = function(scriptIdx, lineIdx) {
     if(!roleplayRec) { alert("마이크를 지원하지 않습니다."); return; }
     if (isRpListening) { roleplayRec.stop(); return; }
@@ -1274,14 +1382,19 @@ window.quickPractice = function(scriptIdx, lineIdx) {
     roleplayRec.onresult = (e) => {
         recognizedText = e.results[0][0].transcript;
         
+        // 🌟 [완벽 다국어 채점 로직] 아시아권 구두점(。、？！)까지 싹 다 무시!
         const punctuationRegex = /[.,!?¿¡。、？！，；："''「」『』\s]/g;
         const cleanTarget = targetText.toLowerCase().replace(punctuationRegex, "");
         const cleanRecog = recognizedText.toLowerCase().replace(punctuationRegex, "");
         
+        // 1. 완전히 똑같거나, 인식된 문장 안에 정답이 통째로 들어있으면 100점!
         if (cleanTarget === cleanRecog || cleanRecog.includes(cleanTarget)) {
             score = 100;
         } else {
+            // 2. 한/중/일 언어인지 자동 감지 (한자, 히라가나, 가타카나, 한글 포함 여부)
             const isAsian = /[一-龥ぁ-んァ-ン가-힣]/.test(cleanTarget);
+            
+            // 아시아어면 '글자(Character)' 단위로 쪼개고, 그 외 언어는 '단어(Word)' 단위로 쪼갬
             let targetTokens = isAsian ? cleanTarget.split("") : targetText.toLowerCase().replace(/[.,!?¿¡]/g, "").split(" ").filter(w=>w);
             let recogString = isAsian ? cleanRecog : recognizedText.toLowerCase();
             
@@ -1289,12 +1402,12 @@ window.quickPractice = function(scriptIdx, lineIdx) {
             targetTokens.forEach(token => {
                 if (recogString.includes(token)) {
                     matchCount++;
-                    recogString = recogString.replace(token, ""); 
+                    recogString = recogString.replace(token, ""); // 중복 글자/단어 매칭 방지
                 }
             });
             
             let rawScore = Math.round((matchCount / targetTokens.length) * 100);
-            score = Math.min(100, rawScore + 15); 
+            score = Math.min(100, rawScore + 15); // 보너스 15점 후하게!
         }
     };
     
@@ -1313,188 +1426,199 @@ window.quickPractice = function(scriptIdx, lineIdx) {
         if(score > 0 && typeof window.addStudyMission === 'function') window.addStudyMission('script'); 
     };
 }
+        // 🎬 [수정완료] 1. 대본 생성 함수 (로딩 애니메이션 + 원본 로직 완벽 통합)
+        window.generateScript = async function() {
+            if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
+            if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
 
-window.generateScript = async function() {
-    if (savedScripts.length >= 5) { if (!confirm("새로운 대본 생성 시 가장 오래된 1번 대본이 삭제됩니다.\n계속하시겠습니까?")) return; }
-    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
-
-    const btn = document.getElementById("generateBtn");
-    
-    const levelBtn = document.querySelector('.level-btn.selected-card');
-    const level = levelBtn ? levelBtn.innerText.trim() : "초급";
-    const customInput = document.getElementById('rp_custom_input');
-    const customSituation = customInput ? customInput.value.trim() : "";
-    const selectedCard = document.querySelector('.sit-card.selected-card');
-    const situation = customSituation ? customSituation : (selectedCard ? selectedCard.dataset.situation : '자유 대화');
-    const isRandom = (situation === '일상 랜덤');
-    
-    const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
-    const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-    const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
-    const expLangName = aiLangNames[expLangCode] || expLangCode;
-
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>AI 대본 생성 중...</span>';
-    btn.disabled = true;
-    btn.classList.add('opacity-50', 'cursor-wait');
-
-    try {
-        const res = await fetch(`${WORKER_URL}generate-script`, { 
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ level: level, situation: isRandom ? "random daily life" : situation, language: targetLangName, expLanguage: expLangName, isRandom: isRandom }) 
-        });
-        const data = await res.json(); 
-        
-        if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-        if (savedScripts.length >= 5) savedScripts.shift(); 
-        
-        savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
-        localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); 
-        
-        window.renderScripts(); 
-        if(customInput) customInput.value = '';
-    } catch (err) { 
-        alert("대본 생성 실패: 네트워크나 서버를 확인해 주세요."); 
-    } finally { 
-        const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-        btn.innerHTML = UI_DICTIONARY[baseLang]?.generateBtn ? `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>${UI_DICTIONARY[baseLang].generateBtn.replace('✨ ', '')}</span>` : `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>AI 대본 생성하기</span>`; 
-        btn.disabled = false; 
-        btn.classList.remove('opacity-50', 'cursor-wait');
-    }
-};
-
-let activeScriptTimeout = null; 
-let isScriptPlaying = false; 
-let playingScriptIndex = -1;
-
-window.playSpecificScript = function(index) {
-    isInteractiveTestActive = false; const currentBtn = document.getElementById(`play-btn-${index}`);
-    if (isScriptPlaying && playingScriptIndex === index) {
-        if(window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); else window.speechSynthesis.cancel();
-        clearTimeout(activeScriptTimeout); isScriptPlaying = false; playingScriptIndex = -1;
-        if(currentBtn) { currentBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>'; currentBtn.classList.replace('text-red-500', 'text-indigo-600'); currentBtn.classList.replace('border-red-200', 'border-indigo-200'); }
-        return;
-    }
-    if(window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); else window.speechSynthesis.cancel();
-    clearTimeout(activeScriptTimeout);
-    
-    if (playingScriptIndex !== -1) {
-        const oldBtn = document.getElementById(`play-btn-${playingScriptIndex}`);
-        if(oldBtn) { oldBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>'; oldBtn.classList.replace('text-red-500', 'text-indigo-600'); oldBtn.classList.replace('border-red-200', 'border-indigo-200'); }
-    }
-    isScriptPlaying = true; playingScriptIndex = index;
-    if(currentBtn) { currentBtn.innerHTML = '<i class="fa-solid fa-square text-xs"></i>'; currentBtn.classList.replace('text-indigo-600', 'text-red-500'); currentBtn.classList.replace('border-indigo-200', 'border-red-200'); }
-
-    const sd = savedScripts[index].scriptData; let playIdx = 0;
-    const playNext = () => {
-        if (!isScriptPlaying || playingScriptIndex !== index) return;
-        if (playIdx >= sd.length) {
-            isScriptPlaying = false; playingScriptIndex = -1;
-            if(currentBtn) { currentBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>'; currentBtn.classList.replace('text-red-500', 'text-indigo-600'); currentBtn.classList.replace('border-red-200', 'border-indigo-200'); }
-            window.markScriptAsLearned(index); 
-            window.addStudyMission('script'); 
-            window.updateStatus("✅ 대본 듣기 완료! (퀘스트 카운트 됨)");
-            return;
-        }
-        
-        const rawText = sd[playIdx].en;
-        const textToRead = rawText.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
-        const pitch = (sd[playIdx].role.toLowerCase() === 'ai') ? 1.2 : 0.8;
-        
-        if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-            window.flutter_inappwebview.callHandler('speak', textToRead, savedScripts[index].langCode, window.selectedTtsVoiceName || "").then(() => {
-                if(!isScriptPlaying) return; 
-                playIdx++; 
-                playNext();
-            });
-        } else {
-        const utt = new SpeechSynthesisUtterance(textToRead); 
-        utt.lang = savedScripts[index].langCode; 
-        
-        let voices = [];
-        if (window.speechSynthesis && typeof window.speechSynthesis.getVoices === 'function') {
-            voices = window.speechSynthesis.getVoices();
-        }
-        const savedVoiceName = localStorage.getItem('selected_voice_name');
-        let selectedVoice = null;
-        
-        if (savedVoiceName) {
-            selectedVoice = voices.find(v => v.name === savedVoiceName && v.lang.startsWith(utt.lang.split('-')[0]));
-        }
-        if (!selectedVoice) {
-            selectedVoice = voices.find(v => v.lang.startsWith(utt.lang.split('-')[0]));
-        }
-        if (selectedVoice) {
-            utt.voice = selectedVoice;
-        }
-
-        utt.pitch = pitch; 
-        utt.onend = utt.onerror = () => { if(!isScriptPlaying) return; playIdx++; activeScriptTimeout = setTimeout(playNext, 500); }; 
-        window.speechSynthesis.speak(utt);
-    }
-    }; playNext();
-};
+            const btn = document.getElementById("generateBtn");
             
-window.toggleQuizMode = function(index) {
-    const btn = document.getElementById(`quiz-btn-${index}`); const isQuizOn = btn.classList.contains('bg-amber-500');
-    if (!isQuizOn) {
-        btn.classList.replace('bg-white', 'bg-amber-500'); btn.classList.replace('text-amber-500', 'text-white');
-        savedScripts[index].scriptData.forEach((line, lineIdx) => {
-            const words = line.en.split(" "); let blankIndices = [];
-            while(blankIndices.length < Math.max(1, Math.floor(words.length * 0.3)) && blankIndices.length < words.length) {
-                let r = Math.floor(Math.random() * words.length); if(!blankIndices.includes(r)) blankIndices.push(r);
+            // 🌟 대표님의 오리지널 레벨/상황 선택 로직 완벽 보존
+            const levelBtn = document.querySelector('.level-btn.selected-card');
+            const level = levelBtn ? levelBtn.innerText.trim() : "초급";
+            const customInput = document.getElementById('rp_custom_input');
+            const customSituation = customInput ? customInput.value.trim() : "";
+            const selectedCard = document.querySelector('.sit-card.selected-card');
+            const situation = customSituation ? customSituation : (selectedCard ? selectedCard.dataset.situation : '자유 대화');
+            const isRandom = (situation === '일상 랜덤');
+            
+            const targetLangName = document.getElementById('targetLanguage').options[document.getElementById('targetLanguage').selectedIndex].dataset.langName;
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
+            const expLangName = aiLangNames[expLangCode] || expLangCode;
+
+            // 🌟 생성 버튼 로딩 애니메이션 켜기
+            const originalBtnHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>AI 대본 생성 중...</span>';
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-wait');
+
+            try {
+                // 서버로 데이터 전송
+                const res = await fetch(`${WORKER_URL}generate-script`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ level: level, situation: isRandom ? "random daily life" : situation, language: targetLangName, expLanguage: expLangName, isRandom: isRandom }) 
+                });
+                const data = await res.json(); 
+                
+                if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
+                if (savedScripts.length >= 5) savedScripts.shift(); 
+                
+                savedScripts.push({ level: level, situation: situation, langName: targetLangName, langCode: document.getElementById('targetLanguage').value, scriptData: data.scriptData });
+                localStorage.setItem('roleplay_scripts', JSON.stringify(savedScripts)); 
+                
+                window.renderScripts(); // 화면에 그려주기
+                if(customInput) customInput.value = '';
+            } catch (err) { 
+                alert("대본 생성 실패: 네트워크나 서버를 확인해 주세요."); 
+            } finally { 
+                // 🌟 통신이 끝나면 버튼 상태 무조건 원상 복구
+                const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+                btn.innerHTML = UI_DICTIONARY[baseLang]?.generateBtn ? `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>${UI_DICTIONARY[baseLang].generateBtn.replace('✨ ', '')}</span>` : `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>AI 대본 생성하기</span>`; 
+                btn.disabled = false; 
+                btn.classList.remove('opacity-50', 'cursor-wait');
             }
-            document.getElementById(`en-text-${index}-line-${lineIdx}`).innerHTML = words.map((w, i) => blankIndices.includes(i) ? `<span class="bg-slate-300 text-transparent rounded px-2 cursor-pointer hover:bg-slate-400 select-none" onclick="this.className='text-blue-600 bg-blue-50 font-extrabold border-blue-200 border rounded px-1'">${w}</span>` : w).join(" ");
-        });
-    } else {
-        btn.classList.replace('bg-amber-500', 'bg-white'); btn.classList.replace('text-white', 'text-amber-500');
-        savedScripts[index].scriptData.forEach((line, lineIdx) => document.getElementById(`en-text-${index}-line-${lineIdx}`).innerHTML = line.en);
-    }
-};
+        };
 
-window.startInteractiveTest = function(index) {
-    if(window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); else window.speechSynthesis.cancel(); 
-    activeTestScriptIdx = index; activeTestLineIdx = 0; isInteractiveTestActive = true;
-    for(let i=0; i<savedScripts[index].scriptData.length; i++) {
-        const fb = document.getElementById(`feedback-${index}-line-${i}`); if(fb) fb.innerHTML = "";
-        const div = document.getElementById(`script-${index}-line-${i}`); if(div) div.classList.remove('bg-yellow-50', 'border-yellow-200');
-    }
-    window.processNextTestLine();
-};
-
-window.processNextTestLine = function() {
-    if (!isInteractiveTestActive) return;
-    const scriptItem = savedScripts[activeTestScriptIdx];
-    if (activeTestLineIdx >= scriptItem.scriptData.length) { isInteractiveTestActive = false; alert("🎉 완료!"); return; }
-    
-    const line = scriptItem.scriptData[activeTestLineIdx]; 
-    const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
-    if(activeTestLineIdx > 0) document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`).classList.remove('bg-yellow-50', 'border-yellow-200');
-    if(lineDiv) { lineDiv.classList.add('bg-yellow-50', 'border-yellow-200'); lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    
-    if (line.role.toLowerCase() === 'ai') {
-        const textToRead = line.en.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
+        // 🌟 2. 롤플레잉 전체 듣기: 대본 읽을 때 이모지 안 읽음!
+        let activeScriptTimeout = null; 
+        let isScriptPlaying = false; 
+        let playingScriptIndex = -1;
         
-        if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-            window.flutter_inappwebview.callHandler('speak', textToRead, scriptItem.langCode, window.selectedTtsVoiceName || "").then(() => {
-                activeTestLineIdx++; 
-                window.processNextTestLine();
-            });
-        } else {
-            const utt = new SpeechSynthesisUtterance(textToRead); utt.lang = scriptItem.langCode; utt.pitch = 1.2;
-            utt.onend = () => { activeTestLineIdx++; setTimeout(window.processNextTestLine, 500); }; 
-            window.speechSynthesis.speak(utt);
-        }
-    } else {
-        document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 🎤</span>`;
-    }
-};
+        window.playSpecificScript = function(index) {
+            isInteractiveTestActive = false; const currentBtn = document.getElementById(`play-btn-${index}`);
+            if (isScriptPlaying && playingScriptIndex === index) {
+                if(window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); else window.speechSynthesis.cancel();
+                clearTimeout(activeScriptTimeout); isScriptPlaying = false; playingScriptIndex = -1;
+                if(currentBtn) { currentBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>'; currentBtn.classList.replace('text-red-500', 'text-indigo-600'); currentBtn.classList.replace('border-red-200', 'border-indigo-200'); }
+                return;
+            }
+            if(window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); else window.speechSynthesis.cancel();
+            clearTimeout(activeScriptTimeout);
+            
+            if (playingScriptIndex !== -1) {
+                const oldBtn = document.getElementById(`play-btn-${playingScriptIndex}`);
+                if(oldBtn) { oldBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>'; oldBtn.classList.replace('text-red-500', 'text-indigo-600'); oldBtn.classList.replace('border-red-200', 'border-indigo-200'); }
+            }
+            isScriptPlaying = true; playingScriptIndex = index;
+            if(currentBtn) { currentBtn.innerHTML = '<i class="fa-solid fa-square text-xs"></i>'; currentBtn.classList.replace('text-indigo-600', 'text-red-500'); currentBtn.classList.replace('border-indigo-200', 'border-red-200'); }
 
-if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-    roleplayRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
-    roleplayRec.continuous = false; roleplayRec.interimResults = false;
+            const sd = savedScripts[index].scriptData; let playIdx = 0;
+            const playNext = () => {
+                if (!isScriptPlaying || playingScriptIndex !== index) return;
+                if (playIdx >= sd.length) {
+                    isScriptPlaying = false; playingScriptIndex = -1;
+                    if(currentBtn) { currentBtn.innerHTML = '<i class="fa-solid fa-volume-high text-xs"></i>'; currentBtn.classList.replace('text-red-500', 'text-indigo-600'); currentBtn.classList.replace('border-red-200', 'border-indigo-200'); }
+                    window.markScriptAsLearned(index); // 🌟 여기서 학습 완료 기록!
+                    window.addStudyMission('script'); 
+                    window.updateStatus("✅ 대본 듣기 완료! (퀘스트 카운트 됨)");
+                    return;
+                }
+                
+                // 👇 여기서 이모지를 싹 걸러냅니다!
+                const rawText = sd[playIdx].en;
+                const textToRead = rawText.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
+                const pitch = (sd[playIdx].role.toLowerCase() === 'ai') ? 1.2 : 0.8;
+                
+                if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+                    window.flutter_inappwebview.callHandler('speak', textToRead, savedScripts[index].langCode, window.selectedTtsVoiceName || "").then(() => {
+                        if(!isScriptPlaying) return; 
+                        playIdx++; 
+                        playNext();
+                    });
+                } else {
+                const utt = new SpeechSynthesisUtterance(textToRead); 
+                utt.lang = savedScripts[index].langCode; 
+                
+                // 🌟 추가된 기기 목소리 적용 로직!
+                let voices = [];
+// 시스템에 speechSynthesis가 진짜로 존재하는지 먼저 확인하는 안전장치!
+if (window.speechSynthesis && typeof window.speechSynthesis.getVoices === 'function') {
+    voices = window.speechSynthesis.getVoices();
 }
+                const savedVoiceName = localStorage.getItem('selected_voice_name');
+                let selectedVoice = null;
+                
+                if (savedVoiceName) {
+                    selectedVoice = voices.find(v => v.name === savedVoiceName && v.lang.startsWith(utt.lang.split('-')[0]));
+                }
+                if (!selectedVoice) {
+                    selectedVoice = voices.find(v => v.lang.startsWith(utt.lang.split('-')[0]));
+                }
+                if (selectedVoice) {
+                    utt.voice = selectedVoice;
+                }
 
-window.startShadowing = function() {
+                utt.pitch = pitch; // 대본은 AI와 내 목소리 톤이 달라야 하므로 기존 피치 유지
+                utt.onend = utt.onerror = () => { if(!isScriptPlaying) return; playIdx++; activeScriptTimeout = setTimeout(playNext, 500); }; 
+                window.speechSynthesis.speak(utt);
+            }
+            }; playNext();
+        };
+                    
+        window.toggleQuizMode = function(index) {
+            const btn = document.getElementById(`quiz-btn-${index}`); const isQuizOn = btn.classList.contains('bg-amber-500');
+            if (!isQuizOn) {
+                btn.classList.replace('bg-white', 'bg-amber-500'); btn.classList.replace('text-amber-500', 'text-white');
+                savedScripts[index].scriptData.forEach((line, lineIdx) => {
+                    const words = line.en.split(" "); let blankIndices = [];
+                    while(blankIndices.length < Math.max(1, Math.floor(words.length * 0.3)) && blankIndices.length < words.length) {
+                        let r = Math.floor(Math.random() * words.length); if(!blankIndices.includes(r)) blankIndices.push(r);
+                    }
+                    document.getElementById(`en-text-${index}-line-${lineIdx}`).innerHTML = words.map((w, i) => blankIndices.includes(i) ? `<span class="bg-slate-300 text-transparent rounded px-2 cursor-pointer hover:bg-slate-400 select-none" onclick="this.className='text-blue-600 bg-blue-50 font-extrabold border-blue-200 border rounded px-1'">${w}</span>` : w).join(" ");
+                });
+            } else {
+                btn.classList.replace('bg-amber-500', 'bg-white'); btn.classList.replace('text-white', 'text-amber-500');
+                savedScripts[index].scriptData.forEach((line, lineIdx) => document.getElementById(`en-text-${index}-line-${lineIdx}`).innerHTML = line.en);
+            }
+        };
+
+        window.startInteractiveTest = function(index) {
+            if(window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); else window.speechSynthesis.cancel(); 
+            activeTestScriptIdx = index; activeTestLineIdx = 0; isInteractiveTestActive = true;
+            for(let i=0; i<savedScripts[index].scriptData.length; i++) {
+                const fb = document.getElementById(`feedback-${index}-line-${i}`); if(fb) fb.innerHTML = "";
+                const div = document.getElementById(`script-${index}-line-${i}`); if(div) div.classList.remove('bg-yellow-50', 'border-yellow-200');
+            }
+            window.processNextTestLine();
+        };
+
+       // 🌟 3. 롤플레잉 실전 섀도잉: AI가 말할 때 이모지 묵음 처리!
+        window.processNextTestLine = function() {
+            if (!isInteractiveTestActive) return;
+            const scriptItem = savedScripts[activeTestScriptIdx];
+            if (activeTestLineIdx >= scriptItem.scriptData.length) { isInteractiveTestActive = false; alert("🎉 완료!"); return; }
+            
+            const line = scriptItem.scriptData[activeTestLineIdx]; 
+            const lineDiv = document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx}`);
+            if(activeTestLineIdx > 0) document.getElementById(`script-${activeTestScriptIdx}-line-${activeTestLineIdx-1}`).classList.remove('bg-yellow-50', 'border-yellow-200');
+            if(lineDiv) { lineDiv.classList.add('bg-yellow-50', 'border-yellow-200'); lineDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+            
+            if (line.role.toLowerCase() === 'ai') {
+                // 👇 섀도잉 게임 중에도 이모지 제거 적용
+                const textToRead = line.en.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
+                
+                if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+                    window.flutter_inappwebview.callHandler('speak', textToRead, scriptItem.langCode, window.selectedTtsVoiceName || "").then(() => {
+                        activeTestLineIdx++; 
+                        window.processNextTestLine();
+                    });
+                } else {
+                    const utt = new SpeechSynthesisUtterance(textToRead); utt.lang = scriptItem.langCode; utt.pitch = 1.2;
+                    utt.onend = () => { activeTestLineIdx++; setTimeout(window.processNextTestLine, 500); }; 
+                    window.speechSynthesis.speak(utt);
+                }
+            } else {
+                document.getElementById(`feedback-${activeTestScriptIdx}-line-${activeTestLineIdx}`).innerHTML = `<span class="text-red-500 animate-pulse bg-red-50 px-2 py-1 border rounded inline-block"><i class="fa-solid fa-microphone"></i> 🎤</span>`;
+            }
+        };
+
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            roleplayRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
+            roleplayRec.continuous = false; roleplayRec.interimResults = false;
+        }
+
+        window.startShadowing = function() {
     if (savedScripts.length === 0) return alert("대본이 없습니다.");
     if (!isInteractiveTestActive) return alert("실전 대화 게임 모드를 먼저 실행하세요.");
     const targetItem = savedScripts[activeTestScriptIdx]; const userLine = targetItem.scriptData[activeTestLineIdx];
@@ -1512,6 +1636,7 @@ window.startShadowing = function() {
     roleplayRec.onresult = (e) => {
         recognizedText = e.results[0][0].transcript;
         
+        // 🌟 [완벽 다국어 채점 로직 동일 적용]
         const punctuationRegex = /[.,!?¿¡。、？！，；："''「」『』\s]/g;
         const cleanTarget = targetText.toLowerCase().replace(punctuationRegex, "");
         const cleanRecog = recognizedText.toLowerCase().replace(punctuationRegex, "");
@@ -1545,108 +1670,77 @@ window.startShadowing = function() {
     };
 };
 
-window.renderScripts();
+        window.renderScripts();
 
-let savedVocabs = JSON.parse(localStorage.getItem('vocab_scripts')) || [];
-let currentVocabSetIdx = -1; let currentVocabWordIdx = 0;
+        let savedVocabs = JSON.parse(localStorage.getItem('vocab_scripts')) || [];
+        let currentVocabSetIdx = -1; let currentVocabWordIdx = 0;
 
-window.setVocabTheme = function(element) {
-    document.querySelectorAll('.vocab-theme-btn').forEach(btn => { btn.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700'); btn.classList.add('bg-white', 'border-slate-200', 'text-slate-500'); });
-    element.classList.remove('bg-white', 'border-slate-200', 'text-slate-500'); element.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
-};
+        window.setVocabTheme = function(element) {
+            document.querySelectorAll('.vocab-theme-btn').forEach(btn => { btn.classList.remove('bg-indigo-50', 'border-indigo-500', 'text-indigo-700'); btn.classList.add('bg-white', 'border-slate-200', 'text-slate-500'); });
+            element.classList.remove('bg-white', 'border-slate-200', 'text-slate-500'); element.classList.add('bg-indigo-50', 'border-indigo-500', 'text-indigo-700');
+        };
 
-window.deleteVocab = function(index) {
-    if (!confirm("이 단어장을 삭제하시겠습니까?")) return;
-    savedVocabs.splice(index, 1); localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); currentVocabSetIdx = -1; window.renderVocabs();
-};
+        window.deleteVocab = function(index) {
+            if (!confirm("이 단어장을 삭제하시겠습니까?")) return;
+            savedVocabs.splice(index, 1); localStorage.setItem('vocab_scripts', JSON.stringify(savedVocabs)); currentVocabSetIdx = -1; window.renderVocabs();
+        };
 
-window.renderVocabs = function() {
-    const listArea = document.getElementById("vocabListArea"); listArea.innerHTML = "";
-    if(savedVocabs.length === 0) { document.getElementById("mainFlashcardArea").classList.add("hidden"); return; }
-    
-    for (let i = savedVocabs.length - 1; i >= 0; i--) {
-        const set = savedVocabs[i];
-        let html = `<div><div class="bg-slate-100 rounded-xl p-2.5 mb-3 flex justify-between items-center"><p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}: [${set.theme}] (${set.langName})</p><button onclick="window.deleteVocab(${i})" class="text-slate-400 hover:text-red-500 px-2 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="grid grid-cols-4 gap-2">`;
-        set.vocabData.forEach((v, vIdx) => {
-            const isSelected = (currentVocabSetIdx === i && currentVocabWordIdx === vIdx);
-            const bgClass = isSelected ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300';
-            html += `<div onclick="window.showFlashcard(${i}, ${vIdx})" class="aspect-square rounded-xl border-[1.5px] ${bgClass} flex flex-col items-center justify-center text-center p-1 cursor-pointer transition-all shadow-sm"><p class="text-[11px] font-bold truncate w-full px-1">${v.word}</p><p class="text-[9px] ${isSelected ? 'text-indigo-200' : 'text-slate-400'} truncate w-full px-1">${v.meaning}</p></div>`;
-        });
-        html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed my-5">`;
-        listArea.insertAdjacentHTML('beforeend', html);
-    }
-    if(currentVocabSetIdx === -1 && savedVocabs.length > 0) window.showFlashcard(savedVocabs.length - 1, 0);
-};
+        window.renderVocabs = function() {
+            const listArea = document.getElementById("vocabListArea"); listArea.innerHTML = "";
+            if(savedVocabs.length === 0) { document.getElementById("mainFlashcardArea").classList.add("hidden"); return; }
+            
+            for (let i = savedVocabs.length - 1; i >= 0; i--) {
+                const set = savedVocabs[i];
+                let html = `<div><div class="bg-slate-100 rounded-xl p-2.5 mb-3 flex justify-between items-center"><p class="text-xs font-extrabold text-slate-600">📚 ${i + 1}: [${set.theme}] (${set.langName})</p><button onclick="deleteVocab(${i})" class="text-slate-400 hover:text-red-500 px-2 transition-colors" title="삭제"><i class="fa-solid fa-xmark text-lg"></i></button></div><div class="grid grid-cols-4 gap-2">`;
+                set.vocabData.forEach((v, vIdx) => {
+                    const isSelected = (currentVocabSetIdx === i && currentVocabWordIdx === vIdx);
+                    const bgClass = isSelected ? 'bg-indigo-500 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300';
+                    html += `<div onclick="showFlashcard(${i}, ${vIdx})" class="aspect-square rounded-xl border-[1.5px] ${bgClass} flex flex-col items-center justify-center text-center p-1 cursor-pointer transition-all shadow-sm"><p class="text-[11px] font-bold truncate w-full px-1">${v.word}</p><p class="text-[9px] ${isSelected ? 'text-indigo-200' : 'text-slate-400'} truncate w-full px-1">${v.meaning}</p></div>`;
+                });
+                html += `</div></div>`; if(i > 0) html += `<hr class="border-slate-200 border-dashed my-5">`;
+                listArea.insertAdjacentHTML('beforeend', html);
+            }
+            if(currentVocabSetIdx === -1 && savedVocabs.length > 0) window.showFlashcard(savedVocabs.length - 1, 0);
+        };
 
-// 🌟 단어장 플래시카드 저장 버튼 포함
-window.showFlashcard = function(setIdx, wordIdx) {
-    currentVocabSetIdx = setIdx; currentVocabWordIdx = wordIdx;
-    const v = savedVocabs[setIdx].vocabData[wordIdx];
-    
-    document.getElementById("mainFlashcardArea").classList.remove("hidden"); 
-    document.getElementById("vocabFlashcard").classList.remove('rotate-y-180'); 
-    
-    document.getElementById("vcCount").innerText = `${savedVocabs[setIdx].theme} (${wordIdx + 1}/10)`; 
-    document.getElementById("vcWord").innerText = v.word; 
-    document.getElementById("vcPron").innerText = `[${v.pronunciation}]`; 
-    document.getElementById("vcPhonetic").innerText = v.phonetic; 
-    document.getElementById("vcMeaning").innerText = v.meaning; 
-    document.getElementById("vcExEn").innerText = `"${v.example_en}"`; 
-    document.getElementById("vcExKo").innerText = v.example_ko;
+        window.showFlashcard = function(setIdx, wordIdx) {
+            currentVocabSetIdx = setIdx; currentVocabWordIdx = wordIdx;
+            const v = savedVocabs[setIdx].vocabData[wordIdx];
+            document.getElementById("mainFlashcardArea").classList.remove("hidden"); document.getElementById("vocabFlashcard").classList.remove('rotate-y-180'); 
+            document.getElementById("vcCount").innerText = `${savedVocabs[setIdx].theme} (${wordIdx + 1}/10)`; document.getElementById("vcWord").innerText = v.word; document.getElementById("vcPron").innerText = `[${v.pronunciation}]`; document.getElementById("vcPhonetic").innerText = v.phonetic; document.getElementById("vcMeaning").innerText = v.meaning; document.getElementById("vcExEn").innerText = `"${v.example_en}"`; document.getElementById("vcExKo").innerText = v.example_ko;
+            window.renderVocabs(); 
+        };
 
-    let saveBtnContainer = document.getElementById('vocabSaveBtnContainer');
-    if (!saveBtnContainer) {
-        saveBtnContainer = document.createElement('div');
-        saveBtnContainer.id = 'vocabSaveBtnContainer';
-        saveBtnContainer.className = 'flex gap-2 mt-4 w-full max-w-sm';
-        document.getElementById('mainFlashcardArea').appendChild(saveBtnContainer);
-    }
-    
-    const safeWord = v.word.replace(/'/g, "\\'");
-    const safeMeaning = v.meaning.replace(/'/g, "\\'");
-    const safeExEn = v.example_en.replace(/'/g, "\\'");
-    const safeExKo = v.example_ko.replace(/'/g, "\\'");
-    const currentLangCode = savedVocabs[setIdx].langCode;
+        window.nextVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx < savedVocabs[currentVocabSetIdx].vocabData.length - 1) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx + 1); };
+        window.prevVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx > 0) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1); };
 
-    // [수정 후: 단어장 저장 버튼 하나로 통합]
-    saveBtnContainer.innerHTML = `
-        <button onclick="window.saveToArchive('vocab', { word: '${safeWord}', meaning: '${safeMeaning}', example: '${safeExEn}', exampleMeaning: '${safeExKo}', langCode: '${currentLangCode}' })" class="w-full py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-[11px] font-bold shadow-sm hover:bg-slate-100 flex items-center justify-center gap-1.5 transition-all">
-            <i class="fa-solid fa-bookmark text-slate-400"></i> 단어장에 저장하기
-        </button>
-    `;
-
-    window.renderVocabs(); 
-};
-
-window.nextVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx < savedVocabs[currentVocabSetIdx].vocabData.length - 1) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx + 1); };
-window.prevVocab = function() { if(currentVocabSetIdx === -1) return; if(currentVocabWordIdx > 0) window.showFlashcard(currentVocabSetIdx, currentVocabWordIdx - 1); };
-
-window.playVocabAudio = function() {
-    if(currentVocabSetIdx === -1) return; 
-    const vocab = savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx];
-    const isBackSide = document.getElementById('vocabFlashcard').classList.contains('rotate-y-180');
-    const textToRead = isBackSide ? vocab.example_en : vocab.word;
-    
-    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-        window.flutter_inappwebview.callHandler('speak', textToRead, savedVocabs[currentVocabSetIdx].langCode, window.selectedTtsVoiceName || "");
-    } else {
-        window.speechSynthesis.cancel();
-        const utt = new SpeechSynthesisUtterance(textToRead);
-        utt.lang = savedVocabs[currentVocabSetIdx].langCode; utt.rate = isBackSide ? 0.9 : 1.0; 
-        window.speechSynthesis.speak(utt);
-    }
-    
-    window.addStudyMission('vocab'); 
-    window.addLearningStat('word', 1);
-};
-
-window.generateVocab = async function() {
+        window.playVocabAudio = function() {
+            if(currentVocabSetIdx === -1) return; 
+            const vocab = savedVocabs[currentVocabSetIdx].vocabData[currentVocabWordIdx];
+            const isBackSide = document.getElementById('vocabFlashcard').classList.contains('rotate-y-180');
+            const textToRead = isBackSide ? vocab.example_en : vocab.word;
+            
+            if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+                window.flutter_inappwebview.callHandler('speak', textToRead, savedVocabs[currentVocabSetIdx].langCode, window.selectedTtsVoiceName || "");
+            } else {
+                window.speechSynthesis.cancel();
+                const utt = new SpeechSynthesisUtterance(textToRead);
+                utt.lang = savedVocabs[currentVocabSetIdx].langCode; utt.rate = isBackSide ? 0.9 : 1.0; 
+                window.speechSynthesis.speak(utt);
+            }
+            
+            // 🌟 꼼수 방지 완료: 발음을 직접 들었을 때만 진짜 공부로 인정!
+            window.addStudyMission('vocab'); 
+            window.addLearningStat('word', 1);
+        };
+        window.generateVocab = async function() {
     if (savedVocabs.length >= 5) { if (!confirm("새로운 단어장 생성 시 가장 오래된 단어장이 자동 삭제됩니다.\n계속하시겠습니까?")) return; }
     if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
 
     const btn = document.getElementById("generateVocabBtn");
     const theme = document.querySelector('.vocab-theme-btn.bg-indigo-50').innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]|\n/g, '').trim();
     
+    // 🌟 [유지] 사용자가 입력한 단어 가져오기
     const customInput = document.getElementById('vc_custom_input');
     const userCustomWord = customInput ? customInput.value.trim() : "";
 
@@ -1666,6 +1760,7 @@ window.generateVocab = async function() {
         });
         const data = await res.json(); 
 
+        // 🌟 [핵심 수정 1] 단어 중복 제거 로직 추가 (word 스펠링 기준)
         const uniqueVocabData = data.vocabData.filter((v, index, self) => 
             index === self.findIndex((t) => (
                 t.word.toLowerCase() === v.word.toLowerCase()
@@ -1677,8 +1772,10 @@ window.generateVocab = async function() {
         let newId = savedVocabs.length > 0 ? savedVocabs[savedVocabs.length - 1].id + 1 : 1;
         if (savedVocabs.length >= 5) savedVocabs.shift(); 
 
+        // 🌟 [핵심 수정 2] 사용자 입력값이 있을 때 테마명을 명확하게 변경하여 입력값 적용 확인
         let finalTheme = userCustomWord ? `[검색] ${userCustomWord}` : theme;
 
+        // 🌟 [수정 적용] 중복 필터링된 배열(uniqueVocabData)을 사용
         savedVocabs.push({ 
             id: newId, 
             theme: finalTheme, 
@@ -1702,342 +1799,189 @@ window.generateVocab = async function() {
         btn.innerHTML = UI_DICTIONARY[baseLang]?.generateVocabBtn || "✨ AI 단어장 생성하기"; btn.disabled = false; 
     }
 };
-window.renderVocabs();
+        window.renderVocabs();
 
-window.loadAlphabetData = async function() {
-    try {
-        const listArea = document.getElementById("alphabetListArea");
-        const btn = document.getElementById("generateAlphaBtn");
-        const tLang = document.getElementById('targetLanguage');
-        const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
-        const targetLangCode = tLang.value;
-        const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-        const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
-        const expLangName = aiLangNames[expLangCode] || expLangCode;
-        const baseLang = expLangCode.split('-')[0];
-        const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
-
-        const cacheKey = 'full_alpha_v28_' + targetLangCode + '_' + expLangCode;
-        let fullData = null; let alphaProgress = {};
-        try { fullData = JSON.parse(localStorage.getItem(cacheKey)); alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v28')) || {}; } catch(e) {}
-        
-        let currentLimit = alphaProgress[cacheKey] || 0;
-        if (fullData && currentLimit >= fullData.alphabetData.length) return;
-
-        if (!fullData) {
-            if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n진행하시겠습니까?`)) return;
-            if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
-
-            let specialHint = "";
-            let letterRule = `'letter' and 'exampleWord' MUST be in [${targetLangName}].`;
-            if (targetLangCode.startsWith('zh')) {
-                specialHint = "Generate basic Chinese Pinyin (Shengmu/Initials and Yunmu/Finals).";
-                letterRule = `'letter' MUST be English alphabet for Pinyin (e.g., b, p, m, f, a, o). 'pronunciation' MUST be Pinyin with tone marks. 'exampleWord' MUST be Chinese Hanzi.`;
-            } else if (targetLangCode.startsWith('ja')) {
-                specialHint = "Generate ALL basic Hiragana and Katakana characters.";
-                letterRule = `'letter' MUST be Japanese. 'pronunciation' MUST be English Romaji.`;
-            } else if (targetLangCode.startsWith('en')) {
-                specialHint = "Generate exactly 26 English alphabets (A to Z)."; 
-            } else if (targetLangCode.startsWith('ko')) {
-                specialHint = "Generate ALL basic Korean Hangul Consonants and Vowels (자음과 모음).";
-                letterRule = `'letter' and 'exampleWord' MUST be Korean Hangul. 'pronunciation' MUST be English Romaji.`;
-            } else {
-                specialHint = "Generate ALL basic characters/letters for this language.";
-            }
-
-            btn.innerText = "⏳ 전체 발음 체계를 구성 중입니다..."; btn.disabled = true;
-            listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "로딩 중..."}</div>`;
-
+        window.loadAlphabetData = async function() {
             try {
-                const res = await fetchAPI(`${WORKER_URL}generate-alphabet`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
-                    body: JSON.stringify({ language: targetLangName, expLanguage: expLangName, extraHint: `${specialHint} ${letterRule}` }) 
+                const listArea = document.getElementById("alphabetListArea");
+                const btn = document.getElementById("generateAlphaBtn");
+                const tLang = document.getElementById('targetLanguage');
+                const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
+                const targetLangCode = tLang.value;
+                const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+                const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi" };
+                const expLangName = aiLangNames[expLangCode] || expLangCode;
+                const baseLang = expLangCode.split('-')[0];
+                const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY["en"];
+
+                const cacheKey = 'full_alpha_v28_' + targetLangCode + '_' + expLangCode;
+                let fullData = null; let alphaProgress = {};
+                try { fullData = JSON.parse(localStorage.getItem(cacheKey)); alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v28')) || {}; } catch(e) {}
+                
+                let currentLimit = alphaProgress[cacheKey] || 0;
+                if (fullData && currentLimit >= fullData.alphabetData.length) return;
+
+                if (!fullData) {
+                    if (!confirm(`[${targetLangName}]의 전체 기초 발음 데이터를 처음 생성합니다.\n진행하시겠습니까?`)) return;
+                    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+
+                    let specialHint = "";
+                    let letterRule = `'letter' and 'exampleWord' MUST be in [${targetLangName}].`;
+                    if (targetLangCode.startsWith('zh')) {
+                        specialHint = "Generate basic Chinese Pinyin (Shengmu/Initials and Yunmu/Finals).";
+                        letterRule = `'letter' MUST be English alphabet for Pinyin (e.g., b, p, m, f, a, o). 'pronunciation' MUST be Pinyin with tone marks. 'exampleWord' MUST be Chinese Hanzi.`;
+                    } else if (targetLangCode.startsWith('ja')) {
+                        specialHint = "Generate ALL basic Hiragana and Katakana characters.";
+                        letterRule = `'letter' MUST be Japanese. 'pronunciation' MUST be English Romaji.`;
+                    } else if (targetLangCode.startsWith('en')) {
+                        specialHint = "Generate exactly 26 English alphabets (A to Z)."; 
+                    } else if (targetLangCode.startsWith('ko')) {
+                        specialHint = "Generate ALL basic Korean Hangul Consonants and Vowels (자음과 모음).";
+                        letterRule = `'letter' and 'exampleWord' MUST be Korean Hangul. 'pronunciation' MUST be English Romaji.`;
+                    } else {
+                        specialHint = "Generate ALL basic characters/letters for this language.";
+                    }
+
+                    btn.innerText = "⏳ 전체 발음 체계를 구성 중입니다..."; btn.disabled = true;
+                    listArea.innerHTML = `<div class="text-center text-slate-400 text-sm mt-10 font-bold"><i class="fa-solid fa-wand-magic-sparkles text-2xl mb-3 text-emerald-400 animate-pulse"></i><br>${dict.alpha_fetching || "로딩 중..."}</div>`;
+
+                    try {
+                        const res = await fetchAPI(`${WORKER_URL}generate-alphabet`, { 
+                            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
+                            body: JSON.stringify({ language: targetLangName, expLanguage: expLangName, extraHint: `${specialHint} ${letterRule}` }) 
+                        });
+                        if (!res) throw new Error("서버 에러");
+                        const data = await res.json(); 
+                        if(!data || !data.alphabetData) throw new Error("데이터 누락");
+                        if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
+
+                        fullData = data; localStorage.setItem(cacheKey, JSON.stringify(fullData)); currentLimit = 0; 
+                    } catch (err) { 
+                        listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">서버 통신 실패. 버튼을 다시 눌러주세요!</div>`;
+                        btn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기"; btn.disabled = false; return;
+                    }
+                } else {
+                    btn.innerText = "⏳ 다음 발음 준비 중..."; btn.disabled = true;
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                }
+
+                currentLimit += 20; alphaProgress[cacheKey] = currentLimit;
+                localStorage.setItem('alpha_progress_v28', JSON.stringify(alphaProgress));
+
+                const isFinished = currentLimit >= fullData.alphabetData.length;
+                const dataToShow = fullData.alphabetData.slice(0, currentLimit);
+                if (typeof window.renderAlphabet === 'function') window.renderAlphabet(dataToShow, fullData.description, targetLangCode);
+
+                if (isFinished) {
+                    btn.innerText = `🎉 모든 발음 학습 완료! (${fullData.alphabetData.length}개)`; btn.disabled = true;
+                    btn.classList.replace('bg-slate-900', 'bg-emerald-600'); btn.classList.replace('hover:bg-black', 'hover:bg-emerald-700');
+                } else {
+                    btn.innerText = `👇 다음 발음 더 보기 (${dataToShow.length} / ${fullData.alphabetData.length})`; btn.disabled = false;
+                    btn.classList.replace('bg-emerald-600', 'bg-slate-900'); btn.classList.replace('hover:bg-emerald-700', 'hover:bg-black');
+                }
+            } catch (e) { const btn = document.getElementById("generateAlphaBtn"); if(btn) { btn.innerText = "✨ 오류 발생 (다시 시도)"; btn.disabled = false; } }
+        };
+        window.renderAlphabet = function(alphabetData, description, langCode) {
+            const listArea = document.getElementById("alphabetListArea"); let html = "";
+            if(description) html += `<div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mb-5 shadow-sm"><p class="text-[13px] text-emerald-800 font-bold leading-relaxed whitespace-pre-wrap"><i class="fa-solid fa-circle-info mr-1"></i> ${description}</p></div>`;
+            const grouped = alphabetData.reduce((acc, curr) => { if (!acc[curr.category]) acc[curr.category] = []; acc[curr.category].push(curr); return acc; }, {});
+            for (const [category, letters] of Object.entries(grouped)) {
+                html += `<div class="mb-6"><h3 class="text-sm font-extrabold text-emerald-700 mb-3 border-b border-emerald-100 pb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-leaf text-emerald-400 text-xs"></i> ${category}</h3><div class="grid grid-cols-3 gap-2">`;
+                letters.forEach(item => {
+                    const safeLetter = item.letter ? item.letter.replace(/'/g, "\\'") : ""; const safeWord = item.exampleWord ? item.exampleWord.replace(/'/g, "\\'") : "";
+                    html += `<button onclick="playAlphabetAudio('${safeLetter}. ${safeWord}', '${langCode}')" class="bg-white border-[2px] border-slate-100 rounded-2xl flex flex-col items-center justify-center p-2.5 shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md transition-all group relative"><span class="absolute top-2 left-2 text-sm drop-shadow-sm">${item.emoji || ''}</span><span class="text-3xl font-black text-slate-800 group-hover:text-emerald-600 transition-colors mt-2 mb-1">${item.letter}</span><span class="text-[10px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded-md group-hover:bg-white transition-colors mb-2">${item.pronunciation}</span><div class="w-full bg-slate-50 rounded-lg py-1.5 group-hover:bg-emerald-100/50 transition-colors"><p class="text-[11px] font-extrabold text-slate-700 truncate px-1">${item.exampleWord || ''}</p><p class="text-[9px] text-slate-500 truncate px-1">${item.exampleMeaning || ''}</p></div></button>`;
                 });
-                if (!res) throw new Error("서버 에러");
-                const data = await res.json(); 
-                if(!data || !data.alphabetData) throw new Error("데이터 누락");
-                if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-
-                fullData = data; localStorage.setItem(cacheKey, JSON.stringify(fullData)); currentLimit = 0; 
-            } catch (err) { 
-                listArea.innerHTML = `<div class="text-center text-red-400 text-sm mt-10 font-bold">서버 통신 실패. 버튼을 다시 눌러주세요!</div>`;
-                btn.innerText = dict.generateAlphaBtn || "✨ 선택한 언어의 AI 파닉스 가져오기"; btn.disabled = false; return;
+                html += `</div></div>`;
             }
-        } else {
-            btn.innerText = "⏳ 다음 발음 준비 중..."; btn.disabled = true;
-            await new Promise(resolve => setTimeout(resolve, 300));
-        }
+            listArea.innerHTML = html;
+        };
 
-        currentLimit += 20; alphaProgress[cacheKey] = currentLimit;
-        localStorage.setItem('alpha_progress_v28', JSON.stringify(alphaProgress));
-
-        const isFinished = currentLimit >= fullData.alphabetData.length;
-        const dataToShow = fullData.alphabetData.slice(0, currentLimit);
-        if (typeof window.renderAlphabet === 'function') window.renderAlphabet(dataToShow, fullData.description, targetLangCode);
-
-        if (isFinished) {
-            btn.innerText = `🎉 모든 발음 학습 완료! (${fullData.alphabetData.length}개)`; btn.disabled = true;
-            btn.classList.replace('bg-slate-900', 'bg-emerald-600'); btn.classList.replace('hover:bg-black', 'hover:bg-emerald-700');
-        } else {
-            btn.innerText = `👇 다음 발음 더 보기 (${dataToShow.length} / ${fullData.alphabetData.length})`; btn.disabled = false;
-            btn.classList.replace('bg-emerald-600', 'bg-slate-900'); btn.classList.replace('hover:bg-emerald-700', 'hover:bg-black');
-        }
-    } catch (e) { const btn = document.getElementById("generateAlphaBtn"); if(btn) { btn.innerText = "✨ 오류 발생 (다시 시도)"; btn.disabled = false; } }
-};
-
-window.renderAlphabet = function(alphabetData, description, langCode) {
-    const listArea = document.getElementById("alphabetListArea"); let html = "";
-    if(description) html += `<div class="bg-emerald-50 rounded-2xl p-4 border border-emerald-100 mb-5 shadow-sm"><p class="text-[13px] text-emerald-800 font-bold leading-relaxed whitespace-pre-wrap"><i class="fa-solid fa-circle-info mr-1"></i> ${description}</p></div>`;
-    const grouped = alphabetData.reduce((acc, curr) => { if (!acc[curr.category]) acc[curr.category] = []; acc[curr.category].push(curr); return acc; }, {});
-    for (const [category, letters] of Object.entries(grouped)) {
-        html += `<div class="mb-6"><h3 class="text-sm font-extrabold text-emerald-700 mb-3 border-b border-emerald-100 pb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-leaf text-emerald-400 text-xs"></i> ${category}</h3><div class="grid grid-cols-3 gap-2">`;
-        letters.forEach(item => {
-            const safeLetter = item.letter ? item.letter.replace(/'/g, "\\'") : ""; const safeWord = item.exampleWord ? item.exampleWord.replace(/'/g, "\\'") : "";
-            html += `<button onclick="window.playAlphabetAudio('${safeLetter}. ${safeWord}', '${langCode}')" class="bg-white border-[2px] border-slate-100 rounded-2xl flex flex-col items-center justify-center p-2.5 shadow-sm hover:border-emerald-400 hover:bg-emerald-50 hover:shadow-md transition-all group relative"><span class="absolute top-2 left-2 text-sm drop-shadow-sm">${item.emoji || ''}</span><span class="text-3xl font-black text-slate-800 group-hover:text-emerald-600 transition-colors mt-2 mb-1">${item.letter}</span><span class="text-[10px] text-slate-400 font-bold bg-slate-100 px-1.5 py-0.5 rounded-md group-hover:bg-white transition-colors mb-2">${item.pronunciation}</span><div class="w-full bg-slate-50 rounded-lg py-1.5 group-hover:bg-emerald-100/50 transition-colors"><p class="text-[11px] font-extrabold text-slate-700 truncate px-1">${item.exampleWord || ''}</p><p class="text-[9px] text-slate-500 truncate px-1">${item.exampleMeaning || ''}</p></div></button>`;
-        });
-        html += `</div></div>`;
-    }
-    listArea.innerHTML = html;
-};
-
-window.playAlphabetAudio = function(textToSpeak, langCode) { 
-    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-        window.flutter_inappwebview.callHandler('speak', textToSpeak, langCode, window.selectedTtsVoiceName || "");
-    } else {
-        window.speechSynthesis.cancel(); 
-        setTimeout(() => { const utt = new SpeechSynthesisUtterance(textToSpeak); utt.lang = langCode; utt.pitch = 1.1; utt.rate = 0.85; window.speechSynthesis.speak(utt); }, 50);
-    }
-};
-
-window.autoLoadAlphabet = function() {
-    const tLang = document.getElementById('targetLanguage'); if(!tLang) return;
-    const targetLangCode = tLang.value; 
-    const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-    const cacheKey = 'full_alpha_v28_' + targetLangCode + '_' + expLangCode;
-    
-    const cachedData = localStorage.getItem(cacheKey); 
-    const btn = document.getElementById("generateAlphaBtn");
-    const listArea = document.getElementById("alphabetListArea");
-
-    if (cachedData && typeof window.renderAlphabet === 'function') {
-        const fullData = JSON.parse(cachedData); 
-        let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v28')) || {};
-        let currentLimit = alphaProgress[cacheKey] || 20; 
-        
-        window.renderAlphabet(fullData.alphabetData.slice(0, currentLimit), fullData.description, targetLangCode);
-        
-        if (btn) {
-            const isFinished = currentLimit >= fullData.alphabetData.length;
-            if (isFinished) {
-                btn.innerText = `🎉 완료! (${fullData.alphabetData.length}개)`; 
-                btn.disabled = true; 
-                btn.classList.replace('bg-slate-900', 'bg-emerald-600'); 
+        window.playAlphabetAudio = function(textToSpeak, langCode) { 
+            if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+                window.flutter_inappwebview.callHandler('speak', textToSpeak, langCode, window.selectedTtsVoiceName || "");
             } else {
-                btn.innerText = `👇 더 보기 (${currentLimit} / ${fullData.alphabetData.length})`; 
-                btn.disabled = false; 
-                btn.classList.replace('bg-emerald-600', 'bg-slate-900'); 
+                window.speechSynthesis.cancel(); 
+                setTimeout(() => { const utt = new SpeechSynthesisUtterance(textToSpeak); utt.lang = langCode; utt.pitch = 1.1; utt.rate = 0.85; window.speechSynthesis.speak(utt); }, 50);
             }
-        }
-    } else {
-        if(listArea) listArea.innerHTML = '';
-        if(btn) { 
-            btn.innerText = "✨ AI 파닉스 가져오기"; 
-            btn.disabled = false; 
-            btn.classList.remove('bg-emerald-600'); 
-            btn.classList.add('bg-slate-900'); 
-        }
-    }
-};
+        };
 
-window.renderSpecialPersona = function() {
-    if (localStorage.getItem('unlocked_special_persona') === 'true') {
-        const guideBtn = document.querySelector('button[onclick="window.currentPersona=\'guide\';"]');
-        if (guideBtn && !document.getElementById('btn_persona_special')) {
-            guideBtn.insertAdjacentHTML('afterend', `
-                <button id="btn_persona_special" onclick="window.currentPersona='special'; window.updateStatus('비밀 페르소나 적용!');" class="w-[70px] h-[32px] flex items-center justify-center bg-pink-50 hover:bg-pink-100 border border-pink-200 text-pink-600 text-[10px] font-extrabold rounded shadow-[0_0_10px_rgba(244,114,182,0.5)] transition-all px-1">
-                    <span class="truncate w-full text-center">✨ 톱스타</span>
-                </button>
-            `);
-        }
-    }
-};
+        window.autoLoadAlphabet = function() {
+            const tLang = document.getElementById('targetLanguage'); if(!tLang) return;
+            const targetLangCode = tLang.value; 
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const cacheKey = 'full_alpha_v28_' + targetLangCode + '_' + expLangCode;
+            
+            const cachedData = localStorage.getItem(cacheKey); 
+            const btn = document.getElementById("generateAlphaBtn");
+            const listArea = document.getElementById("alphabetListArea");
 
-
-// ==========================================
-// 📂 내 보관함 통합 엔진 (박스 요약 + 리스트형 완벽 호환)
-// ==========================================
-
-window.archiveData = { script: [], vocab: [], freetalk: [] };
-window.currentArchiveTab = 'script';
-window.archiveFilter = 'all'; // 🌟 추가: 현재 선택된 필터 상태 저장
-
-// 1. 데이터 불러오기 / 저장하기
-window.loadArchiveData = function() {
-    const saved = localStorage.getItem('talkai_archive_db');
-    if (saved) window.archiveData = JSON.parse(saved);
-};
-window.saveArchiveData = function() {
-    localStorage.setItem('talkai_archive_db', JSON.stringify(window.archiveData));
-};
-
-// 🌟 추가: 필터 버튼 클릭 시 실행될 함수
-window.setArchiveFilter = function(type) {
-    if (window.archiveFilter === type) {
-        window.archiveFilter = 'all'; // 이미 선택된 박스를 누르면 '전체 보기'로 해제
-    } else {
-        window.archiveFilter = type;  // 선택한 필터(general 또는 premium) 적용
-    }
-    window.renderArchiveList(); // 화면 다시 그리기
-};
-
-// 2. 탭 전환 (버튼 색상 변경 + 리스트 갱신)
-window.switchArchiveTab = function(tabName) {
-    window.currentArchiveTab = tabName;
-    window.archiveFilter = 'all'; // 🌟 추가: 대본/단어장 탭을 바꿀 때는 무조건 '전체 보기'로 초기화
-    
-    const tabs = ['script', 'vocab', 'freetalk'];
-    tabs.forEach(t => {
-        const btn = document.getElementById(`tab_${t}`);
-        if(btn) {
-            btn.className = (t === tabName) 
-                ? "flex-1 bg-amber-50 border border-amber-400 text-amber-700 text-xs font-bold py-2 rounded-xl shadow-sm transition-all"
-                : "flex-1 bg-white border border-slate-200 text-slate-500 text-xs font-bold py-2 rounded-xl hover:bg-slate-50 transition-all";
-        }
-    });
-    
-    window.renderArchiveList(); 
-};
-
-// 3. 리스트 렌더링 (필터 & 프리미엄 UI 싹 다 제거)
-window.renderArchiveList = function() {
-    const container = document.getElementById('archiveListContainer');
-    if (!container) return;
-
-    const items = window.archiveData[window.currentArchiveTab] || [];
-
-    container.innerHTML = ''; 
-    if (items.length === 0) {
-        container.innerHTML = `<div class="flex flex-col items-center justify-center h-48 opacity-60 mt-5"><div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-300 text-2xl mb-3"><i class="fa-solid fa-folder-open"></i></div><p class="text-xs font-bold text-slate-400">아직 보관된 내용이 없습니다.</p></div>`;
-        return;
-    }
-
-    // 데이터 카드 렌더링 (순정 UI)
-    items.forEach((item) => {
-        const title = window.currentArchiveTab === 'vocab' ? item.word : (item.original || "대화내용");
-        const sub1 = window.currentArchiveTab === 'vocab' ? item.meaning : '';
-        const sub2 = window.currentArchiveTab === 'vocab' ? item.example : item.translation;
-        const sub3 = window.currentArchiveTab === 'vocab' ? item.exampleMeaning : '';
+            if (cachedData && typeof window.renderAlphabet === 'function') {
+                const fullData = JSON.parse(cachedData); 
+                let alphaProgress = JSON.parse(localStorage.getItem('alpha_progress_v28')) || {};
+                let currentLimit = alphaProgress[cacheKey] || 20; 
+                
+                window.renderAlphabet(fullData.alphabetData.slice(0, currentLimit), fullData.description, targetLangCode);
+                
+                if (btn) {
+                    const isFinished = currentLimit >= fullData.alphabetData.length;
+                    if (isFinished) {
+                        btn.innerText = `🎉 완료! (${fullData.alphabetData.length}개)`; 
+                        btn.disabled = true; 
+                        btn.classList.replace('bg-slate-900', 'bg-emerald-600'); 
+                    } else {
+                        btn.innerText = `👇 더 보기 (${currentLimit} / ${fullData.alphabetData.length})`; 
+                        btn.disabled = false; 
+                        btn.classList.replace('bg-emerald-600', 'bg-slate-900'); 
+                    }
+                }
+            } else {
+                if(listArea) listArea.innerHTML = '';
+                if(btn) { 
+                    btn.innerText = "✨ AI 파닉스 가져오기"; 
+                    btn.disabled = false; 
+                    btn.classList.remove('bg-emerald-600'); 
+                    btn.classList.add('bg-slate-900'); 
+                }
+            }
+        };
+        // 🌟 2. 비밀 페르소나 버튼 생성 함수 (연인 -> 톱스타로 변경)
+        window.renderSpecialPersona = function() {
+            if (localStorage.getItem('unlocked_special_persona') === 'true') {
+                const guideBtn = document.querySelector('button[onclick="window.currentPersona=\'guide\';"]');
+                if (guideBtn && !document.getElementById('btn_persona_special')) {
+                    guideBtn.insertAdjacentHTML('afterend', `
+                        <button id="btn_persona_special" onclick="window.currentPersona='special'; window.updateStatus('비밀 페르소나 적용!');" class="w-[70px] h-[32px] flex items-center justify-center bg-pink-50 hover:bg-pink-100 border border-pink-200 text-pink-600 text-[10px] font-extrabold rounded shadow-[0_0_10px_rgba(244,114,182,0.5)] transition-all px-1">
+                            <span class="truncate w-full text-center">✨ 톱스타</span>
+                        </button>
+                    `);
+                }
+            }
+        };
         
-        container.innerHTML += `
-            <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-3 relative overflow-hidden transition-all hover:-translate-y-0.5">
-                <div class="flex items-center justify-between mb-2 relative z-10">
-                    <span class="text-[9px] font-black px-2 py-0.5 rounded border text-blue-600 bg-blue-50 border-blue-200">
-                        <i class="fa-solid fa-bookmark mr-0.5"></i> 일반 보관
-                    </span>
-                    <button onclick="window.deleteArchiveItem('${item.id}')" class="text-slate-300 hover:text-red-500 transition-colors px-1 py-0.5"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                </div>
-                
-                <div class="relative z-10 pl-1 mb-3">
-                    <p class="text-xs font-black text-slate-800 mb-0.5 leading-snug">${title}</p>
-                    ${sub1 ? `<p class="text-[12px] font-bold text-slate-500 mb-2">${sub1}</p>` : ''}
-                    ${sub2 ? `
-                    <div class="pl-2 border-l-2 border-slate-200 mt-2">
-                        <p class="text-[12px] font-black text-slate-600 leading-snug">${sub2}</p>
-                        ${sub3 ? `<p class="text-[11px] text-slate-600 font-medium leading-snug mt-0.5">${sub3}</p>` : ''}
-                    </div>` : ''}
-                </div>
-                
-                <button onclick="window.playArchiveAudio('${item.id}')" class="w-full py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-black rounded-xl transition-all flex items-center justify-center gap-1.5 relative z-10">
-                    <i class="fa-solid fa-volume-high"></i> 음성 듣기
-                </button>
-            </div>
-        `;
-    });
-};
 
-// 4. 통합 저장 엔진 (isPremium 파라미터 삭제, 언어만 박제)
-window.saveToArchive = function(type, itemData) {
-    if (!window.archiveData) window.archiveData = { script: [], vocab: [], freetalk: [] };
-    if (!window.archiveData[type]) window.archiveData[type] = [];
-
-    alert("💾 보관함에 저장되었습니다.");
-
-    const inherentLang = itemData.langCode || localStorage.getItem('target_language') || 'en-US';
-
-    const newItem = {
-        id: 'archive_' + Date.now(),
-        savedLangCode: inherentLang, // 만들어진 당시의 언어만 기억
-        ...itemData
-    };
-
-    window.archiveData[type].unshift(newItem); 
-    window.saveArchiveData(); 
-    
-    if (window.currentArchiveTab === type) {
-        window.renderArchiveList();
-    }
-};
-
-// 5. 삭제 (플러터 연동 기기 파일 삭제 로직 제거)
-window.deleteArchiveItem = function(id) {
-    if(confirm("이 항목을 삭제하시겠습니까?")) {
-        const currentTab = window.currentArchiveTab;
-        window.archiveData[currentTab] = window.archiveData[currentTab].filter(i => i.id !== id);
-        window.saveArchiveData();
-        window.renderArchiveList();
-    }
-};
-
-// 6. 보관함 오디오 재생 (구글 통신 완전 삭제, 순수 기기 재생)
-window.playArchiveAudio = async function(id) {
-    const currentTab = window.currentArchiveTab;
-    const item = window.archiveData[currentTab].find(i => i.id === id);
-    if (!item) return alert("데이터를 찾을 수 없습니다.");
-
-    let textToRead = currentTab === 'vocab' ? item.word + (item.example && item.example.trim() !== "null" ? ". " + item.example : "") : item.original;
-    if (!textToRead) return;
-    
-    const cleanText = textToRead.replace(/[\*\#\`\~\"\'\(\)\[\]]/g, ' ').replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, '').trim();
-    const targetLang = item.savedLangCode || localStorage.getItem('target_language') || 'en-US';
-
-    if (typeof window.updateStatus === 'function') window.updateStatus("🔊 음성 재생 중...");
-    
-    // 만능 기기 재생 함수로 바로 쏴줌!
-    if (typeof window.speakText === 'function') {
-        window.speakText(cleanText, targetLang);
-    } else {
-        window.speechSynthesis.cancel();
-        const utt = new SpeechSynthesisUtterance(cleanText);
-        utt.lang = targetLang;
-        window.speechSynthesis.speak(utt);
-    }
-};
-
-// 앱 켤 때 즉시 데이터 불러오고 탭 세팅!
-window.loadArchiveData();
-window.switchArchiveTab('script');
-
-
-// ==========================================
 // 🌟 다국어 지원 & 스크롤 고정형 AI 속마음 모듈
-// ==========================================
 window.updateMemoryDisplay = function() {
     const memDisplay = document.getElementById('ai_memory_display');
     if(!memDisplay) return;
 
+    // 🚫 [스크롤 제거 핵심] 자바스크립트로 스크롤 강제 차단 및 고정
     memDisplay.style.overflow = "hidden";
     memDisplay.style.maxHeight = "none";
-    memDisplay.classList.remove('overflow-y-auto', 'overflow-auto'); 
+    memDisplay.classList.remove('overflow-y-auto', 'overflow-auto'); // 혹시 모를 기존 클래스 제거
 
+    // 🌍 사용자 다국어 설정 가져오기
     const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
     const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
     
+    // 상태 라벨 다국어 처리 (사전에 없으면 기본값 언어별로 출력)
     const statusLabel = dict.ui_status || (baseLang === 'ko' ? "상태" : "Status");
 
+    // 데이터 가져오기
     const intimacyData = INTIMACY_SYSTEM.getData();
     const levelInfo = INTIMACY_SYSTEM.levels[intimacyData.level];
     const dynamicThought = localStorage.getItem('ai_dynamic_thought') || levelInfo.aiMind; 
 
+    // 화면에 그리기
     let htmlContent = `
         <div class="mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl shadow-sm relative overflow-hidden">
             <div class="absolute -right-2 -top-2 opacity-10 text-4xl">💭</div>
@@ -2047,110 +1991,126 @@ window.updateMemoryDisplay = function() {
 
     memDisplay.innerHTML = htmlContent;
 };
+        // 🌟 [수정됨] AI 튜터의 속마음(기억)을 사용자의 언어 설정에 맞춰 다국어로 요약하는 기능
+        window.compressMemory = async function() {
+            // 대화가 8줄 이상 쌓였을 때만 기억 압축 실행
+            if (conversationHistory.length < 8) return; 
+            const savedMem = localStorage.getItem('user_compressed_memory') || 'Empty';
+            const chatLog = JSON.stringify(conversationHistory);
+            
+            // 🌟 1. 현재 사용자가 설정한 '사용자 언어' 파악하기
+            const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
+            const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi", "id-ID": "Indonesian" };
+            const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
-window.compressMemory = async function() {
-    if (conversationHistory.length < 14) return; 
-    const savedMem = localStorage.getItem('user_compressed_memory') || 'Empty';
-    const chatLog = JSON.stringify(conversationHistory);
-    
-    const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
-    const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi", "id-ID": "Indonesian" };
-    const exactAiLang = aiLangNames[expLangCode] || expLangCode;
+            // 🌟 2. AI에게 "무조건 사용자가 설정한 언어(exactAiLang)로 속마음을 작성해!"라고 강력하게 명령
+            const sysPrompt = `You are an AI tutor's memory compressor. Extract the user's characteristics, preferences, and interests from the chat log.
+            STRICT RULE: You MUST write the compressed memory ONLY in ${exactAiLang}. Keep it friendly and concise (under 100 characters).
+            Respond ONLY in JSON format: {"memory": "..."}`;
 
-    const sysPrompt = `You are an AI tutor's memory compressor. Extract the user's characteristics, preferences, and interests from the chat log.
-    STRICT RULE: You MUST write the compressed memory ONLY in ${exactAiLang}. Keep it friendly and concise (under 100 characters).
-    Respond ONLY in JSON format: {"memory": "..."}`;
-
-    try {
-        let res = await fetchAPI(WORKER_URL, {
-            method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
-            body: JSON.stringify({ model: "deepseek-chat", messages: [{role: "system", content: sysPrompt}, {role: "user", content: `Old Memory:${savedMem}\nNew Chat:${chatLog}`}], response_format: { type: "json_object" } })
-        });
-        let data = await res.json();
-        let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
-        let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
-        
-        if (parsed.memory) {
-            window.conversationTurn = (window.conversationTurn || 0) + 1;
-
-            if (window.conversationTurn % 5 === 0) {
-                let isUpdated = false; 
-
+            try {
+                let res = await fetchAPI(WORKER_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
+                    body: JSON.stringify({ model: "deepseek-chat", messages: [{role: "system", content: sysPrompt}, {role: "user", content: `Old Memory:${savedMem}\nNew Chat:${chatLog}`}], response_format: { type: "json_object" } })
+                });
+                let data = await res.json();
+                let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+                let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
+                
                 if (parsed.memory) {
-                    localStorage.setItem('user_compressed_memory', parsed.memory);
-                    isUpdated = true;
-                }
+    // 💡 1. AI가 답변을 완료할 때마다 '실제 대화 턴(Turn)'을 1씩 증가시킵니다.
+// 💡 1. 대화 턴(Turn) 1 증가
+window.conversationTurn = (window.conversationTurn || 0) + 1;
 
-                if (parsed.inner_thought) {
-                    localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
-                    isUpdated = true;
-                }
-
-                if (isUpdated && typeof window.updateMemoryDisplay === 'function') {
-                    window.updateMemoryDisplay();
-                }
-            }
-
-            const pureChat = conversationHistory.filter(m => m.role !== "system");
-            conversationHistory = pureChat.slice(-4);
-            sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
-        }
-    } catch(e) {
-        console.error("메모리 압축 실패:", e);
-    }
-};
-
-setTimeout(window.updateMemoryDisplay, 500);
-
-let savedAIMemos = JSON.parse(localStorage.getItem('ai_auto_memos')) || [];
-window.toggleMemoModal = function(show) {
-    const modal = document.getElementById('memoModal');
-    if (show) { window.renderMemos(); modal.classList.remove('hidden'); } else modal.classList.add('hidden');
-};
-
-window.renderMemos = function() {
-    savedAIMemos = JSON.parse(localStorage.getItem('ai_auto_memos')) || [];
-    const area = document.getElementById('memoListArea'); const badge = document.getElementById('memoCountBadge');
-    area.innerHTML = '';
-    if (savedAIMemos.length === 0) {
-        area.innerHTML = `<div class="text-center text-slate-400 text-xs font-bold mt-10">메모가 없습니다.</div>`;
-        if(badge) badge.classList.add('hidden'); return;
-    }
-    if(badge) { badge.innerText = savedAIMemos.length; badge.classList.remove('hidden'); }
-    savedAIMemos.forEach((memo, i) => {
-        const dateStr = new Date(memo.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-        area.insertAdjacentHTML('beforeend', `<div class="bg-white p-3 rounded-xl border border-amber-200 shadow-sm relative pr-8"><button onclick="window.deleteMemo(${i})" class="absolute top-3 right-3 text-slate-300 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash-can"></i></button><p class="text-[10px] font-bold text-amber-500 mb-1">${dateStr}</p><p class="text-sm font-bold text-slate-700 leading-relaxed">${memo.content}</p></div>`);
-    });
-};
-window.deleteMemo = function(index) { savedAIMemos.splice(index, 1); localStorage.setItem('ai_auto_memos', JSON.stringify(savedAIMemos)); window.renderMemos(); };
-window.clearAllMemos = function() { if(!confirm("모든 메모를 지우시겠습니까?")) return; savedAIMemos = []; localStorage.setItem('ai_auto_memos', JSON.stringify(savedAIMemos)); window.renderMemos(); };
-setTimeout(window.renderMemos, 500);
-
-window.updateExtraUI = function() {
-    const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-    const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY['en'];
-
-    if(document.getElementById('ui_persona_friend')) document.getElementById('ui_persona_friend').innerText = dict.ui_persona_friend || "Best Friend";
-    if(document.getElementById('ui_persona_assistant')) document.getElementById('ui_persona_assistant').innerText = dict.ui_persona_assistant || "Assistant";
-    if(document.getElementById('ui_persona_guide')) document.getElementById('ui_persona_guide').innerText = dict.ui_persona_guide || "Travel Guide";
+// 💡 2. 정확히 5턴(사용자 5번 + AI 5번)마다 무거운 작업 실행
+if (window.conversationTurn % 5 === 0) {
     
-    const room1Titles = { 'ko': '💬 프리토킹 튜터', 'en': '💬 Free Chat Tutor', 'ja': '💬 フリートーキング', 'zh': '💬 自由对话导师', 'es': '💬 Tutor Libre', 'fr': '💬 Tuteur de Chat', 'de': '💬 Freier Chat', 'vi': '💬 Gia sư trò chuyện', 'ru': '💬 Свободный разговор', 'th': '💬 ติวเตอร์แชท', 'ar': '💬 معلم محادثة حرة' };
-    if(document.getElementById('header_room1')) document.getElementById('header_room1').innerText = room1Titles[baseLang] || room1Titles['en'];
+    let isUpdated = false; // 업데이트 발생 여부 체크
 
-    if(typeof window.updateStreakUI === 'function') window.updateStreakUI();
-    if(typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
-    if(typeof window.renderMemos === 'function') window.renderMemos();
-};
-setTimeout(window.updateExtraUI, 500);
-const langSelector = document.getElementById('explanationLanguage');
-if (langSelector) langSelector.addEventListener('change', window.updateExtraUI);
+    // [기억 압축 업데이트]
+    if (parsed.memory) {
+        localStorage.setItem('user_compressed_memory', parsed.memory);
+        isUpdated = true;
+    }
 
+    // [속마음 업데이트]
+    if (parsed.inner_thought) {
+        localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
+        isUpdated = true;
+    }
 
+    // 💡 3. 데이터가 하나라도 저장되었다면, 화면(UI)을 새로고침! (이게 핵심입니다)
+    if (isUpdated && typeof window.updateMemoryDisplay === 'function') {
+        window.updateMemoryDisplay();
+    }
+}
+
+// 💡 4. 이건 5턴 조건문 밖에 둡니다! (매번 실행되어 텍스트 양을 가볍게 유지)
+const pureChat = conversationHistory.filter(m => m.role !== "system");
+conversationHistory = pureChat.slice(-4);
+sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+}
+            } catch(e) {
+                console.error("메모리 압축 실패:", e);
+            }
+        };
+        // 앱이 처음 켜질 때도 기억을 띄워줌
+        setTimeout(window.updateMemoryDisplay, 500);
+
+        let savedAIMemos = JSON.parse(localStorage.getItem('ai_auto_memos')) || [];
+        window.toggleMemoModal = function(show) {
+            const modal = document.getElementById('memoModal');
+            if (show) { window.renderMemos(); modal.classList.remove('hidden'); } else modal.classList.add('hidden');
+        };
+
+        window.renderMemos = function() {
+            savedAIMemos = JSON.parse(localStorage.getItem('ai_auto_memos')) || [];
+            const area = document.getElementById('memoListArea'); const badge = document.getElementById('memoCountBadge');
+            area.innerHTML = '';
+            if (savedAIMemos.length === 0) {
+                area.innerHTML = `<div class="text-center text-slate-400 text-xs font-bold mt-10">메모가 없습니다.</div>`;
+                if(badge) badge.classList.add('hidden'); return;
+            }
+            if(badge) { badge.innerText = savedAIMemos.length; badge.classList.remove('hidden'); }
+            savedAIMemos.forEach((memo, i) => {
+                const dateStr = new Date(memo.timestamp).toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+                area.insertAdjacentHTML('beforeend', `<div class="bg-white p-3 rounded-xl border border-amber-200 shadow-sm relative pr-8"><button onclick="deleteMemo(${i})" class="absolute top-3 right-3 text-slate-300 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash-can"></i></button><p class="text-[10px] font-bold text-amber-500 mb-1">${dateStr}</p><p class="text-sm font-bold text-slate-700 leading-relaxed">${memo.content}</p></div>`);
+            });
+        };
+        window.deleteMemo = function(index) { savedAIMemos.splice(index, 1); localStorage.setItem('ai_auto_memos', JSON.stringify(savedAIMemos)); window.renderMemos(); };
+        window.clearAllMemos = function() { if(!confirm("모든 메모를 지우시겠습니까?")) return; savedAIMemos = []; localStorage.setItem('ai_auto_memos', JSON.stringify(savedAIMemos)); window.renderMemos(); };
+        setTimeout(window.renderMemos, 500);
+
+         // 🌟 [페르소나 버튼 버그 수정 및 다국어 실시간 적용 업데이트 함수]
+        window.updateExtraUI = function() {
+            const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
+            const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY['en'];
+
+            // 기존의 한국어 강제 고정 코드를 다국어 지원으로 교체!
+            if(document.getElementById('ui_persona_friend')) document.getElementById('ui_persona_friend').innerText = dict.ui_persona_friend || "Best Friend";
+            if(document.getElementById('ui_persona_assistant')) document.getElementById('ui_persona_assistant').innerText = dict.ui_persona_assistant || "Assistant";
+            if(document.getElementById('ui_persona_guide')) document.getElementById('ui_persona_guide').innerText = dict.ui_persona_guide || "Travel Guide";
+            
+            const room1Titles = { 'ko': '💬 프리토킹 튜터', 'en': '💬 Free Chat Tutor', 'ja': '💬 フリートーキング', 'zh': '💬 自由对话导师', 'es': '💬 Tutor Libre', 'fr': '💬 Tuteur de Chat', 'de': '💬 Freier Chat', 'vi': '💬 Gia sư trò chuyện', 'ru': '💬 Свободный разговор', 'th': '💬 ติวเตอร์แชท', 'ar': '💬 معلم محادثة حرة' };
+            if(document.getElementById('header_room1')) document.getElementById('header_room1').innerText = room1Titles[baseLang] || room1Titles['en'];
+
+            if(typeof window.updateStreakUI === 'function') window.updateStreakUI();
+            if(typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
+            if(typeof window.renderMemos === 'function') window.renderMemos();
+        };
+        setTimeout(window.updateExtraUI, 500);
+        const langSelector = document.getElementById('explanationLanguage');
+        if (langSelector) langSelector.addEventListener('change', window.updateExtraUI);
+        
+
+// 🌟 출석/퀘스트 모달 열고 닫기 스위치 함수
 window.openStreakModal = function() { 
     const modal = document.getElementById('streak-modal');
     if (modal) {
         modal.classList.remove('hidden'); 
-        window.updateStreakUI(); 
+        window.updateStreakUI(); // 창 열 때 최신 퀘스트 상태로 싹 업데이트!
+    } else {
+        console.error("streak-modal 창을 찾을 수 없습니다! HTML에 있는지 확인하세요.");
     }
 };
 
@@ -2161,19 +2121,23 @@ window.closeStreakModal = function() {
     }
 };
 
+        // 🌟 대본 학습 기록을 저장하는 함수
 window.markScriptAsLearned = function(scriptIndex) {
     let learnedScripts = JSON.parse(localStorage.getItem('learned_scripts_log') || '[]');
+    // 중복 방지: 이미 학습한 대본인지 확인
     if (!learnedScripts.includes(scriptIndex)) {
         learnedScripts.push(scriptIndex);
         localStorage.setItem('learned_scripts_log', JSON.stringify(learnedScripts));
     }
-    window.updateDashboardUI(); 
+    window.updateDashboardUI(); // 리포트 즉시 갱신
 };
 
+        // 🌟 1. 퀘스트 진행도 및 모달창 UI 업데이트 함수
 window.updateStreakUI = function() {
     const todayStr = new Date().toLocaleDateString();
     let streakData = JSON.parse(localStorage.getItem('study_streak_v3')) || { lastDate: "", streak: 0, scriptCount: 0, vocabCount: 0, freeTalkCount: 0, completedToday: false };
     
+    // 다국어 사전 가져오기
     const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
     const dict = UI_DICTIONARY[baseLang] || UI_DICTIONARY['en'];
     
@@ -2247,6 +2211,7 @@ window.updateStreakUI = function() {
     }
 };
 
+       // 🌟 2. 퀘스트 체크 & 보상 지급 함수 (완전 정리본)
 window.addStudyMission = function(type) {
     if (!type) return;
     const todayStr = new Date().toLocaleDateString();
@@ -2265,25 +2230,22 @@ window.addStudyMission = function(type) {
             streakData.completedToday = true;
             streakData.streak += 1;
             INTIMACY_SYSTEM.addExp('quest');
-            
-            // 🌙 기존 rwMoons를 ⚡ rwLightning으로 변경
-            let rwLightning = 3; 
+            // 기본 보상
+            let rwMoons = 3; 
 
-            if (streakData.streak === 5) rwLightning = 3;
-            else if (streakData.streak === 10) rwLightning = 5;
-            else if (streakData.streak === 20) rwLightning = 10;
-            else if (streakData.streak === 30) rwLightning = 15; 
-            else if (streakData.streak > 30 && streakData.streak % 10 === 0) rwLightning = 30; 
+            // 🌟 스페셜 캐릭터 잠금 해제 로직을 완전히 삭제하고, 순수하게 초승달 보상만 남김
+            if (streakData.streak === 5) rwMoons = 10;
+            
+            else if (streakData.streak === 10) rwMoons = 20;
+            else if (streakData.streak === 20) rwMoons = 30;
+            else if (streakData.streak === 30) rwMoons = 30; 
+            else if (streakData.streak > 30 && streakData.streak % 10 === 0) rwMoons = 30; 
 
             setTimeout(() => { 
                 window.openStreakModal(); 
-                
-                // localStorage 키값도 moon_coins에서 lightning_coins로 변경
-                let currentLightning = parseInt(localStorage.getItem('lightning_coins') || '0');
-                localStorage.setItem('lightning_coins', currentLightning + rwLightning); 
-                
-                // 알림창 텍스트와 이모지 교체
-                alert(`🎉 퀘스트 완벽 달성! 오늘의 보상 번개 +${rwLightning}개가 지급되었습니다! ⚡`);
+                let currentMoons = parseInt(localStorage.getItem('moon_coins') || '0');
+                localStorage.setItem('moon_coins', currentMoons + rwMoons); 
+                alert(`🎉 퀘스트 완벽 달성! 오늘의 보상 초승달 +${rwMoons}개가 지급되었습니다! 🌙`);
                 window.updateBadgeUI(); 
             }, 800);
         }
@@ -2291,7 +2253,8 @@ window.addStudyMission = function(type) {
         window.updateStreakUI();
     }
 };
-setTimeout(window.updateStreakUI, 500);
+        // 앱 켤 때 퀘스트 정보 갱신
+        setTimeout(window.updateStreakUI, 500);
 
 window.updateDashboardUI = function() {
     let stats = JSON.parse(localStorage.getItem('user_learning_stats_v1')) || { sentences: 0, words: 0 };
@@ -2306,6 +2269,7 @@ window.updateDashboardUI = function() {
     if(elWords) elWords.innerText = stats.words;
     if(elScripts) elScripts.innerText = scriptsLearnedCount; 
 
+    // 🌟 다국어 번역 적용
     const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
     const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
     
@@ -2313,39 +2277,44 @@ window.updateDashboardUI = function() {
     if(labelScript) labelScript.innerText = dict.ui_home_stat_script || "학습한 대본";
 };
 
-window.addLearningStat = function(type, amount = 1) {
-    let stats = JSON.parse(localStorage.getItem('user_learning_stats_v1')) || { sentences: 0, words: 0 };
-    if (type === 'sentence') stats.sentences += amount;
-    if (type === 'word') stats.words += amount;
-    localStorage.setItem('user_learning_stats_v1', JSON.stringify(stats));
-    window.updateDashboardUI(); 
-};
-setTimeout(window.updateDashboardUI, 500);
+        window.addLearningStat = function(type, amount = 1) {
+            let stats = JSON.parse(localStorage.getItem('user_learning_stats_v1')) || { sentences: 0, words: 0 };
+            if (type === 'sentence') stats.sentences += amount;
+            if (type === 'word') stats.words += amount;
+            localStorage.setItem('user_learning_stats_v1', JSON.stringify(stats));
+            window.updateDashboardUI(); 
+        };
 
-setTimeout(() => {
-    if (!document.getElementById('targetLanguage')) {
-        document.body.insertAdjacentHTML('beforeend', '<select id="targetLanguage" class="hidden"></select>');
-        if (typeof renderLanguageSelects === 'function') renderLanguageSelects();
-        document.getElementById('targetLanguage').value = localStorage.getItem('target_language') || 'en-US';
-    }
-}, 500);
+        setTimeout(window.updateDashboardUI, 500);
 
-const originalHandleBodyClick = window.handleBodyClick;
-window.handleBodyClick = function(e) {
-    if(originalHandleBodyClick) originalHandleBodyClick(e);
-    const dd = document.getElementById('genderDropdown');
-    if (dd && !e.target.closest('#genderDropdownContainer')) dd.classList.add('hidden');
-};
+        setTimeout(() => {
+            if (!document.getElementById('targetLanguage')) {
+                document.body.insertAdjacentHTML('beforeend', '<select id="targetLanguage" class="hidden"></select>');
+                if (typeof renderLanguageSelects === 'function') renderLanguageSelects();
+                document.getElementById('targetLanguage').value = localStorage.getItem('target_language') || 'en-US';
+            }
+        }, 500);
+        // 빈 공간 클릭 시 드롭다운 닫히게 하기
+        const originalHandleBodyClick = window.handleBodyClick;
+        window.handleBodyClick = function(e) {
+            if(originalHandleBodyClick) originalHandleBodyClick(e);
+            const dd = document.getElementById('genderDropdown');
+            if (dd && !e.target.closest('#genderDropdownContainer')) dd.classList.add('hidden');
+        };
 
+        // 🌟 1. 기기 목소리 리스트 불러오기 및 UI 렌더링
 window.renderVoiceList = function() {
     const container = document.getElementById('voiceListContainer');
     if (!container) return;
 
+    // 1. 앱이 던져준 목소리 데이터가 있는지 확인
+    // (이미 앱이 'getDeviceVoices' 핸들러로 던져준 데이터를 받아서 처리하는 로직으로 변경)
     if (window.deviceVoicesCache && window.deviceVoicesCache.length > 0) {
         const voices = window.deviceVoicesCache;
         const targetLang = localStorage.getItem('target_language') || 'en-US';
-        const langPrefix = targetLang.split('-')[0]; 
+        const langPrefix = targetLang.split('-')[0]; // 예: 'en-US' -> 'en'
 
+        // 2. 해당 언어(en, ko 등)와 일치하는 목소리만 필터링
         const filteredVoices = voices.filter(v => v.locale.startsWith(langPrefix));
 
         container.innerHTML = ''; 
@@ -2361,8 +2330,9 @@ window.renderVoiceList = function() {
             btn.innerText = `🗣️ ${voice.name}`;
             btn.onclick = () => {
                 localStorage.setItem('selected_voice_name', voice.name);
-                localStorage.setItem('selected_voice_locale', voice.locale); 
+                localStorage.setItem('selected_voice_locale', voice.locale); // locale도 함께 저장!
                 
+                // UI 업데이트
                 document.getElementById('disp-voiceName').innerText = voice.name;
                 document.getElementById('drop-voice').classList.add('hidden');
                 
@@ -2371,14 +2341,19 @@ window.renderVoiceList = function() {
             container.appendChild(btn);
         });
     } else {
+        // 데이터가 아직 안 왔으면 0.5초 뒤에 다시 시도
         container.innerHTML = '<div class="p-4 text-center text-[10px] text-slate-400 animate-pulse">목소리 불러오는 중...</div>';
         setTimeout(window.renderVoiceList, 500);
     }
 };
 
+
+// 🌟 1. 선택한 목소리 이름 기억
 window.selectedTtsVoiceName = localStorage.getItem('saved_voice_name') || ""; 
 
+// 🌟 1. 앱에서 목소리 데이터를 받아오고 UI에 뿌려주는 '마스터 함수'
 window.requestVoicesFromApp = async function() {
+    // 앱과 연결되었는지 먼저 체크
     if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
         try {
             const voicesJson = await window.flutter_inappwebview.callHandler('getDeviceVoices');
@@ -2390,18 +2365,22 @@ window.requestVoicesFromApp = async function() {
         }
     }
 };
+// 1초 뒤에 딱 한 번만 실행
 setTimeout(window.requestVoicesFromApp, 1000);
 
+// 🌟 2. 데이터를 받아서 드롭다운에 예쁘게 그려주는 함수
 window.loadVoicesToUI = function(voicesJson) {
+    // 앱에서 받은 JSON 데이터를 JS 객체로 변환
     window.deviceVoicesCache = JSON.parse(voicesJson);
     const container = document.getElementById('voiceListContainer');
     if(!container) return;
 
-    container.innerHTML = ''; 
+    container.innerHTML = ''; // "로딩 중..." 텍스트 지우기
 
     const targetLang = localStorage.getItem('target_language') || 'en-US';
     const langPrefix = targetLang.split('-')[0];
 
+    // 해당 언어(영어, 한국어 등) 목소리만 필터링
     const filteredVoices = window.deviceVoicesCache.filter(v => v.locale.startsWith(langPrefix));
 
     if(filteredVoices.length === 0) {
@@ -2418,6 +2397,7 @@ window.loadVoicesToUI = function(voicesJson) {
             document.getElementById('disp-voiceName').innerText = voice.name;
             document.getElementById('drop-voice').classList.add('hidden');
             
+            // 딥시크가 말할 때 이 목소리를 쓰도록 기억!
             window.selectedTtsVoiceName = voice.name;
             localStorage.setItem('saved_voice_name', voice.name);
         };
@@ -2425,13 +2405,19 @@ window.loadVoicesToUI = function(voicesJson) {
     });
 };
 
+// 🌟 3. 앱 켜지자마자 실행!
 window.onload = function() {
     window.requestVoicesFromApp();
 };
 
+
+
+
+// 🌟 2. 선택된 목소리 이름을 UI에 표시하는 함수
 window.updateVoiceDisplay = function(voiceName) {
     const disp = document.getElementById('disp-voiceName');
     if (disp) {
+        // 🌟 다국어 사전에서 '기본 음성' 글자 빼오기
         const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
         const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
         const defaultVoiceText = dict.ui_default_voice || "기본 음성";
@@ -2440,16 +2426,21 @@ window.updateVoiceDisplay = function(voiceName) {
     }
 };
 
+// 🌟 3. 브라우저에서 목소리 로딩이 끝날 때 리스트 새로고침 (필수 방어코드)
 if (window.speechSynthesis) {
     window.speechSynthesis.onvoiceschanged = window.renderVoiceList;
 }
 
+// 🌟 4. 앱 초기화 시 목소리 UI 업데이트
 setTimeout(() => {
     const savedVoice = localStorage.getItem('selected_voice_name');
     window.updateVoiceDisplay(savedVoice);
     window.renderVoiceList();
 }, 500);
 
+
+
+// 화면 아무 곳이나 클릭하면 열려있는 패널 모두 닫기
 document.addEventListener('click', (e) => {
     const nav = document.getElementById('globalNavWrapper');
     const isClickInside = nav.contains(e.target);
@@ -2460,46 +2451,34 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// 🌟 앱 실행 시 단 한 번만 호출되는 '초기화 마스터 블록'
 document.addEventListener('DOMContentLoaded', () => {
+    
+    // 1-1. 언어 선택 드롭다운 옵션 채우기
     if (typeof window.renderLanguageSelects === 'function') window.renderLanguageSelects();
 
+    // 1-2. 로컬스토리지에서 저장된 언어값 불러오기
     const savedTargetLang = localStorage.getItem('target_language') || 'en-US';
     const savedSttLang = localStorage.getItem('stt_input_language') || 'ko-KR';
     const savedExpLang = localStorage.getItem('explanation_language') || 'ko-KR';
 
+    // HTML 태그에 값 세팅
     const targetSelect = document.getElementById('targetLanguage');
     const sttSelect = document.getElementById('sttInputLanguage');
     const expSelect = document.getElementById('explanationLanguage');
 
-    // 👇👇 [여기서부터 수정됨] 프리미엄 보이스 자동 갱신 로직 추가 👇👇
-    if (targetSelect) {
-        targetSelect.value = savedTargetLang;
-        
-        // 언어를 바꿀 때마다 리스트 싹 다시 그리기!
-        targetSelect.addEventListener('change', function(e) {
-            if (typeof window.updatePremiumVoiceList === 'function') {
-                window.updatePremiumVoiceList(e.target.value);
-            }
-        });
-        
-        // 앱을 처음 켰을 때, 하드코딩된 글씨 밀어버리고 바로 리스트 그리기!
-        setTimeout(() => {
-            if (typeof window.updatePremiumVoiceList === 'function') {
-                window.updatePremiumVoiceList(targetSelect.value);
-            }
-        }, 300); // 다른 UI들이 렌더링될 시간을 0.3초 벌어주고 안전하게 실행
-    }
-    // 👆👆 [여기까지 수정됨] 👆👆
-
+    if (targetSelect) targetSelect.value = savedTargetLang;
     if (expSelect) expSelect.value = savedExpLang;
     if (sttSelect) {
         sttSelect.value = savedSttLang;
+        // 음성 입력 언어 변경 시 저장 및 디스플레이 업데이트 (중복 로직 통합)
         sttSelect.onchange = function() { 
             localStorage.setItem('stt_input_language', this.value); 
             if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays(); 
         };
     }
 
+    // 1-3. 폰트 크기 초기화 (3번 중복되던 코드 1번으로 압축)
     const savedFontSize = localStorage.getItem('chat_font_size');
     if (savedFontSize) {
         document.documentElement.style.setProperty('--chat-font-size', savedFontSize + 'px');
@@ -2507,34 +2486,47 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fontSlider) fontSlider.value = savedFontSize;
     }
 
+    // 1-4. 앱 모드 및 다국어 UI 즉시 렌더링
     if (typeof window.populateDropdowns === 'function') window.populateDropdowns();
     if (typeof window.changeUILanguage === 'function') window.changeUILanguage(savedExpLang);
     if (typeof window.changeAppMode === 'function') window.changeAppMode(localStorage.getItem('app_mode') || 'tutor');
     if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
 
+    // 100ms 후: 기초 발음 데이터 불러오기 (UI 렌더링 방해 방지)
     setTimeout(() => {
         if (typeof window.autoLoadAlphabet === 'function') window.autoLoadAlphabet();
     }, 100);
 
+    // 200ms 후: AI 목소리 성별 초기화 적용
     setTimeout(() => {
         const savedGender = localStorage.getItem('voice_gender') || 'female';
         if (typeof window.selectGender === 'function') window.selectGender(savedGender);
     }, 200);
 
+    // 🌟 [추가된 부분] Pages 패널 하위 항목 클릭 시 자동 닫기 기능
     const pagesPanel = document.getElementById('inlinePagesPanel');
     if (pagesPanel) {
+        // 패널 안의 모든 링크(a), 버튼(button), 리스트(li) 요소 찾기
         const menuItems = pagesPanel.querySelectorAll('a, button, li');
         menuItems.forEach(item => {
             item.addEventListener('click', () => {
+                // 클릭하면 즉시 패널에 hidden 클래스를 추가하여 숨김
                 pagesPanel.classList.add('hidden');
+                
+                // 만약 배경을 어둡게 하는 overlay도 있다면 함께 숨김 (선택사항)
+                // document.getElementById('overlay_id')?.classList.add('hidden');
             });
         });
     }
+
 });
+
+// script.js 파일 내부의 changeUILanguage 및 관련 연동부 전체 교체/추가
 
 window.closeAllPanels = function() {
     document.querySelectorAll('.panel-popup').forEach(p => p.classList.add('hidden'));
 };
+
 
 // 🌟 1. 통합 페르소나 선택 함수
 window.selectPersona = function(mode, customId = null) {
@@ -2662,7 +2654,7 @@ window.renderCustomCharacters = function() {
     }
 };
 
-
+// 앱 초기 로드 시 렌더링
 setTimeout(() => {
     if(typeof window.renderCustomCharacters === 'function') {
         window.renderCustomCharacters();
@@ -2673,20 +2665,25 @@ setTimeout(() => {
     }
 }, 500);
 
+
+
 if (uiChatHistory.length > 0) uiChatHistory.forEach(msg => window.addMessageToChat(msg.sender, msg.text, msg.translation, msg.targetLangCode, true));
 
 window.clearSelection = function() {
-    document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
-    startIndex = -1; endIndex = -1; currentBubbleId = null;
-    selectionTooltip.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => selectionTooltip.classList.add('hidden'), 200);
-}
-
+            document.querySelectorAll('.word-span, .exp-word-span').forEach(el => el.classList.remove('selected'));
+            startIndex = -1; endIndex = -1; currentBubbleId = null;
+            selectionTooltip.classList.add('opacity-0', 'pointer-events-none'); setTimeout(() => selectionTooltip.classList.add('hidden'), 200);
+        }
+        // 에러 방지용 안전 장치
 window.handleBodyClick = window.handleBodyClick || function(e) {};
 window.clearSelection = window.clearSelection || function() {};
 
 window.requestVoicesFromApp = function() {
+    // 1. 플러터 브릿지가 생성될 때까지 기다리는 안전장치
     if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
         console.log("✅ 앱 브릿지 연결 성공!");
+        
+        // 2. 앱에 getDeviceVoices 요청
         window.flutter_inappwebview.callHandler('getDeviceVoices').then(function(voicesJson) {
             if(voicesJson) {
                 console.log("📦 목소리 데이터 수신 성공!");
@@ -2694,568 +2691,23 @@ window.requestVoicesFromApp = function() {
             }
         });
     } else {
+        // 3. 앱이 아직 안 켜졌으면 0.3초 뒤에 다시 호출
         console.log("⏳ 앱 브릿지 대기 중...");
         setTimeout(window.requestVoicesFromApp, 300);
     }
 };
 
+// 페이지가 완전히 로드된 후 시작
 window.addEventListener('flutterInAppWebViewPlatformReady', function(event) {
     window.requestVoicesFromApp();
 });
 
 
-// ==========================================
-// 🚀 자동 전송 토글 기능 추가
-// ==========================================
-window.isAutoSend = false; // 기본값: 안전하게 텍스트창에서 검토하는 모드
-
-window.toggleAutoSend = function() {
-    window.isAutoSend = !window.isAutoSend; // 상태 반전
-    const btn = document.getElementById('autoSendToggleBtn');
-    const icon = document.getElementById('autoSendIcon');
-    
-    if(window.isAutoSend) {
-        // ON 상태 디자인 (파란색 불 켜짐)
-        btn.classList.replace('bg-slate-100', 'bg-blue-50');
-        btn.classList.replace('text-slate-500', 'text-blue-600');
-        btn.classList.replace('border-slate-200', 'border-blue-200');
-        icon.classList.replace('fa-toggle-off', 'fa-toggle-on');
-        window.updateStatus("자동 전송 ON");
-    } else {
-        // OFF 상태 디자인 (회색 불 꺼짐)
-        btn.classList.replace('bg-blue-50', 'bg-slate-100');
-        btn.classList.replace('text-blue-600', 'text-slate-500');
-        btn.classList.replace('border-blue-200', 'border-slate-200');
-        icon.classList.replace('fa-toggle-on', 'fa-toggle-off');
-        window.updateStatus("자동 전송 OFF");
-    }
-};
-
-// ==========================================
-// 🎤 마이크 인식 및 전송 처리 (이중 방어막 및 자동전송 지원)
-// ==========================================
-window.initSpeechRecognition = function() {
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        
-        recognition.onstart = () => {
-            isListening = true; 
-            if(window.stopSpeaking) window.stopSpeaking(); 
-            if(micBtn) { micBtn.classList.replace('from-blue-400', 'from-red-400'); micBtn.classList.replace('to-blue-600', 'to-red-600'); }
-            if(micIcon) { micIcon.classList.replace('fa-microphone', 'fa-ear-listen'); }
-            window.updateStatus("듣는 중...");
-        };
-        
-        recognition.onresult = (e) => {
-            resetMic();
-            if(e.results && e.results[0] && e.results[0][0]) {
-                let transcript = e.results[0][0].transcript;
-                let inputField = document.getElementById('textInput');
-                const MAX_CHARS = 300; // 글자수 제한 300자로 넉넉하게 확장
-                
-                if (inputField) {
-                    let currentText = inputField.value.trim();
-                    let newText = currentText !== '' ? currentText + ' ' + transcript : transcript;
-                    
-                    // 글자수 자르기 방어막
-                    if (newText.length > MAX_CHARS) {
-                        newText = newText.substring(0, MAX_CHARS);
-                    }
-
-                    inputField.value = newText;
-                    
-                    // 🚨 핵심 분기점: 스위치 상태에 따라 다르게 작동
-                    if (window.isAutoSend) {
-                        window.updateStatus("메시지 전송 중...");
-                        if (typeof sendTextMessage === 'function') sendTextMessage(); // 즉시 전송 발사!
-                    } else {
-                        inputField.focus(); // 텍스트창에 멈춰서 검토 대기
-                        window.updateStatus("확인 후 전송하세요"); 
-                    }
-                }
-            }
-        };
-        
-        recognition.onerror = (e) => { 
-            resetMic(); 
-            window.updateStatus("마이크 인식 실패"); 
-        };
-        
-        recognition.onend = () => resetMic();
-    }
-}
-initSpeechRecognition();
-
-
-
-window.audioCache = window.audioCache || {};
 
 
 
 
 
-
-// ==========================================
-// 💎 1. 프리미엄 보이스 DB (제미나이 별자리 19종 원상복구!)
-// ==========================================
-const premiumVoices = [
-    { code: "Zephyr", name: "제파 (여성, 세련/차분함 )" },          { code: "Umbriel", name: "움브리엘 (남성, 중후함)" },
-    { code: "Sulafat", name: "술라파트 (여성, 밝음/활기참)" },      { code: "Charon", name: "카론 (남성, 차분함)" },
-    { code: "Fenrir", name: "펜리르 (여성, 신뢰감/안정감)" },       { code: "Puck", name: "퍼크 (남성, 톡톡 튀는 일상톤)" },       
-    { code: "Aoede", name: "아오에데 (여성, 산뜻하고 경쾌한)" },     { code: "Enceladus", name: "엔셀라두스 (남성, 감성적인 숨소리)" },
-    { code: "Kore", name: "코레 (여성, 일상대화)" },                { code: "Sadachbia", name: "사다크비아 (남성, 생동감 넘치는)" },
-    { code: "Leda", name: "레다 (여성, 앳되고 생기있는)" },          { code: "Achird", name: "아키르드 (남성, 친근하고 다정한)" },
-    { code: "Erinome", name: "에리노메 (여성, 맑고 또렷한)" },       { code: "Algenib", name: "알게니브 (남성, 거칠고 허스키한)" },
-    { code: "Autonoe", name: "아우토노에 (여성, 밝고 화사한)" },      { code: "Algieba", name: "알지에바 (남성, 젠틀하고 매끄러운)" },
-    { code: "Callirrhoe", name: "칼리로에 (여성, 느긋하고 편안한)" }, { code: "Alnilam", name: "알닐람 (남성, 단호하고 확고한)" },
-    { code: "Despina", name: "데스피나 (여성, 차분하고 부드러운)" },
-        
-];
-
-// 다시 언어 상관없이 제미나이 리스트로 통일
-const premiumVoicesDB = {
-    "en": premiumVoices, "ko": premiumVoices, "ja": premiumVoices, "zh": premiumVoices,
-    "es": premiumVoices, "fr": premiumVoices, "de": premiumVoices, "vi": premiumVoices,
-    "ru": premiumVoices, "th": premiumVoices, "ar": premiumVoices, "hi": premiumVoices,
-    "pl": premiumVoices, "gd": premiumVoices, "la": premiumVoices, "he": premiumVoices,
-    "ne": premiumVoices, "mn": premiumVoices, "bo": premiumVoices, "sw": premiumVoices,
-    "id": premiumVoices
-};
-
-// ==========================================
-// 🌍 2. 드롭다운 리스트 갱신 & 선택 함수
-// ==========================================
-window.updatePremiumVoiceList = function(langCode) {
-    const baseLang = langCode.substring(0, 2); 
-    const availableVoices = premiumVoicesDB[baseLang] || premiumVoicesDB["en"]; 
-
-    const dropdownWrap = document.getElementById('drop-voice-premium'); 
-    if (!dropdownWrap) return; 
-    
-    dropdownWrap.innerHTML = ''; 
-
-    availableVoices.forEach(voice => {
-        const item = document.createElement('div');
-        item.className = 'cursor-pointer hover:bg-gray-100 p-2 text-sm text-gray-700'; 
-        item.innerText = voice.name;
-        
-        item.onclick = function() {
-            window.selectPremiumVoice(voice.code, voice.name, true);
-        };
-        dropdownWrap.appendChild(item);
-    });
-
-    if (availableVoices.length > 0) {
-        window.selectPremiumVoice(availableVoices[0].code, availableVoices[0].name, false);
-    }
-};
-
-window.selectPremiumVoice = function(voiceCode, voiceName) {
-    // 1. 선택한 목소리 정보 저장
-    localStorage.setItem('premium_voice_code', voiceCode);
-    localStorage.setItem('premium_voice_name', voiceName);
-    
-    // 2. 화면에 선택한 목소리 이름 표시
-    const voiceNameDisp = document.getElementById('disp-voiceName-premium');
-    if(voiceNameDisp) voiceNameDisp.innerText = voiceName;
-    
-    // 3. 열려있던 드롭다운 메뉴 닫기
-    const dropMenu = document.getElementById('drop-voice-premium');
-    if(dropMenu) dropMenu.classList.add('hidden'); 
-    
-    // 🔥 기존에 있던 자동 재생 코드(window.playSampleVoice)를 완전히 삭제했습니다!
-};
-
-
-
-// 1. 통합 재생기
-// 💡 파라미터에 specificVoiceCode 를 추가합니다.
-window.playAppAudio = async function(text, type, langCode = 'en-US', specificVoiceCode = null) {
-    if (type === 'premium') {
-        // 💡 [핵심] 파라미터로 넘어온 박제된 목소리가 있으면 무조건 1순위로 사용! (없으면 현재 앱 설정 사용)
-        const selectedVoiceCode = specificVoiceCode || localStorage.getItem('premium_voice_code') || 'Zephyr'; 
-        
-        const response = await fetch(WORKER_URL + 'tts', {
-            method: 'POST',
-            body: JSON.stringify({ text: text, voiceCode: selectedVoiceCode })
-        });
-        const data = await response.json();
-        
-        // (💡 참고: 제미나이 오디오 디코딩 로직이 있다면 이렇게 연결합니다)
-        if (data.audioContent && typeof window.playGeminiAudio === 'function') {
-            await window.playGeminiAudio(data.audioContent);
-        } else {
-            const audio = new Audio("data:audio/mpeg;base64," + data.audioContent);
-            audio.play();
-        }
-    } else {
-        return window.playBasicAudio(text, langCode);
-    }
-};
-
-// 2. 일반 음성 재생 전용 함수
-window.playBasicAudio = function(text, lang) {
-    return new Promise((resolve) => {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        utterance.onend = resolve;
-        window.speechSynthesis.speak(utterance);
-    });
-};
-
-// 3. 프리미엄 설정창 미리듣기 (제미나이 셋팅 원상복구)
-window.playSampleVoice = async function(type) {
-    const targetLanguage = document.getElementById('targetLanguage').value || 'en-US';
-    const baseLang = targetLanguage.substring(0, 2);
-
-    const previewTexts = {
-        "en": "Oh, hi there! Um... I didn't expect to see you here. (Sigh) Honestly... it's been a really long day, but, haha, I'm glad we ran into each other!",
-        "ko": "어, 안녕하세요! 음... 여기서 뵐 줄은 진짜 몰랐네요. 후우... 오늘 정말 정신없는 하루였는데, 하하, 그래도 이렇게 마주치니까 반갑네요!",
-        "ja": "こんにちは！えっと…ここで会うとは思わなかったです。ふぅ…今日は本当に忙しい一日だったんですけど、あはは、でも会えて嬉しいです！",
-        "zh": "啊，你好！嗯……真没想到会在这里见到你。呼……今天真是忙碌的一天，哈哈，不过很高兴能碰见你！",
-        "es": "¡Oh, hola! Eh... no esperaba verte por aquí. Uf... ha sido un día realmente largo, pero, jaja, ¡qué bueno que nos cruzamos!",
-        "fr": "Oh, salut ! Euh... je ne m'attendais pas à te voir ici. Pff... la journée a été vraiment longue, mais, haha, je suis content qu'on se soit croisés !",
-        "de": "Oh, hallo! Ähm... ich hätte nicht erwartet, dich hier zu sehen. Puh... es war ein wirklich langer Tag, aber, haha, ich bin froh, dass wir uns über den Weg gelaufen sind!",
-        "vi": "Ồ, chào bạn! Ừm... không ngờ lại gặp bạn ở đây. Thật sự... hôm nay là một ngày rất dài, nhưng, haha, rất vui vì chúng ta tình cờ gặp nhau!",
-        "ru": "О, привет! Эм... не ожидал увидеть тебя здесь. Честно говоря... это был очень долгий день, но, ха-ха, я рад, что мы столкнулись!",
-        "th": "โอ้ สวัสดี! เอิ่ม... ไม่คิดว่าจะเจอคุณที่นี่เลย พูดตามตรง... วันนี้เป็นวันที่ยาวนานมาก แต่ ฮ่าฮ่า ดีใจนะที่บังเอิญเจอกัน!",
-        "ar": "أوه، أهلاً! أمم... لم أتوقع رؤيتك هنا. بصراحة... لقد كان يوماً طويلاً جداً، لكن، هاها، أنا سعيد لأننا التقينا!",
-        "hi": "ओह, नमस्ते! उम्म... मुझे आपको यहाँ देखने की उम्मीद नहीं थी। सच कहूँ तो... आज का दिन बहुत लंबा रहा, लेकिन, हाहा, मुझे खुशी है कि हम टकरा गए!",
-        "pl": "O, cześć! Eem... nie spodziewałem się, że cię tu zobaczę. Szczerze mówiąc... to był naprawdę długi dzień, ale, haha, cieszę się, że na siebie wpadliśmy!",
-        "gd": "Ò, latha math! Uill... bha mi a' smaoineachadh nach fhaiceadh mi thu an seo. Gu fìrinneach... bha e na latha glè fhada, ach, haha, tha mi toilichte gun do choinnich sinn!",
-        "la": "O, salve! Em... non exspectabam te hic videre. Vere... dies valde longus fuit, sed, haha, gaudeo nos convenisse!",
-        "he": "או, היי! אהמ... לא ציפיתי לראות אותך כאן. בכנות... זה היה יום ממש ארוך, אבל, חחח, אני שמח שנתקלנו אחד בשני!",
-        "ne": "ओहो, नमस्ते! उम... मैले तपाईंलाई यहाँ देख्ने आश गरेको थिइनँ। साँचो भन्नुपर्दा... आजको दिन निकै लामो रह्यो, तर, हाहा, हामी यसरी भेट भएकोमा खुसी लाग्यो!",
-        "mn": "Өө, сайн уу! Өө... чамайг энд харж магадгүй гэж бодсонгүй. Үнэндээ... өнөөдөр үнэхээр урт өдөр байлаа, гэхдээ, хаха, ингээд таарсандаа баяртай байна!",
-        "bo": "ཨོ་ལེགས་སོ། ཨེམ... ང་ཁྱེད་རང་འདིར་མཐོང་བའི་རེ་བ་བྱས་མེད། དྲང་པོར་བཤད་ན... དེ་རིང་ཉིན་མ་ཧ་ཅང་རིང་པོ་ཞིག་རེད། ཡིན་ནའང་། ཧ་ཧ། ང་ཚོ་ཐུག་པ་འདིར་དགའ་པོ་བྱུང་།",
-        "sw": "Oh, mambo! Um... sikutarajia kukuona hapa. Kusema kweli... imekuwa siku ndefu sana, lakini, haha, nina furaha tumekutana!",
-        "id": "Oh, hai! Um... aku nggak nyangka bakal ketemu kamu di sini. Jujur ya... hari ini panjang banget, tapi, haha, aku seneng kita bisa kebetulan ketemu!"
-    };
-    const sampleText = previewTexts[baseLang] || previewTexts["en"];
-    
-    if (type === 'basic') {
-        if (typeof window.speakText === 'function') window.speakText(sampleText, targetLanguage);
-        else alert("일반 기기 음성: " + sampleText);
-    } else if (type === 'premium') {
-        const selectedVoiceCode = localStorage.getItem('premium_voice_code') || 'Zephyr';
-        const avatarWrap = document.getElementById('avatarWrap');
-        if(avatarWrap) avatarWrap.style.borderColor = "#f59e0b"; 
-
-        try {
-            const cleanUrl = WORKER_URL.replace(/\/$/, '') + '/tts';
-            const response = await fetch(cleanUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: sampleText, voiceCode: selectedVoiceCode })
-            });
-            const data = await response.json();
-            
-            if (data.audioContent) {
-                // 🔥 원래 쓰시던 무적의 제미나이 재생기 출격!
-                await window.playGeminiAudio(data.audioContent);
-                if(avatarWrap) avatarWrap.style.borderColor = "#bfdbfe";
-            } else if (data.error) {
-                alert("🚨 제미나이 생성 에러:\n" + data.error);
-                if(avatarWrap) avatarWrap.style.borderColor = "#bfdbfe";
-            } else {
-                alert("알 수 없는 이유로 음성 생성에 실패했습니다.");
-                if(avatarWrap) avatarWrap.style.borderColor = "#bfdbfe";
-            }
-        } catch (error) {
-            console.error("네트워크 에러:", error);
-            alert("네트워크 연결 실패: 워커 주소나 인터넷 상태를 확인해주세요.");
-            if(avatarWrap) avatarWrap.style.borderColor = "#bfdbfe";
-        }
-    }
-};
-
-// ==========================================
-// 🔊 제미나이 전용 오디오 재생기 (완전체: Raw PCM 직결 방식)
-// ==========================================
-window.playGeminiAudio = async function(base64Data) {
-    return new Promise((resolve, reject) => {
-        try {
-            if (!base64Data || base64Data.length < 100) {
-                alert("🚨 수신된 데이터가 없습니다.");
-                return reject("Empty data");
-            }
-
-            // 1. 구글이 던진 날것의 텍스트를 기계어 배열로 변환
-            const cleanBase64 = base64Data.replace(/[^A-Za-z0-9+/=]/g, "");
-            const binaryString = atob(cleanBase64);
-            
-            // 2. 제미나이는 16-bit PCM(2바이트 묶음)을 사용하므로 그릇을 준비
-            const buffer = new ArrayBuffer(binaryString.length);
-            const view = new DataView(buffer);
-            for (let i = 0; i < binaryString.length; i++) {
-                view.setUint8(i, binaryString.charCodeAt(i));
-            }
-            
-            // 3. 기계어를 소리 파형 데이터(Int16)로 묶어줌
-            const int16Array = new Int16Array(buffer);
-            
-            // 💡 [핵심] 브라우저 스피커 엔진 가동 (제미나이 표준 주파수 24,000Hz 세팅)
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            const audioCtx = new AudioContext();
-            
-            // 1채널(모노), 데이터 길이, 24kHz 주파수
-            const audioBuffer = audioCtx.createBuffer(1, int16Array.length, 24000);
-            const channelData = audioBuffer.getChannelData(0);
-            
-            // 4. 날것의 파형을 스피커가 이해할 수 있는 전기 신호(-1.0 ~ 1.0)로 변환
-            for (let i = 0; i < int16Array.length; i++) {
-                channelData[i] = int16Array[i] / 32768.0; 
-            }
-            
-            // 5. 스피커에 다이렉트 꽂기!
-            const source = audioCtx.createBufferSource();
-            source.buffer = audioBuffer;
-            source.connect(audioCtx.destination);
-            
-            source.onended = resolve;
-            source.start(0); 
-            
-            console.log("✅ 제미나이 PCM 날것 데이터 해독 및 직결 재생 성공!");
-
-        } catch (error) {
-            console.error("🚨 PCM 변환 완전 실패:", error);
-            reject(error);
-        }
-    });
-};
-
-// 🚨 무적의 감시 카메라: 디자인(UI)에 상관없이 0.5초마다 언어 변경을 100% 잡아냅니다!
-let lastCheckedLang = localStorage.getItem('target_language') || 'en-US';
-
-setInterval(() => {
-    const currentSavedLang = localStorage.getItem('target_language');
-    if (currentSavedLang && currentSavedLang !== lastCheckedLang) {
-        lastCheckedLang = currentSavedLang;
-        if (typeof window.updatePremiumVoiceList === 'function') {
-            window.updatePremiumVoiceList(currentSavedLang);
-        }
-    }
-}, 500);
-
-setTimeout(() => {
-    const savedPremiumVoice = localStorage.getItem('premium_voice_name');
-    if (savedPremiumVoice) {
-        document.getElementById('disp-voiceName-premium').innerText = savedPremiumVoice;
-    }
-}, 500);
-
-
-
-
-
-
-// ==========================================
-// 🌐 실시간 대면 통역기 (Real-time Interpreter) 엔진
-// ==========================================
-
-window.isInterpActive = false;
-window.interpRec = null;
-
-// 🌟 대화 기록을 20개씩 저장할 배열
-window.interpHistoryTop = [];
-window.interpHistoryBottom = [];
-
-// 통역기 창 열기
-window.openInterpreter = function() {
-    console.log("통역기 실행!");
-    if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
-    
-    const modal = document.getElementById('interpreterModal');
-    if(!modal) return alert("통역기 화면을 찾을 수 없습니다.");
-    
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
-    modal.style.zIndex = '99999'; 
-    
-    // 🌟 배열과 화면 초기화
-    window.interpHistoryTop = [];
-    window.interpHistoryBottom = [];
-    const topText = document.getElementById('interp-text-top');
-    const bottomText = document.getElementById('interp-text-bottom');
-    if(topText) topText.innerHTML = '<div class="mt-auto w-full"><span class="opacity-40 text-2xl sm:text-3xl font-black text-slate-800 break-keep">대화를 시작해주세요.</span></div>';
-    if(bottomText) bottomText.innerHTML = '<div class="mb-auto w-full text-right"><span class="opacity-40 text-2xl sm:text-3xl font-black text-slate-800 break-keep">대화를 시작해주세요.</span></div>';
-    
-    try {
-        const tLangValue = localStorage.getItem('target_language') || 'en-US';
-        const sLangValue = localStorage.getItem('stt_input_language') || 'ko-KR';
-        document.getElementById('interp-lang-top').innerText = typeof window.getLangName === 'function' ? window.getLangName(tLangValue) : "AI 언어";
-        document.getElementById('interp-lang-bottom').innerText = typeof window.getLangName === 'function' ? window.getLangName(sLangValue) : "내 언어";
-    } catch(e) {}
-    
-    if (!window.interpRec) {
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-            window.interpRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            window.interpRec.continuous = true; 
-            window.interpRec.interimResults = false;
-            
-            window.interpRec.onresult = (e) => {
-                const lastIdx = e.results.length - 1;
-                const transcript = e.results[lastIdx][0].transcript;
-                if(transcript.trim()) {
-                    window.processInterpTranslation(transcript);
-                }
-            };
-            
-            window.interpRec.onend = () => {
-                if(window.isInterpActive) {
-                    setTimeout(() => {
-                        if(window.isInterpActive) {
-                            try { window.interpRec.start(); } catch(err) {}
-                        }
-                    }, 500);
-                }
-            };
-            window.interpRec.onerror = (e) => { console.log("마이크 대기..."); };
-        } else {
-            alert("이 기기에서는 음성 인식을 지원하지 않습니다.");
-        }
-    }
-};
-
-window.closeInterpreter = function() {
-    const modal = document.getElementById('interpreterModal');
-    if(modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none'; 
-    }
-    if (window.isInterpActive) window.toggleInterpMic();
-};
-
-window.toggleInterpMic = function() {
-    if(!window.interpRec) return alert("마이크를 켤 수 없습니다.");
-    const btn = document.getElementById('interp-mic-btn');
-    const icon = document.getElementById('interp-mic-icon');
-    const status = document.getElementById('interp-status');
-    
-    if (window.isInterpActive) {
-        window.isInterpActive = false;
-        try { window.interpRec.stop(); } catch(e) {}
-        if(btn) { btn.classList.replace('bg-orange-50', 'bg-blue-50'); btn.classList.replace('border-orange-200', 'border-blue-100'); btn.classList.replace('text-orange-500', 'text-blue-500'); }
-        if(icon) icon.classList.remove('animate-pulse');
-        if(status) { status.innerHTML = "실시간 통역 모드 (OFF)"; status.classList.replace('text-orange-600', 'text-slate-500'); status.classList.replace('bg-orange-100', 'bg-slate-100'); }
-    } else {
-        window.isInterpActive = true;
-        window.interpRec.lang = localStorage.getItem('stt_input_language') || 'ko-KR';
-        try { window.interpRec.start(); } catch(e) {}
-        if(btn) { btn.classList.replace('bg-blue-50', 'bg-orange-50'); btn.classList.replace('border-blue-100', 'border-orange-200'); btn.classList.replace('text-blue-500', 'text-orange-500'); }
-        if(icon) icon.classList.add('animate-pulse');
-        if(status) { status.innerHTML = "실시간 통역 모드 (ON) <i class='fa-solid fa-satellite-dish ml-1'></i>"; status.classList.replace('text-slate-500', 'text-orange-600'); status.classList.replace('bg-slate-100', 'bg-orange-100'); }
-    }
-};
-
-// 🌟 위쪽 화면 렌더링 (최신 글이 아래에 쌓이며 과거 텍스트는 위로 밀림)
-// 🌟 위쪽 화면 렌더링 (최신 글이 아래에 쌓이며 스크롤 가능)
-window.renderInterpTop = function() {
-    const container = document.getElementById('interp-text-top');
-    if(!container) return;
-    
-    let html = window.interpHistoryTop.map((msg, i) => `
-        <div class="mb-2 ${i === window.interpHistoryTop.length - 1 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-start w-full shrink-0">
-            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep">${msg.translated}</span>
-            <span class="text-xs font-bold text-blue-600 mt-1 border-l-[3px] border-blue-400 pl-2 bg-blue-50/50 pr-3 py-0.5 rounded-r-lg">${msg.original}</span>
-        </div>
-    `).join('');
-    
-    // 내용물이 바닥에 붙어서 위로 밀려나도록 mt-auto 컨테이너로 감싸줌
-    container.innerHTML = `<div class="mt-auto w-full flex flex-col gap-2">` + html + `</div>`;
-    // 새로 추가될 때마다 최하단으로 스크롤 이동
-    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
-};
-
-// 🌟 아래쪽 화면 렌더링 (최신 글이 위에 쌓이며 스크롤 가능)
-window.renderInterpBottom = function() {
-    const container = document.getElementById('interp-text-bottom');
-    if(!container) return;
-    
-    let html = window.interpHistoryBottom.map((msg, i) => `
-        <div class="mb-2 ${i === 0 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-end w-full shrink-0">
-            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep text-right">${msg.translated}</span>
-            <span class="text-xs font-bold text-orange-600 mt-1 border-r-[3px] border-orange-400 pr-2 bg-orange-50/50 pl-3 py-0.5 rounded-l-lg text-right">${msg.original}</span>
-        </div>
-    `).join('');
-    
-    // 내용물이 천장에 붙어서 아래로 밀려나도록 mb-auto 컨테이너로 감싸줌
-    container.innerHTML = `<div class="mb-auto w-full flex flex-col gap-2">` + html + `</div>`;
-    // 새로 추가될 때마다 최상단으로 스크롤 이동
-    setTimeout(() => { container.scrollTop = 0; }, 50);
-};
-
-// 딥시크 텍스트 통신
-window.processInterpTranslation = async function(text) {
-    if (!text.trim()) return;
-    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) { window.toggleInterpMic(); return; }
-    if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-
-    const status = document.getElementById('interp-status');
-    if(status) status.innerHTML = "번역 중... ⏳";
-
-    const tLangCode = localStorage.getItem('target_language') || 'en-US';
-    const sLangCode = localStorage.getItem('stt_input_language') || 'ko-KR';
-
-    const sysPrompt = `You are a real-time bilateral interpreter.
-    Detect if the user's input is closer to ${sLangCode} or ${tLangCode}.
-    - If it's ${sLangCode}, translate to ${tLangCode}.
-    - If it's ${tLangCode}, translate to ${sLangCode}.
-    Respond ONLY in JSON format EXACTLY like this:
-    {
-       "detected_lang_code": "either '${sLangCode}' or '${tLangCode}'",
-       "translated_text": "the translated result"
-    }`;
-
-    try {
-        let res = await fetchAPI(WORKER_URL + 'translate-interp', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Device-ID': typeof myDeviceId !== 'undefined' ? myDeviceId : "unknown" },
-            body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: sysPrompt }, { role: "user", content: text }], response_format: { type: "json_object" } })
-        });
-        
-        let data = await res.json();
-        let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
-        let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
-        
-        if (parsed.detected_lang_code === sLangCode || parsed.detected_lang_code.includes(sLangCode.split('-')[0])) {
-            // 내가 한 말(한국어) -> 상대방 화면(위)에 쌓기 (최대 20개)
-            window.interpHistoryTop.push({ translated: parsed.translated_text, original: text });
-            if(window.interpHistoryTop.length > 20) window.interpHistoryTop.shift();
-            window.renderInterpTop();
-        } else {
-            // 상대방이 한 말(영어) -> 내 화면(아래)에 쌓기 (최대 20개)
-            window.interpHistoryBottom.unshift({ translated: parsed.translated_text, original: text });
-            if(window.interpHistoryBottom.length > 20) window.interpHistoryBottom.pop();
-            window.renderInterpBottom();
-        }
-    } catch(e) {
-        console.error("통역 에러 발생:", e);
-        if(status) status.innerHTML = "통역 에러 ⚠️";
-    } finally {
-        if(window.isInterpActive && status) { status.innerHTML = "실시간 통역 모드 (ON) <i class='fa-solid fa-satellite-dish ml-1'></i>"; }
-    }
-};
-// ==========================================
-
-// 1. 번역 모드 선택 팝업 토글
-window.toggleTranslateMenu = function() {
-    const menu = document.getElementById('translateModeMenu');
-    menu.classList.toggle('hidden');
-};
-
-// 2. 기존 스마트 번역 모드 활성화 (기존 번역기 로직 부활)
-window.activateSmartTranslate = function() {
-    // 기존에 버튼 스타일 변경하던 로직을 재사용하여 '번역 모드'로 스위칭
-    window.changeAppMode('translate');
-    
-    // 원래 쓰시던 번역기 화면(screen-main 등)으로 이동하거나 기능 활성화
-    window.navigate('screen-main');
-    window.updateStatus("스마트 번역 모드로 전환되었습니다.");
-};
 
 
 
