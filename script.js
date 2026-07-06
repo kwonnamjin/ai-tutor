@@ -3207,24 +3207,24 @@ window.startPingPongMic = function(speaker) {
         // 🌟 여기가 핑퐁의 핵심입니다! 마이크가 꺼졌을 때 작동
         window.interpRec.onend = () => {
             if (window.manualStop) {
-                // 1. 내가 버튼을 눌러서 강제로 끄거나 턴을 뺏은 경우 (조용히 멈춤)
+                // 1. 내가 버튼을 직접 눌러서 강제로 끄거나 턴을 뺏은 경우 (조용히 멈춤)
+                // (더 이상 아무 작업도 하지 않음)
             } else if (window.hasSpoken) {
-                // 2. 정상적으로 말을 마친 경우 -> 0.3초 후 반대쪽으로 턴 자동 교체!
+                // 2. 정상적으로 말을 마친 경우 -> 0.3초 후 반대쪽으로 턴 핑퐁 교체!
                 const nextSpeaker = speaker === 'ME' ? 'OTHER' : 'ME';
                 if(status) status.innerHTML = "턴 교체 중... 🏓";
                 setTimeout(() => {
                     window.startPingPongMic(nextSpeaker);
                 }, 300);
             } else {
-                // 3. 침묵만 하다가 기계가 알아서 꺼진 경우 -> 핑퐁 중지 (배터리/무한루프 방지)
-                window.resetMicUI();
-                if(status) status.innerHTML = "대기 중 (마이크를 눌러 재개) ⏸️";
+                // 3. 침묵해서 기계가 알아서 꺼진 경우 -> 끄지 말고 '현재 차례' 무한 유지! 
+                // (생각하는 중이거나 뜸 들이는 중이니까 내 마이크를 다시 바로 켬)
+                if(status) status.innerHTML = "계속 듣고 있습니다... 👂";
+                setTimeout(() => {
+                    window.startPingPongMic(speaker);
+                }, 100);
             }
         };
-
-        try { window.interpRec.start(); } catch(e) { window.resetMicUI(); }
-    }
-};
 
 
 // ==========================================
