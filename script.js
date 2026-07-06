@@ -3211,34 +3211,24 @@ window.processInterpTranslation = async function(text) {
     const status = document.getElementById('interp-status');
     if(status) status.innerHTML = "번역 중... ⏳";
 
-    const tLangCode = localStorage.getItem('target_language') || 'en-US'; 
-    const sLangCode = localStorage.getItem('stt_input_language') || 'ko-KR'; 
+    // 🌟 이제 sLang/tLang은 판별 기준이 아니라, AI가 참고할 '주요 사용 언어 2개'로만 전달합니다.
+    const langA = localStorage.getItem('stt_input_language') || 'ko-KR'; 
+    const langB = localStorage.getItem('target_language') || 'en-US';
 
-    const sysPrompt = `You are a real-time bilateral interpreter.
-    Language 1 (ME): [${sLangCode}]
-    Language 2 (OTHER): [${tLangCode}]
+    const sysPrompt = `You are a universal real-time interpreter.
+    There are two languages involved: [${langA}] and [${langB}].
 
-    CRITICAL RULE 1: PHONETIC RECOGNITION. If the OTHER person speaks [${tLangCode}], the STT might transcribe it phonetically into [${sLangCode}] characters (e.g., Spanish "Buenas tardes" -> "부에나스 타르데스"). Treat this as [${tLangCode}].
+    CRITICAL RULE:
+    1. Analyze the input text. Identify if it is [${langA}] or [${langB}].
+    2. If the input is [${langA}], translate it into [${langB}]. Set "source_lang" to "${langA}".
+    3. If the input is [${langB}], translate it into [${langA}]. Set "source_lang" to "${langB}".
+    4. STRICTLY NO EXPLANATIONS. Output ONLY the translation.
 
-    CRITICAL RULE 2: STRICTLY NO EXPLANATIONS. 
-    - NEVER explain the context.
-    - NEVER provide multiple meanings or dictionary definitions.
-    - NEVER add notes like "Assuming this means..." or "This translates literally as...".
-    - If the input is ambiguous, meaningless, or clearly a misrecognition, just output the most direct, literal translation possible WITHOUT ANY COMMENTARY.
-
-    Step 1: Determine the speaker.
-    - Standard [${sLangCode}] expressions = "ME".
-    - Phonetic pronunciation of [${tLangCode}] = "OTHER".
-
-    Step 2: Provide the meaning in BOTH languages.
-    - "text_me": ONLY the exact text/translation in standard [${sLangCode}] orthography (e.g., 한국어).
-    - "text_other": ONLY the exact text/translation in standard [${tLangCode}] orthography (e.g., Spanish alphabet).
-
-    Respond ONLY in JSON format EXACTLY like this:
+    Respond ONLY in JSON format:
     {
-       "speaker": "ME or OTHER",
-       "text_me": "Translation only",
-       "text_other": "Translation only"
+       "source_lang": "The detected language code",
+       "text_me": "Translation in [${langA}]",
+       "text_other": "Translation in [${langB}]"
     }`;
 
     try {
@@ -3252,16 +3242,14 @@ window.processInterpTranslation = async function(text) {
         let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
         let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
         
-        // 🌟 수정 포인트: 마이크 원본(text) 대신, AI가 정제한 완벽한 텍스트(text_me, text_other)를 작은 글씨(original) 자리에 씁니다!
-        if (parsed.speaker === "ME") {
-            // 내가 한 말 -> 상대방 화면(위)에 외국어 띄우기
-            // 큰 글씨: 외국어 (text_other) / 작은 글씨: 한국어 원문 (text_me)
+        // 🌟 이제 source_lang이 무엇이든, 무조건 반대쪽 언어로 판단해서 화면에 띄웁니다!
+        if (parsed.source_lang === langA || (typeof parsed.source_lang === 'string' && parsed.source_lang.includes(langA.split('-')[0]))) {
+            // langA(한국어 등)로 말함 -> 상대방 화면(위)에 langB(외국어) 띄우기
             window.interpHistoryTop.push({ translated: parsed.text_other, original: parsed.text_me });
             if(window.interpHistoryTop.length > 20) window.interpHistoryTop.shift();
             window.renderInterpTop();
         } else {
-            // 상대방이 한 말 -> 내 화면(아래)에 한국어 띄우기
-            // 큰 글씨: 한국어 (text_me) / 작은 글씨: 외국어 원문 (text_other)
+            // langB(외국어 등)로 말함 -> 내 화면(아래)에 langA(한국어) 띄우기
             window.interpHistoryBottom.unshift({ translated: parsed.text_me, original: parsed.text_other });
             if(window.interpHistoryBottom.length > 20) window.interpHistoryBottom.pop();
             window.renderInterpBottom();
