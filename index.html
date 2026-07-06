@@ -67,6 +67,12 @@
                     <span data-i18n="ui_pages_alpha" class="text-xs font-black text-slate-700 whitespace-nowrap">기초발음</span>
                     <span data-i18n="ui_pages_alpha_desc" class="text-[10px] text-slate-500 font-bold text-right ml-3 break-keep">언어의 뼈대인 발음 익히기</span>
                 </button>
+                <!-- 기존 기초발음 버튼 아래에 추가 -->
+                <div class="h-px bg-slate-200 my-1 w-full"></div> <!-- 구분선 -->
+                <button onclick="navigate('screen-archive'); window.closeAllPanels();" class="w-full flex items-center justify-between p-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors shadow-sm">
+                    <span class="text-xs font-black text-amber-700 whitespace-nowrap"><i class="fa-solid fa-box-archive mr-1.5"></i>내 보관함</span>
+                    <span class="text-[10px] text-slate-500 font-bold text-right ml-3 break-keep">초승달 소장 및 오답노트</span>
+                </button>
             </div>
 
             <!-- Report 패널 -->
@@ -117,7 +123,6 @@
             <button id="btn_persona_friend" onclick="window.selectPersona('friend')" class="persona-btn shrink-0 py-2 rounded-xl border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all shadow-sm"><span data-i18n="ui_char_friend">친구</span></button>
             <button id="btn_persona_assistant" onclick="window.selectPersona('assistant')" class="persona-btn shrink-0 py-2 rounded-xl border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all shadow-sm"><span data-i18n="ui_char_assistant">비서</span></button>
             <button id="btn_persona_guide" onclick="window.selectPersona('guide')" class="persona-btn shrink-0 py-2 rounded-xl border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all shadow-sm"><span data-i18n="ui_char_guide">가이드</span></button>
-    
             <!--아이돌 페르소나 비활성 처리-->
          <!--  <button id="btn_persona_special" onclick="window.selectPersona('special')" class="persona-btn shrink-0 py-2 rounded-xl border border-slate-200 bg-white text-slate-400 text-[11px] font-bold transition-all shadow-sm"><span data-i18n="ui_char_idol">아이돌</span></button> -->
         </div>
@@ -156,56 +161,82 @@
 
             <!-- Settings 패널 -->
             <div id="inlineSettingsPanel" class="hidden panel-popup bg-white/95 backdrop-blur-md border-b border-x border-slate-200 rounded-b-xl shadow-lg p-4 mb-4 z-10 relative flex flex-col gap-2">
+                
+                <!-- 1. 앱/AI 언어 설정 (기존과 동일) -->
                 <div class="flex flex-col bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
-                    <div class="flex justify-between items-center py-2.5 px-3 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleDropdown('drop-exp')">
-                        <span class="text-xs font-bold text-slate-500" id="ui_home_user_lang">앱 표시 언어</span>
+                    <div class="flex justify-between items-center py-2 px-3 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleDropdown('drop-exp')">
+                        <span class="text-[11px] font-bold text-slate-500" id="ui_home_user_lang">앱 표시 언어</span>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs font-black text-slate-700" id="disp-explanationLanguageHome">🇰🇷 한국어 (UI)</span>
+                            <span class="text-[11px] font-black text-slate-700" id="disp-explanationLanguageHome">🇰🇷 한국어 (UI)</span>
                             <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
                         </div>
                     </div>
-                    <div id="drop-exp" class="hidden max-h-48 overflow-y-auto bg-white border-t border-slate-100 flex-col no-scrollbar"></div>
+                    <div id="drop-exp" class="hidden max-h-40 overflow-y-auto bg-white border-t border-slate-100 flex-col no-scrollbar"></div>
                 </div>
-                <div class="flex flex-col bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
-                    <div class="flex justify-between items-center py-2.5 px-3 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleDropdown('drop-target')">
-                        <span class="text-xs font-bold text-slate-500" id="ui_home_target_lang">AI 언어 (학습)</span>
+                
+                <div class="flex gap-2">
+                    <div class="flex-1 flex flex-col bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
+                        <div class="flex justify-between items-center py-2 px-2 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleDropdown('drop-target')">
+                            <span class="text-[10px] font-bold text-slate-500" id="ui_home_target_lang">AI 언어 (학습)</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[10px] font-black text-blue-600 truncate max-w-[50px]" id="disp-targetLanguageHome">🇺🇸 English (AI)</span>
+                                <i class="fa-solid fa-chevron-down text-[8px] text-slate-400"></i>
+                            </div>
+                        </div>
+                        <div id="drop-target" class="hidden max-h-40 overflow-y-auto bg-white border-t border-slate-100 flex-col no-scrollbar"></div>
+                    </div>
+                    <div class="flex-1 flex flex-col bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
+                        <div class="flex justify-between items-center py-2 px-2 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleDropdown('drop-stt')">
+                            <span class="text-[10px] font-bold text-slate-500" id="ui_home_stt_lang">내 음성 언어</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[10px] font-black text-emerald-600 truncate max-w-[50px]" id="disp-sttInputLanguageHome">🇰🇷 Kor</span>
+                                <i class="fa-solid fa-chevron-down text-[8px] text-slate-400"></i>
+                            </div>
+                        </div>
+                        <div id="drop-stt" class="hidden max-h-40 overflow-y-auto bg-white border-t border-slate-100 flex-col no-scrollbar"></div>
+                    </div>
+                </div>
+
+                <div class="w-full h-px bg-slate-200 my-1"></div> <!-- 구분선 -->
+
+                <!-- 🤖 2. 기본 AI 음성 (무료) -->
+                <div class="flex flex-col bg-white border border-slate-200 rounded-lg overflow-hidden relative z-40 shadow-sm">
+                    <div class="flex justify-between items-center py-2 px-3">
+                        <span class="text-[11px] font-extrabold text-slate-600 flex items-center gap-1.5 cursor-pointer" onclick="document.getElementById('drop-voice').classList.toggle('hidden')">
+                            <span class="text-xs font-bold text-slate-500" data-i18n="set_voice_gender">AI 목소리 선택</span>
+                        </span>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs font-black text-blue-600" id="disp-targetLanguageHome">🇺🇸 English (AI)</span>
-                            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                            <span class="text-[10px] font-black text-blue-600 truncate max-w-[80px] cursor-pointer" id="disp-voiceName" onclick="document.getElementById('drop-voice').classList.toggle('hidden')" data-i18n="ui_default_voice">기본 음성</span>
+                            
+                            <!-- 일반 미리듣기 버튼 -->
+                            <button onclick="window.playSampleVoice('basic')" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-1.5 rounded-md text-[9px] font-black transition-colors shadow-sm ml-1 flex items-center gap-1">
+                                <i class="fa-solid fa-volume-high"></i> 듣기
+                            </button>
+                            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 cursor-pointer" onclick="document.getElementById('drop-voice').classList.toggle('hidden')"></i>
                         </div>
                     </div>
-                    <div id="drop-target" class="hidden max-h-48 overflow-y-auto bg-white border-t border-slate-100 flex-col no-scrollbar"></div>
-                </div>
-                <div class="flex flex-col bg-slate-50 border border-slate-200 rounded-lg overflow-hidden">
-                    <div class="flex justify-between items-center py-2.5 px-3 cursor-pointer hover:bg-slate-100 transition-colors" onclick="toggleDropdown('drop-stt')">
-                        <span class="text-xs font-bold text-slate-500" id="ui_home_stt_lang">내 음성 언어</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-black text-emerald-600" id="disp-sttInputLanguageHome">🇰🇷 한국어 (Me)</span>
-                            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
+                    
+                    <div id="drop-voice" class="hidden bg-slate-50 border-t border-slate-200 flex-col max-h-40 overflow-y-auto shadow-inner">
+                        <div id="voiceListContainer" class="flex flex-col">
+                            <div class="p-4 text-center text-[10px] text-slate-400 font-bold animate-pulse">기기 목소리를 불러오는 중...</div>
                         </div>
                     </div>
-                    <div id="drop-stt" class="hidden max-h-48 overflow-y-auto bg-white border-t border-slate-100 flex-col no-scrollbar"></div>
                 </div>
-<div class="flex flex-col bg-slate-50 border border-slate-200 rounded-lg overflow-hidden mt-1 relative z-50">
-    <div class="flex justify-between items-center py-2.5 px-3 cursor-pointer hover:bg-slate-100 transition-colors" onclick="document.getElementById('drop-voice').classList.toggle('hidden')">
-        <span class="text-xs font-bold text-slate-500" data-i18n="set_voice_gender">AI 목소리 선택</span>
-        <div class="flex items-center gap-2">
-            <span class="text-xs font-black text-purple-600 truncate max-w-[120px]" id="disp-voiceName" data-i18n="ui_default_voice">기본 음성</span>
-            <i class="fa-solid fa-chevron-down text-[10px] text-slate-400"></i>
-        </div>
-    </div>
-    
-    <div id="drop-voice" class="hidden bg-white border-t border-slate-100 flex-col max-h-48 overflow-y-auto shadow-inner">
-        <div id="voiceListContainer" class="flex flex-col">
-            <div class="p-4 text-center text-[10px] text-slate-400 font-bold animate-pulse">
-                기기 목소리를 불러오는 중...
-            </div>
-        </div>
-    </div>
-</div>
+
+                
+                    
+                    <!-- 구글 TTS API로 가져올 프리미엄 목소리 더미 리스트 -->
+                    <div id="drop-voice-premium" class="hidden bg-white border-t border-amber-200 flex-col max-h-40 overflow-y-auto shadow-inner">
+                        <div class="flex flex-col">
+                            <button class="w-full text-left px-4 py-2.5 text-[11px] font-bold text-amber-700 hover:bg-amber-50 border-b border-amber-100 transition-colors" onclick="window.selectPremiumVoice('en-US-Journey-F', '미국 (여성 1)')">🇺🇸 미국 (여성 1) - 차분함</button>
+                            <button class="w-full text-left px-4 py-2.5 text-[11px] font-bold text-amber-700 hover:bg-amber-50 border-b border-amber-100 transition-colors" onclick="window.selectPremiumVoice('en-US-Journey-D', '미국 (남성 1)')">🇺🇸 미국 (남성 1) - 신뢰감</button>
+                            <button class="w-full text-left px-4 py-2.5 text-[11px] font-bold text-amber-700 hover:bg-amber-50 border-b border-amber-100 transition-colors" onclick="window.selectPremiumVoice('en-GB-News-G', '영국 (여성 1)')">🇬🇧 영국 (여성 1) - 아나운서</button>
+                            <button class="w-full text-left px-4 py-2.5 text-[11px] font-bold text-amber-700 hover:bg-amber-50 transition-colors" onclick="window.selectPremiumVoice('en-AU-Standard-B', '호주 (남성 1)')">🇦🇺 호주 (남성 1) - 유쾌함</button>
+                        </div>
+                    </div>
+                </div>
 
             </div>
-        </div>
 
         <!-- Home 스크린 -->
         <div id="screen-home" class="absolute top-0 left-0 w-full h-full z-10 sm:rounded-3xl transition-transform duration-300 bg-[#e0f2fe] overflow-hidden flex flex-col">
@@ -293,7 +324,7 @@
                 </div>
             </div>
 
-         <!-- 🌟 하단 제어부 영역 시작 -->
+            <!-- 🌟 하단 제어부 영역 시작 -->
 <div class="flex-none bg-white border-t border-slate-200 pt-2.5 pb-2 px-3 flex flex-col z-20 shadow-[0_-10px_15px_-3px_rgba(0,0,0,0.05)]">
     
     <!-- 1. 탭 및 언어 스왑 -->
@@ -302,9 +333,9 @@
              <button id="modeTutorBtn" onclick="changeAppMode('tutor')" class="flex-1 py-1.5 text-[11px] font-black rounded-lg border border-blue-600 bg-blue-600 text-white shadow-md transition-all">
                  <span data-i18n="ui_tab_chat">💬 대화</span>
              </button>
-             <button id="modeTranslateBtn" onclick="changeAppMode('translate')" class="flex-1 py-1.5 text-[11px] font-black rounded-lg border border-transparent bg-transparent text-slate-500 hover:bg-slate-200 transition-all">
-                 <span data-i18n="ui_tab_translate">🌐 번역</span>
-             </button>
+             <button id="modeTranslateBtn" onclick="window.toggleTranslateMenu()" class="flex-1 py-1.5 text-[11px] font-black rounded-lg border border-transparent bg-transparent text-slate-500 hover:bg-slate-200 transition-all">
+    <span data-i18n="ui_tab_translate">🌐 번역</span>
+</button>
         </div>
         <div id="sttToggleContainer" class="bg-slate-50 rounded-xl flex-1 min-w-0 flex items-center border border-slate-200 shadow-sm overflow-hidden transform transition-transform hover:scale-[1.02]">
             <button id="btnLangSwap" class="w-full bg-transparent text-[10px] sm:text-[11px] font-bold text-slate-600 py-2 px-1 flex items-center justify-center outline-none hover:bg-slate-100 transition-colors" onclick="window.swapLanguages()">
@@ -313,6 +344,10 @@
                </span> 
             </button>
         </div>
+        <div id="translateModeMenu" class="hidden absolute bottom-20 left-4 right-4 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-[9999]">
+    <button onclick="window.openInterpreter(); window.toggleTranslateMenu()" class="w-full text-left p-3 text-xs font-black text-blue-600 hover:bg-blue-50 rounded-lg">🎙️ 실시간 대면 통역</button>
+    <button onclick="window.activateSmartTranslate(); window.toggleTranslateMenu()" class="w-full text-left p-3 text-xs font-black text-indigo-600 hover:bg-indigo-50 rounded-lg">🧠스마트 번역</button>
+</div>
     </div>
     
     <!-- 2. 텍스트 입력창 -->
@@ -351,9 +386,10 @@
                 <i class="fa-solid fa-lightbulb text-amber-500 text-sm shrink-0"></i> 
                 <span id="expGlobalBtnText" class="truncate">과외 해설</span>
             </button>
-        </div>   
-      </div>
+        </div>
+        </div>
     </div>
+    
 </div> 
 <!-- 🚨 가장 중요: 바로 위 </div> 태그가 메인 뼈대를 닫아주는 핵심 태그입니다! 절대 지워지면 안 됩니다. -->
 
@@ -516,6 +552,28 @@
             </div>
         </div>
         
+       <!-- 📂 내 보관함(오답노트) 스크린 -->
+        <div id="screen-archive" class="absolute top-0 left-0 w-full h-full flex flex-col z-50 bg-[#f8fafc] overflow-hidden sm:rounded-3xl" style="transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);">
+            
+            <!-- 1. 상단 서브 탭 -->
+            <!-- 1. 상단 서브 탭 (글로벌 네비게이션에 가리지 않도록 상단 여백 pt-[115px] 추가!) -->
+<div class="flex-none bg-white pt-[115px] px-4 py-3 border-b border-gray-200 shadow-sm z-10">
+                <div class="flex gap-2">
+                    <button id="tab_script" class="flex-1 bg-amber-50 border border-amber-400 text-amber-700 text-xs font-bold py-2.5 rounded-xl shadow-sm transition-all" onclick="window.switchArchiveTab('script')">대본</button>
+                    <button id="tab_vocab" class="flex-1 bg-white border border-slate-200 text-slate-500 text-xs font-bold py-2.5 rounded-xl hover:bg-slate-50 transition-all" onclick="window.switchArchiveTab('vocab')">단어장</button>
+                    <button id="tab_freetalk" class="flex-1 bg-white border border-slate-200 text-slate-500 text-xs font-bold py-2.5 rounded-xl hover:bg-slate-50 transition-all" onclick="window.switchArchiveTab('freetalk')">프리토킹</button>
+                </div>
+            </div>
+
+            
+
+            <!-- 3. 리스트 영역 (스크롤 창) -->
+            <div class="flex-1 overflow-y-auto p-4 pb-24 bg-[#f8fafc]" id="archiveListContainer">
+                <!-- 자바스크립트가 여기에 카드를 쌓아줍니다 -->
+            </div>
+        </div>
+
+        
         <!-- 각종 모달창들 -->
         <div id="customLangModal" class="hidden absolute inset-0 bg-slate-900/60 flex items-end justify-center z-[110] backdrop-blur-sm transition-opacity">
             <div id="customLangContent" class="bg-white w-full max-w-md rounded-t-3xl p-6 shadow-2xl transition-transform duration-300 translate-y-full border-t border-slate-100 pb-10 sm:pb-6">
@@ -557,7 +615,7 @@
            <h2 id="streak_modal_title_wrapper" class="text-xl font-black text-slate-800 mb-1">
         <span id="modal-streak-count" class="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">0</span>일 연속 달성!
     </h2>
-    <p data-i18n="ui_streak_modal_desc" class="text-xs text-slate-500 mb-5 font-bold">매일 꾸준히 학습하고 초승달 보상을 받으세요 🌙</p>
+    <p data-i18n="ui_streak_modal_desc" class="text-xs text-slate-500 mb-5 font-bold">매일 꾸준히 학습하고 번개 보상을 받으세요 🌙</p>
     
     <div id="modal-quest-container" class="text-left mb-5"></div>
     <div id="modal-target-box" class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-left"></div>
@@ -567,7 +625,50 @@
     </button>
 </div>
     </div>
+
+
+   
+
+
 </div>
+
+
+<!-- 🎙️ 실시간 대면 통역기 스크린 -->
+    <div id="interpreterModal" class="hidden absolute inset-0 z-[9999] bg-slate-50 flex flex-col sm:rounded-3xl overflow-hidden transition-all duration-300">
+        
+        <!-- 상단 화면 (상대방) - 스크롤 오류 해결 -->
+        <div class="flex-1 relative bg-slate-100 border-b border-slate-200 flex flex-col overflow-hidden">
+            <div class="absolute top-4 left-4 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-2 z-10">
+                <span id="interp-lang-top" class="text-xs font-extrabold text-slate-700">🇺🇸 English</span>
+            </div>
+            <!-- 순수 스크롤 박스로 변경 -->
+            <div id="interp-text-top" class="flex-1 overflow-y-auto no-scrollbar p-5 pt-16 pb-4 scroll-smooth block">
+                <div class="opacity-40 text-2xl font-black text-slate-800 text-left mt-4">대화를 시작해주세요.</div>
+            </div>
+        </div>
+        
+        <!-- 중앙 경계선 (마이크) -->
+        <div class="flex-none bg-white shadow-[0_0_15px_rgba(0,0,0,0.08)] z-20 py-2.5 px-4 flex items-center justify-between relative border-y-2 border-slate-200">
+            <span id="interp-status" class="text-[10px] font-black text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded-md shadow-sm w-24 text-center truncate">통역 OFF</span>
+            <button id="interp-mic-btn" onclick="window.toggleInterpMic()" class="flex-1 max-w-[160px] h-11 mx-3 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center gap-2 text-xl font-black transition-all shadow-sm border-2 border-blue-100 hover:scale-[1.02] outline-none">
+                <i id="interp-mic-icon" class="fa-solid fa-microphone"></i>
+            </button>
+            <button onclick="window.closeInterpreter()" class="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-slate-500 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all shadow-sm w-24 outline-none">
+                <i class="fa-solid fa-xmark text-sm"></i>
+            </button>
+        </div>
+        
+        <!-- 하단 화면 (사용자) - 스크롤 오류 해결 -->
+        <div class="flex-1 relative bg-slate-50 flex flex-col overflow-hidden">
+            <!-- 순수 스크롤 박스로 변경 -->
+            <div id="interp-text-bottom" class="flex-1 overflow-y-auto no-scrollbar p-5 pb-16 pt-4 scroll-smooth block">
+                <div class="opacity-40 text-2xl font-black text-slate-800 text-right mb-4">대화를 시작해주세요.</div>
+            </div>
+            <div class="absolute bottom-4 right-4 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-2 z-10">
+                <span id="interp-lang-bottom" class="text-xs font-extrabold text-slate-700">🇰🇷 한국어</span>
+            </div>
+        </div>
+    </div>
 
      <!--테스트용 투명버튼-->
 <!-- <div onclick="devTestLimit()" style="position: fixed; bottom: 0; right: 0; width: 50px; height: 50px; opacity: 0; z-index: 9999;"></div> -->

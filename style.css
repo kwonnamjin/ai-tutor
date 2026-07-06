@@ -40,3 +40,13 @@ button#modeTutorBtn, button#modeTranslateBtn {
     padding-bottom: 4px !important;
     min-height: 0 !important;
 }
+
+#interpreterModal {
+    position: fixed !important; /* 부모 태그 상관없이 무조건 화면 기준 */
+    z-index: 99999 !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    display: none; /* JS에서 block/flex로 전환 */
+}
