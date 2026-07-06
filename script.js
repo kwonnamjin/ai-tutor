@@ -3064,13 +3064,18 @@ window.activeMicSpeaker = null;
 window.manualStop = false; // 사용자의 강제 개입(버튼 터치) 여부
 window.hasSpoken = false;  // 의미 있는 말소리가 인식되었는지 여부
 
-// 🌟 새롭게 추가: 언어 선택창을 바꾸면 실행되는 함수
+// ==========================================
+// 3. 언어 변경 시 처리 로직
+// ==========================================
 window.changeInterpLang = function(settingKey, langCode) {
-    // 1. 전체 설정값(localStorage) 업데이트
+    // 로컬 스토리지에 즉시 저장
     localStorage.setItem(settingKey, langCode);
     
-    // 2. 혹시 마이크가 켜져서 듣고 있는 중이라면, 
-    // 엉뚱한 언어로 듣지 않도록 강제로 대기 모드로 돌려보냅니다.
+    // 🌟 진짜 설정(Settings) 메뉴의 셀렉트 박스 값도 같이 바꿔서 완벽하게 동기화!
+    const originSelect = document.getElementById(settingKey);
+    if(originSelect) originSelect.value = langCode;
+    
+    // 마이크 충돌 방지를 위해 즉시 리셋
     window.manualStop = true; 
     if (window.interpRec) {
         window.interpRec.onend = null;
@@ -3080,10 +3085,12 @@ window.changeInterpLang = function(settingKey, langCode) {
     window.resetMicUI();
     
     const status = document.getElementById('interp-status');
-    if(status) status.innerHTML = "언어 변경됨. 마이크를 누르세요 🎙️";
+    if(status) status.innerHTML = "언어가 변경되었습니다 🎙️";
 };
 
-// 🌟 기존 openInterpreter 함수 수정: 창이 열릴 때 선택창에 현재 설정값 세팅
+// ==========================================
+// 1. 통역기 창 열기 (설정창 언어 목록 자동 복사 기능 포함)
+// ==========================================
 window.openInterpreter = function() {
     if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
     
@@ -3101,22 +3108,52 @@ window.openInterpreter = function() {
     if(topText) topText.innerHTML = '';
     if(bottomText) bottomText.innerHTML = '';
     
-    // ==========================================
-    // 이 부분이 교체되었습니다! 
-    // 기존의 단순 텍스트 표시 대신, select 박스의 값을 설정값과 동기화합니다.
+    // 🌟 1. 설정창에 있는 기존 <select> 목록을 통째로 복사해옵니다.
+    const settingTarget = document.getElementById('target_language'); 
+    const settingInput = document.getElementById('stt_input_language'); 
+    const topSelect = document.getElementById('interp-lang-top-sel');
+    const bottomSelect = document.getElementById('interp-lang-bottom-sel');
+
+    if (settingTarget && topSelect) {
+        topSelect.innerHTML = settingTarget.innerHTML; // 목록 복붙!
+    }
+    if (settingInput && bottomSelect) {
+        bottomSelect.innerHTML = settingInput.innerHTML; // 목록 복붙!
+    }
+
+    // 🌟 2. 현재 localStorage에 저장된 설정값으로 선택 항목을 맞춥니다.
     try {
         const tLangValue = localStorage.getItem('target_language') || 'en-US';
         const sLangValue = localStorage.getItem('stt_input_language') || 'ko-KR';
-        
-        const topSelect = document.getElementById('interp-lang-top-sel');
-        const bottomSelect = document.getElementById('interp-lang-bottom-sel');
-        
         if(topSelect) topSelect.value = tLangValue;
         if(bottomSelect) bottomSelect.value = sLangValue;
     } catch(e) {}
-    // ==========================================
     
     window.resetMicUI();
+};
+
+// ==========================================
+// 2. 통역기 닫기 (오류 완벽 해결 버전)
+// ==========================================
+window.closeInterpreter = function() {
+    console.log("통역기 종료 시도"); // 디버깅용 확인
+    
+    // 마이크 강제 종료 안전하게 처리
+    window.manualStop = true;
+    if (window.interpRec) {
+        window.interpRec.onend = null;
+        window.interpRec.onerror = null;
+        try { window.interpRec.abort(); } catch(e) { console.error(e); }
+    }
+    
+    window.resetMicUI();
+
+    // 화면 숨기기
+    const modal = document.getElementById('interpreterModal');
+    if(modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none'; 
+    }
 };
 
 // 3. UI를 기본 상태(대기)로 돌리는 함수
