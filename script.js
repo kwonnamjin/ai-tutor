@@ -3051,19 +3051,19 @@ setTimeout(() => {
 
 
 
-
 // ==========================================
-// 🌐 실시간 대면 통역기 (Real-time Interpreter) 엔진
+// 🌐 실시간 대면 통역기 (워키토키 듀얼 마이크 방식) 엔진
 // ==========================================
 
 window.isInterpActive = false;
 window.interpRec = null;
+window.currentSpeaker = null; // 🌟 현재 듣고 있는 마이크 주체 저장
 
 // 🌟 대화 기록을 20개씩 저장할 배열
 window.interpHistoryTop = [];
 window.interpHistoryBottom = [];
 
-// 통역기 창 열기
+// 통역기 창 열기 (마이크 대기 상태로 열림)
 window.openInterpreter = function() {
     console.log("통역기 실행!");
     if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
@@ -3075,223 +3075,198 @@ window.openInterpreter = function() {
     modal.style.display = 'flex';
     modal.style.zIndex = '99999'; 
     
-    // 🌟 배열과 화면 초기화
+    // 배열과 화면 초기화
     window.interpHistoryTop = [];
     window.interpHistoryBottom = [];
     const topText = document.getElementById('interp-text-top');
     const bottomText = document.getElementById('interp-text-bottom');
-    if(topText) topText.innerHTML = '<div class="mt-auto w-full"><span class="opacity-40 text-2xl sm:text-3xl font-black text-slate-800 break-keep">대화를 시작해주세요.</span></div>';
-    if(bottomText) bottomText.innerHTML = '<div class="mb-auto w-full text-right"><span class="opacity-40 text-2xl sm:text-3xl font-black text-slate-800 break-keep">대화를 시작해주세요.</span></div>';
+    if(topText) topText.innerHTML = '<div class="mt-auto w-full"><span class="opacity-40 text-2xl sm:text-3xl font-black text-slate-800 break-keep">위쪽 마이크를 누르고 말씀하세요.</span></div>';
+    if(bottomText) bottomText.innerHTML = '<div class="mb-auto w-full text-right"><span class="opacity-40 text-2xl sm:text-3xl font-black text-slate-800 break-keep">아래쪽 마이크를 누르고 말씀하세요.</span></div>';
     
     try {
         const tLangValue = localStorage.getItem('target_language') || 'en-US';
         const sLangValue = localStorage.getItem('stt_input_language') || 'ko-KR';
-        document.getElementById('interp-lang-top').innerText = typeof window.getLangName === 'function' ? window.getLangName(tLangValue) : "AI 언어";
+        document.getElementById('interp-lang-top').innerText = typeof window.getLangName === 'function' ? window.getLangName(tLangValue) : "상대방 언어";
         document.getElementById('interp-lang-bottom').innerText = typeof window.getLangName === 'function' ? window.getLangName(sLangValue) : "내 언어";
     } catch(e) {}
     
-    // 🌟 핵심: 설정값(localStorage)에 있는 언어를 마이크 엔진에 직접 주입!
-    const sLangCode = localStorage.getItem('stt_input_language') || 'ko-KR'; 
-    
-    if (!window.interpRec) {
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-            window.interpRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            window.interpRec.continuous = true;
-            window.interpRec.interimResults = false;
-            
-            // 🌟 마이크 엔진에 설정된 언어 강제 주입
-            window.interpRec.lang = sLangCode; 
-            
-            window.interpRec.onresult = (e) => {
-                const transcript = e.results[e.results.length - 1][0].transcript;
-                if(transcript.trim()) {
-                    window.processInterpTranslation(transcript);
-                }
-            };
-            
-            window.interpRec.onend = () => {
-                if(window.isInterpActive) {
-                    setTimeout(() => {
-                        if(window.isInterpActive) {
-                            try { window.interpRec.start(); } catch(err) {}
-                        }
-                    }, 500);
-                }
-            };
-            window.interpRec.onerror = (e) => { console.log("마이크 대기..."); };
-        } else {
-            // 이미 생성된 마이크라면 언어만 즉시 업데이트
-        window.interpRec.lang = sLangCode;
-        }
-    }
+    const status = document.getElementById('interp-status');
+    if(status) status.innerHTML = "마이크 버튼을 눌러주세요 🎙️";
 };
 
+// 통역기 창 닫기
 window.closeInterpreter = function() {
     const modal = document.getElementById('interpreterModal');
     if(modal) {
         modal.classList.add('hidden');
         modal.style.display = 'none'; 
     }
-    if (window.isInterpActive) window.toggleInterpMic();
-};
-
-window.toggleInterpMic = function() {
-    if(!window.interpRec) return alert("마이크를 켤 수 없습니다.");
-    const btn = document.getElementById('interp-mic-btn');
-    const icon = document.getElementById('interp-mic-icon');
-    const status = document.getElementById('interp-status');
-    
-    if (window.isInterpActive) {
-        window.isInterpActive = false;
+    // 켜져 있는 마이크가 있다면 강제 종료
+    if (window.interpRec) {
+        window.interpRec.onend = null; 
         try { window.interpRec.stop(); } catch(e) {}
-        if(btn) { btn.classList.replace('bg-orange-50', 'bg-blue-50'); btn.classList.replace('border-orange-200', 'border-blue-100'); btn.classList.replace('text-orange-500', 'text-blue-500'); }
-        if(icon) icon.classList.remove('animate-pulse');
-        if(status) { status.innerHTML = "실시간 통역 모드 (OFF)"; status.classList.replace('text-orange-600', 'text-slate-500'); status.classList.replace('bg-orange-100', 'bg-slate-100'); }
-    } else {
-        window.isInterpActive = true;
-        window.interpRec.lang = localStorage.getItem('stt_input_language') || 'ko-KR';
-        try { window.interpRec.start(); } catch(e) {}
-        if(btn) { btn.classList.replace('bg-blue-50', 'bg-orange-50'); btn.classList.replace('border-blue-100', 'border-orange-200'); btn.classList.replace('text-blue-500', 'text-orange-500'); }
-        if(icon) icon.classList.add('animate-pulse');
-        if(status) { status.innerHTML = "실시간 통역 모드 (ON) <i class='fa-solid fa-satellite-dish ml-1'></i>"; status.classList.replace('text-slate-500', 'text-orange-600'); status.classList.replace('bg-slate-100', 'bg-orange-100'); }
     }
 };
 
-// 🌟 위쪽 화면 렌더링 (최신 글이 아래에 쌓이며 과거 텍스트는 위로 밀림)
-// 🌟 위쪽 화면 렌더링 (최신 글이 아래에 쌓이며 스크롤 가능)
-window.renderInterpTop = function() {
-    const container = document.getElementById('interp-text-top');
-    if(!container) return;
-    
-    let html = window.interpHistoryTop.map((msg, i) => `
-        <div class="mb-2 ${i === window.interpHistoryTop.length - 1 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-start w-full shrink-0">
-            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep">${msg.translated}</span>
-            <span class="text-xs font-bold text-blue-600 mt-1 border-l-[3px] border-blue-400 pl-2 bg-blue-50/50 pr-3 py-0.5 rounded-r-lg">${msg.original}</span>
-        </div>
-    `).join('');
-    
-    // 내용물이 바닥에 붙어서 위로 밀려나도록 mt-auto 컨테이너로 감싸줌
-    container.innerHTML = `<div class="mt-auto w-full flex flex-col gap-2">` + html + `</div>`;
-    // 새로 추가될 때마다 최하단으로 스크롤 이동
-    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+// ==========================================
+// 🎤 듀얼 마이크 제어 로직 (새로 추가됨)
+// ==========================================
+
+// 🎤 내 마이크 켜기 (한국어 고정)
+window.startSourceMic = function() { 
+    window.startSpecificMic('ME', localStorage.getItem('stt_input_language') || 'ko-KR');
 };
 
-// 🌟 위쪽 화면 렌더링 (최신 글이 아래에 쌓이며 스크롤 쫙쫙 됨)
-window.renderInterpTop = function() {
-    const container = document.getElementById('interp-text-top');
-    if(!container) return;
-    
-    container.innerHTML = window.interpHistoryTop.map((msg, i) => `
-        <div class="mb-5 ${i === window.interpHistoryTop.length - 1 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-start w-full">
-            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep">${msg.translated}</span>
-            <span class="text-xs font-bold text-blue-600 mt-1 border-l-[3px] border-blue-400 pl-2 bg-blue-50/50 pr-3 py-0.5 rounded-r-lg">${msg.original}</span>
-        </div>
-    `).join('');
-    
-    // 내용이 추가되면 무조건 최하단으로 스크롤을 끌어내림
-    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+// 🎤 상대방 마이크 켜기 (외국어 고정)
+window.startTargetMic = function() { 
+    window.startSpecificMic('OTHER', localStorage.getItem('target_language') || 'en-US');
 };
 
-// 🌟 아래쪽 화면 렌더링 (최신 글이 위에 쌓이며 스크롤 쫙쫙 됨)
-window.renderInterpBottom = function() {
-    const container = document.getElementById('interp-text-bottom');
-    if(!container) return;
-    
-    container.innerHTML = window.interpHistoryBottom.map((msg, i) => `
-        <div class="mb-5 ${i === 0 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-end w-full">
-            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep text-right">${msg.translated}</span>
-            <span class="text-xs font-bold text-orange-600 mt-1 border-r-[3px] border-orange-400 pr-2 bg-orange-50/50 pl-3 py-0.5 rounded-l-lg text-right">${msg.original}</span>
-        </div>
-    `).join('');
-    
-    // 내용이 추가되면 무조건 최상단으로 스크롤을 끌어올림
-    setTimeout(() => { container.scrollTop = 0; }, 50);
-};
+// ⚙️ 공통 마이크 실행 로직
+window.startSpecificMic = function(speaker, langCode) {
+    // 기존에 돌고 있던 마이크가 있다면 무조건 종료
+    if (window.interpRec) {
+        window.interpRec.onend = null; 
+        try { window.interpRec.stop(); } catch(e) {}
+    }
 
-// 딥시크 텍스트 통신 (발음 기호 대신 완벽한 양방향 원문/번역 세팅)
-window.processInterpTranslation = async function(text) {
-    if (!text.trim()) return;
-    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) { window.toggleInterpMic(); return; }
-    if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
-
+    window.currentSpeaker = speaker;
     const status = document.getElementById('interp-status');
-    if(status) status.innerHTML = "똑똑하게 생각 중... 🧠";
+    
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        window.interpRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        window.interpRec.continuous = false; // 무전기처럼 한 번 말하고 꺼지도록 설정
+        window.interpRec.interimResults = false;
+        
+        // 🌟 마이크 엔진에 버튼에 맞는 언어코드를 100% 명확하게 주입!
+        window.interpRec.lang = langCode;
+
+        window.interpRec.onstart = () => {
+            if(status) {
+                status.innerHTML = speaker === 'ME' 
+                    ? `<span class="text-blue-500 font-bold">내 마이크 듣는 중... 🎙️</span>` 
+                    : `<span class="text-orange-500 font-bold">상대방 마이크 듣는 중... 🎙️</span>`;
+            }
+        };
+
+        window.interpRec.onresult = (e) => {
+            const transcript = e.results[e.results.length - 1][0].transcript;
+            if(transcript.trim()) {
+                // 어떤 언어인지 고민할 필요 없이 텍스트와 주체를 바로 번역기로 넘김
+                window.processInterpTranslationExplicit(transcript, window.currentSpeaker);
+            }
+        };
+        
+        window.interpRec.onerror = (e) => { 
+            console.error("마이크 에러:", e); 
+            if(status) status.innerHTML = "마이크 오류. 다시 눌러주세요.";
+        };
+        window.interpRec.start();
+    } else {
+        alert("이 브라우저에서는 음성 인식을 지원하지 않습니다.");
+    }
+};
+
+// ==========================================
+// 🧠 100% 명확한 번역 엔진 (새로 교체됨)
+// ==========================================
+window.processInterpTranslationExplicit = async function(text, speaker) {
+    if (!text.trim()) return;
+    if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) return;
+    if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
+    
+    const status = document.getElementById('interp-status');
+    if(status) status.innerHTML = "번역 중... ⏳";
 
     const langA = localStorage.getItem('stt_input_language') || 'ko-KR'; 
     const langB = localStorage.getItem('target_language') || 'en-US';
 
-    // 🌟 핵심 변화: 속도 제한을 풀고 '지능형 문맥 분석'을 강제함
-    const sysPrompt = `You are a high-precision bilateral interpreter.
-    My Language: [${langA}], Target Language: [${langB}].
+    // 버튼을 누른 주체에 따라 출발 언어와 도착 언어가 100% 확정됨
+    const sourceLang = speaker === 'ME' ? langA : langB;
+    const targetLang = speaker === 'ME' ? langB : langA;
 
-    YOUR GOAL: 
-    - Provide the most natural, idiomatic, and accurate translation. 
-    - Analyze the intent and context (like a smart assistant).
-    - If the input is phonetic (e.g., "루나" -> "Luna"), recognize the true meaning.
-    - If the input is slang or ambiguous, resolve it based on common usage.
-    
-    CRITICAL RESTRICTION: 
-    - Output ONLY JSON. NO explanations, NO commentary, NO notes.
-    - "text_me": Translation in [${langA}].
-    - "text_other": Translation in [${langB}].
+    // 🌟 프롬프트가 미친 듯이 단순해집니다! (오류 발생 확률 0%)
+    const sysPrompt = `You are a strict, professional translator.
+    Source language: [${sourceLang}]
+    Target language: [${targetLang}]
 
-    Respond in JSON format:
+    RULE: Translate the input text directly into the Target language.
+    NO explanations, NO notes. Output ONLY JSON.
+
+    Respond in JSON format EXACTLY like this:
     {
-       "speaker": "Identify if original was [${langA}] (ME) or [${langB}] (OTHER)",
-       "text_me": "Translation in [${langA}]",
-       "text_other": "Translation in [${langB}]"
+       "text_original": "The corrected spelling of the input in [${sourceLang}]",
+       "text_translated": "The translated text in [${targetLang}]"
     }`;
 
     try {
         let res = await fetchAPI(WORKER_URL + 'translate-interp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Device-ID': typeof myDeviceId !== 'undefined' ? myDeviceId : "unknown" },
-            body: JSON.stringify({ 
-                // 🌟 하이브리드 엔진: 딥시크의 지능을 최대로 활용 (reasoning/thinking 활성화)
-                model: "deepseek-chat", 
-                messages: [{ role: "system", content: sysPrompt }, { role: "user", content: text }], 
-                response_format: { type: "json_object" } 
-            })
+            body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: sysPrompt }, { role: "user", content: text }], response_format: { type: "json_object" } })
         });
         
         let data = await res.json();
         let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
         let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
         
-        // 데이터 정제 후 화면에 반영
-        if (parsed.speaker === "ME" || parsed.speaker.includes("ME")) {
-            window.interpHistoryTop.push({ translated: parsed.text_other, original: parsed.text_me });
+        // 화면 배분 로직
+        if (speaker === "ME") {
+            // 내가 말함 -> 위쪽(상대방) 화면에 외국어 띄우기
+            window.interpHistoryTop.push({ translated: parsed.text_translated, original: parsed.text_original });
             if(window.interpHistoryTop.length > 20) window.interpHistoryTop.shift();
             window.renderInterpTop();
         } else {
-            window.interpHistoryBottom.unshift({ translated: parsed.text_me, original: parsed.text_other });
+            // 상대방이 말함 -> 아래쪽(내) 화면에 한국어 띄우기
+            window.interpHistoryBottom.unshift({ translated: parsed.text_translated, original: parsed.text_original });
             if(window.interpHistoryBottom.length > 20) window.interpHistoryBottom.pop();
             window.renderInterpBottom();
         }
     } catch(e) {
         console.error("통역 에러:", e);
-        if(status) status.innerHTML = "지능형 통역 실패 ⚠️";
     } finally {
-        if(window.isInterpActive && status) { status.innerHTML = "실시간 지능 통역 (ON) <i class='fa-solid fa-brain ml-1'></i>"; }
+        if(status) status.innerHTML = "마이크 버튼을 눌러주세요 🎙️";
     }
 };
-// ==========================================
 
-// 1. 번역 모드 선택 팝업 토글
+// ==========================================
+// 🎨 화면 렌더링 및 기타 기능 (기존 유지)
+// ==========================================
+window.renderInterpTop = function() {
+    const container = document.getElementById('interp-text-top');
+    if(!container) return;
+    container.innerHTML = window.interpHistoryTop.map((msg, i) => `
+        <div class="mb-5 ${i === window.interpHistoryTop.length - 1 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-start w-full">
+            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep">${msg.translated}</span>
+            <span class="text-xs font-bold text-blue-600 mt-1 border-l-[3px] border-blue-400 pl-2 bg-blue-50/50 pr-3 py-0.5 rounded-r-lg">${msg.original}</span>
+        </div>
+    `).join('');
+    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+};
+
+window.renderInterpBottom = function() {
+    const container = document.getElementById('interp-text-bottom');
+    if(!container) return;
+    container.innerHTML = window.interpHistoryBottom.map((msg, i) => `
+        <div class="mb-5 ${i === 0 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-end w-full">
+            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep text-right">${msg.translated}</span>
+            <span class="text-xs font-bold text-orange-600 mt-1 border-r-[3px] border-orange-400 pr-2 bg-orange-50/50 pl-3 py-0.5 rounded-l-lg text-right">${msg.original}</span>
+        </div>
+    `).join('');
+    setTimeout(() => { container.scrollTop = 0; }, 50);
+};
+
 window.toggleTranslateMenu = function() {
     const menu = document.getElementById('translateModeMenu');
     menu.classList.toggle('hidden');
 };
 
-// 2. 기존 스마트 번역 모드 활성화 (기존 번역기 로직 부활)
 window.activateSmartTranslate = function() {
-    // 기존에 버튼 스타일 변경하던 로직을 재사용하여 '번역 모드'로 스위칭
     window.changeAppMode('translate');
-    
-    // 원래 쓰시던 번역기 화면(screen-main 등)으로 이동하거나 기능 활성화
     window.navigate('screen-main');
     window.updateStatus("스마트 번역 모드로 전환되었습니다.");
 };
+
 
 
 
