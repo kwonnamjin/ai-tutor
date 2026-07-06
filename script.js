@@ -3052,20 +3052,20 @@ setTimeout(() => {
 
 
 // ==========================================
-// 🌐 실시간 대면 통역기 (워키토키 듀얼 마이크 방식) 엔진
+// 🏓 반자동 무한 핑퐁 대면 통역기 (턴 뺏기 기능 포함)
 // ==========================================
 
 window.isInterpActive = false;
 window.interpRec = null;
-window.currentSpeaker = null; // 🌟 현재 듣고 있는 마이크 주체 저장
-
-// 🌟 대화 기록을 20개씩 저장할 배열
 window.interpHistoryTop = [];
 window.interpHistoryBottom = [];
 
-// 통역기 창 열기 (마이크 대기 상태로 열림)
+window.activeMicSpeaker = null;
+window.manualStop = false; // 사용자의 강제 개입(버튼 터치) 여부
+window.hasSpoken = false;  // 의미 있는 말소리가 인식되었는지 여부
+
+// 1. 통역기 창 열기
 window.openInterpreter = function() {
-    console.log("통역기 실행!");
     if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
     
     const modal = document.getElementById('interpreterModal');
@@ -3075,13 +3075,12 @@ window.openInterpreter = function() {
     modal.style.display = 'flex';
     modal.style.zIndex = '99999'; 
     
-    // 배열과 화면 초기화
     window.interpHistoryTop = [];
     window.interpHistoryBottom = [];
     const topText = document.getElementById('interp-text-top');
     const bottomText = document.getElementById('interp-text-bottom');
-    if(topText) topText.innerHTML = '<div class="mt-auto w-full"><span class="opacity-40 text-2xl sm:text-3xl font-black text-slate-800 break-keep">위쪽 마이크를 누르고 말씀하세요.</span></div>';
-    if(bottomText) bottomText.innerHTML = '<div class="mb-auto w-full text-right"><span class="opacity-40 text-2xl sm:text-3xl font-black text-slate-800 break-keep">아래쪽 마이크를 누르고 말씀하세요.</span></div>';
+    if(topText) topText.innerHTML = '';
+    if(bottomText) bottomText.innerHTML = '';
     
     try {
         const tLangValue = localStorage.getItem('target_language') || 'en-US';
@@ -3090,32 +3089,25 @@ window.openInterpreter = function() {
         document.getElementById('interp-lang-bottom').innerText = typeof window.getLangName === 'function' ? window.getLangName(sLangValue) : "내 언어";
     } catch(e) {}
     
-    const status = document.getElementById('interp-status');
-    if(status) status.innerHTML = "마이크 버튼을 눌러주세요 🎙️";
+    window.resetMicUI();
 };
 
-// 통역기 창 닫기
+// 2. 통역기 창 닫기
 window.closeInterpreter = function() {
     const modal = document.getElementById('interpreterModal');
     if(modal) {
         modal.classList.add('hidden');
         modal.style.display = 'none'; 
     }
-    // 켜져 있는 마이크가 있다면 강제 종료
+    window.manualStop = true;
     if (window.interpRec) {
         window.interpRec.onend = null; 
         try { window.interpRec.stop(); } catch(e) {}
     }
+    window.resetMicUI();
 };
 
-// ==========================================
-// 🏓 반자동 핑퐁 대면 통역기 (턴 뺏기 기능 포함)
-// ==========================================
-window.activeMicSpeaker = null;
-window.manualStop = false; // 사용자의 강제 개입(버튼 터치) 여부
-window.hasSpoken = false;  // 의미 있는 말소리가 인식되었는지 여부
-
-// UI를 기본 상태(대기)로 돌리는 함수
+// 3. UI를 기본 상태(대기)로 돌리는 함수
 window.resetMicUI = function() {
     const btnTop = document.getElementById('btn-mic-top');
     const btnBottom = document.getElementById('btn-mic-bottom');
@@ -3129,16 +3121,17 @@ window.resetMicUI = function() {
         btnBottom.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">내 마이크 (터치하여 말하기)</span>`;
     }
     
+    const status = document.getElementById('interp-status');
+    if(status) status.innerHTML = "마이크를 선택하세요 🎙️";
     window.activeMicSpeaker = null;
 };
 
-// 👆 사용자가 마이크 버튼을 눌렀을 때 (턴 뺏기 or 일시정지)
+// 4. 사용자가 마이크 버튼을 눌렀을 때 (턴 뺏기 or 일시정지)
 window.toggleMic = function(speaker) {
     const status = document.getElementById('interp-status');
 
-    // 1. 이미 켜진 마이크(내 턴)를 다시 누름 -> "대화 일시 정지(Pause)"
     if (window.activeMicSpeaker === speaker) {
-        window.manualStop = true; // 자동 전환 방지
+        window.manualStop = true; 
         if (window.interpRec) {
             window.interpRec.onend = null;
             try { window.interpRec.stop(); } catch(e) {}
@@ -3148,27 +3141,24 @@ window.toggleMic = function(speaker) {
         return; 
     }
 
-    // 2. 다른 마이크를 누름 -> "강제 턴 뺏기(Override) & 핑퐁 시작"
-    window.manualStop = true; // 돌고 있던 마이크의 자동 전환을 막음
+    window.manualStop = true; 
     if (window.interpRec) {
         window.interpRec.onend = null;
         try { window.interpRec.stop(); } catch(e) {}
     }
 
-    // 마이크 하드웨어 리셋을 위해 0.1초 딜레이 후 강제 실행
     setTimeout(() => {
         window.startPingPongMic(speaker);
     }, 100);
 };
 
-// 🔄 핑퐁 사이클을 돌리는 핵심 엔진
+// 5. 핑퐁 사이클 핵심 엔진 (무한 반복 로직 적용 완료!)
 window.startPingPongMic = function(speaker) {
     window.manualStop = false; 
-    window.hasSpoken = false; // 말을 했는지 초기화
+    window.hasSpoken = false; 
     window.resetMicUI();
     window.activeMicSpeaker = speaker;
 
-    // 누른(혹은 턴이 넘어온) 마이크를 빨간색(녹음 중)으로 UI 변경
     const activeBtn = speaker === 'OTHER' ? document.getElementById('btn-mic-top') : document.getElementById('btn-mic-bottom');
     if (activeBtn) {
         activeBtn.className = "w-full py-3.5 rounded-xl bg-red-500 text-white border border-red-600 flex items-center justify-center gap-2 shadow-md transition-all duration-300 animate-pulse scale-[1.02]";
@@ -3192,39 +3182,115 @@ window.startPingPongMic = function(speaker) {
         window.interpRec.onresult = (e) => {
             const transcript = e.results[e.results.length - 1][0].transcript;
             if(transcript.trim()) {
-                window.hasSpoken = true; // 🌟 의미 있는 말을 했다는 표식!
+                window.hasSpoken = true; 
                 window.processInterpTranslationExplicit(transcript, speaker);
             }
         };
 
         window.interpRec.onerror = (e) => {
             console.error("마이크 에러:", e);
-            window.manualStop = true; // 에러 시 무한 루프 방지
-            window.resetMicUI();
-            if(status) status.innerHTML = "오류 발생. 마이크를 다시 누르세요.";
+            if (e.error !== 'no-speech') {
+                window.manualStop = true; 
+                window.resetMicUI();
+                if(status) status.innerHTML = "오류 발생. 마이크를 다시 누르세요.";
+            }
         };
 
-        // 🌟 여기가 핑퐁의 핵심입니다! 마이크가 꺼졌을 때 작동
         window.interpRec.onend = () => {
             if (window.manualStop) {
-                // 1. 내가 버튼을 직접 눌러서 강제로 끄거나 턴을 뺏은 경우 (조용히 멈춤)
-                // (더 이상 아무 작업도 하지 않음)
+                // 사용자가 강제로 껐을 때
             } else if (window.hasSpoken) {
-                // 2. 정상적으로 말을 마친 경우 -> 0.3초 후 반대쪽으로 턴 핑퐁 교체!
+                // 말을 정상적으로 마쳤을 때 -> 턴 교체
                 const nextSpeaker = speaker === 'ME' ? 'OTHER' : 'ME';
                 if(status) status.innerHTML = "턴 교체 중... 🏓";
                 setTimeout(() => {
                     window.startPingPongMic(nextSpeaker);
                 }, 300);
             } else {
-                // 3. 침묵해서 기계가 알아서 꺼진 경우 -> 끄지 말고 '현재 차례' 무한 유지! 
-                // (생각하는 중이거나 뜸 들이는 중이니까 내 마이크를 다시 바로 켬)
+                // 말을 안 했을 때 -> 턴 유지 (무한 대기)
                 if(status) status.innerHTML = "계속 듣고 있습니다... 👂";
                 setTimeout(() => {
                     window.startPingPongMic(speaker);
                 }, 100);
             }
         };
+
+        try { window.interpRec.start(); } catch(e) { window.resetMicUI(); }
+    }
+};
+
+// 6. 딥시크 번역 통신 함수
+window.processInterpTranslationExplicit = async function(text, speaker) {
+    if (!text.trim()) return;
+    
+    const langA = localStorage.getItem('stt_input_language') || 'ko-KR'; 
+    const langB = localStorage.getItem('target_language') || 'en-US';
+
+    const sourceLang = speaker === 'ME' ? langA : langB;
+    const targetLang = speaker === 'ME' ? langB : langA;
+
+    const sysPrompt = `You are a strict, professional translator.
+    Source language: [${sourceLang}]
+    Target language: [${targetLang}]
+
+    RULE: Translate the input text directly into the Target language.
+    NO explanations, NO notes. Output ONLY JSON.
+
+    Respond in JSON format EXACTLY like this:
+    {
+       "text_original": "The corrected spelling of the input in [${sourceLang}]",
+       "text_translated": "The translated text in [${targetLang}]"
+    }`;
+
+    try {
+        let res = await fetchAPI(WORKER_URL + 'translate-interp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: sysPrompt }, { role: "user", content: text }], response_format: { type: "json_object" } })
+        });
+        
+        let data = await res.json();
+        let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
+        let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
+        
+        if (speaker === "ME") {
+            window.interpHistoryTop.push({ translated: parsed.text_translated, original: parsed.text_original });
+            if(window.interpHistoryTop.length > 20) window.interpHistoryTop.shift();
+            window.renderInterpTop();
+        } else {
+            window.interpHistoryBottom.unshift({ translated: parsed.text_translated, original: parsed.text_original });
+            if(window.interpHistoryBottom.length > 20) window.interpHistoryBottom.pop();
+            window.renderInterpBottom();
+        }
+    } catch(e) {
+        console.error("통역 에러:", e);
+    }
+};
+
+// 7. 화면 렌더링
+window.renderInterpTop = function() {
+    const container = document.getElementById('interp-text-top');
+    if(!container) return;
+    container.innerHTML = window.interpHistoryTop.map((msg, i) => `
+        <div class="mb-5 ${i === window.interpHistoryTop.length - 1 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-start w-full">
+            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep">${msg.translated}</span>
+            <span class="text-xs font-bold text-blue-600 mt-1 border-l-[3px] border-blue-400 pl-2 bg-blue-50/50 pr-3 py-0.5 rounded-r-lg">${msg.original}</span>
+        </div>
+    `).join('');
+    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+};
+
+window.renderInterpBottom = function() {
+    const container = document.getElementById('interp-text-bottom');
+    if(!container) return;
+    container.innerHTML = window.interpHistoryBottom.map((msg, i) => `
+        <div class="mb-5 ${i === 0 ? 'opacity-100' : 'opacity-40'} transition-opacity duration-300 flex flex-col items-end w-full">
+            <span class="text-2xl sm:text-3xl font-black text-slate-800 break-keep text-right">${msg.translated}</span>
+            <span class="text-xs font-bold text-orange-600 mt-1 border-r-[3px] border-orange-400 pr-2 bg-orange-50/50 pl-3 py-0.5 rounded-l-lg text-right">${msg.original}</span>
+        </div>
+    `).join('');
+    setTimeout(() => { container.scrollTop = 0; }, 50);
+};
 
 
 // ==========================================
