@@ -3212,7 +3212,7 @@ window.toggleMic = function(speaker) {
 };
 
 // ==========================================
-// 6. 핑퐁 사이클 핵심 엔진 (띠링띠링 무한루프 방지 완벽 적용)
+// 6. 핑퐁 사이클 핵심 엔진
 // ==========================================
 window.startPingPongMic = function(speaker) {
     window.manualStop = false; 
@@ -3258,18 +3258,14 @@ window.startPingPongMic = function(speaker) {
 
         window.interpRec.onend = () => {
             if (window.manualStop) {
-                // 수동으로 버튼을 눌렀을 때는 아무것도 안 함
+                // 수동 개입 시 아무것도 안함
             } else if (window.hasSpoken) {
-                // 말을 정상적으로 마쳤을 때 -> 턴 교체 (핑퐁!)
                 const nextSpeaker = speaker === 'ME' ? 'OTHER' : 'ME';
                 if(status) status.innerHTML = "턴 교체 중... 🏓";
                 setTimeout(() => { window.startPingPongMic(nextSpeaker); }, 300);
             } else {
-                // 🚨 띠링띠링 무한루프 방지!
-                // 아무 말도 안 해서 기계가 마이크를 껐을 때는 억지로 다시 켜지 않음
-                // 조용하고 깔끔하게 '대기 모드'로 돌아갑니다.
-                window.resetMicUI();
-                if(status) status.innerHTML = "대기 중 (마이크를 눌러 재개) ⏸️";
+                if(status) status.innerHTML = "계속 듣고 있습니다... 👂";
+                setTimeout(() => { window.startPingPongMic(speaker); }, 100);
             }
         };
 
