@@ -3064,7 +3064,26 @@ window.activeMicSpeaker = null;
 window.manualStop = false; // 사용자의 강제 개입(버튼 터치) 여부
 window.hasSpoken = false;  // 의미 있는 말소리가 인식되었는지 여부
 
-// 1. 통역기 창 열기
+// 🌟 새롭게 추가: 언어 선택창을 바꾸면 실행되는 함수
+window.changeInterpLang = function(settingKey, langCode) {
+    // 1. 전체 설정값(localStorage) 업데이트
+    localStorage.setItem(settingKey, langCode);
+    
+    // 2. 혹시 마이크가 켜져서 듣고 있는 중이라면, 
+    // 엉뚱한 언어로 듣지 않도록 강제로 대기 모드로 돌려보냅니다.
+    window.manualStop = true; 
+    if (window.interpRec) {
+        window.interpRec.onend = null;
+        window.interpRec.onerror = null;
+        try { window.interpRec.abort(); } catch(e) {}
+    }
+    window.resetMicUI();
+    
+    const status = document.getElementById('interp-status');
+    if(status) status.innerHTML = "언어 변경됨. 마이크를 누르세요 🎙️";
+};
+
+// 🌟 기존 openInterpreter 함수 수정: 창이 열릴 때 선택창에 현재 설정값 세팅
 window.openInterpreter = function() {
     if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
     
@@ -3082,28 +3101,21 @@ window.openInterpreter = function() {
     if(topText) topText.innerHTML = '';
     if(bottomText) bottomText.innerHTML = '';
     
+    // ==========================================
+    // 이 부분이 교체되었습니다! 
+    // 기존의 단순 텍스트 표시 대신, select 박스의 값을 설정값과 동기화합니다.
     try {
         const tLangValue = localStorage.getItem('target_language') || 'en-US';
         const sLangValue = localStorage.getItem('stt_input_language') || 'ko-KR';
-        document.getElementById('interp-lang-top').innerText = typeof window.getLangName === 'function' ? window.getLangName(tLangValue) : "상대방 언어";
-        document.getElementById('interp-lang-bottom').innerText = typeof window.getLangName === 'function' ? window.getLangName(sLangValue) : "내 언어";
+        
+        const topSelect = document.getElementById('interp-lang-top-sel');
+        const bottomSelect = document.getElementById('interp-lang-bottom-sel');
+        
+        if(topSelect) topSelect.value = tLangValue;
+        if(bottomSelect) bottomSelect.value = sLangValue;
     } catch(e) {}
+    // ==========================================
     
-    window.resetMicUI();
-};
-
-// 2. 통역기 창 닫기
-window.closeInterpreter = function() {
-    const modal = document.getElementById('interpreterModal');
-    if(modal) {
-        modal.classList.add('hidden');
-        modal.style.display = 'none'; 
-    }
-    window.manualStop = true;
-    if (window.interpRec) {
-        window.interpRec.onend = null; 
-        try { window.interpRec.stop(); } catch(e) {}
-    }
     window.resetMicUI();
 };
 
