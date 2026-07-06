@@ -3130,29 +3130,36 @@ window.resetMicUI = function() {
 window.toggleMic = function(speaker) {
     const status = document.getElementById('interp-status');
 
+    // 1. 켜져 있는 마이크(내 차례)를 다시 누름 -> "대기 모드(비활성)"
     if (window.activeMicSpeaker === speaker) {
         window.manualStop = true; 
         if (window.interpRec) {
             window.interpRec.onend = null;
-            try { window.interpRec.stop(); } catch(e) {}
+            window.interpRec.onerror = null; // 🌟 강제 종료 시 에러 핸들러 무력화
+            try { window.interpRec.abort(); } catch(e) {} // 🌟 stop() 대신 즉시 종료하는 abort() 사용
         }
         window.resetMicUI();
-        if(status) status.innerHTML = "대화 일시 정지 ⏸️";
+        if(status) status.innerHTML = "대기 중 (마이크를 눌러 재개) ⏸️";
         return; 
     }
 
+    // 2. 비활성된 반대쪽 마이크를 누름 -> "강제 턴 뺏기"
     window.manualStop = true; 
     if (window.interpRec) {
         window.interpRec.onend = null;
-        try { window.interpRec.stop(); } catch(e) {}
+        window.interpRec.onerror = null; 
+        try { window.interpRec.abort(); } catch(e) {} 
     }
 
+    if(status) status.innerHTML = "턴을 가져오는 중... ⚡";
+
+    // 🌟 하드웨어가 완전히 마이크를 놓아줄 수 있도록 0.25초(250ms) 대기 후 실행
     setTimeout(() => {
         window.startPingPongMic(speaker);
-    }, 100);
+    }, 250);
 };
 
-// 5. 핑퐁 사이클 핵심 엔진 (무한 반복 로직 적용 완료!)
+// 5. 핑퐁 사이클 핵심 엔진 (턴 뺏기 오류 무시 로직 적용)
 window.startPingPongMic = function(speaker) {
     window.manualStop = false; 
     window.hasSpoken = false; 
@@ -3188,8 +3195,9 @@ window.startPingPongMic = function(speaker) {
         };
 
         window.interpRec.onerror = (e) => {
-            console.error("마이크 에러:", e);
-            if (e.error !== 'no-speech') {
+            console.error("마이크 에러:", e.error);
+            // 🌟 턴을 뺏을 때 발생하는 강제 종료(aborted) 에러를 무시하고 멈춤 방지!
+            if (e.error !== 'no-speech' && e.error !== 'aborted') {
                 window.manualStop = true; 
                 window.resetMicUI();
                 if(status) status.innerHTML = "오류 발생. 마이크를 다시 누르세요.";
@@ -3198,7 +3206,7 @@ window.startPingPongMic = function(speaker) {
 
         window.interpRec.onend = () => {
             if (window.manualStop) {
-                // 사용자가 강제로 껐을 때
+                // 사용자가 강제로 끄거나 턴을 뺏었을 때는 아무것도 하지 않음
             } else if (window.hasSpoken) {
                 // 말을 정상적으로 마쳤을 때 -> 턴 교체
                 const nextSpeaker = speaker === 'ME' ? 'OTHER' : 'ME';
@@ -3207,7 +3215,7 @@ window.startPingPongMic = function(speaker) {
                     window.startPingPongMic(nextSpeaker);
                 }, 300);
             } else {
-                // 말을 안 했을 때 -> 턴 유지 (무한 대기)
+                // 말을 안 했을 때 -> 현재 턴 유지 (무한 대기)
                 if(status) status.innerHTML = "계속 듣고 있습니다... 👂";
                 setTimeout(() => {
                     window.startPingPongMic(speaker);
