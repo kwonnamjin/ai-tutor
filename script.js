@@ -3202,7 +3202,7 @@ window.renderInterpBottom = function() {
     setTimeout(() => { container.scrollTop = 0; }, 50);
 };
 
-// 딥시크 텍스트 통신 (언어 자동 판별 & 번역 방향 100% 강제 고정)
+// 딥시크 텍스트 통신 (언어 자동 판별 & 오지랖 완벽 차단)
 window.processInterpTranslation = async function(text) {
     if (!text.trim()) return;
     if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) { window.toggleInterpMic(); return; }
@@ -3215,26 +3215,32 @@ window.processInterpTranslation = async function(text) {
     const tLangCode = localStorage.getItem('target_language') || 'en-US'; // 위쪽 언어 (외국어)
     const sLangCode = localStorage.getItem('stt_input_language') || 'ko-KR'; // 아래쪽 언어 (내 언어)
 
-    // 🌟 프롬프트 초강화: AI가 헷갈리지 않게 두 언어 번역을 무조건 모두 요구!
+    // 🌟 프롬프트 초강화: 설명 금지, 주석 금지, 직역 강제!
     const sysPrompt = `You are a real-time bilateral interpreter.
     Language 1 (ME): [${sLangCode}]
     Language 2 (OTHER): [${tLangCode}]
 
-    CRITICAL RULE: The STT engine is optimized for [${sLangCode}]. If the OTHER person speaks [${tLangCode}], the input might be transcribed phonetically into [${sLangCode}] characters (e.g., English "Sunday" -> "썬데이", Thai "Khop khun" -> "코쿤캅").
+    CRITICAL RULE 1: PHONETIC RECOGNITION. If the OTHER person speaks [${tLangCode}], the STT might transcribe it phonetically into [${sLangCode}] characters (e.g., Spanish "Buenas tardes" -> "부에나스 타르데스"). Treat this as [${tLangCode}].
 
-    Step 1: Analyze the input and determine the speaker.
-    - If the input is a natural expression in [${sLangCode}], "speaker" is "ME".
-    - If the input is a phonetic pronunciation of [${tLangCode}], "speaker" is "OTHER".
+    CRITICAL RULE 2: STRICTLY NO EXPLANATIONS. 
+    - NEVER explain the context.
+    - NEVER provide multiple meanings or dictionary definitions.
+    - NEVER add notes like "Assuming this means..." or "This translates literally as...".
+    - If the input is ambiguous, meaningless, or clearly a misrecognition (like "배는 오체"), just output the most direct, literal translation possible WITHOUT ANY COMMENTARY.
 
-    Step 2: Provide the meaning in BOTH languages strictly.
-    - "text_me": The exact meaning written in standard [${sLangCode}].
-    - "text_other": The exact meaning written in standard [${tLangCode}].
+    Step 1: Determine the speaker.
+    - Standard [${sLangCode}] expressions = "ME".
+    - Phonetic pronunciation of [${tLangCode}] = "OTHER".
+
+    Step 2: Provide the meaning in BOTH languages.
+    - "text_me": ONLY the translated text in [${sLangCode}].
+    - "text_other": ONLY the translated text in [${tLangCode}].
 
     Respond ONLY in JSON format EXACTLY like this:
     {
        "speaker": "ME or OTHER",
-       "text_me": "Translation in ${sLangCode}",
-       "text_other": "Translation in ${tLangCode}"
+       "text_me": "Translation only",
+       "text_other": "Translation only"
     }`;
 
     try {
@@ -3248,7 +3254,7 @@ window.processInterpTranslation = async function(text) {
         let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
         let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
         
-        // 🌟 판단 기준: speaker 값으로 분류 후, 화면에 맞는 언어를 콕 집어서 넣기!
+        // 판단 기준: speaker 값으로 분류 후, 화면에 맞는 언어를 콕 집어서 넣기!
         if (parsed.speaker === "ME") {
             // 내가 한 말 -> 상대방 화면(위)에 외국어(text_other) 띄우기
             window.interpHistoryTop.push({ translated: parsed.text_other, original: text });
