@@ -3202,7 +3202,7 @@ window.renderInterpBottom = function() {
     setTimeout(() => { container.scrollTop = 0; }, 50);
 };
 
-// 딥시크 텍스트 통신 (발음 기호 대신 완벽한 양방향 원문/번역 세팅)
+// 딥시크 텍스트 통신 (분류 오류 완벽 차단)
 window.processInterpTranslation = async function(text) {
     if (!text.trim()) return;
     if (typeof window.checkAndBlockAPI === 'function' && !window.checkAndBlockAPI()) { window.toggleInterpMic(); return; }
@@ -3211,24 +3211,22 @@ window.processInterpTranslation = async function(text) {
     const status = document.getElementById('interp-status');
     if(status) status.innerHTML = "번역 중... ⏳";
 
-    // 🌟 이제 sLang/tLang은 판별 기준이 아니라, AI가 참고할 '주요 사용 언어 2개'로만 전달합니다.
-    const langA = localStorage.getItem('stt_input_language') || 'ko-KR'; 
-    const langB = localStorage.getItem('target_language') || 'en-US';
+    const tLangCode = localStorage.getItem('target_language') || 'en-US';
+    const sLangCode = localStorage.getItem('stt_input_language') || 'ko-KR';
 
-    const sysPrompt = `You are a universal real-time interpreter.
-    There are two languages involved: [${langA}] and [${langB}].
+    // 🌟 프롬프트 초강화: 발화자 구분(ME vs OTHER)을 강제!
+    const sysPrompt = `You are a real-time bilateral interpreter.
+    The user's native language is ${sLangCode} (e.g. Korean).
+    The other person's language is ${tLangCode} (e.g. English).
 
-    CRITICAL RULE:
-    1. Analyze the input text. Identify if it is [${langA}] or [${langB}].
-    2. If the input is [${langA}], translate it into [${langB}]. Set "source_lang" to "${langA}".
-    3. If the input is [${langB}], translate it into [${langA}]. Set "source_lang" to "${langB}".
-    4. STRICTLY NO EXPLANATIONS. Output ONLY the translation.
-
-    Respond ONLY in JSON format:
+    Identify which language the input text belongs to:
+    - If the input is in ${sLangCode}, translate it to ${tLangCode}, and set "speaker" to "ME".
+    - If the input is in ${tLangCode}, translate it to ${sLangCode}, and set "speaker" to "OTHER".
+    
+    Respond ONLY in JSON format EXACTLY like this:
     {
-       "source_lang": "The detected language code",
-       "text_me": "Translation in [${langA}]",
-       "text_other": "Translation in [${langB}]"
+       "speaker": "ME or OTHER",
+       "translated_text": "the translated result"
     }`;
 
     try {
@@ -3242,15 +3240,15 @@ window.processInterpTranslation = async function(text) {
         let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
         let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
         
-        // 🌟 이제 source_lang이 무엇이든, 무조건 반대쪽 언어로 판단해서 화면에 띄웁니다!
-        if (parsed.source_lang === langA || (typeof parsed.source_lang === 'string' && parsed.source_lang.includes(langA.split('-')[0]))) {
-            // langA(한국어 등)로 말함 -> 상대방 화면(위)에 langB(외국어) 띄우기
-            window.interpHistoryTop.push({ translated: parsed.text_other, original: parsed.text_me });
+        // 🌟 판단 기준: speaker 값으로 100% 명확하게 분류!
+        if (parsed.speaker === "ME") {
+            // 내가 한 말(한국어) -> 상대방 화면(위)에 쌓기
+            window.interpHistoryTop.push({ translated: parsed.translated_text, original: text });
             if(window.interpHistoryTop.length > 20) window.interpHistoryTop.shift();
             window.renderInterpTop();
         } else {
-            // langB(외국어 등)로 말함 -> 내 화면(아래)에 langA(한국어) 띄우기
-            window.interpHistoryBottom.unshift({ translated: parsed.text_me, original: parsed.text_other });
+            // 상대방이 한 말(영어) -> 내 화면(아래)에 쌓기
+            window.interpHistoryBottom.unshift({ translated: parsed.translated_text, original: text });
             if(window.interpHistoryBottom.length > 20) window.interpHistoryBottom.pop();
             window.renderInterpBottom();
         }
