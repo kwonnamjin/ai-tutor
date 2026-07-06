@@ -3094,26 +3094,28 @@ window.openInterpreter = function() {
         if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
             window.interpRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             window.interpRec.continuous = true; 
-            window.interpRec.interimResults = true; // 🌟 핵심: 중간 결과(interim)까지 캐치!
-            window.interpRec.lang = localStorage.getItem('stt_input_language') || 'ko-KR'; // 기본 언어셋
+            window.interpRec.interimResults = false;
             
             window.interpRec.onresult = (e) => {
-                let finalTranscript = '';
-                // 🌟 핵심: 결과가 미완성이어도 더 넓게 받아들임
-                for (let i = e.resultIndex; i < e.results.length; ++i) {
-                    if (e.results[i].isFinal) {
-                        finalTranscript += e.results[i][0].transcript;
-                        window.processInterpTranslation(finalTranscript); // 최종본만 처리
-                    }
+                const lastIdx = e.results.length - 1;
+                const transcript = e.results[lastIdx][0].transcript;
+                if(transcript.trim()) {
+                    window.processInterpTranslation(transcript);
                 }
             };
             
-            // 🌟 마이크 오류 시 즉시 재시작 (다른 기기 소리 놓치지 않게)
             window.interpRec.onend = () => {
                 if(window.isInterpActive) {
-                    try { window.interpRec.start(); } catch(err) {}
+                    setTimeout(() => {
+                        if(window.isInterpActive) {
+                            try { window.interpRec.start(); } catch(err) {}
+                        }
+                    }, 500);
                 }
             };
+            window.interpRec.onerror = (e) => { console.log("마이크 대기..."); };
+        } else {
+            alert("이 기기에서는 음성 인식을 지원하지 않습니다.");
         }
     }
 };
