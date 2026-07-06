@@ -3085,7 +3085,7 @@ window.changeInterpLang = function(settingKey, langCode) {
 };
 
 // ==========================================
-// 2. 통역기 창 열기 (언어 목록 자동 복사)
+// 2. 통역기 창 열기 (언어 목록 복사 & 안전장치 추가)
 // ==========================================
 window.openInterpreter = function() {
     if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
@@ -3104,14 +3104,45 @@ window.openInterpreter = function() {
     if(topText) topText.innerHTML = '';
     if(bottomText) bottomText.innerHTML = '';
     
-    const settingTarget = document.getElementById('target_language'); 
-    const settingInput = document.getElementById('stt_input_language'); 
+    // 🌟 오류 해결: 설정창 ID를 못 찾았을 때를 대비한 '예비 언어 목록 (안전장치)'
+    const defaultOptions = `
+        <option value="ko-KR">🇰🇷 한국어</option>
+        <option value="en-US">🇺🇸 English</option>
+        <option value="ja-JP">🇯🇵 日本語</option>
+        <option value="zh-CN">🇨🇳 中文</option>
+        <option value="es-ES">🇪🇸 Español</option>
+        <option value="th-TH">🇹🇭 ภาษาไทย</option>
+        <option value="vi-VN">🇻🇳 Tiếng Việt</option>
+    `;
+
     const topSelect = document.getElementById('interp-lang-top-sel');
     const bottomSelect = document.getElementById('interp-lang-bottom-sel');
 
-    if (settingTarget && topSelect) topSelect.innerHTML = settingTarget.innerHTML;
-    if (settingInput && bottomSelect) bottomSelect.innerHTML = settingInput.innerHTML;
+    // 대표님 설정창의 <select> ID가 'target_language'가 아닐 수 있습니다.
+    const settingTarget = document.getElementById('target_language'); 
+    const settingInput = document.getElementById('stt_input_language'); 
 
+    // 상단(상대방) 언어 박스 채우기
+    if (topSelect) {
+        // 설정창에서 목록을 찾았고, 비어있지 않다면 복사!
+        if (settingTarget && settingTarget.innerHTML.trim() !== '') {
+            topSelect.innerHTML = settingTarget.innerHTML;
+        } else {
+            // 못 찾았으면 안전장치 목록 강제 주입!
+            topSelect.innerHTML = defaultOptions; 
+        }
+    }
+
+    // 하단(내) 언어 박스 채우기
+    if (bottomSelect) {
+        if (settingInput && settingInput.innerHTML.trim() !== '') {
+            bottomSelect.innerHTML = settingInput.innerHTML;
+        } else {
+            bottomSelect.innerHTML = defaultOptions; 
+        }
+    }
+
+    // 🌟 2. 현재 localStorage에 저장된 설정값으로 선택 항목을 맞춥니다.
     try {
         const tLangValue = localStorage.getItem('target_language') || 'en-US';
         const sLangValue = localStorage.getItem('stt_input_language') || 'ko-KR';
