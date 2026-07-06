@@ -3052,30 +3052,26 @@ setTimeout(() => {
 
 
 // ==========================================
-// 🏓 반자동 무한 핑퐁 대면 통역기 (턴 뺏기 기능 포함)
+// 🌐 대면 통역기 전역 변수 설정
 // ==========================================
-
 window.isInterpActive = false;
 window.interpRec = null;
 window.interpHistoryTop = [];
 window.interpHistoryBottom = [];
 
 window.activeMicSpeaker = null;
-window.manualStop = false; // 사용자의 강제 개입(버튼 터치) 여부
-window.hasSpoken = false;  // 의미 있는 말소리가 인식되었는지 여부
+window.manualStop = false; 
+window.hasSpoken = false;  
 
 // ==========================================
-// 3. 언어 변경 시 처리 로직
+// 1. 언어 변경 시 처리 로직 (설정 동기화)
 // ==========================================
 window.changeInterpLang = function(settingKey, langCode) {
-    // 로컬 스토리지에 즉시 저장
     localStorage.setItem(settingKey, langCode);
     
-    // 🌟 진짜 설정(Settings) 메뉴의 셀렉트 박스 값도 같이 바꿔서 완벽하게 동기화!
     const originSelect = document.getElementById(settingKey);
     if(originSelect) originSelect.value = langCode;
     
-    // 마이크 충돌 방지를 위해 즉시 리셋
     window.manualStop = true; 
     if (window.interpRec) {
         window.interpRec.onend = null;
@@ -3089,7 +3085,7 @@ window.changeInterpLang = function(settingKey, langCode) {
 };
 
 // ==========================================
-// 1. 통역기 창 열기 (설정창 언어 목록 자동 복사 기능 포함)
+// 2. 통역기 창 열기 (언어 목록 자동 복사)
 // ==========================================
 window.openInterpreter = function() {
     if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
@@ -3108,20 +3104,14 @@ window.openInterpreter = function() {
     if(topText) topText.innerHTML = '';
     if(bottomText) bottomText.innerHTML = '';
     
-    // 🌟 1. 설정창에 있는 기존 <select> 목록을 통째로 복사해옵니다.
     const settingTarget = document.getElementById('target_language'); 
     const settingInput = document.getElementById('stt_input_language'); 
     const topSelect = document.getElementById('interp-lang-top-sel');
     const bottomSelect = document.getElementById('interp-lang-bottom-sel');
 
-    if (settingTarget && topSelect) {
-        topSelect.innerHTML = settingTarget.innerHTML; // 목록 복붙!
-    }
-    if (settingInput && bottomSelect) {
-        bottomSelect.innerHTML = settingInput.innerHTML; // 목록 복붙!
-    }
+    if (settingTarget && topSelect) topSelect.innerHTML = settingTarget.innerHTML;
+    if (settingInput && bottomSelect) bottomSelect.innerHTML = settingInput.innerHTML;
 
-    // 🌟 2. 현재 localStorage에 저장된 설정값으로 선택 항목을 맞춥니다.
     try {
         const tLangValue = localStorage.getItem('target_language') || 'en-US';
         const sLangValue = localStorage.getItem('stt_input_language') || 'ko-KR';
@@ -3133,22 +3123,18 @@ window.openInterpreter = function() {
 };
 
 // ==========================================
-// 2. 통역기 닫기 (오류 완벽 해결 버전)
+// 3. 통역기 창 닫기
 // ==========================================
 window.closeInterpreter = function() {
-    console.log("통역기 종료 시도"); // 디버깅용 확인
-    
-    // 마이크 강제 종료 안전하게 처리
     window.manualStop = true;
     if (window.interpRec) {
         window.interpRec.onend = null;
         window.interpRec.onerror = null;
-        try { window.interpRec.abort(); } catch(e) { console.error(e); }
+        try { window.interpRec.abort(); } catch(e) {}
     }
     
     window.resetMicUI();
 
-    // 화면 숨기기
     const modal = document.getElementById('interpreterModal');
     if(modal) {
         modal.classList.add('hidden');
@@ -3156,7 +3142,9 @@ window.closeInterpreter = function() {
     }
 };
 
-// 3. UI를 기본 상태(대기)로 돌리는 함수
+// ==========================================
+// 4. 마이크 UI 리셋 함수
+// ==========================================
 window.resetMicUI = function() {
     const btnTop = document.getElementById('btn-mic-top');
     const btnBottom = document.getElementById('btn-mic-bottom');
@@ -3175,24 +3163,24 @@ window.resetMicUI = function() {
     window.activeMicSpeaker = null;
 };
 
-// 4. 사용자가 마이크 버튼을 눌렀을 때 (턴 뺏기 or 일시정지)
+// ==========================================
+// 5. 사용자가 마이크 버튼을 눌렀을 때 (턴 뺏기 / 일시정지)
+// ==========================================
 window.toggleMic = function(speaker) {
     const status = document.getElementById('interp-status');
 
-    // 1. 켜져 있는 마이크(내 차례)를 다시 누름 -> "대기 모드(비활성)"
     if (window.activeMicSpeaker === speaker) {
         window.manualStop = true; 
         if (window.interpRec) {
             window.interpRec.onend = null;
-            window.interpRec.onerror = null; // 🌟 강제 종료 시 에러 핸들러 무력화
-            try { window.interpRec.abort(); } catch(e) {} // 🌟 stop() 대신 즉시 종료하는 abort() 사용
+            window.interpRec.onerror = null; 
+            try { window.interpRec.abort(); } catch(e) {} 
         }
         window.resetMicUI();
         if(status) status.innerHTML = "대기 중 (마이크를 눌러 재개) ⏸️";
         return; 
     }
 
-    // 2. 비활성된 반대쪽 마이크를 누름 -> "강제 턴 뺏기"
     window.manualStop = true; 
     if (window.interpRec) {
         window.interpRec.onend = null;
@@ -3202,13 +3190,14 @@ window.toggleMic = function(speaker) {
 
     if(status) status.innerHTML = "턴을 가져오는 중... ⚡";
 
-    // 🌟 하드웨어가 완전히 마이크를 놓아줄 수 있도록 0.25초(250ms) 대기 후 실행
     setTimeout(() => {
         window.startPingPongMic(speaker);
     }, 250);
 };
 
-// 5. 핑퐁 사이클 핵심 엔진 (턴 뺏기 오류 무시 로직 적용)
+// ==========================================
+// 6. 핑퐁 사이클 핵심 엔진
+// ==========================================
 window.startPingPongMic = function(speaker) {
     window.manualStop = false; 
     window.hasSpoken = false; 
@@ -3244,8 +3233,6 @@ window.startPingPongMic = function(speaker) {
         };
 
         window.interpRec.onerror = (e) => {
-            console.error("마이크 에러:", e.error);
-            // 🌟 턴을 뺏을 때 발생하는 강제 종료(aborted) 에러를 무시하고 멈춤 방지!
             if (e.error !== 'no-speech' && e.error !== 'aborted') {
                 window.manualStop = true; 
                 window.resetMicUI();
@@ -3255,20 +3242,14 @@ window.startPingPongMic = function(speaker) {
 
         window.interpRec.onend = () => {
             if (window.manualStop) {
-                // 사용자가 강제로 끄거나 턴을 뺏었을 때는 아무것도 하지 않음
+                // 수동 개입 시 아무것도 안함
             } else if (window.hasSpoken) {
-                // 말을 정상적으로 마쳤을 때 -> 턴 교체
                 const nextSpeaker = speaker === 'ME' ? 'OTHER' : 'ME';
                 if(status) status.innerHTML = "턴 교체 중... 🏓";
-                setTimeout(() => {
-                    window.startPingPongMic(nextSpeaker);
-                }, 300);
+                setTimeout(() => { window.startPingPongMic(nextSpeaker); }, 300);
             } else {
-                // 말을 안 했을 때 -> 현재 턴 유지 (무한 대기)
                 if(status) status.innerHTML = "계속 듣고 있습니다... 👂";
-                setTimeout(() => {
-                    window.startPingPongMic(speaker);
-                }, 100);
+                setTimeout(() => { window.startPingPongMic(speaker); }, 100);
             }
         };
 
@@ -3276,7 +3257,9 @@ window.startPingPongMic = function(speaker) {
     }
 };
 
-// 6. 딥시크 번역 통신 함수
+// ==========================================
+// 7. 딥시크 텍스트 통신
+// ==========================================
 window.processInterpTranslationExplicit = async function(text, speaker) {
     if (!text.trim()) return;
     
@@ -3324,7 +3307,9 @@ window.processInterpTranslationExplicit = async function(text, speaker) {
     }
 };
 
-// 7. 화면 렌더링
+// ==========================================
+// 8. 화면 렌더링
+// ==========================================
 window.renderInterpTop = function() {
     const container = document.getElementById('interp-text-top');
     if(!container) return;
@@ -3348,8 +3333,6 @@ window.renderInterpBottom = function() {
     `).join('');
     setTimeout(() => { container.scrollTop = 0; }, 50);
 };
-
-
 // ==========================================
 // 🧠 100% 명확한 번역 엔진 (새로 교체됨)
 // ==========================================
