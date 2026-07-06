@@ -3209,24 +3209,29 @@ window.processInterpTranslation = async function(text) {
     if (typeof window.incrementLocalUsage === 'function') window.incrementLocalUsage();
 
     const status = document.getElementById('interp-status');
-    if(status) status.innerHTML = "번역 중... ⏳";
+    if(status) status.innerHTML = "똑똑하게 생각 중... 🧠";
 
-    // 🌟 이제 sLang/tLang은 판별 기준이 아니라, AI가 참고할 '주요 사용 언어 2개'로만 전달합니다.
     const langA = localStorage.getItem('stt_input_language') || 'ko-KR'; 
     const langB = localStorage.getItem('target_language') || 'en-US';
 
-    const sysPrompt = `You are a universal real-time interpreter.
-    There are two languages involved: [${langA}] and [${langB}].
+    // 🌟 핵심 변화: 속도 제한을 풀고 '지능형 문맥 분석'을 강제함
+    const sysPrompt = `You are a high-precision bilateral interpreter.
+    My Language: [${langA}], Target Language: [${langB}].
 
-    CRITICAL RULE:
-    1. Analyze the input text. Identify if it is [${langA}] or [${langB}].
-    2. If the input is [${langA}], translate it into [${langB}]. Set "source_lang" to "${langA}".
-    3. If the input is [${langB}], translate it into [${langA}]. Set "source_lang" to "${langB}".
-    4. STRICTLY NO EXPLANATIONS. Output ONLY the translation.
+    YOUR GOAL: 
+    - Provide the most natural, idiomatic, and accurate translation. 
+    - Analyze the intent and context (like a smart assistant).
+    - If the input is phonetic (e.g., "루나" -> "Luna"), recognize the true meaning.
+    - If the input is slang or ambiguous, resolve it based on common usage.
+    
+    CRITICAL RESTRICTION: 
+    - Output ONLY JSON. NO explanations, NO commentary, NO notes.
+    - "text_me": Translation in [${langA}].
+    - "text_other": Translation in [${langB}].
 
-    Respond ONLY in JSON format:
+    Respond in JSON format:
     {
-       "source_lang": "The detected language code",
+       "speaker": "Identify if original was [${langA}] (ME) or [${langB}] (OTHER)",
        "text_me": "Translation in [${langA}]",
        "text_other": "Translation in [${langB}]"
     }`;
@@ -3235,48 +3240,34 @@ window.processInterpTranslation = async function(text) {
         let res = await fetchAPI(WORKER_URL + 'translate-interp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-Device-ID': typeof myDeviceId !== 'undefined' ? myDeviceId : "unknown" },
-            body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "system", content: sysPrompt }, { role: "user", content: text }], response_format: { type: "json_object" } })
+            body: JSON.stringify({ 
+                // 🌟 하이브리드 엔진: 딥시크의 지능을 최대로 활용 (reasoning/thinking 활성화)
+                model: "deepseek-chat", 
+                messages: [{ role: "system", content: sysPrompt }, { role: "user", content: text }], 
+                response_format: { type: "json_object" } 
+            })
         });
         
         let data = await res.json();
         let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
         let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
         
-        // 🌟 이제 source_lang이 무엇이든, 무조건 반대쪽 언어로 판단해서 화면에 띄웁니다!
-        if (parsed.source_lang === langA || (typeof parsed.source_lang === 'string' && parsed.source_lang.includes(langA.split('-')[0]))) {
-            // langA(한국어 등)로 말함 -> 상대방 화면(위)에 langB(외국어) 띄우기
+        // 데이터 정제 후 화면에 반영
+        if (parsed.speaker === "ME" || parsed.speaker.includes("ME")) {
             window.interpHistoryTop.push({ translated: parsed.text_other, original: parsed.text_me });
             if(window.interpHistoryTop.length > 20) window.interpHistoryTop.shift();
             window.renderInterpTop();
         } else {
-            // langB(외국어 등)로 말함 -> 내 화면(아래)에 langA(한국어) 띄우기
             window.interpHistoryBottom.unshift({ translated: parsed.text_me, original: parsed.text_other });
             if(window.interpHistoryBottom.length > 20) window.interpHistoryBottom.pop();
             window.renderInterpBottom();
         }
     } catch(e) {
-        console.error("통역 에러 발생:", e);
-        if(status) status.innerHTML = "통역 에러 ⚠️";
+        console.error("통역 에러:", e);
+        if(status) status.innerHTML = "지능형 통역 실패 ⚠️";
     } finally {
-        if(window.isInterpActive && status) { status.innerHTML = "실시간 통역 모드 (ON) <i class='fa-solid fa-satellite-dish ml-1'></i>"; }
+        if(window.isInterpActive && status) { status.innerHTML = "실시간 지능 통역 (ON) <i class='fa-solid fa-brain ml-1'></i>"; }
     }
-};
-// ==========================================
-
-// 1. 번역 모드 선택 팝업 토글
-window.toggleTranslateMenu = function() {
-    const menu = document.getElementById('translateModeMenu');
-    menu.classList.toggle('hidden');
-};
-
-// 2. 기존 스마트 번역 모드 활성화 (기존 번역기 로직 부활)
-window.activateSmartTranslate = function() {
-    // 기존에 버튼 스타일 변경하던 로직을 재사용하여 '번역 모드'로 스위칭
-    window.changeAppMode('translate');
-    
-    // 원래 쓰시던 번역기 화면(screen-main 등)으로 이동하거나 기능 활성화
-    window.navigate('screen-main');
-    window.updateStatus("스마트 번역 모드로 전환되었습니다.");
 };
 
 
