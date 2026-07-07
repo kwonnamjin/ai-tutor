@@ -1165,8 +1165,14 @@ window.saveSettings = function() {
     if (oldExpLang !== newExpLang) { window.clearChatSession(); window.updateStatus("언어 설정이 변경되어 대화가 초기화되었습니다."); }
 }
 
-// 🌟 완벽하게 통합된 화면 이동 함수
+// 🌟 현재 화면이 어디인지 기억하는 변수 (앱을 처음 켜면 홈 화면)
+window.currentActiveScreen = 'screen-home';
+
+// 🌟 완벽하게 통합된 화면 이동 함수 (현재 위치 추적 기능 추가!)
 window.navigate = function(screenId) {
+    // 💡 방금 어디로 이동했는지 기억합니다!
+    window.currentActiveScreen = screenId; 
+
     ['inlinePagesPanel', 'inlineReportPanel', 'inlineMemoryPanel', 'inlineSparePanel', 'inlineSettingsPanel'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
@@ -1193,6 +1199,72 @@ window.navigate = function(screenId) {
         }
     }
 };
+
+// ==========================================
+// 💡 스텝형 도움말 엑스레이 모드 (열기 / 넘기기 / 스킵)
+// ==========================================
+window.currentHelpStep = 1; // 현재 몇 번째 말풍선을 보고 있는지 기억
+
+// 1. 도움말 열기 (물음표 버튼 눌렀을 때)
+window.toggleHelpMode = function() {
+    const overlay = document.getElementById('helpXrayOverlay');
+    if(!overlay) return;
+    
+    if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
+
+    // 모든 그룹과 말풍선을 싹 다 숨김 초기화
+    document.querySelectorAll('.help-group').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.help-step').forEach(el => el.classList.add('hidden'));
+
+    // 현재 화면에 맞는 그룹 켜기
+    const activeHelp = document.getElementById('help-' + window.currentActiveScreen);
+    if(activeHelp) {
+        activeHelp.classList.remove('hidden');
+        window.currentHelpStep = 1; // 1단계부터 시작
+        
+        // 해당 화면의 'step-1' 말풍선만 보이게 켬!
+        const firstSteps = activeHelp.querySelectorAll('.step-1');
+        firstSteps.forEach(el => el.classList.remove('hidden'));
+    }
+
+    overlay.classList.remove('hidden'); // 화면 어둡게 짠!
+};
+
+// 2. 다음 말풍선으로 넘기기 (화면 터치 시)
+window.nextHelpStep = function(e) {
+    // 🌟 핵심: 사용자가 '건너뛰기(Skip)' 버튼을 눌렀다면 스텝 넘기기를 무시함
+    if(e && e.target.closest('button')) return;
+
+    const activeHelp = document.getElementById('help-' + window.currentActiveScreen);
+    if(!activeHelp) return window.closeHelpMode();
+
+    // 현재 켜져 있던 말풍선 숨기기
+    const currentSteps = activeHelp.querySelectorAll(`.step-${window.currentHelpStep}`);
+    
+    // 다음 띄울 말풍선 찾기
+    const nextStepNum = window.currentHelpStep + 1;
+    const nextSteps = activeHelp.querySelectorAll(`.step-${nextStepNum}`);
+
+    if(nextSteps.length > 0) {
+        // 다음 말풍선이 있으면 교체!
+        currentSteps.forEach(el => el.classList.add('hidden'));
+        nextSteps.forEach(el => el.classList.remove('hidden'));
+        window.currentHelpStep = nextStepNum;
+    } else {
+        // 더 이상 띄울 말풍선(다음 스텝)이 없으면 튜토리얼 종료
+        window.closeHelpMode();
+    }
+};
+
+// 3. 튜토리얼 즉시 종료 (스킵 버튼 눌렀을 때)
+window.closeHelpMode = function(e) {
+    if(e) e.stopPropagation(); // 뒤로 클릭 이벤트가 새어나가는 것 방지
+    const overlay = document.getElementById('helpXrayOverlay');
+    if(overlay) overlay.classList.add('hidden');
+};
+
+
+
 
 window.openPage = window.navigate;
 window.goHome = function() { window.navigate('screen-home'); };
@@ -3359,10 +3431,7 @@ window.activateSmartTranslate = function() {
     if (typeof window.updateStatus === 'function') window.updateStatus("스마트 번역 모드로 전환되었습니다.");
 };
 
-// 도움말(?) 버튼 클릭 시 작동할 임시 함수
-window.toggleHelpMode = function() {
-    alert("화면 버튼을 설명해 주는 '도움말 엑스레이 모드'를 준비 중입니다! 💡");
-};
+
 
 
 // 테스트 투명버튼
