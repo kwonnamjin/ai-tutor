@@ -2147,6 +2147,9 @@ if (langSelector) langSelector.addEventListener('change', window.updateExtraUI);
 
 
 window.openStreakModal = function() { 
+    // 🌟 추가된 핵심 코드: 모달창이 뜰 때 열려있던 패널(리포트, 셋팅 등)을 싹 닫아줍니다!
+    if(typeof window.closeAllPanels === 'function') window.closeAllPanels();
+
     const modal = document.getElementById('streak-modal');
     if (modal) {
         modal.classList.remove('hidden'); 
@@ -3356,7 +3359,10 @@ window.activateSmartTranslate = function() {
     if (typeof window.updateStatus === 'function') window.updateStatus("스마트 번역 모드로 전환되었습니다.");
 };
 
-
+// 도움말(?) 버튼 클릭 시 작동할 임시 함수
+window.toggleHelpMode = function() {
+    alert("화면 버튼을 설명해 주는 '도움말 엑스레이 모드'를 준비 중입니다! 💡");
+};
 
 
 // 테스트 투명버튼
