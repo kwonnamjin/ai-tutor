@@ -3342,7 +3342,19 @@ window.renderInterpBottom = function() {
     `).join('');
     setTimeout(() => { container.scrollTop = 0; }, 50);
 };
+// ==========================================
+// 9. 하단 번역 메뉴 토글 및 스마트 번역 기능
+// ==========================================
+window.toggleTranslateMenu = function() {
+    const menu = document.getElementById('translateModeMenu');
+    if (menu) menu.classList.toggle('hidden');
+};
 
+window.activateSmartTranslate = function() {
+    if (typeof window.changeAppMode === 'function') window.changeAppMode('translate');
+    if (typeof window.navigate === 'function') window.navigate('screen-main');
+    if (typeof window.updateStatus === 'function') window.updateStatus("스마트 번역 모드로 전환되었습니다.");
+};
 
 
 
