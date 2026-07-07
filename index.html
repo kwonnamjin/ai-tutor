@@ -11,6 +11,8 @@
 </head>
 <body class="p-0 sm:p-4 bg-slate-900 overflow-hidden" onclick="handleBodyClick(event)">
 
+    
+
     <div class="w-full max-w-md h-full sm:h-[850px] max-h-full sm:rounded-3xl shadow-2xl overflow-hidden relative mx-auto bg-slate-900">
         
         <!-- 🌟 1. 공통 상단 헤더 -->
@@ -27,6 +29,8 @@
                 </button>
             </div>
         </header>
+
+        
 
         <div style="display: none;">
             <select id="targetLanguage"></select>
@@ -254,6 +258,14 @@
 
         <!-- Home 스크린 -->
         <div id="screen-home" class="absolute top-0 left-0 w-full h-full z-10 sm:rounded-3xl transition-transform duration-300 bg-[#e0f2fe] overflow-hidden flex flex-col">
+<!-- 💡 가장 깔끔한 방식: 배경 없이 글자만 띄우기 -->
+<div id="home-guide-message" class="fixed top-[37%] left-0 right-0 z-[9999999] flex justify-center pointer-events-none">
+    <div class="px-6 py-3 rounded-full border border-white/30 backdrop-blur-sm shadow-xl text-center">
+        <p class="text-white text-[12px] font-bold drop-shadow-md">
+            우측 상단 [ ? ] 버튼을 누르면<br>기능 설명을 볼 수 있습니다.
+        </p>
+    </div>
+</div>
             <div class="absolute inset-0 z-0 pointer-events-none bg-[#e0f2fe]">
                 <div class="absolute inset-0 bg-[url('app-bg-02.jpg')] bg-[length:100%_auto] bg-center bg-no-repeat opacity-[0.90] mix-blend-multiply"></div>
                 <div class="absolute inset-0 bg-gradient-to-b from-[#e0f2fe] from-25% via-transparent via-50% to-[#e0f2fe] to-75%"></div>
@@ -818,6 +830,9 @@
     <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
 </div>
     </div>
+
+ 
+
 </div>
 
 
