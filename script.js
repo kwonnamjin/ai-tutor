@@ -1,5 +1,5 @@
 // 🌟 1. 전역 변수 초기화
-const WORKER_URL = "https://holy-tree-32c5.thin770.workers.dev/";
+const WORKER_URL = "https://talkaitest.thin770.workers.dev/";
 
 let isListening = false, isSpeaking = false, recognition = null;
 const synthesis = window.speechSynthesis;
@@ -812,26 +812,44 @@ window.speakText = function(text, langCode) {
 
     const targetLangCode = langCode || localStorage.getItem('target_language') || 'en-US';
     
-    // 🌟 UI 효과 시작 (기존 방식 유지)
+    // UI 효과 시작 
     isSpeaking = true;
     if(avatarWrap) { avatarWrap.classList.add('speaking-pulse', 'speaking-bob'); avatarWrap.style.borderColor = "#60a5fa"; }
     if(stopAudioBtn) { stopAudioBtn.disabled = false; stopAudioBtn.classList.replace('text-slate-500', 'text-red-500'); }
     if(typeof window.updateStatus === 'function') window.updateStatus("말하는 중...");
 
+    // 🔥 [추가 1] AI가 입을 떼는 순간! (애니메이션 Talking으로 전환)
+    const unityFrame = document.getElementById('unity-iframe');
+    if (unityFrame && unityFrame.contentWindow.myUnityInstance) {
+        unityFrame.contentWindow.myUnityInstance.SendMessage('CharacterManager', 'StartTalking');
+    }
+
     // 🌟 앱이면 플러터로, 아니면 브라우저 엔진으로 발화
     if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
-        // [강제 기본 음성 로직] 캐시가 있다면 체크, 없으면 기본값으로 플러터에 요청
         let voiceToUse = window.deviceVoicesCache?.find(v => v.name === window.selectedTtsVoiceName);
         if (!voiceToUse) {
             voiceToUse = window.deviceVoicesCache?.find(v => v.locale.startsWith(targetLangCode.split('-')[0])) || window.deviceVoicesCache?.[0];
             window.selectedTtsVoiceName = voiceToUse ? voiceToUse.name : "";
         }
-        window.flutter_inappwebview.callHandler('speak', clean, targetLangCode, window.selectedTtsVoiceName);
+        window.flutter_inappwebview.callHandler('speak', clean, targetLangCode, window.selectedTtsVoiceName).then(() => {
+            // 🔥 [추가 2-A] 앱(플러터)에서 말이 100% 끝났을 때 (다시 대기 상태로 복귀)
+            if (unityFrame && unityFrame.contentWindow.myUnityInstance) {
+                unityFrame.contentWindow.myUnityInstance.SendMessage('CharacterManager', 'StopTalking');
+            }
+        });
     } else {
         // 웹 브라우저 엔진 (기존 방식)
         if(synthesis) synthesis.cancel();
         currentUtterance = new SpeechSynthesisUtterance(clean);
         currentUtterance.lang = targetLangCode;
+        
+        // 🔥 [추가 2-B] 웹 브라우저에서 말이 100% 끝났을 때 (다시 대기 상태로 복귀)
+        currentUtterance.onend = function() {
+            if (unityFrame && unityFrame.contentWindow.myUnityInstance) {
+                unityFrame.contentWindow.myUnityInstance.SendMessage('CharacterManager', 'StopTalking');
+            }
+        };
+
         synthesis.speak(currentUtterance);
     }
 
@@ -847,6 +865,12 @@ window.speakText = function(text, langCode) {
 window.stopSpeaking = function() {
     if (window.flutter_inappwebview) window.flutter_inappwebview.callHandler('stop'); 
     else synthesis.cancel(); 
+
+    // 🔥 [추가 3] 사용자가 강제로 정지 버튼(🔇)을 눌러서 말을 끊었을 때도 모션 멈추기!
+    const unityFrame = document.getElementById('unity-iframe');
+    if (unityFrame && unityFrame.contentWindow.myUnityInstance) {
+        unityFrame.contentWindow.myUnityInstance.SendMessage('CharacterManager', 'StopTalking');
+    }
 }
 
 async function handleUserMessage(text) {
@@ -1197,6 +1221,20 @@ window.navigate = function(screenId) {
         } else {
             home.style.transform = 'translateX(-20%)';
         }
+    }
+
+    // 🔥 [새로 추가된 부분] 화면 이동 시 유니티 캐릭터와 버튼 상태 제어
+    const unityIframe = document.getElementById('unity-iframe');
+    const charUI = document.getElementById('character-ui');
+
+    if (screenId === 'screen-home') {
+        // 홈 화면으로 올 때: 캐릭터 크게(가운데로 원복), 선택 버튼 보이기
+        if (unityIframe) unityIframe.classList.remove('chat-mode');
+        if (charUI) charUI.style.display = 'flex';
+    } else {
+        // 대화창 등 다른 화면으로 갈 때: 캐릭터 작게(우측 하단 미니모드), 선택 버튼 숨기기
+        if (unityIframe) unityIframe.classList.add('chat-mode');
+        if (charUI) charUI.style.display = 'none';
     }
 };
 

@@ -50,3 +50,87 @@ button#modeTutorBtn, button#modeTranslateBtn {
     height: 100dvh !important;
     display: none; /* JS에서 block/flex로 전환 */
 }
+
+
+/* 캐릭터 선택 UI 하단 중앙 강제 고정 */
+#character-ui {
+    position: fixed;         /* absolute 대신 fixed를 쓰면 화면 뷰포트 기준으로 고정됩니다 */
+    bottom: 90px;            /* 🔥 하단에서부터의 높이 (멤버십 배너 높이에 맞춰 이 숫자를 조절하세요. 80~120px 추천) */
+    left: 50%;
+    transform: translateX(-50%); /* 가로 정중앙 정렬 */
+    width: 100%;
+    max-width: 350px;
+    display: flex;
+    justify-content: center; /* 가로로 한 줄로 모으기 */
+    align-items: center;     /* 세로 높이 맞추기 */
+    gap: 15px;               /* 버튼 사이의 간격 */
+    pointer-events: none;    /* UI 껍데기는 클릭 통과 */
+    z-index: 9999;           /* 무조건 화면 맨 위에 오게 강력하게 설정 */
+}
+
+/* ◁ ▷ 화살표 버튼 디자인 */
+.char-btn {
+    pointer-events: auto;
+    background: rgba(255, 255, 255, 0.2); /* 반투명 배경 */
+    color: rgb(7, 173, 151);
+    border: 2px solid rgb(7, 173, 151);
+    font-size: 20px;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 가운데 [선택] 버튼 디자인 */
+.select-btn {
+    pointer-events: auto;
+    background: #4A90E2; 
+    color: white;
+    border: none;
+    padding: 12px 60px; /* 좌우로 길쭉하게 */
+    font-size: 18px;
+    border-radius: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+/* 기본 상태 (홈 화면 - 크기 50% 축소 & 선택 버튼 위쪽 배치) */
+#unity-iframe {
+    position: fixed !important;
+    
+    /* 🔥 위치 설정: 선택 버튼(bottom: 90px) 바로 위쪽으로 배치 */
+    bottom: 130px !important; /* 버튼 위 여백. 너무 붙어있으면 180px, 200px 등으로 늘리세요 */
+    left: 50% !important;
+    transform: translateX(-50%) !important; /* 가로 정중앙 맞춤 */
+    
+    /* 🔥 크기 설정: 화면의 50% 크기로 축소 */
+    width: 40vw !important;  /* 화면 가로 넓이의 50% */
+    height: 40vh !important; /* 화면 세로 높이의 50% */
+    max-width: 250px !important; /* 모바일에서 너무 뚱뚱해지지 않게 최대치 제한 */
+    max-height: 400px !important;
+    
+    border: none !important;
+    background: transparent !important;
+    z-index: 10;
+    transition: all 0.4s ease-in-out; /* 대화창 넘어갈 때 부드럽게 움직이도록 애니메이션 */
+    pointer-events: none !important; /* 클릭 통과 유지 */
+}
+
+/* 대화창 모드 (우측 하단 배치 + 춤춰도 안 잘리는 넉넉한 무대) */
+#unity-iframe.chat-mode {
+    bottom: 150px !important; 
+    right: -30px !important;      /* 🔥 화면 우측 끝에 붙임 */
+    left: auto !important;      /* 🔥 기존 left 설정 무시 */
+    width: 350px !important;    /* 🔥 가로를 350px로 넉넉하게! (팔다리 안 잘림) */
+    max-width: 400px !important; /* 강제 축소 방지 */
+    height: 200px !important;   
+    transform: none !important; /* 쏠림 방지 */
+    margin: 0 !important;       
+    z-index: 9999 !important;
+    pointer-events: none !important; 
+}
