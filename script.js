@@ -2323,13 +2323,9 @@ window.closeStreakModal = function() {
     }
 };
 
+// 기존의 복잡했던 방 번호 기록 방식을 지우고, 깔끔하게 통계 1 증가로 교체!
 window.markScriptAsLearned = function(scriptIndex) {
-    let learnedScripts = JSON.parse(localStorage.getItem('learned_scripts_log') || '[]');
-    if (!learnedScripts.includes(scriptIndex)) {
-        learnedScripts.push(scriptIndex);
-        localStorage.setItem('learned_scripts_log', JSON.stringify(learnedScripts));
-    }
-    window.updateDashboardUI(); 
+    window.addLearningStat('script', 1);
 };
 
 window.updateStreakUI = function() {
@@ -2456,9 +2452,15 @@ window.addStudyMission = function(type) {
 setTimeout(window.updateStreakUI, 500);
 
 window.updateDashboardUI = function() {
-    let stats = JSON.parse(localStorage.getItem('user_learning_stats_v1')) || { sentences: 0, words: 0 };
-    const learnedScripts = JSON.parse(localStorage.getItem('learned_scripts_log') || '[]');
-    let scriptsLearnedCount = learnedScripts.length;
+    // 💡 scripts: 0 을 기본값으로 추가하여 대본 통계 그릇을 만듭니다.
+    let stats = JSON.parse(localStorage.getItem('user_learning_stats_v1')) || { sentences: 0, words: 0, scripts: 0 };
+    
+    // 💡 혹시 예전 방식(learned_scripts_log)에 남아있는 기록이 있다면 초기 통계에 합산해주는 센스 (하위 호환성)
+    if (stats.scripts === undefined) {
+        const legacyCount = JSON.parse(localStorage.getItem('learned_scripts_log') || '[]').length;
+        stats.scripts = legacyCount;
+        localStorage.setItem('user_learning_stats_v1', JSON.stringify(stats));
+    }
 
     const elSentences = document.getElementById('dash-total-sentences');
     const elWords = document.getElementById('dash-total-words');
@@ -2466,7 +2468,8 @@ window.updateDashboardUI = function() {
 
     if(elSentences) elSentences.innerText = stats.sentences;
     if(elWords) elWords.innerText = stats.words;
-    if(elScripts) elScripts.innerText = scriptsLearnedCount; 
+    // 💡 이제 무한하게 오르는 정상적인 대본 학습 횟수를 화면에 꽂아줍니다.
+    if(elScripts) elScripts.innerText = stats.scripts; 
 
     const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
     const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
@@ -2476,9 +2479,13 @@ window.updateDashboardUI = function() {
 };
 
 window.addLearningStat = function(type, amount = 1) {
-    let stats = JSON.parse(localStorage.getItem('user_learning_stats_v1')) || { sentences: 0, words: 0 };
+    let stats = JSON.parse(localStorage.getItem('user_learning_stats_v1')) || { sentences: 0, words: 0, scripts: 0 };
+    
     if (type === 'sentence') stats.sentences += amount;
     if (type === 'word') stats.words += amount;
+    // 💡 대본(script)이 들어왔을 때 카운트를 올려주는 로직을 추가합니다!
+    if (type === 'script') stats.scripts = (stats.scripts || 0) + amount;
+    
     localStorage.setItem('user_learning_stats_v1', JSON.stringify(stats));
     window.updateDashboardUI(); 
 };
