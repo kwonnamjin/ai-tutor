@@ -895,25 +895,23 @@ async function handleUserMessage(text) {
     const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
     // 페르소나와 상관없이 무조건 500자 요약본을 불러오도록 고정
-const savedMemory = localStorage.getItem('user_compressed_memory') || '';
-// AI에게 "이게 너의 장기 기억이다"라고 확실히 박아줍니다.
-const memoryPrompt = savedMemory.length > 0 ? `\n\n[장기 기억 데이터: ${savedMemory}]` : ''
-    const criticalRule = `\n\n🚨 CRITICAL RULE: The 'translation' MUST be in ${exactAiLang}.`;
+// 1. 필요한 설정값들을 가장 먼저 가져옵니다.
+const currentMode = localStorage.getItem('current_persona') || localStorage.getItem('currentPersona') || 'friend';
+const customId = localStorage.getItem('custom_id'); 
 
-    const currentMode = localStorage.getItem('current_persona') || localStorage.getItem('currentPersona') || 'friend';
-    const customId = localStorage.getItem('custom_id'); // 추가: 커스텀 아이디 가져오기
-    // 💡 추가: 페르소나 모드에 따른 기억 키값 분기
+// 2. savedMemory 변수를 딱 한 번만 선언합니다.
 let savedMemory = '';
 if (currentMode === 'custom' && customId) {
-    // 커스텀이면 해당 ID별 기억 로드
     savedMemory = localStorage.getItem(`user_memory_custom_${customId}`) || '';
 } else {
-    // 기본 모드면 공용 기억 로드
     savedMemory = localStorage.getItem('user_compressed_memory') || '';
 }
 
-// 💡 AI에게 박아주는 프롬프트 (기억을 명확히 구분)
+// 3. 이제 이 변수를 사용하여 memoryPrompt를 만듭니다.
 const memoryPrompt = savedMemory.length > 0 ? `\n\n[장기 기억 데이터: ${savedMemory}]` : '';
+
+// 4. 나머지 코드들 (criticalRule 등)은 바로 밑에 이어서 작성하세요.
+const criticalRule = `\n\n🚨 CRITICAL RULE: The 'translation' MUST be in ${exactAiLang}.`;
 
 
 
