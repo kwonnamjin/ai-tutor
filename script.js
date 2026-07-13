@@ -901,7 +901,22 @@ const memoryPrompt = savedMemory.length > 0 ? `\n\n[장기 기억 데이터: ${s
     const criticalRule = `\n\n🚨 CRITICAL RULE: The 'translation' MUST be in ${exactAiLang}.`;
 
     const currentMode = localStorage.getItem('current_persona') || localStorage.getItem('currentPersona') || 'friend';
-    
+    const customId = localStorage.getItem('custom_id'); // 추가: 커스텀 아이디 가져오기
+    // 💡 추가: 페르소나 모드에 따른 기억 키값 분기
+let savedMemory = '';
+if (currentMode === 'custom' && customId) {
+    // 커스텀이면 해당 ID별 기억 로드
+    savedMemory = localStorage.getItem(`user_memory_custom_${customId}`) || '';
+} else {
+    // 기본 모드면 공용 기억 로드
+    savedMemory = localStorage.getItem('user_compressed_memory') || '';
+}
+
+// 💡 AI에게 박아주는 프롬프트 (기억을 명확히 구분)
+const memoryPrompt = savedMemory.length > 0 ? `\n\n[장기 기억 데이터: ${savedMemory}]` : '';
+
+
+
     let customName = 'AI 튜터';
     let customPrompt = '친절한 튜터';
     
@@ -2188,6 +2203,16 @@ window.compressMemory = async function() {
     NEVER lose critical facts like user's name, hobbies, or meeting date.
     The total memory must not exceed 500 characters.
     Output JSON: {"memory": "..."}`;
+    
+    const currentMode = localStorage.getItem('current_persona') || 'friend';
+    const customId = localStorage.getItem('custom_id');
+    
+    const memoryKey = (currentMode === 'custom' && customId) 
+    ? `user_memory_custom_${customId}` 
+    : 'user_compressed_memory';
+
+// 저장 시:
+localStorage.setItem(memoryKey, parsed.memory);
 
     try {
         let res = await fetchAPI(WORKER_URL, {
@@ -2221,9 +2246,10 @@ window.compressMemory = async function() {
         conversationHistory = pureChat.slice(-10); // 4에서 10으로 늘려 더 똑똑하게 만듦
         sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
 
-    } catch(e) {
-        console.error("메모리 압축 실패:", e);
-    }
+    if (parsed.memory) {
+            localStorage.setItem(memoryKey, parsed.memory); // 분리된 키에 저장
+        }
+    } catch(e) { console.error(e); }
 };
 
 setTimeout(window.updateMemoryDisplay, 500);
@@ -2672,6 +2698,7 @@ window.selectPersona = function(mode, customId = null) {
     localStorage.setItem('current_persona', mode);
 
     if (mode === 'custom' && customId) {
+        localStorage.setItem('custom_id', customId);
         let chars = JSON.parse(localStorage.getItem('my_custom_characters') || '[]');
         let selectedChar = chars.find(c => c.id === customId);
         if (selectedChar) localStorage.setItem('user_custom_persona', JSON.stringify(selectedChar));
