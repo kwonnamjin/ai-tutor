@@ -999,13 +999,6 @@ Respond EXACTLY in JSON:
             apiMessages[apiMessages.length - 1].content = `[STRICT RULE: TRANSLATE the following text into ${targetName}. DO NOT answer the question or converse.]\n\n` + apiMessages[apiMessages.length - 1].content;
         }
 
-        // 첫 만남 날짜 확인 및 저장
-        let firstDate = localStorage.getItem('first_meet_date');
-        if (!firstDate) { 
-            firstDate = new Date().toISOString().split('T')[0]; 
-            localStorage.setItem('first_meet_date', firstDate); 
-        }
-
         let res = await fetchAPI(WORKER_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
@@ -1013,8 +1006,7 @@ Respond EXACTLY in JSON:
                 model: "deepseek-chat", 
                 messages: apiMessages, 
                 response_format: { type: "json_object" },
-                userLocalTime: new Date().toLocaleString(),
-                firstMeetDate: firstDate // <-- 💡 동적 날짜 추가
+                userLocalTime: new Date().toLocaleString() 
             }) 
         });
         
@@ -2175,10 +2167,8 @@ window.compressMemory = async function() {
     const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi", "id-ID": "Indonesian" };
     const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
-    let firstDate = localStorage.getItem('first_meet_date') || new Date().toISOString().split('T')[0];
     const sysPrompt = `You are an AI tutor's memory compressor. Extract the user's characteristics, preferences, and interests from the chat log.
-    STRICT RULE: You MUST write the compressed memory ONLY in ${exactAiLang}. 
-    [Memory Rule Update] You are allowed to use up to 500 characters. Prioritize keeping critical facts (user's name, hobbies, first meeting date: ${firstDate}) uncompressed and separate.
+    STRICT RULE: You MUST write the compressed memory ONLY in ${exactAiLang}. Keep it friendly and concise (under 100 characters).
     Respond ONLY in JSON format: {"memory": "..."}`;
 
     try {
