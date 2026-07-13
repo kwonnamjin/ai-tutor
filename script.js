@@ -894,8 +894,10 @@ async function handleUserMessage(text) {
     const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Simplified Chinese (Mandarin)", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian" };
     const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
-    const savedMemory = localStorage.getItem('user_compressed_memory') || '';
-    const memoryPrompt = savedMemory ? `\n\n[User's Core Memory: ${savedMemory}]` : '';
+    // 페르소나와 상관없이 무조건 500자 요약본을 불러오도록 고정
+const savedMemory = localStorage.getItem('user_compressed_memory') || '';
+// AI에게 "이게 너의 장기 기억이다"라고 확실히 박아줍니다.
+const memoryPrompt = savedMemory.length > 0 ? `\n\n[장기 기억 데이터: ${savedMemory}]` : ''
     const criticalRule = `\n\n🚨 CRITICAL RULE: The 'translation' MUST be in ${exactAiLang}.`;
 
     const currentMode = localStorage.getItem('current_persona') || localStorage.getItem('currentPersona') || 'friend';
@@ -999,6 +1001,13 @@ Respond EXACTLY in JSON:
             apiMessages[apiMessages.length - 1].content = `[STRICT RULE: TRANSLATE the following text into ${targetName}. DO NOT answer the question or converse.]\n\n` + apiMessages[apiMessages.length - 1].content;
         }
 
+        // 첫 만남 날짜 확인 및 저장
+        let firstDate = localStorage.getItem('first_meet_date');
+        if (!firstDate) { 
+            firstDate = new Date().toISOString().split('T')[0]; 
+            localStorage.setItem('first_meet_date', firstDate); 
+        }
+
         let res = await fetchAPI(WORKER_URL, { 
             method: 'POST', 
             headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId }, 
@@ -1006,7 +1015,8 @@ Respond EXACTLY in JSON:
                 model: "deepseek-chat", 
                 messages: apiMessages, 
                 response_format: { type: "json_object" },
-                userLocalTime: new Date().toLocaleString() 
+                userLocalTime: new Date().toLocaleString(),
+                firstMeetDate: firstDate // <-- 💡 동적 날짜 추가
             }) 
         });
         
@@ -2159,29 +2169,39 @@ window.updateMemoryDisplay = function() {
 };
 
 window.compressMemory = async function() {
-    if (conversationHistory.length < 14) return; 
-    const savedMem = localStorage.getItem('user_compressed_memory') || 'Empty';
-    const chatLog = JSON.stringify(conversationHistory);
+    if (conversationHistory.length < 10) return; // 너무 짧으면 압축 안 함
+    
+    // 💡 핵심: 기존 기억을 '덮어쓰는' 게 아니라 '병합'할 준비를 함
+    const oldMemory = localStorage.getItem('user_compressed_memory') || '';
+    const chatLog = JSON.stringify(conversationHistory.slice(-10)); // 최근 10턴만 요약에 반영
     
     const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
     const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi", "id-ID": "Indonesian" };
     const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
+    let firstDate = localStorage.getItem('first_meet_date') || new Date().toISOString().split('T')[0];
     const sysPrompt = `You are an AI tutor's memory compressor. Extract the user's characteristics, preferences, and interests from the chat log.
-    STRICT RULE: You MUST write the compressed memory ONLY in ${exactAiLang}. Keep it friendly and concise (under 100 characters).
+    STRICT RULE: You MUST write the compressed memory ONLY in ${exactAiLang}. 
+    [Memory Rule Update] You are allowed to use up to 500 characters. Prioritize keeping critical facts (user's name, hobbies, first meeting date: ${firstDate}) uncompressed and separate.
     Respond ONLY in JSON format: {"memory": "..."}`;
 
     try {
         let res = await fetchAPI(WORKER_URL, {
             method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Device-ID': myDeviceId },
-            body: JSON.stringify({ model: "deepseek-chat", messages: [{role: "system", content: sysPrompt}, {role: "user", content: `Old Memory:${savedMem}\nNew Chat:${chatLog}`}], response_format: { type: "json_object" } })
+            body: JSON.stringify({ 
+                model: "deepseek-chat", 
+                messages: [{role: "system", content: sysPrompt}, {role: "user", content: `기존 기억:${oldMemory}\n새로운 대화:${chatLog}`}], 
+                response_format: { type: "json_object" } 
+            })
         });
         let data = await res.json();
-        let rawContent = data.choices[0].message.content.replace(/```json/g, "").replace(/```/g, "").trim();
-        let parsed = JSON.parse(rawContent.match(/\{[\s\S]*\}/)[0]);
+        let parsed = JSON.parse(data.choices[0].message.content.match(/\{[\s\S]*\}/)[0]);
         
         if (parsed.memory) {
-            window.conversationTurn = (window.conversationTurn || 0) + 1;
+            // 💡 중요: oldMemory를 완전히 버리는 게 아니라, 
+            // AI가 보내준 새 요약(parsed.memory)을 저장합니다.
+            // 만약 AI가 이전 기억을 누락한다면, 여기서 oldMemory와 parsed.memory를 합치도록 제어할 수 있습니다.
+            localStorage.setItem('user_compressed_memory', parsed.memory);
 
             if (window.conversationTurn % 5 === 0) {
                 let isUpdated = false; 
@@ -2676,7 +2696,7 @@ window.selectPersona = function(mode, customId = null) {
         activeBtn.classList.add('bg-gradient-to-r', 'from-blue-500', 'to-indigo-500', 'text-white', 'border-transparent', 'scale-105');
     }
 
-    window.clearChatSession();
+    //window.clearChatSession();
     window.updateStatus(`${mode === 'custom' ? '나만의 AI' : mode} 모드 적용!`);
 };
 
