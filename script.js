@@ -1145,7 +1145,11 @@ window.requestExplanationFromBubble = async function(bubbleId, fullText, isExp, 
     const targetLangName = tLang.options[tLang.selectedIndex].dataset.langName;
     const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
     
-    window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); document.getElementById('avatarWrap').style.borderColor = "#f59e0b"; 
+    window.updateStatus("AI 튜터가 문법을 분석 중입니다..."); 
+    
+    // 💡 방어막 1: 아바타가 화면에 있을 때만 테두리 색상 변경
+    const avatarWrap = document.getElementById('avatarWrap');
+    if(avatarWrap) avatarWrap.style.borderColor = "#f59e0b"; 
 
     const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi", "id-ID": "Indonesian" };
     const exactAiLang = aiLangNames[expLangCode] || expLangCode;
@@ -1194,8 +1198,17 @@ window.requestExplanationFromBubble = async function(bubbleId, fullText, isExp, 
         const safeExplanation = explanationText.replace(/\n/g, ' <br> ');
         msgDiv.innerHTML = `<div class="bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-none p-4 max-w-[95%] shadow-md self-start relative"><p class="text-[11px] font-extrabold text-amber-600 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-lightbulb"></i> [집중 해설] ${targetText}</p><p id="bubble-${bId}" class="chat-text-dynamic text-slate-800 break-words leading-relaxed font-medium">${window.createSpansForText(safeExplanation, bId, true)}</p></div>`;
         document.getElementById('chatContainer').appendChild(msgDiv); setTimeout(() => document.getElementById('chatContainer').scrollTop = document.getElementById('chatContainer').scrollHeight, 50);
-        window.updateStatus("대기 중"); document.getElementById('avatarWrap').style.borderColor = "#60a5fa"; 
-    } catch(e) { console.error(e); window.updateStatus("해설 통신 에러"); document.getElementById('avatarWrap').style.borderColor = "#f87171"; }
+        window.updateStatus("대기 중"); 
+        
+        // 💡 방어막 2: 성공 시 파란색 복구
+        if(avatarWrap) avatarWrap.style.borderColor = "#60a5fa"; 
+    } catch(e) { 
+        console.error(e); 
+        window.updateStatus("해설 통신 에러"); 
+        
+        // 💡 방어막 3: 에러 시 빨간색 변경
+        if(avatarWrap) avatarWrap.style.borderColor = "#f87171"; 
+    }
 };
 
 window.clearChatSession = function() { 
