@@ -1037,12 +1037,16 @@ Respond EXACTLY in JSON:
         window.conversationTurn = (window.conversationTurn || 0) + 1;
 
         if (window.conversationTurn % 5 === 0) {
-            if (parsed.memory) {
-                localStorage.setItem('user_compressed_memory', parsed.memory);
-                if (typeof window.updateMemoryDisplay === 'function') {
-                    window.updateMemoryDisplay();
-                }
-            }
+            if (parsed.memory && parsed.memory.trim() !== "") {
+    // 💡 기존 데이터가 있으면 유지하면서 새 데이터를 덮어쓰거나 합치는 방식
+    localStorage.setItem('user_compressed_memory', parsed.memory);
+    
+    if (typeof window.updateMemoryDisplay === 'function') {
+        window.updateMemoryDisplay();
+    }
+} else {
+    console.warn("🚨 AI가 메모리를 반환하지 않았습니다. 기존 데이터를 보호합니다.");
+}
         }
 
         if (Array.isArray(conversationHistory)) {
@@ -2169,9 +2173,8 @@ window.updateMemoryDisplay = function() {
 };
 
 window.compressMemory = async function() {
-    if (conversationHistory.length < 10) return; // 너무 짧으면 압축 안 함
+    if (conversationHistory.length < 5) return; 
     
-    // 💡 핵심: 기존 기억을 '덮어쓰는' 게 아니라 '병합'할 준비를 함
     const oldMemory = localStorage.getItem('user_compressed_memory') || '';
     const chatLog = JSON.stringify(conversationHistory.slice(-10)); // 최근 10턴만 요약에 반영
     
@@ -2180,10 +2183,11 @@ window.compressMemory = async function() {
     const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
     let firstDate = localStorage.getItem('first_meet_date') || new Date().toISOString().split('T')[0];
-    const sysPrompt = `You are an AI tutor's memory compressor. Extract the user's characteristics, preferences, and interests from the chat log.
-    STRICT RULE: You MUST write the compressed memory ONLY in ${exactAiLang}. 
-    [Memory Rule Update] You are allowed to use up to 500 characters. Prioritize keeping critical facts (user's name, hobbies, first meeting date: ${firstDate}) uncompressed and separate.
-    Respond ONLY in JSON format: {"memory": "..."}`;
+    const sysPrompt = `You are an AI tutor's memory compressor. 
+    STRICT RULE: Update the 'memory' by merging new information into the old one. 
+    NEVER lose critical facts like user's name, hobbies, or meeting date.
+    The total memory must not exceed 500 characters.
+    Output JSON: {"memory": "..."}`;
 
     try {
         let res = await fetchAPI(WORKER_URL, {
@@ -2197,34 +2201,26 @@ window.compressMemory = async function() {
         let data = await res.json();
         let parsed = JSON.parse(data.choices[0].message.content.match(/\{[\s\S]*\}/)[0]);
         
-        if (parsed.memory) {
-            // 💡 중요: oldMemory를 완전히 버리는 게 아니라, 
-            // AI가 보내준 새 요약(parsed.memory)을 저장합니다.
-            // 만약 AI가 이전 기억을 누락한다면, 여기서 oldMemory와 parsed.memory를 합치도록 제어할 수 있습니다.
+        // 💡 1. 데이터가 유효할 때만 처리 (데이터 유실 방지)
+        if (parsed && parsed.memory && parsed.memory.trim().length > 5) {
             localStorage.setItem('user_compressed_memory', parsed.memory);
-
-            if (window.conversationTurn % 5 === 0) {
-                let isUpdated = false; 
-
-                if (parsed.memory) {
-                    localStorage.setItem('user_compressed_memory', parsed.memory);
-                    isUpdated = true;
-                }
-
-                if (parsed.inner_thought) {
-                    localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
-                    isUpdated = true;
-                }
-
-                if (isUpdated && typeof window.updateMemoryDisplay === 'function') {
-                    window.updateMemoryDisplay();
-                }
-            }
-
-            const pureChat = conversationHistory.filter(m => m.role !== "system");
-            conversationHistory = pureChat.slice(-4);
-            sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+        } else {
+            console.warn("메모리 데이터가 너무 짧거나 비어있어 업데이트를 건너뜁니다.");
         }
+
+        // 💡 2. 5턴마다 속마음 갱신 (기존 로직)
+        if (window.conversationTurn % 5 === 0) {
+            if (parsed.inner_thought) {
+                localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
+                if (typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
+            }
+        }
+
+        // 💡 3. 단기 기억 최적화
+        const pureChat = conversationHistory.filter(m => m.role !== "system");
+        conversationHistory = pureChat.slice(-10); // 4에서 10으로 늘려 더 똑똑하게 만듦
+        sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
+
     } catch(e) {
         console.error("메모리 압축 실패:", e);
     }
