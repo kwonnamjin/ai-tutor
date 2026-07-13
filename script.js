@@ -2186,31 +2186,31 @@ window.updateMemoryDisplay = function() {
 };
 
 window.compressMemory = async function() {
-    if (conversationHistory.length < 5) return; 
-    
-    const oldMemory = localStorage.getItem('user_compressed_memory') || '';
-    const chatLog = JSON.stringify(conversationHistory.slice(-10)); // 최근 10턴만 요약에 반영
-    
+    if (conversationHistory.length < 5) return;
+
+    // 1. 저장할 키값 결정 (커스텀 vs 기본 페르소나 분리)
+    const currentMode = localStorage.getItem('current_persona') || 'friend';
+    const customId = localStorage.getItem('custom_id');
+    const memoryKey = (currentMode === 'custom' && customId) 
+        ? `user_memory_custom_${customId}` 
+        : 'user_compressed_memory';
+
+    // 2. 기존 기억 불러오기 (결정된 키값 사용)
+    const oldMemory = localStorage.getItem(memoryKey) || '';
+    const chatLog = JSON.stringify(conversationHistory.slice(-10));
+
     const expLangCode = document.getElementById('explanationLanguage').value || 'ko-KR';
     const aiLangNames = { "ko-KR": "Korean", "en-US": "English", "ja-JP": "Japanese", "zh-CN": "Chinese", "es-ES": "Spanish", "th-TH": "Thai", "vi-VN": "Vietnamese", "fr-FR": "French", "de-DE": "German", "ru-RU": "Russian", "ar-SA": "Arabic", "hi-IN": "Hindi", "id-ID": "Indonesian" };
     const exactAiLang = aiLangNames[expLangCode] || expLangCode;
 
     let firstDate = localStorage.getItem('first_meet_date') || new Date().toISOString().split('T')[0];
+    
+    // 💡 덮어쓰기가 아닌 '병합(Merge)' 프롬프트
     const sysPrompt = `You are an AI tutor's memory compressor. 
     STRICT RULE: Update the 'memory' by merging new information into the old one. 
-    NEVER lose critical facts like user's name, hobbies, or meeting date.
-    The total memory must not exceed 500 characters.
-    Output JSON: {"memory": "..."}`;
-    
-    const currentMode = localStorage.getItem('current_persona') || 'friend';
-    const customId = localStorage.getItem('custom_id');
-    
-    const memoryKey = (currentMode === 'custom' && customId) 
-    ? `user_memory_custom_${customId}` 
-    : 'user_compressed_memory';
-
-// 저장 시:
-localStorage.setItem(memoryKey, parsed.memory);
+    NEVER lose critical facts like user's name, hobbies, or meeting date (${firstDate}).
+    The total memory must not exceed 500 characters. MUST be written in ${exactAiLang}.
+    Output ONLY JSON format: {"memory": "..."}`;
 
     try {
         let res = await fetchAPI(WORKER_URL, {
@@ -2222,32 +2222,28 @@ localStorage.setItem(memoryKey, parsed.memory);
             })
         });
         let data = await res.json();
-        let parsed = JSON.parse(data.choices[0].message.content.match(/\{[\s\S]*\}/)[0]);
         
-        // 💡 1. 데이터가 유효할 때만 처리 (데이터 유실 방지)
+        // 💡 3. 방어적 파싱 로직 (에러 방지)
+        let rawContent = data.choices[0].message.content.match(/\{[\s\S]*\}/)[0];
+        let parsed = JSON.parse(rawContent);
+
+        // 💡 4. 안전하게 '분리된 키(memoryKey)'에 저장
         if (parsed && parsed.memory && parsed.memory.trim().length > 5) {
-            localStorage.setItem('user_compressed_memory', parsed.memory);
-        } else {
-            console.warn("메모리 데이터가 너무 짧거나 비어있어 업데이트를 건너뜁니다.");
+            localStorage.setItem(memoryKey, parsed.memory);
         }
 
-        // 💡 2. 5턴마다 속마음 갱신 (기존 로직)
-        if (window.conversationTurn % 5 === 0) {
-            if (parsed.inner_thought) {
-                localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
-                if (typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
-            }
+        if (window.conversationTurn % 5 === 0 && parsed.inner_thought) {
+            localStorage.setItem('ai_dynamic_thought', parsed.inner_thought);
+            if (typeof window.updateMemoryDisplay === 'function') window.updateMemoryDisplay();
         }
 
-        // 💡 3. 단기 기억 최적화
         const pureChat = conversationHistory.filter(m => m.role !== "system");
-        conversationHistory = pureChat.slice(-10); // 4에서 10으로 늘려 더 똑똑하게 만듦
+        conversationHistory = pureChat.slice(-10);
         sessionStorage.setItem('llmHistory', JSON.stringify(conversationHistory));
 
-    if (parsed.memory) {
-            localStorage.setItem(memoryKey, parsed.memory); // 분리된 키에 저장
-        }
-    } catch(e) { console.error(e); }
+    } catch(e) {
+        console.error("메모리 압축 실패:", e);
+    }
 };
 
 setTimeout(window.updateMemoryDisplay, 500);
