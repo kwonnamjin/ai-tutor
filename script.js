@@ -2110,13 +2110,16 @@ window.saveToArchive = function(type, itemData) {
     if (!window.archiveData) window.archiveData = { script: [], vocab: [], freetalk: [] };
     if (!window.archiveData[type]) window.archiveData[type] = [];
 
-    alert("💾 보관함에 저장되었습니다.");
+    // 💡 [수정됨] 앱을 먹통으로 만들던 원흉인 alert()를 삭제하고, 부드러운 하단 상태창 알림으로 교체합니다.
+    if (typeof window.updateStatus === 'function') {
+        window.updateStatus("💾 보관함에 저장되었습니다!");
+    }
 
     const inherentLang = itemData.langCode || localStorage.getItem('target_language') || 'en-US';
 
     const newItem = {
         id: 'archive_' + Date.now(),
-        savedLangCode: inherentLang, // 만들어진 당시의 언어만 기억
+        savedLangCode: inherentLang,
         ...itemData
     };
 
