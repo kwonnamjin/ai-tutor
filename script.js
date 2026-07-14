@@ -2191,12 +2191,8 @@ window.updateMemoryDisplay = function() {
     const levelInfo = INTIMACY_SYSTEM.levels[intimacyData.level];
     const dynamicThought = localStorage.getItem('ai_dynamic_thought') || levelInfo.aiMind; 
 
-    // 💡 [수정됨] 불필요한 박스 디자인(bg-gradient, border, p-3 등)을 싹 걷어내고 텍스트만 깔끔하게 배치했습니다.
-    let htmlContent = `
-        <div class="mt-1 mb-1">
-            <p class="text-[10px] font-black text-blue-500 mb-1">${statusLabel}: Lv.${intimacyData.level} ${levelInfo.name}</p>
-            <p class="text-xs font-bold text-slate-700 leading-relaxed">"${dynamicThought}"</p>
-        </div>`;
+    // 💡 [수정됨] 엔터(줄바꿈)가 빈칸으로 인식되지 않도록 코드를 한 줄로 완전히 붙여버렸습니다!
+    let htmlContent = `<div class="mt-1"><p class="text-[10px] font-black text-blue-500 mb-1">${statusLabel}: Lv.${intimacyData.level} ${levelInfo.name}</p><p class="text-xs font-bold text-slate-700 leading-relaxed">"${dynamicThought}"</p></div>`;
 
     memDisplay.innerHTML = htmlContent;
 };
