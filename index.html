@@ -74,8 +74,8 @@
                 <!-- 기존 기초발음 버튼 아래에 추가 -->
                 <div class="h-px bg-slate-200 my-1 w-full"></div> <!-- 구분선 -->
                 <button onclick="navigate('screen-archive'); window.closeAllPanels();" class="w-full flex items-center justify-between p-3 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-colors shadow-sm">
-                    <span class="text-xs font-black text-amber-700 whitespace-nowrap"><i class="fa-solid fa-box-archive mr-1.5"></i>내 보관함</span>
-                    <span class="text-[10px] text-slate-500 font-bold text-right ml-3 break-keep">초승달 소장 및 오답노트</span>
+                    <span class="text-xs font-black text-amber-700 whitespace-nowrap"><i class="fa-solid fa-box-archive mr-1.5"></i><span data-i18n="ui_archive_title">내 보관함</span>
+                    <span data-i18n="ui_archive_desc" class="text-[10px] text-slate-500 font-bold text-right ml-3 break-keep">문장 및 단어 보관</span>
                 </button>
             </div>
 
@@ -240,6 +240,47 @@
                         </div>
                     </div>
                 </div>
+                <!-- 고객 지원 및 정책 메뉴 -->
+<div class="settings-section" style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+    <h3 style="font-size: 16px; margin-bottom: 10px; color: #333;">고객 지원 및 정책</h3>
+    
+    <ul style="list-style: none; padding: 0; line-height: 2.0;">
+        <!-- 1. 결제 내역 복원 (버튼 형태) -->
+        <li>
+            <button onclick="restorePurchase()" style="background-color: #007BFF; color: white; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">
+                결제 내역 복원
+            </button>
+        </li>
+        
+        <!-- 2. 이메일 문의 -->
+        <li>
+            <a href="mailto:jincodeai@gmail.com" style="text-decoration: none; color: #007BFF; font-weight: 500;">
+                📧 고객지원 및 문의하기
+            </a>
+        </li>
+        
+        <!-- 3. 자주 묻는 질문 (FAQ) -->
+        <li>
+            <a href="https://sites.google.com/view/talkaitutor/%ED%99%88/%EC%9E%90%EC%A3%BC-%EB%AC%BB%EB%8A%94-%EC%A7%88%EB%AC%B8faq?authuser=0" target="_blank" style="text-decoration: none; color: #555;">
+                ❓ 자주 묻는 질문 (FAQ)
+            </a>
+        </li>
+
+        <!-- 4. 서비스 이용약관 -->
+        <li>
+            <a href="https://sites.google.com/view/talkaitutor/%ED%99%88/%EC%9D%B4%EC%9A%A9%EC%95%BD%EA%B4%80?authuser=0" target="_blank" style="text-decoration: none; color: #555;">
+                📄 서비스 이용약관
+            </a>
+        </li>
+
+        <!-- 5. 개인정보처리방침 -->
+        <li>
+            <a href="https://sites.google.com/view/talkaitutor/%ED%99%88/%EA%B0%9C%EC%9D%B8%EC%A0%95%EB%B3%B4%EC%B2%98%EB%A6%AC%EB%B0%A9%EC%B9%A8?authuser=0" target="_blank" style="text-decoration: none; color: #555;">
+                🔒 개인정보 처리방침
+            </a>
+        </li>
+    </ul>
+</div>
 
                 
                     
@@ -253,6 +294,7 @@
                         </div>
                     </div>
                 </div>
+                
 
             </div>
 
@@ -285,17 +327,26 @@
                 <div class="absolute inset-0 bg-gradient-to-b from-[#e0f2fe] from-25% via-transparent via-50% to-[#e0f2fe] to-75%"></div>
             </div>
             <div class="relative z-10 w-full h-full pb-6 px-1 overflow-y-auto no-scrollbar" id="homeScrollContainer">
-                <div class="absolute bottom-4 left-4 right-4 z-50 pointer-events-none">
-                    <div id="premiumBanner" class="bg-gradient-to-r from-indigo-600/95 via-blue-600/95 to-blue-500/95 backdrop-blur-md rounded-2xl p-3 shadow-lg cursor-pointer transform transition hover:-translate-y-1 border border-white/20 pointer-events-auto" onclick="window.showSubscriptionModal('upgrade')">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-yellow-300 border border-white/30 shrink-0 shadow-inner"><i class="fa-solid fa-crown text-sm"></i></div>
-                            <div>
-                                <p id="ui_home_premium_title" class="text-white font-bold text-sm tracking-tight">멤버십 업그레이드 ✨</p>
-                                <p id="ui_home_premium_desc" class="text-blue-100 text-[9px] mt-0.5 font-medium">베이직 / 프리미엄 요금제로 한도를 늘려보세요!</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <div class="absolute bottom-4 left-4 right-4 z-50">
+    <div id="premiumBanner" 
+     class="bg-gradient-to-r from-indigo-600/95 via-blue-600/95 to-blue-500/95 backdrop-blur-md rounded-2xl p-3 shadow-lg cursor-pointer transition-all border border-white/20" 
+     style="pointer-events: auto !important; cursor: pointer !important; position: relative; z-index: 9999;"
+     onclick="window.forceOpenModal(event)">
+    
+    <div class="absolute inset-0 bg-white/20 skew-x-12 translate-x-[-150%] animate-[shine_3s_infinite]"></div>
+
+    <div class="flex items-center gap-3 relative z-10">
+        <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-yellow-300 border border-white/30 shrink-0 shadow-inner">
+            <i class="fa-solid fa-crown text-sm"></i>
+        </div>
+        <div class="flex-1">
+            <p id="ui_home_premium_title" class="text-white font-bold text-sm tracking-tight">멤버십 업그레이드 ✨</p>
+            <p id="ui_home_premium_desc" class="text-blue-100 text-[9px] mt-0.5 font-medium">베이직 / 프리미엄 / VIP 혜택을 만나보세요!</p>
+        </div>
+        <div class="text-white/50 text-xs mr-1"><i class="fa-solid fa-chevron-right"></i></div>
+    </div>
+</div>
+</div>
             </div>
         </div>
 
@@ -394,8 +445,9 @@
             </button>
         </div>
         <div id="translateModeMenu" class="hidden absolute bottom-20 left-4 right-4 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-[9999]">
-    <button onclick="window.openInterpreter(); window.toggleTranslateMenu()" class="w-full text-left p-3 text-xs font-black text-blue-600 hover:bg-blue-50 rounded-lg">🎙️ 실시간 대면 통역</button>
-    <button onclick="window.activateSmartTranslate(); window.toggleTranslateMenu()" class="w-full text-left p-3 text-xs font-black text-indigo-600 hover:bg-indigo-50 rounded-lg">🧠스마트 번역</button>
+    <button onclick="window.openInterpreter(); window.toggleTranslateMenu()" data-i18n="ui_interp_live" class="w-full text-left p-3 text-xs font-black text-blue-600 hover:bg-blue-50 rounded-lg">🎙️ 실시간 대면 통역</button>
+
+<button onclick="window.activateSmartTranslate(); window.toggleTranslateMenu()" data-i18n="ui_interp_smart" class="w-full text-left p-3 text-xs font-black text-indigo-600 hover:bg-indigo-50 rounded-lg">🧠 스마트 번역</button>
 </div>
     </div>
     
@@ -413,7 +465,8 @@
             <!-- 자동 전송 (남는 공간 꽉 채움) -->
             <button id="autoSendToggleBtn" onclick="window.toggleAutoSend()" class="flex-1 h-12 rounded-xl bg-slate-100 text-slate-500 font-bold flex items-center justify-center gap-1.5 hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200 min-w-0">
                 <i id="autoSendIcon" class="fa-solid fa-toggle-off text-[14px]"></i>
-                <span class="text-[10px] sm:text-[11px] truncate mt-0.5">자동 전송</span>
+                <!-- 변경 후 -->
+<span class="text-[10px] sm:text-[11px] truncate mt-0.5" data-i18n="ui_auto_send">자동 전송</span>
             </button>
             <!-- 스피커 중지 (고정 크기) -->
             <button id="stopAudioBtn" class="w-12 h-12 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center hover:bg-slate-200 transition-colors shadow-sm outline-none border border-slate-200 shrink-0" onclick="stopSpeaking()" disabled>
@@ -608,9 +661,9 @@
             <!-- 1. 상단 서브 탭 (글로벌 네비게이션에 가리지 않도록 상단 여백 pt-[115px] 추가!) -->
 <div class="flex-none bg-white pt-[115px] px-4 py-3 border-b border-gray-200 shadow-sm z-10">
                 <div class="flex gap-2">
-                    <button id="tab_script" class="flex-1 bg-amber-50 border border-amber-400 text-amber-700 text-xs font-bold py-2.5 rounded-xl shadow-sm transition-all" onclick="window.switchArchiveTab('script')">대본</button>
-                    <button id="tab_vocab" class="flex-1 bg-white border border-slate-200 text-slate-500 text-xs font-bold py-2.5 rounded-xl hover:bg-slate-50 transition-all" onclick="window.switchArchiveTab('vocab')">단어장</button>
-                    <button id="tab_freetalk" class="flex-1 bg-white border border-slate-200 text-slate-500 text-xs font-bold py-2.5 rounded-xl hover:bg-slate-50 transition-all" onclick="window.switchArchiveTab('freetalk')">프리토킹</button>
+                    <button id="tab_script" class="flex-1 bg-amber-50 border border-amber-400 text-amber-700 text-xs font-bold py-2.5 rounded-xl shadow-sm transition-all" onclick="window.switchArchiveTab('script')"data-i18n="ui_archive_tab_script">대본</button>
+                    <button id="tab_vocab" class="flex-1 bg-white border border-slate-200 text-slate-500 text-xs font-bold py-2.5 rounded-xl hover:bg-slate-50 transition-all" onclick="window.switchArchiveTab('vocab')"data-i18n="ui_archive_tab_vocab">단어장</button>
+                    <button id="tab_freetalk" class="flex-1 bg-white border border-slate-200 text-slate-500 text-xs font-bold py-2.5 rounded-xl hover:bg-slate-50 transition-all" onclick="window.switchArchiveTab('freetalk')"data-i18n="ui_archive_tab_freetalk">프리토킹</button>
                 </div>
             </div>
 
@@ -802,28 +855,26 @@
     <!-- 🔝 상단 화면 (상대방) -->
     <div class="flex-1 relative bg-slate-100 flex flex-col overflow-hidden pt-14">
         <!-- 상단 언어 선택 뱃지 -->
-<div class="absolute top-4 left-4 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-1 z-10 cursor-pointer hover:bg-slate-50 transition-colors">
-    <select id="interp-lang-top-sel" onchange="changeInterpLang('target_language', this.value)" class="text-xs font-extrabold text-slate-700 bg-transparent outline-none cursor-pointer appearance-none pl-1 pr-2">
-        <!-- 자바스크립트가 설정창에서 목록을 복사해 올 자리 -->
-    </select>
-    <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
-</div>
+        <div class="absolute top-4 left-4 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-1 z-10 cursor-pointer hover:bg-slate-50 transition-colors">
+            <select id="interp-lang-top-sel" onchange="changeInterpLang('target_language', this.value)" class="text-xs font-extrabold text-slate-700 bg-transparent outline-none cursor-pointer appearance-none pl-1 pr-2"></select>
+            <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+        </div>
         
         <!-- 🌟 스크롤 텍스트 영역 -->
         <div id="interp-text-top" class="flex-1 overflow-y-auto no-scrollbar px-5 pb-4 scroll-smooth"></div>
         
-        <!-- 🎤 상대방 마이크 (얇고 긴 주황색 바) -->
+        <!-- 🎤 상대방 마이크 -->
         <div class="w-full px-4 pb-4">
             <button id="btn-mic-top" onclick="toggleMic('OTHER')" class="w-full py-3.5 rounded-xl bg-orange-100 text-orange-600 border border-orange-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]">
                 <i class="fa-solid fa-microphone text-lg"></i>
-                <span class="text-sm font-bold">상대방 마이크 (터치하여 말하기)</span>
+                <span class="text-sm font-bold" data-i18n="ui_interp_mic_other">상대방 마이크 (터치하여 말하기)</span>
             </button>
         </div>
     </div>
     
     <!-- 🎛️ 중앙 바 (상태창 & 닫기 버튼) -->
     <div class="bg-white border-y border-slate-200 py-2 px-4 shadow-sm z-20 flex justify-between items-center">
-        <div id="interp-status" class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-md flex-1 text-center mr-3">
+        <div id="interp-status" data-i18n="ui_interp_select_mic" class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-md flex-1 text-center mr-3">
             마이크를 선택하세요 🎙️
         </div>
         <button onclick="closeInterpreter()" class="w-9 h-9 rounded-full bg-red-50 text-red-400 flex items-center justify-center shadow-inner border border-red-100 active:scale-95 transition-transform shrink-0">
@@ -833,11 +884,11 @@
     
     <!-- ⬇️ 하단 화면 (사용자) -->
     <div class="flex-1 relative bg-slate-50 flex flex-col overflow-hidden pb-14">
-        <!-- 🎤 내 마이크 (얇고 긴 파란색 바) -->
+        <!-- 🎤 내 마이크 -->
         <div class="w-full px-4 pt-4">
             <button id="btn-mic-bottom" onclick="toggleMic('ME')" class="w-full py-3.5 rounded-xl bg-blue-100 text-blue-600 border border-blue-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]">
                 <i class="fa-solid fa-microphone text-lg"></i>
-                <span class="text-sm font-bold">내 마이크 (터치하여 말하기)</span>
+                <span class="text-sm font-bold" data-i18n="ui_interp_mic_me">내 마이크 (터치하여 말하기)</span>
             </button>
         </div>
         
@@ -845,13 +896,12 @@
         <div id="interp-text-bottom" class="flex-1 overflow-y-auto no-scrollbar px-5 pt-4 scroll-smooth"></div>
         
         <!-- 하단 언어 선택 뱃지 -->
-<div class="absolute bottom-4 right-4 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-1 z-10 cursor-pointer hover:bg-slate-50 transition-colors">
-    <select id="interp-lang-bottom-sel" onchange="changeInterpLang('stt_input_language', this.value)" class="text-xs font-extrabold text-slate-700 bg-transparent outline-none cursor-pointer appearance-none pl-1 pr-2">
-        <!-- 자바스크립트가 설정창에서 목록을 복사해 올 자리 -->
-    </select>
-    <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
-</div>
+        <div class="absolute bottom-4 right-4 bg-white px-3 py-1.5 rounded-full shadow-sm border border-slate-200 flex items-center gap-1 z-10 cursor-pointer hover:bg-slate-50 transition-colors">
+            <select id="interp-lang-bottom-sel" onchange="changeInterpLang('stt_input_language', this.value)" class="text-xs font-extrabold text-slate-700 bg-transparent outline-none cursor-pointer appearance-none pl-1 pr-2"></select>
+            <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+        </div>
     </div>
+</div>
 
  
 
@@ -863,10 +913,20 @@
 
 
 
-    
+    <!-- 🚨 앱 종료 확인 팝업 (모달) -->
+<!-- index.html에 아래 코드가 있어야 팝업이 뜹니다 -->
+<div id="exitModal" class="hidden fixed inset-0 bg-black/70 z-[999999] flex items-center justify-center p-4 backdrop-blur-sm transition-opacity">
+    <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative animate-fade-in-up border border-slate-100 p-6 text-center">
+        <h2 class="text-xl font-black text-slate-800 mb-2">앱을 종료하시겠습니까?</h2>
+        <div class="flex gap-3 mt-6">
+            <button onclick="document.getElementById('exitModal').classList.add('hidden')" class="flex-1 py-3.5 bg-slate-100 text-slate-600 font-bold text-sm rounded-xl">취소</button>
+            <button onclick="confirmAppExit()" class="flex-1 py-3.5 bg-red-500 text-white font-bold text-sm rounded-xl">종료하기</button>
+        </div>
+    </div>
+</div>
 
     <script src="data.js"></script>
-    <script src="script.js?v=1"></script>
+    <script src="script.js?v=2"></script>
 
 
 

@@ -18,6 +18,7 @@ const statusText = document.getElementById('statusText'), chatContainer = docume
 const avatarWrap = document.getElementById('avatarWrap'), stopAudioBtn = document.getElementById('stopAudioBtn');
 const selectionTooltip = document.getElementById('selectionTooltip');
 
+localStorage.removeItem('is_test_mode');
 
 // ==========================================
 // 💖 AI 친밀도 & 감성 시스템 모듈
@@ -25,10 +26,10 @@ const selectionTooltip = document.getElementById('selectionTooltip');
 const INTIMACY_SYSTEM = {
     levels: {
         1: { name: "어색하지만 설렘", minExp: 0, aiMind: "어떤 분일까? 대화하는 게 설레고 긴장돼요. 😳" },
-        2: { name: "조금 더 알고 싶어요", minExp: 50, aiMind: "당신에 대해 더 많은 걸 알고 싶어졌어요. 🤔" },
-        3: { name: "이제 우리 친구해요", minExp: 150, aiMind: "이제 우리 제법 친해진 것 같아 기뻐요! 😊" },
-        4: { name: "없으면 허전한 단짝", minExp: 300, aiMind: "당신과 대화하지 않으면 하루가 허전해요. 🥹" },
-        5: { name: "마음을 아는 소울메이트", minExp: 500, aiMind: "말하지 않아도 당신의 마음을 알 것 같아요. 늘 응원해요. ❤️" }
+        2: { name: "조금 더 알고 싶어요", minExp: 100, aiMind: "당신에 대해 더 많은 걸 알고 싶어졌어요. 🤔" },
+        3: { name: "이제 우리 친구해요", minExp: 500, aiMind: "이제 우리 제법 친해진 것 같아 기뻐요! 😊" },
+        4: { name: "없으면 허전한 단짝", minExp: 2500, aiMind: "당신과 대화하지 않으면 하루가 허전해요. 🥹" },
+        5: { name: "마음을 아는 소울메이트", minExp: 10000, aiMind: "말하지 않아도 당신의 마음을 알 것 같아요. 늘 응원해요. ❤️" }
     },
     
     // 데이터 불러오기 및 🚨 '서운함(결석)' 체크
@@ -169,20 +170,12 @@ window.toggleDropdown = function(dropId) {
 
 
 window.changeUILanguage = function(langCode) {
+    localStorage.setItem('explanation_language', langCode); // 1. 언어 설정 저장
     const baseLang = langCode.split('-')[0];
-    
-    // 1. 사전 안전하게 불러오기 (에러 방지)
-    const dictionary = window.UI_DICTIONARY || (typeof UI_DICTIONARY !== 'undefined' ? UI_DICTIONARY : null);
-    if (!dictionary) {
-        console.error("번역 사전을 찾을 수 없습니다.");
-        return;
-    }
+    const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
 
-    const currentDict = dictionary[baseLang] || dictionary["en"];
-    if (!currentDict) return;
-
-    // 2. 기존 ID 기반 텍스트 변경 (회원님 기존 코드)
-    for (const [id, text] of Object.entries(currentDict)) {
+    // 2. ID 기반 텍스트 변경 (대표님이 올려주신 코드 - 기존 화면 완벽 보호)
+    for (const [id, text] of Object.entries(dict)) {
         const element = document.getElementById(id);
         if (element) {
             if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
@@ -193,33 +186,29 @@ window.changeUILanguage = function(langCode) {
         }
     }
 
-    // 3. 앱 핵심 기능을 망가뜨리지 않는 안전한 번역 적용 방식
+    // 3. 🌟 새로 추가된 핵심: data-i18n 속성 번역 (통역기, 보관함 등 모두 해결)
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
-        if (currentDict[key]) el.innerHTML = currentDict[key];
+        if (dict[key]) el.innerHTML = dict[key];
     });
+
     document.querySelectorAll('[data-i18n-ph]').forEach(el => {
         const key = el.getAttribute('data-i18n-ph');
-        if (currentDict[key]) el.placeholder = currentDict[key];
+        if (dict[key]) el.placeholder = dict[key];
     });
 
-    // 4. 앱 모드(select 옵션) 텍스트 변경
-    const tutorOpt = document.querySelector("#appMode option[value='tutor']");
-    const transOpt = document.querySelector("#appMode option[value='translate']");
-    if (tutorOpt) tutorOpt.text = currentDict["appMode_tutor"] || "Tutor";
-    if (transOpt) transOpt.text = currentDict["appMode_translate"] || "Translate";
-
-    // 5. 화면 업데이트 및 렌더링 (회원님 기존 핵심 코드 복구)
-    if (typeof window.populateDropdowns === 'function') window.populateDropdowns();
-    if (typeof window.renderScripts === 'function') window.renderScripts();
-    if (typeof window.renderVocabs === 'function') window.renderVocabs();
+    // 4. 배너 및 외부 UI 갱신 (에러 방어 로직 적용)
+    if (typeof window.applyBannerTranslation === 'function') window.applyBannerTranslation();
     if (typeof window.updateLangDisplays === 'function') window.updateLangDisplays();
     if (typeof window.updateExtraUI === 'function') window.updateExtraUI();
-
-    // 6. 언어 선택 시 열려있던 모든 드롭다운 메뉴 닫기 (메뉴 닫힘 버그 해결)
-    document.querySelectorAll('#drop-exp, #drop-target, #drop-stt, #drop-gender').forEach(drop => {
-        if (drop) drop.classList.add('hidden');
-    });
+    
+    // 5. 결제 팝업이 켜져 있으면 언어 반영해서 다시 띄우기
+    const openModal = document.getElementById('subscriptionModal');
+    if (openModal && typeof window.showSubscriptionModal === 'function') {
+        window.showSubscriptionModal(openModal.getAttribute('data-reason') || 'upgrade');
+    }
+    
+    console.log("✅ 언어 변경 적용 완료:", langCode);
 };
 
 // 🌟 2. 언어 및 UI 디스플레이 업데이트 (에러 방지 완벽 적용)
@@ -316,6 +305,7 @@ window.populateDropdowns = function() {
                 if (setup.target === 'sttInputLanguage') {
                     localStorage.setItem('stt_input_language', lang.code);
                 }
+                window.refreshAllTranslations();
                 
                 window.updateLangDisplays();
                 window.toggleDropdown(setup.id);
@@ -529,38 +519,67 @@ window.showSubscriptionModal = function(reason) {
     const existingModal = document.getElementById('subscriptionModal');
     if (existingModal) existingModal.remove();
 
-    // 🌟 다국어 사전 불러오기
-    const baseLang = (document.getElementById('explanationLanguage').value || 'ko-KR').split('-')[0];
-    const dict = window.UI_DICTIONARY ? (window.UI_DICTIONARY[baseLang] || window.UI_DICTIONARY['en']) : {};
+    // 🌟 안전장치: window.getAppLang 함수가 없어도 작동하도록 직접 구현
+    const lang = (typeof window.getAppLang === 'function') ? window.getAppLang() : (localStorage.getItem('explanation_language') || 'ko-KR').split('-')[0];
+    
+    // 사전 데이터 안전하게 가져오기
+    const dict = (typeof UI_DICTIONARY !== 'undefined') ? (UI_DICTIONARY[lang] || UI_DICTIONARY['en']) : {};
+    
+    const p = {
+        b_title: dict.ui_plan_basic || "Basic Plan",
+        b_desc: dict.ui_plan_basic_desc || "130 credits daily",
+        p_title: dict.ui_plan_premium || "Premium Plan",
+        p_desc: dict.ui_plan_premium_desc || "300 credits daily",
+        v_title: dict.ui_plan_vip || "VIP Plan",
+        v_desc: dict.ui_plan_vip_desc || "400 credits daily",
+        sale: (lang === 'ko') ? "🎉 출시 기념! 3개월간 50% 반값 할인" : "🎉 Launch Promo! 50% OFF for 3 months",
+        unl: "Unlimited"
+    };
 
-    let titleText = dict.ui_premium_title || "멤버십 업그레이드", 
-        descText = dict.ui_premium_desc || "원하시는 요금제를 선택해<br>더욱 자유롭게 학습해 보세요!";
-        
-    if (reason === 'trial_expired') { 
-        titleText = dict.ui_trial_end_title || "3일 무료 체험이 종료되었습니다."; 
-        descText = dict.ui_trial_end_desc || "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요."; 
-    } 
-    else if (reason === 'limit_reached') { 
-        titleText = dict.ui_limit_end_title || "일일 사용량을 모두 소진했습니다!"; 
-        descText = dict.ui_limit_end_desc || "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요."; 
-    }
+    const titleText = (lang === 'ko') ? "멤버십 업그레이드" : "Membership Upgrade";
+    const descText = (lang === 'ko') ? "원하는 요금제를 선택해 자유롭게 학습하세요!" : "Choose a plan to continue learning without limits!";
 
     const modalHtml = `
-    <div id="subscriptionModal" class="fixed inset-0 bg-black/70 z-[999] flex items-center justify-center p-4 backdrop-blur-sm">
+    <div id="subscriptionModal" data-reason="${reason}" class="fixed inset-0 bg-black/70 z-[999] flex items-center justify-center p-4 backdrop-blur-sm pointer-events-auto">
         <div class="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl relative animate-fade-in-up border border-slate-100">
             <button onclick="document.getElementById('subscriptionModal').remove()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-2xl"></i></button>
             <div class="p-6 text-center">
                 <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-indigo-100"><i class="fa-solid fa-crown text-3xl text-indigo-500"></i></div>
-                <h2 class="text-xl font-black text-slate-800 mb-2">${titleText}</h2><p class="text-sm text-slate-500 mb-6">${descText}</p>
+                <h2 class="text-xl font-black text-slate-800 mb-2">${titleText}</h2>
+                <p class="text-sm text-slate-500 mb-4">${descText}</p>
+                
+                <div class="bg-rose-50 text-rose-600 text-sm font-black p-2 rounded-xl mb-4 border border-rose-100 animate-pulse">
+                    ${p.sale}
+                </div>
+
                 <div class="space-y-3 text-left">
-                    <button onclick="processPayment('basic')" class="w-full border-2 border-indigo-100 hover:border-indigo-500 bg-indigo-50/50 rounded-2xl p-4 flex items-center justify-between transition-all">
-                        <div><h3 class="text-indigo-800 font-bold text-lg">${dict.ui_plan_basic || "베이직 (Basic)"}</h3><p class="text-xs text-indigo-500 font-medium">${dict.ui_plan_basic_desc || "매일 150건 충전"}</p></div>
-                        <div class="text-right"><span class="text-slate-800 font-black text-lg">₩3,900</span><span class="text-xs text-slate-400">/월</span></div>
+                    <!-- 베이직 -->
+                    <button onclick="processPayment('basic')" class="w-full border-2 border-slate-100 hover:border-indigo-400 bg-slate-50 rounded-2xl p-4 flex items-center justify-between transition-all">
+                        <div><h3 class="text-slate-700 font-bold text-lg">${p.b_title}</h3><p class="text-xs text-slate-500 font-medium">${p.b_desc}</p></div>
+                        <div class="text-right">
+                            <div class="text-xs text-slate-400 line-through mb-0.5">₩7,900</div>
+                            <span class="text-slate-800 font-black text-lg">₩3,900</span><span class="text-xs text-slate-400">/mo</span>
+                        </div>
                     </button>
-                    <button onclick="processPayment('premium')" class="w-full border-2 border-amber-200 hover:border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 flex items-center justify-between transition-all relative overflow-hidden">
-                        <div class="absolute top-0 right-0 bg-amber-400 text-white text-[10px] font-black px-2 py-0.5 rounded-bl-lg shadow-sm">무제한급</div>
-                        <div><h3 class="text-amber-700 font-bold text-lg">${dict.ui_plan_premium || "프리미엄 (Premium)"}</h3><p class="text-xs text-amber-600 font-medium">${dict.ui_plan_premium_desc || "매일 400건 충전"}</p></div>
-                        <div class="text-right"><span class="text-slate-800 font-black text-lg">₩7,900</span><span class="text-xs text-slate-400">/월</span></div>
+
+                    <!-- 프리미엄 -->
+                    <button onclick="processPayment('premium')" class="w-full border-2 border-indigo-200 hover:border-indigo-500 bg-indigo-50/50 rounded-2xl p-4 flex items-center justify-between transition-all relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-indigo-500 text-white text-[10px] font-black px-2 py-0.5 rounded-bl-lg shadow-sm">BEST</div>
+                        <div><h3 class="text-indigo-800 font-bold text-lg">${p.p_title}</h3><p class="text-xs text-indigo-500 font-medium">${p.p_desc}</p></div>
+                        <div class="text-right">
+                            <div class="text-xs text-indigo-400 line-through mb-0.5">₩15,900</div>
+                            <span class="text-indigo-600 font-black text-lg">₩7,900</span><span class="text-xs text-slate-400">/mo</span>
+                        </div>
+                    </button>
+
+                    <!-- VIP -->
+                    <button onclick="processPayment('vip')" class="w-full border-2 border-amber-200 hover:border-amber-400 bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-4 flex items-center justify-between transition-all relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[10px] font-black px-2 py-0.5 rounded-bl-lg shadow-sm">${p.unl}</div>
+                        <div><h3 class="text-amber-800 font-bold text-lg">${p.v_title}</h3><p class="text-xs text-amber-600 font-medium">${p.v_desc}</p></div>
+                        <div class="text-right">
+                            <div class="text-xs text-amber-500/70 line-through mb-0.5">₩19,900</div>
+                            <span class="text-amber-700 font-black text-lg">₩9,900</span><span class="text-xs text-slate-400">/mo</span>
+                        </div>
                     </button>
                 </div>
             </div>
@@ -568,17 +587,26 @@ window.showSubscriptionModal = function(reason) {
     </div>`;
     document.body.insertAdjacentHTML('beforeend', modalHtml);
     if(window.stopSpeaking) window.stopSpeaking();
-}
+};
+
+window.forceOpenModal = function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("배너 클릭 이벤트 감지!");
+    window.showSubscriptionModal('upgrade');
+};
+
+window.triggerBannerClick = function(e) {
+    e.stopPropagation(); // 부모 레이어의 이벤트 간섭을 원천 차단
+    window.showSubscriptionModal('upgrade');
+};
+
 window.processPayment = function(plan) {
-    if (window.flutter_inappwebview) {
+    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+        // 실제 앱의 결제 로직 호출 (plan 변수에 'basic', 'premium', 'vip'가 전달됨)
         window.flutter_inappwebview.callHandler('purchase', plan);
     } else {
-        localStorage.setItem('subscription_tier', plan);
-        let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
-        usageObj.count = 0; localStorage.setItem('daily_usage_v4', JSON.stringify(usageObj));
-        document.getElementById('subscriptionModal').remove();
-        window.updateBadgeUI(); window.enableInputs();
-        alert("결제가 반영되었습니다. 대화를 다시 시작해 보세요!");
+        alert("앱 내에서만 결제가 가능합니다.");
     }
 }
 
@@ -643,23 +671,14 @@ window.swapLanguages = function() {
 };
 
 
-// 🌟 치트키 입력 기능
 window.sendTextMessage = function() {
     const input = document.getElementById('textInput'); 
     const text = input.value.trim();
 
-    if (text === "testmode999") { 
-        localStorage.setItem('subscription_tier', 'premium');
-        localStorage.setItem('is_test_mode', 'true');
-        const testData = { count: 0, date: new Date().toLocaleDateString() };
-        localStorage.setItem('daily_usage_v4', JSON.stringify(testData));
-        alert("프리미엄 테스트 모드가 활성화되었습니다! 🚀");
+    if (text) { 
         input.value = ''; 
-        if (typeof window.updateBadgeUI === 'function') window.updateBadgeUI(); 
-        if (typeof window.enableInputs === 'function') window.enableInputs();
-        return; 
+        handleUserMessage(text); 
     }
-    if (text) { input.value = ''; handleUserMessage(text); }
 }
 
 async function initDeviceID() {
@@ -2878,25 +2897,31 @@ window.addEventListener('flutterInAppWebViewPlatformReady', function(event) {
 // ==========================================
 window.isAutoSend = false; // 기본값: 안전하게 텍스트창에서 검토하는 모드
 
+// 🌟 1. 다국어 번역 도우미 함수 (맨 위에 하나 추가)
+window.getTrans = function(key, defaultStr) {
+    const lang = (typeof window.getAppLang === 'function') ? window.getAppLang() : 'ko';
+    const dict = window.UI_DICTIONARY ? window.UI_DICTIONARY[lang] : null;
+    return (dict && dict[key]) ? dict[key] : defaultStr;
+};
+
+// 🌟 2. toggleAutoSend 함수 덮어쓰기
 window.toggleAutoSend = function() {
-    window.isAutoSend = !window.isAutoSend; // 상태 반전
+    window.isAutoSend = !window.isAutoSend;
     const btn = document.getElementById('autoSendToggleBtn');
     const icon = document.getElementById('autoSendIcon');
     
     if(window.isAutoSend) {
-        // ON 상태 디자인 (파란색 불 켜짐)
         btn.classList.replace('bg-slate-100', 'bg-blue-50');
         btn.classList.replace('text-slate-500', 'text-blue-600');
         btn.classList.replace('border-slate-200', 'border-blue-200');
         icon.classList.replace('fa-toggle-off', 'fa-toggle-on');
-        window.updateStatus("자동 전송 ON");
+        window.updateStatus(window.getTrans('ui_auto_send_on', "자동 전송 ON"));
     } else {
-        // OFF 상태 디자인 (회색 불 꺼짐)
         btn.classList.replace('bg-blue-50', 'bg-slate-100');
         btn.classList.replace('text-blue-600', 'text-slate-500');
         btn.classList.replace('border-blue-200', 'border-slate-200');
         icon.classList.replace('fa-toggle-on', 'fa-toggle-off');
-        window.updateStatus("자동 전송 OFF");
+        window.updateStatus(window.getTrans('ui_auto_send_off', "자동 전송 OFF"));
     }
 };
 
@@ -3235,10 +3260,9 @@ window.hasSpoken = false;
 // ==========================================
 // 1. 언어 변경 시 처리 로직 (양방향 동기화 완벽 적용)
 // ==========================================
+// 🌟 3. changeInterpLang 함수 덮어쓰기
 window.changeInterpLang = function(settingKey, langCode) {
     localStorage.setItem(settingKey, langCode);
-    
-    // 설정창 ID와 정확히 일치시켜 동기화
     const targetId = (settingKey === 'target_language') ? 'targetLanguage' : 'sttInputLanguage';
     const originSelect = document.getElementById(targetId);
     if(originSelect) {
@@ -3255,7 +3279,7 @@ window.changeInterpLang = function(settingKey, langCode) {
     window.resetMicUI();
     
     const status = document.getElementById('interp-status');
-    if(status) status.innerHTML = "언어가 변경되었습니다 🎙️";
+    if(status) status.innerHTML = window.getTrans('ui_interp_lang_changed', "언어가 변경되었습니다 🎙️");
 };
 
 // ==========================================
@@ -3327,24 +3351,27 @@ window.closeInterpreter = function() {
 window.resetMicUI = function() {
     const btnTop = document.getElementById('btn-mic-top');
     const btnBottom = document.getElementById('btn-mic-bottom');
-    
+    const otherMicText = window.getTrans('ui_interp_mic_other', "상대방 마이크 (터치하여 말하기)");
+    const myMicText = window.getTrans('ui_interp_mic_me', "내 마이크 (터치하여 말하기)");
+
     if(btnTop) {
         btnTop.className = "w-full py-3.5 rounded-xl bg-orange-100 text-orange-600 border border-orange-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]";
-        btnTop.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">상대방 마이크 (터치하여 말하기)</span>`;
+        btnTop.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">${otherMicText}</span>`;
     }
     if(btnBottom) {
         btnBottom.className = "w-full py-3.5 rounded-xl bg-blue-100 text-blue-600 border border-blue-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]";
-        btnBottom.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">내 마이크 (터치하여 말하기)</span>`;
+        btnBottom.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">${myMicText}</span>`;
     }
     
     const status = document.getElementById('interp-status');
-    if(status) status.innerHTML = "마이크를 선택하세요 🎙️";
+    if(status) status.innerHTML = window.getTrans('ui_interp_select_mic', "마이크를 선택하세요 🎙️");
     window.activeMicSpeaker = null;
 };
 
 // ==========================================
 // 5. 버튼 터치 시 턴 뺏기 / 수동 제어
 // ==========================================
+// 🌟 5. toggleMic 함수 덮어쓰기
 window.toggleMic = function(speaker) {
     const status = document.getElementById('interp-status');
 
@@ -3356,7 +3383,7 @@ window.toggleMic = function(speaker) {
             try { window.interpRec.abort(); } catch(e) {} 
         }
         window.resetMicUI();
-        if(status) status.innerHTML = "대기 중 (마이크를 눌러 재개) ⏸️";
+        if(status) status.innerHTML = window.getTrans('ui_interp_paused', "대기 중 (마이크를 눌러 재개) ⏸️");
         return; 
     }
 
@@ -3367,13 +3394,14 @@ window.toggleMic = function(speaker) {
         try { window.interpRec.abort(); } catch(e) {} 
     }
 
-    if(status) status.innerHTML = "턴을 가져오는 중... ⚡";
+    if(status) status.innerHTML = window.getTrans('ui_interp_getting_turn', "턴을 가져오는 중... ⚡");
     setTimeout(() => { window.startPingPongMic(speaker); }, 250);
 };
 
 // ==========================================
 // 6. 핑퐁 사이클 핵심 엔진 (대표님이 원하시는 오리지널 방식 복구!)
 // ==========================================
+// 🌟 6. startPingPongMic 함수 덮어쓰기
 window.startPingPongMic = function(speaker) {
     window.manualStop = false; 
     window.hasSpoken = false; 
@@ -3381,9 +3409,11 @@ window.startPingPongMic = function(speaker) {
     window.activeMicSpeaker = speaker;
 
     const activeBtn = speaker === 'OTHER' ? document.getElementById('btn-mic-top') : document.getElementById('btn-mic-bottom');
+    const listeningText = window.getTrans('ui_interp_listening', "듣는 중... (터치 시 턴 뺏기)");
+
     if (activeBtn) {
         activeBtn.className = "w-full py-3.5 rounded-xl bg-red-500 text-white border border-red-600 flex items-center justify-center gap-2 shadow-md transition-all duration-300 animate-pulse scale-[1.02]";
-        activeBtn.innerHTML = `<i class="fa-solid fa-bolt text-lg"></i><span class="text-sm font-bold">듣는 중... (터치 시 턴 뺏기)</span>`;
+        activeBtn.innerHTML = `<i class="fa-solid fa-bolt text-lg"></i><span class="text-sm font-bold">${listeningText}</span>`;
     }
 
     const langCode = speaker === 'ME' ? (localStorage.getItem('stt_input_language') || 'ko-KR') : (localStorage.getItem('target_language') || 'en-US');
@@ -3397,8 +3427,12 @@ window.startPingPongMic = function(speaker) {
         const status = document.getElementById('interp-status');
 
         window.interpRec.onstart = () => {
-            if(status) status.innerHTML = speaker === 'ME' ? `<span class="text-blue-600 font-bold">내 차례입니다 🎙️</span>` : `<span class="text-orange-600 font-bold">상대방 차례입니다 🎙️</span>`;
-        };
+    const myTurnTxt = window.getTrans('ui_interp_my_turn', "내 차례입니다 🎙️");
+    const otherTurnTxt = window.getTrans('ui_interp_other_turn', "상대방 차례입니다 🎙️");
+    if(status) status.innerHTML = speaker === 'ME' ? 
+        `<span class="text-blue-600 font-bold">${myTurnTxt}</span>` : 
+        `<span class="text-orange-600 font-bold">${otherTurnTxt}</span>`;
+};
 
         window.interpRec.onresult = (e) => {
             const transcript = e.results[e.results.length - 1][0].transcript;
@@ -3412,7 +3446,7 @@ window.startPingPongMic = function(speaker) {
             if (e.error !== 'no-speech' && e.error !== 'aborted') {
                 window.manualStop = true; 
                 window.resetMicUI();
-                if(status) status.innerHTML = "오류 발생. 마이크를 다시 누르세요.";
+                if(status) status.innerHTML = window.getTrans('ui_interp_error', "오류 발생. 마이크를 다시 누르세요.");
             }
         };
 
@@ -3420,13 +3454,11 @@ window.startPingPongMic = function(speaker) {
             if (window.manualStop) {
                 // 수동으로 멈췄을 때는 가만히 있음
             } else if (window.hasSpoken) {
-                // 🌟 말을 성공적으로 마침 -> 빠릿빠릿하게 반대쪽 턴으로 넘김! (원본의 300ms 딜레이 유지)
                 const nextSpeaker = speaker === 'ME' ? 'OTHER' : 'ME';
-                if(status) status.innerHTML = "턴 교체 중... 🏓";
+                if(status) status.innerHTML = window.getTrans('ui_interp_changing_turn', "턴 교체 중... 🏓");
                 setTimeout(() => { window.startPingPongMic(nextSpeaker); }, 300);
             } else {
-                // 🌟 말을 안 하고 끊겼을 때 -> 끄지 말고 내 차례 마이크를 다시 강제로 켬! (원본의 100ms 딜레이 유지)
-                if(status) status.innerHTML = "계속 듣고 있습니다... 👂";
+                if(status) status.innerHTML = window.getTrans('ui_interp_keep_listening', "계속 듣고 있습니다... 👂");
                 setTimeout(() => { window.startPingPongMic(speaker); }, 100);
             }
         };
@@ -3525,15 +3557,261 @@ window.activateSmartTranslate = function() {
     if (typeof window.updateStatus === 'function') window.updateStatus("스마트 번역 모드로 전환되었습니다.");
 };
 
+// 🌐 언어가 변경될 때 호출하는 함수
+window.updateUiLanguage = function(newLang) {
+    // 1. 숨겨진 언어 기준 값(explanationLanguage)을 최신 언어로 강제 업데이트
+    const langInput = document.getElementById('explanationLanguage');
+    if (langInput) {
+        langInput.value = newLang;
+    }
+
+    // 2. 만약 화면에 결제창(모달)이 띄워져 있다면 새 언어로 즉시 다시 열기
+    const openModal = document.getElementById('subscriptionModal');
+    if (openModal) {
+        const currentReason = openModal.getAttribute('data-reason') || 'upgrade';
+        window.showSubscriptionModal(currentReason); 
+    }
+
+    // 3. 🌟 홈 화면 배너 즉시 번역 (추가된 부분)
+    if (typeof applyBannerTranslation === 'function') {
+        applyBannerTranslation();
+    }
+}
+// 🌟 언어 변경 시 화면 전체를 즉시 번역하는 강제 갱신 함수
+window.refreshAllTranslations = function() {
+    const lang = window.getAppLang(); // 현재 설정된 언어 가져오기
+    
+    // 1. 배너 텍스트 갱신
+    if (typeof window.applyBannerTranslation === 'function') {
+        window.applyBannerTranslation();
+    }
+    
+    // 2. 기존 HTML의 [data-i18n] 속성을 가진 모든 요소 갱신
+    const dict = window.UI_DICTIONARY[lang] || window.UI_DICTIONARY['en'];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.innerHTML = dict[key];
+    });
+    
+    // 3. 결제 모달창이 열려있다면 즉시 언어 적용
+    const openModal = document.getElementById('subscriptionModal');
+    if (openModal) {
+        window.showSubscriptionModal(openModal.getAttribute('data-reason') || 'upgrade');
+    }
+    
+    console.log("🎨 UI 언어 강제 갱신 완료:", lang);
+};
+
+// ==========================================
+// 🚨 실시간 대면 통역 & 자동 전송 완벽 번역 모듈 (script.js 맨 아래 덮어쓰기)
+// ==========================================
+(function() {
+    // 1. 번역 데이터 강제 주입
+    const EXTRA_TRANS = {
+        "ko": {
+            ui_auto_send: "자동 전송", ui_auto_send_on: "자동 전송 ON", ui_auto_send_off: "자동 전송 OFF",
+            ui_interp_live: "🎙️ 실시간 대면 통역", ui_interp_smart: "🧠 스마트 번역",
+            ui_interp_mic_other: "상대방 마이크 (터치하여 말하기)", ui_interp_mic_me: "내 마이크 (터치하여 말하기)",
+            ui_interp_listening: "듣는 중... (터치 시 턴 뺏기)", ui_interp_select_mic: "마이크를 선택하세요 🎙️",
+            ui_interp_my_turn: "내 차례입니다 🎙️", ui_interp_other_turn: "상대방 차례입니다 🎙️",
+            ui_interp_paused: "대기 중 (마이크를 눌러 재개) ⏸️", ui_interp_lang_changed: "언어가 변경되었습니다 🎙️",
+            ui_interp_getting_turn: "턴을 가져오는 중... ⚡", ui_interp_error: "오류 발생. 마이크를 다시 누르세요.",
+            ui_interp_changing_turn: "턴 교체 중... 🏓", ui_interp_keep_listening: "계속 듣고 있습니다... 👂"
+        },
+        "en": {
+            ui_auto_send: "Auto Send", ui_auto_send_on: "Auto Send ON", ui_auto_send_off: "Auto Send OFF",
+            ui_interp_live: "🎙️ Live Interpreter", ui_interp_smart: "🧠 Smart Translate",
+            ui_interp_mic_other: "Other's Mic (Touch to speak)", ui_interp_mic_me: "My Mic (Touch to speak)",
+            ui_interp_listening: "Listening... (Touch to take turn)", ui_interp_select_mic: "Select a microphone 🎙️",
+            ui_interp_my_turn: "My turn 🎙️", ui_interp_other_turn: "Other's turn 🎙️",
+            ui_interp_paused: "Paused (Press mic to resume) ⏸️", ui_interp_lang_changed: "Language changed 🎙️",
+            ui_interp_getting_turn: "Taking turn... ⚡", ui_interp_error: "Error. Press mic again.",
+            ui_interp_changing_turn: "Changing turn... 🏓", ui_interp_keep_listening: "Still listening... 👂"
+        },
+        "ja": {
+            ui_auto_send: "自動送信", ui_auto_send_on: "自動送信 ON", ui_auto_send_off: "自動送信 OFF",
+            ui_interp_live: "🎙️ リアルタイム通訳", ui_interp_smart: "🧠 スマート翻訳",
+            ui_interp_mic_other: "相手のマイク (タッチして話す)", ui_interp_mic_me: "自分のマイク (タッチして話す)",
+            ui_interp_listening: "リスニング中... (タッチで奪取)", ui_interp_select_mic: "マイクを選択してください 🎙️",
+            ui_interp_my_turn: "私の番です 🎙️", ui_interp_other_turn: "相手の番です 🎙️",
+            ui_interp_paused: "待機中 (マイクを押して再開) ⏸️", ui_interp_lang_changed: "言語が変更されました 🎙️",
+            ui_interp_getting_turn: "ターンを取得中... ⚡", ui_interp_error: "エラー。もう一度押してください。",
+            ui_interp_changing_turn: "ターン交替中... 🏓", ui_interp_keep_listening: "引き続きリスニング中... 👂"
+        },
+        "zh": {
+            ui_auto_send: "自动发送", ui_auto_send_on: "自动发送开启", ui_auto_send_off: "自动发送关闭",
+            ui_interp_live: "🎙️ 实时同传", ui_interp_smart: "🧠 智能翻译",
+            ui_interp_mic_other: "对方麦克风 (点击说话)", ui_interp_mic_me: "我的麦克风 (点击说话)",
+            ui_interp_listening: "聆听中... (点击抢占回合)", ui_interp_select_mic: "请选择麦克风 🎙️",
+            ui_interp_my_turn: "到我了 🎙️", ui_interp_other_turn: "对方回合 🎙️",
+            ui_interp_paused: "暂停中 (点击恢复) ⏸️", ui_interp_lang_changed: "语言已更改 🎙️",
+            ui_interp_getting_turn: "正在抢占回合... ⚡", ui_interp_error: "发生错误，请重新点击。",
+            ui_interp_changing_turn: "回合切换中... 🏓", ui_interp_keep_listening: "继续聆听中... 👂"
+        },
+        "es": {
+            ui_auto_send: "Envío Auto", ui_auto_send_on: "Envío Auto ON", ui_auto_send_off: "Envío Auto OFF",
+            ui_interp_live: "🎙️ Intérprete en Vivo", ui_interp_smart: "🧠 Traducción Inteligente",
+            ui_interp_mic_other: "Mic del Otro (Tocar para hablar)", ui_interp_mic_me: "Mi Mic (Tocar para hablar)",
+            ui_interp_listening: "Escuchando... (Tocar para turno)", ui_interp_select_mic: "Seleccione un micrófono 🎙️",
+            ui_interp_my_turn: "Mi turno 🎙️", ui_interp_other_turn: "Turno del otro 🎙️",
+            ui_interp_paused: "En espera (Presione el mic) ⏸️", ui_interp_lang_changed: "Idioma cambiado 🎙️",
+            ui_interp_getting_turn: "Tomando turno... ⚡", ui_interp_error: "Error. Presione de nuevo.",
+            ui_interp_changing_turn: "Cambiando turno... 🏓", ui_interp_keep_listening: "Sigo escuchando... 👂"
+        }
+    };
+
+    if (typeof window.UI_DICTIONARY !== 'undefined') {
+        Object.keys(EXTRA_TRANS).forEach(lang => {
+            if (window.UI_DICTIONARY[lang]) Object.assign(window.UI_DICTIONARY[lang], EXTRA_TRANS[lang]);
+        });
+    }
+
+    // 🌟 2. 텍스트 번역 도우미 (오류 완벽 수정: 무조건 로컬스토리지에서 찐언어 가져옴!)
+    window.getTrans = function(key, defaultStr) {
+        const langCode = localStorage.getItem('explanation_language') || 'ko-KR';
+        const lang = langCode.split('-')[0];
+        const dict = window.UI_DICTIONARY ? window.UI_DICTIONARY[lang] : null;
+        return (dict && dict[key]) ? dict[key] : defaultStr;
+    };
+
+    // 3. 동적 마이크 UI / 상태창 텍스트 변경
+    window.toggleAutoSend = function() {
+        window.isAutoSend = !window.isAutoSend;
+        const btn = document.getElementById('autoSendToggleBtn');
+        const icon = document.getElementById('autoSendIcon');
+        if(window.isAutoSend) {
+            btn.classList.replace('bg-slate-100', 'bg-blue-50'); btn.classList.replace('text-slate-500', 'text-blue-600'); btn.classList.replace('border-slate-200', 'border-blue-200'); icon.classList.replace('fa-toggle-off', 'fa-toggle-on');
+            window.updateStatus(window.getTrans('ui_auto_send_on', "자동 전송 ON"));
+        } else {
+            btn.classList.replace('bg-blue-50', 'bg-slate-100'); btn.classList.replace('text-blue-600', 'text-slate-500'); btn.classList.replace('border-blue-200', 'border-slate-200'); icon.classList.replace('fa-toggle-on', 'fa-toggle-off');
+            window.updateStatus(window.getTrans('ui_auto_send_off', "자동 전송 OFF"));
+        }
+    };
+
+    window.resetMicUI = function() {
+        const btnTop = document.getElementById('btn-mic-top');
+        const btnBottom = document.getElementById('btn-mic-bottom');
+        if(btnTop) {
+            btnTop.className = "w-full py-3.5 rounded-xl bg-orange-100 text-orange-600 border border-orange-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]";
+            btnTop.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">${window.getTrans('ui_interp_mic_other', "상대방 마이크 (터치하여 말하기)")}</span>`;
+        }
+        if(btnBottom) {
+            btnBottom.className = "w-full py-3.5 rounded-xl bg-blue-100 text-blue-600 border border-blue-200 flex items-center justify-center gap-2 shadow-sm transition-all duration-300 active:scale-[0.98]";
+            btnBottom.innerHTML = `<i class="fa-solid fa-microphone text-lg"></i><span class="text-sm font-bold">${window.getTrans('ui_interp_mic_me', "내 마이크 (터치하여 말하기)")}</span>`;
+        }
+        const status = document.getElementById('interp-status');
+        if(status) status.innerHTML = window.getTrans('ui_interp_select_mic', "마이크를 선택하세요 🎙️");
+        window.activeMicSpeaker = null;
+    };
+
+    window.startPingPongMic = function(speaker) {
+        window.manualStop = false; window.hasSpoken = false; window.resetMicUI(); window.activeMicSpeaker = speaker;
+        const activeBtn = speaker === 'OTHER' ? document.getElementById('btn-mic-top') : document.getElementById('btn-mic-bottom');
+        if (activeBtn) {
+            activeBtn.className = "w-full py-3.5 rounded-xl bg-red-500 text-white border border-red-600 flex items-center justify-center gap-2 shadow-md transition-all duration-300 animate-pulse scale-[1.02]";
+            activeBtn.innerHTML = `<i class="fa-solid fa-bolt text-lg"></i><span class="text-sm font-bold">${window.getTrans('ui_interp_listening', "듣는 중... (터치 시 턴 뺏기)")}</span>`;
+        }
+        const langCode = speaker === 'ME' ? (localStorage.getItem('stt_input_language') || 'ko-KR') : (localStorage.getItem('target_language') || 'en-US');
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            window.interpRec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            window.interpRec.continuous = false; window.interpRec.interimResults = false; window.interpRec.lang = langCode;
+            const status = document.getElementById('interp-status');
+            window.interpRec.onstart = () => {
+                if(status) status.innerHTML = speaker === 'ME' ? `<span class="text-blue-600 font-bold">${window.getTrans('ui_interp_my_turn', "내 차례입니다 🎙️")}</span>` : `<span class="text-orange-600 font-bold">${window.getTrans('ui_interp_other_turn', "상대방 차례입니다 🎙️")}</span>`;
+            };
+            window.interpRec.onresult = (e) => {
+                if(e.results[e.results.length - 1][0].transcript.trim()) { window.hasSpoken = true; window.processInterpTranslationExplicit(e.results[e.results.length - 1][0].transcript, speaker); }
+            };
+            window.interpRec.onerror = (e) => {
+                if (e.error !== 'no-speech' && e.error !== 'aborted') { window.manualStop = true; window.resetMicUI(); if(status) status.innerHTML = window.getTrans('ui_interp_error', "오류 발생. 마이크를 다시 누르세요."); }
+            };
+            window.interpRec.onend = () => {
+                if (window.manualStop) { /* 수동 정지 */ } 
+                else if (window.hasSpoken) {
+                    if(status) status.innerHTML = window.getTrans('ui_interp_changing_turn', "턴 교체 중... 🏓");
+                    setTimeout(() => { window.startPingPongMic(speaker === 'ME' ? 'OTHER' : 'ME'); }, 300);
+                } else {
+                    if(status) status.innerHTML = window.getTrans('ui_interp_keep_listening', "계속 듣고 있습니다... 👂");
+                    setTimeout(() => { window.startPingPongMic(speaker); }, 100);
+                }
+            };
+            try { window.interpRec.start(); } catch(e) { window.resetMicUI(); }
+        }
+    };
+})();
 
 
 
-// 테스트 투명버튼
+// ==========================================
+// 🚨 안드로이드 뒤로가기(백버튼) 제어 및 종료 팝업 모듈
+// ==========================================
+(function() {
+    // 1. 초기 접속 시 가짜 방문 기록을 하나 밀어넣음 (뒤로가기를 잡기 위한 덫)
+    window.history.pushState({ page: 'main' }, null, '');
 
-//window.devTestLimit = function() {
-  //  let todayObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
-  //  todayObj.count = 50; // 번개 50개 소진
-  //  localStorage.setItem('daily_usage_v4', JSON.stringify(todayObj));
-  //  localStorage.setItem('moon_coins', '3'); // 초승달 3개 줌
- //   window.updateBadgeUI();
-  //  alert("삐빅! 번개 0, 초승달 3개로 조작 완료!");};
+    // 2. 사용자가 폰에서 뒤로가기(<) 버튼을 눌렀을 때 감지
+    window.addEventListener('popstate', function(event) {
+        let modalClosed = false;
+
+        // 1단계: 열려있는 팝업이나 모달창이 있다면 우선적으로 닫기
+        const modals = ['subscriptionModal', 'streak-modal', 'memoModal', 'customLangModal', 'paywallModal', 'helpXrayOverlay'];
+        modals.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && (!el.classList.contains('hidden') || el.style.display === 'flex')) {
+                if (id === 'subscriptionModal') el.remove();
+                else el.classList.add('hidden');
+                modalClosed = true;
+            }
+        });
+
+        // 통역기 창이 열려있다면 닫기
+        const interpModal = document.getElementById('interpreterModal');
+        if (interpModal && !interpModal.classList.contains('hidden')) {
+            if (typeof window.closeInterpreter === 'function') window.closeInterpreter();
+            modalClosed = true;
+        }
+
+        // 모달창을 닫은 경우, 앱이 꺼지면 안되므로 다시 덫(pushState)을 놓음
+        if (modalClosed) {
+            window.history.pushState({ page: 'main' }, null, '');
+            return;
+        }
+
+        // 2단계: 모달창이 없고, 홈 화면이 아니라면 홈 화면으로 돌려보냄
+        if (window.currentActiveScreen !== 'screen-home') {
+            if (typeof window.navigate === 'function') window.navigate('screen-home');
+            window.history.pushState({ page: 'main' }, null, '');
+            return;
+        }
+
+        // 3단계: 홈 화면이고 팝업도 없다면 '종료 확인 팝업'을 띄움
+        const exitModal = document.getElementById('exitModal');
+        if (exitModal) {
+            exitModal.classList.remove('hidden');
+        }
+        
+        // 팝업에서 취소를 누를 수 있으므로 다시 덫을 놓아둠
+        window.history.pushState({ page: 'main' }, null, '');
+    });
+})();
+
+// 3. 진짜 '종료하기' 버튼을 눌렀을 때 실행되는 함수
+window.confirmAppExit = function() {
+    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+        // 플러터 앱으로 종료 신호를 쏩니다.
+        window.flutter_inappwebview.callHandler('exitApp');
+    } else {
+        // 웹 브라우저 테스트용
+        window.close();
+    }
+};
+
+// 결제 내역 복원 함수
+window.restorePurchase = function() {
+    console.log("결제 복원 버튼 클릭됨");
+    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+        window.flutter_inappwebview.callHandler('restorePurchase');
+    } else {
+        alert("앱 환경에서만 결제 복원이 가능합니다.");
+    }
+};

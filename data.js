@@ -96,15 +96,13 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "{n}일 연속 달성!", "ui_streak_modal_desc": "매일 꾸준히 학습하고 번개 보상을 받으세요 ",
         "ui_streak_quest_vocab": "단어장 학습 (필수)", "ui_streak_choice": "아래 둘 중 하나 선택 달성",
         "ui_streak_freetalk": "프리토킹", "ui_streak_roleplay": "롤플레잉", "ui_streak_progress": "진행 중", "ui_streak_close": "열심히 할게요! (닫기)",
-        "ui_premium_title": "멤버십 업그레이드", "ui_premium_desc": "원하시는 요금제를 선택해<br>더욱 자유롭게 학습해 보세요!",
-        "ui_plan_basic": "베이직 (Basic)", "ui_plan_basic_desc": "매일 150건 충전", "ui_plan_premium": "프리미엄 (Premium)", "ui_plan_premium_desc": "매일 400건 충전",
+        
         "ui_trial_end_title": "3일 무료 체험이 종료되었습니다.", "ui_trial_end_desc": "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요.",
         "ui_limit_end_title": "일일 사용량을 모두 소진했습니다!", "ui_limit_end_desc": "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요.",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_stat_script": "학습한 대본", "ui_stat_count": "개", "ui_next_reward": "다음 보상 ({n}일 연속)",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
-        "ui_default_voice": "기본 음성","ui_home_stat_script": "학습한 대본","ui_premium_title": "멤버십 업그레이드", "ui_premium_desc": "원하시는 요금제를 선택해<br>더욱 자유롭게 학습해 보세요!",
-        "ui_plan_basic": "베이직 (Basic)", "ui_plan_basic_desc": "매일 150건 충전", "ui_plan_premium": "프리미엄 (Premium)", "ui_plan_premium_desc": "매일 400건 충전","ui_trial_end_title": "3일 무료 체험이 종료되었습니다.", "ui_trial_end_desc": "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요.",
+        "ui_default_voice": "기본 음성","ui_home_stat_script": "학습한 대본","ui_trial_end_title": "3일 무료 체험이 종료되었습니다.", "ui_trial_end_desc": "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요.",
         "ui_limit_end_title": "일일 사용량을 모두 소진했습니다!", "ui_limit_end_desc": "계속 학습하시려면<br>멤버십 플랜을 선택해 주세요.",
     
             },
@@ -198,8 +196,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "{n} Day Streak!", 
         "ui_streak_quest_vocab": "Vocabulary Study (Required)", "ui_streak_choice": "Choose one of the below",
         "ui_streak_freetalk": "Free Talk", "ui_streak_roleplay": "Roleplay", "ui_streak_progress": "In Progress", "ui_streak_close": "I'll do my best! (Close)",
-        "ui_premium_title": "Upgrade Membership", "ui_premium_desc": "Choose a plan and<br>learn more freely!",
-        "ui_plan_basic": "Basic", "ui_plan_basic_desc": "150 daily limit", "ui_plan_premium": "Premium", "ui_plan_premium_desc": "400 daily limit",
+        
         "ui_trial_end_title": "3-day Free Trial Ended.", "ui_trial_end_desc": "To continue learning,<br>please select a plan.",
         "ui_limit_end_title": "Daily Limit Reached!", "ui_limit_end_desc": "To continue learning,<br>please select a plan.",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -207,9 +204,7 @@ const SUPPORTED_LANGUAGES = [
     "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "Default Voice",
         "ui_home_stat_script": "Scripts Learned",
-        "ui_premium_title": "Upgrade Membership", "ui_premium_desc": "Choose a plan and<br>learn more freely!",
-        "ui_plan_basic": "Basic", "ui_plan_basic_desc": "150 daily limit", 
-        "ui_plan_premium": "Premium", "ui_plan_premium_desc": "400 daily limit",
+        
         "ui_trial_end_title": "3-day Free Trial Ended.", "ui_trial_end_desc": "To continue learning,<br>please select a plan.",
         "ui_limit_end_title": "Daily Limit Reached!", "ui_limit_end_desc": "To continue learning,<br>please select a plan."
     
@@ -288,8 +283,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "{n}日連続達成！", 
         "ui_streak_quest_vocab": "単語帳学習 (必須)", "ui_streak_choice": "以下のいずれかを達成",
         "ui_streak_freetalk": "フリートーク", "ui_streak_roleplay": "ロールプレイ", "ui_streak_progress": "進行中", "ui_streak_close": "頑張ります！(閉じる)",
-        "ui_premium_title": "メンバーシップのアップグレード", "ui_premium_desc": "プランを選択して、<br>もっと自由に学習しましょう！",
-        "ui_plan_basic": "ベーシック (Basic)", "ui_plan_basic_desc": "毎日150回チャージ", "ui_plan_premium": "プレミアム (Premium)", "ui_plan_premium_desc": "毎日400回チャージ",
+        
         "ui_trial_end_title": "3日間の無料体験が終了しました。", "ui_trial_end_desc": "学習を続けるには、<br>プランを選択してください。",
         "ui_limit_end_title": "1日の利用上限に達しました！", "ui_limit_end_desc": "学習を続けるには、<br>プランを選択してください。",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -297,9 +291,7 @@ const SUPPORTED_LANGUAGES = [
     "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "デフォルト音声",
         "ui_home_stat_script": "学習した台本",
-        "ui_premium_title": "メンバーシップのアップグレード", "ui_premium_desc": "プランを選択して、<br>もっと自由に学習しましょう！",
-        "ui_plan_basic": "ベーシック (Basic)", "ui_plan_basic_desc": "毎日150回チャージ", 
-        "ui_plan_premium": "プレミアム (Premium)", "ui_plan_premium_desc": "毎日400回チャージ",
+        
         "ui_trial_end_title": "3日間の無料体験が終了しました。", "ui_trial_end_desc": "学習を続けるには、<br>プランを選択してください。",
         "ui_limit_end_title": "1日の利用上限に達しました！", "ui_limit_end_desc": "学習を続けるには、<br>プランを選択してください。"
     
@@ -376,8 +368,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "达成 {n} 天连续学习！", 
         "ui_streak_quest_vocab": "单词本学习 (必修)", "ui_streak_choice": "完成以下两项之一",
         "ui_streak_freetalk": "自由对话", "ui_streak_roleplay": "角色扮演", "ui_streak_progress": "进行中", "ui_streak_close": "我会努力的！(关闭)",
-        "ui_premium_title": "升级会员", "ui_premium_desc": "选择您想要的套餐，<br>更加自由地学习吧！",
-        "ui_plan_basic": "基础版 (Basic)", "ui_plan_basic_desc": "每天150次额度", "ui_plan_premium": "高级版 (Premium)", "ui_plan_premium_desc": "每天400次额度",
+        
         "ui_trial_end_title": "3天免费试用已结束。", "ui_trial_end_desc": "若要继续学习，<br>请选择会员套餐。",
         "ui_limit_end_title": "今日使用量已耗尽！", "ui_limit_end_desc": "若要继续学习，<br>请选择会员套餐。",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -385,9 +376,7 @@ const SUPPORTED_LANGUAGES = [
     "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "默认语音",
         "ui_home_stat_script": "学习过的剧本",
-        "ui_premium_title": "升级会员", "ui_premium_desc": "选择您想要的套餐，<br>更加自由地学习吧！",
-        "ui_plan_basic": "基础版 (Basic)", "ui_plan_basic_desc": "每天150次额度", 
-        "ui_plan_premium": "高级版 (Premium)", "ui_plan_premium_desc": "每天400次额度",
+        
         "ui_trial_end_title": "3天免费试用已结束。", "ui_trial_end_desc": "若要继续学习，<br>请选择会员套餐。",
         "ui_limit_end_title": "今日使用量已耗尽！", "ui_limit_end_desc": "若要继续学习，<br>请选择会员套餐。"
     
@@ -464,8 +453,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "¡Racha de {n} días!", 
         "ui_streak_quest_vocab": "Estudio de Vocab (Obligatorio)", "ui_streak_choice": "Elige uno de los siguientes",
         "ui_streak_freetalk": "Charla Libre", "ui_streak_roleplay": "Juego de Roles", "ui_streak_progress": "En progreso", "ui_streak_close": "¡Me esforzaré! (Cerrar)",
-        "ui_premium_title": "Mejorar Membresía", "ui_premium_desc": "¡Elige un plan y<br>aprende con más libertad!",
-        "ui_plan_basic": "Básico (Basic)", "ui_plan_basic_desc": "Límite de 150 diarios", "ui_plan_premium": "Premium", "ui_plan_premium_desc": "Límite de 400 diarios",
+        
         "ui_trial_end_title": "La prueba de 3 días terminó.", "ui_trial_end_desc": "Para continuar,<br>por favor selecciona un plan.",
         "ui_limit_end_title": "¡Límite diario alcanzado!", "ui_limit_end_desc": "Para continuar,<br>por favor selecciona un plan.",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -473,9 +461,7 @@ const SUPPORTED_LANGUAGES = [
     "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "Voz Predeterminada",
         "ui_home_stat_script": "Guiones Aprendidos",
-        "ui_premium_title": "Mejorar Membresía", "ui_premium_desc": "¡Elige un plan y<br>aprende con más libertad!",
-        "ui_plan_basic": "Básico (Basic)", "ui_plan_basic_desc": "Límite de 150 diarios", 
-        "ui_plan_premium": "Premium", "ui_plan_premium_desc": "Límite de 400 diarios",
+        
         "ui_trial_end_title": "La prueba de 3 días terminó.", "ui_trial_end_desc": "Para continuar,<br>por favor selecciona un plan.",
         "ui_limit_end_title": "¡Límite diario alcanzado!", "ui_limit_end_desc": "Para continuar,<br>por favor selecciona un plan."
     
@@ -552,8 +538,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "Série de {n} jours !", 
         "ui_streak_quest_vocab": "Vocabulaire (Requis)", "ui_streak_choice": "Choisissez l'un des suivants",
         "ui_streak_freetalk": "Discussion Libre", "ui_streak_roleplay": "Jeu de Rôle", "ui_streak_progress": "En cours", "ui_streak_close": "Je ferai de mon mieux ! (Fermer)",
-        "ui_premium_title": "Améliorer l'Abonnement", "ui_premium_desc": "Choisissez un forfait et<br>apprenez plus librement !",
-        "ui_plan_basic": "Basique (Basic)", "ui_plan_basic_desc": "Limite de 150 par jour", "ui_plan_premium": "Premium", "ui_plan_premium_desc": "Limite de 400 par jour",
+        
         "ui_trial_end_title": "Essai gratuit de 3 jours terminé.", "ui_trial_end_desc": "Pour continuer,<br>veuillez choisir un forfait.",
         "ui_limit_end_title": "Limite quotidienne atteinte !", "ui_limit_end_desc": "Pour continuer,<br>veuillez choisir un forfait.",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -561,9 +546,7 @@ const SUPPORTED_LANGUAGES = [
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "Voix par Défaut",
         "ui_home_stat_script": "Scripts Appris",
-        "ui_premium_title": "Améliorer l'Abonnement", "ui_premium_desc": "Choisissez un forfait et<br>apprenez plus librement !",
-        "ui_plan_basic": "Basique (Basic)", "ui_plan_basic_desc": "Limite de 150 par jour", 
-        "ui_plan_premium": "Premium", "ui_plan_premium_desc": "Limite de 400 par jour",
+        
         "ui_trial_end_title": "Essai gratuit de 3 jours terminé.", "ui_trial_end_desc": "Pour continuer,<br>veuillez choisir un forfait.",
         "ui_limit_end_title": "Limite quotidienne atteinte !", "ui_limit_end_desc": "Pour continuer,<br>veuillez choisir un forfait."
     
@@ -640,8 +623,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "{n} Tage in Folge!", 
         "ui_streak_quest_vocab": "Vokabeln lernen (Pflicht)", "ui_streak_choice": "Wähle eines der folgenden",
         "ui_streak_freetalk": "Freies Gespräch", "ui_streak_roleplay": "Rollenspiel", "ui_streak_progress": "In Bearbeitung", "ui_streak_close": "Ich gebe mein Bestes! (Schließen)",
-        "ui_premium_title": "Mitgliedschaft aktualisieren", "ui_premium_desc": "Wähle einen Plan und<br>lerne noch freier!",
-        "ui_plan_basic": "Basic", "ui_plan_basic_desc": "150 Limit pro Tag", "ui_plan_premium": "Premium", "ui_plan_premium_desc": "400 Limit pro Tag",
+        
         "ui_trial_end_title": "3-Tage-Testversion beendet.", "ui_trial_end_desc": "Um weiterzulernen,<br>wähle bitte einen Plan.",
         "ui_limit_end_title": "Tägliches Limit erreicht!", "ui_limit_end_desc": "Um weiterzulernen,<br>wähle bitte einen Plan.",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -649,9 +631,7 @@ const SUPPORTED_LANGUAGES = [
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "Standardstimme",
         "ui_home_stat_script": "Gelernte Skripte",
-        "ui_premium_title": "Mitgliedschaft aktualisieren", "ui_premium_desc": "Wähle einen Plan und<br>lerne noch freier!",
-        "ui_plan_basic": "Basic", "ui_plan_basic_desc": "150 Limit pro Tag", 
-        "ui_plan_premium": "Premium", "ui_plan_premium_desc": "400 Limit pro Tag",
+        
         "ui_trial_end_title": "3-Tage-Testversion beendet.", "ui_trial_end_desc": "Um weiterzulernen,<br>wähle bitte einen Plan.",
         "ui_limit_end_title": "Tägliches Limit erreicht!", "ui_limit_end_desc": "Um weiterzulernen,<br>wähle bitte einen Plan."
     
@@ -727,8 +707,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "Đạt {n} ngày liên tiếp!", 
         "ui_streak_quest_vocab": "Học từ vựng (Bắt buộc)", "ui_streak_choice": "Chọn một trong hai bên dưới",
         "ui_streak_freetalk": "Trò chuyện tự do", "ui_streak_roleplay": "Nhập vai", "ui_streak_progress": "Đang tiến hành", "ui_streak_close": "Tôi sẽ cố gắng! (Đóng)",
-        "ui_premium_title": "Nâng cấp Thành viên", "ui_premium_desc": "Chọn gói của bạn và<br>học thoải mái hơn!",
-        "ui_plan_basic": "Cơ bản (Basic)", "ui_plan_basic_desc": "Giới hạn 150 mỗi ngày", "ui_plan_premium": "Cao cấp (Premium)", "ui_plan_premium_desc": "Giới hạn 400 mỗi ngày",
+        
         "ui_trial_end_title": "3 ngày dùng thử đã kết thúc.", "ui_trial_end_desc": "Để tiếp tục học,<br>vui lòng chọn một gói.",
         "ui_limit_end_title": "Đã hết giới hạn sử dụng trong ngày!", "ui_limit_end_desc": "Để tiếp tục học,<br>vui lòng chọn một gói.",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -736,9 +715,7 @@ const SUPPORTED_LANGUAGES = [
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "Giọng mặc định",
         "ui_home_stat_script": "Kịch bản đã học",
-        "ui_premium_title": "Nâng cấp Thành viên", "ui_premium_desc": "Chọn gói của bạn và<br>học thoải mái hơn!",
-        "ui_plan_basic": "Cơ bản (Basic)", "ui_plan_basic_desc": "Giới hạn 150 mỗi ngày", 
-        "ui_plan_premium": "Cao cấp (Premium)", "ui_plan_premium_desc": "Giới hạn 400 mỗi ngày",
+        
         "ui_trial_end_title": "3 ngày dùng thử đã kết thúc.", "ui_trial_end_desc": "Để tiếp tục học,<br>vui lòng chọn một gói.",
         "ui_limit_end_title": "Đã hết giới hạn sử dụng trong ngày!", "ui_limit_end_desc": "Để tiếp tục học,<br>vui lòng chọn một gói."
     
@@ -814,8 +791,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "{n} дней подряд!", 
         "ui_streak_quest_vocab": "Словарь (Обязательно)", "ui_streak_choice": "Выберите одно из двух",
         "ui_streak_freetalk": "Свободное общение", "ui_streak_roleplay": "Ролевая игра", "ui_streak_progress": "В процессе", "ui_streak_close": "Я постараюсь! (Закрыть)",
-        "ui_premium_title": "Улучшить подписку", "ui_premium_desc": "Выберите тариф и<br>учитесь свободнее!",
-        "ui_plan_basic": "Базовый (Basic)", "ui_plan_basic_desc": "Лимит 150 в день", "ui_plan_premium": "Премиум (Premium)", "ui_plan_premium_desc": "Лимит 400 в день",
+        
         "ui_trial_end_title": "3 дня бесплатно закончились.", "ui_trial_end_desc": "Чтобы продолжить,<br>пожалуйста, выберите тариф.",
         "ui_limit_end_title": "Дневной лимит исчерпан!", "ui_limit_end_desc": "Чтобы продолжить,<br>пожалуйста, выберите тариф.",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -823,9 +799,7 @@ const SUPPORTED_LANGUAGES = [
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "Голос по умолчанию",
         "ui_home_stat_script": "Изученные сценарии",
-        "ui_premium_title": "Улучшить подписку", "ui_premium_desc": "Выберите тариф и<br>учитесь свободнее!",
-        "ui_plan_basic": "Базовый (Basic)", "ui_plan_basic_desc": "Лимит 150 в день", 
-        "ui_plan_premium": "Премиум (Premium)", "ui_plan_premium_desc": "Лимит 400 в день",
+        
         "ui_trial_end_title": "3 дня бесплатно закончились.", "ui_trial_end_desc": "Чтобы продолжить,<br>пожалуйста, выберите тариф.",
         "ui_limit_end_title": "Дневной лимит исчерпан!", "ui_limit_end_desc": "Чтобы продолжить,<br>пожалуйста, выберите тариф."
     
@@ -902,8 +876,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "ต่อเนื่อง {n} วัน!", 
         "ui_streak_quest_vocab": "เรียนคำศัพท์ (บังคับ)", "ui_streak_choice": "เลือกทำอย่างใดอย่างหนึ่ง",
         "ui_streak_freetalk": "คุยอิสระ", "ui_streak_roleplay": "จำลองสถานการณ์", "ui_streak_progress": "กำลังดำเนินการ", "ui_streak_close": "ฉันจะพยายามเต็มที่! (ปิด)",
-        "ui_premium_title": "อัปเกรดสมาชิก", "ui_premium_desc": "เลือกแพ็กเกจและ<br>เรียนรู้ได้อย่างอิสระมากขึ้น!",
-        "ui_plan_basic": "เบสิก (Basic)", "ui_plan_basic_desc": "ชาร์จ 150 ครั้งต่อวัน", "ui_plan_premium": "พรีเมียม (Premium)", "ui_plan_premium_desc": "ชาร์จ 400 ครั้งต่อวัน",
+        
         "ui_trial_end_title": "สิ้นสุดช่วงทดลองใช้ 3 วันแล้ว", "ui_trial_end_desc": "หากต้องการเรียนต่อ<br>โปรดเลือกแพ็กเกจสมาชิก",
         "ui_limit_end_title": "ใช้โควต้าจำกัดรายวันหมดแล้ว!", "ui_limit_end_desc": "หากต้องการเรียนต่อ<br>โปรดเลือกแพ็กเกจสมาชิก",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -911,9 +884,7 @@ const SUPPORTED_LANGUAGES = [
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "เสียงเริ่มต้น",
         "ui_home_stat_script": "สคริปต์ที่เรียน",
-        "ui_premium_title": "อัปเกรดสมาชิก", "ui_premium_desc": "เลือกแพ็กเกจและ<br>เรียนรู้ได้อย่างอิสระมากขึ้น!",
-        "ui_plan_basic": "เบสิก (Basic)", "ui_plan_basic_desc": "ชาร์จ 150 ครั้งต่อวัน", 
-        "ui_plan_premium": "พรีเมียม (Premium)", "ui_plan_premium_desc": "ชาร์จ 400 ครั้งต่อวัน",
+        
         "ui_trial_end_title": "สิ้นสุดช่วงทดลองใช้ 3 วันแล้ว", "ui_trial_end_desc": "หากต้องการเรียนต่อ<br>โปรดเลือกแพ็กเกจสมาชิก",
         "ui_limit_end_title": "ใช้โควต้าจำกัดรายวันหมดแล้ว!", "ui_limit_end_desc": "หากต้องการเรียนต่อ<br>โปรดเลือกแพ็กเกจสมาชิก"
     
@@ -990,8 +961,7 @@ const SUPPORTED_LANGUAGES = [
         "ui_streak_modal_title": "إنجاز {n} أيام متتالية!", 
         "ui_streak_quest_vocab": "دراسة المفردات (مطلوب)", "ui_streak_choice": "اختر واحداً مما يلي",
         "ui_streak_freetalk": "محادثة حرة", "ui_streak_roleplay": "لعب الأدوار", "ui_streak_progress": "جاري التنفيذ", "ui_streak_close": "سأبذل قصارى جهدي! (إغلاق)",
-        "ui_premium_title": "ترقية العضوية", "ui_premium_desc": "اختر الخطة المناسبة لك<br>وتعلم بحرية أكبر!",
-        "ui_plan_basic": "أساسي (Basic)", "ui_plan_basic_desc": "150 رصيد يومي", "ui_plan_premium": "مميز (Premium)", "ui_plan_premium_desc": "400 رصيد يومي",
+        
         "ui_trial_end_title": "انتهت فترة التجربة المجانية لمدة 3 أيام.", "ui_trial_end_desc": "لمواصلة التعلم،<br>يرجى اختيار خطة العضوية.",
         "ui_limit_end_title": "لقد استنفدت الحد اليومي!", "ui_limit_end_desc": "لمواصلة التعلم،<br>يرجى اختيار خطة العضوية.",
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
@@ -999,9 +969,7 @@ const SUPPORTED_LANGUAGES = [
         "nav_home": "HOME", "nav_pages": "Pages", "nav_report": "Report", "nav_mind": "AI Mind", "nav_char": "AI Character", "nav_setting": "Setting",
         "ui_default_voice": "الصوت الافتراضي",
         "ui_home_stat_script": "السيناريوهات المتعلمة",
-        "ui_premium_title": "ترقية العضوية", "ui_premium_desc": "اختر الخطة المناسبة لك<br>وتعلم بحرية أكبر!",
-        "ui_plan_basic": "أساسي (Basic)", "ui_plan_basic_desc": "150 رصيد يومي", 
-        "ui_plan_premium": "مميز (Premium)", "ui_plan_premium_desc": "400 رصيد يومي",
+        
         "ui_trial_end_title": "انتهت فترة التجربة المجانية لمدة 3 أيام.", "ui_trial_end_desc": "لمواصلة التعلم،<br>يرجى اختيار خطة العضوية.",
         "ui_limit_end_title": "لقد استنفدت الحد اليومي!", "ui_limit_end_desc": "لمواصلة التعلم،<br>يرجى اختيار خطة العضوية."
     
@@ -2058,3 +2026,203 @@ if (typeof UI_DICTIONARY !== 'undefined') {
         Object.assign(UI_DICTIONARY[lang], HELP_TOOLTIP_TRANSLATIONS[lang]);
     });
 }
+
+// 🚨 언어 사전 안전 장치 (data.js 맨 아래에 추가하세요)
+if (typeof window.UI_DICTIONARY !== 'undefined') {
+    const supportedLangs = ['ko', 'ja', 'zh', 'en', 'es', 'th']; // 번역이 완료된 언어들
+    
+    for (const lang in window.UI_DICTIONARY) {
+        // 번역이 완벽하지 않은 나머지 언어들은 영어(en) 사전 데이터를 통째로 복사해서 채워넣습니다.
+        if (!supportedLangs.includes(lang)) {
+            window.UI_DICTIONARY[lang] = Object.assign({}, window.UI_DICTIONARY['en'], window.UI_DICTIONARY[lang]);
+        }
+    }
+}
+
+// 🌟 21개 언어 VIP 포함 요금제 통합 사전
+const SUBSCRIPTION_TRANS = {
+    "ko": { ui_plan_basic: "베이직 (Basic)", ui_plan_basic_desc: "매일 130건 충전", ui_plan_premium: "프리미엄 (Premium)", ui_plan_premium_desc: "매일 300건 충전", ui_plan_vip: "브이아이피 (VIP)", ui_plan_vip_desc: "매일 400건 충전" },
+    "en": { ui_plan_basic: "Basic Plan", ui_plan_basic_desc: "130 credits daily", ui_plan_premium: "Premium Plan", ui_plan_premium_desc: "300 credits daily", ui_plan_vip: "VIP Plan", ui_plan_vip_desc: "400 credits daily" },
+    "ja": { ui_plan_basic: "ベーシック", ui_plan_basic_desc: "毎日 130回チャージ", ui_plan_premium: "プレミアム", ui_plan_premium_desc: "毎日 300回チャージ", ui_plan_vip: "VIPプラン", ui_plan_vip_desc: "毎日 400回チャージ" },
+    "zh": { ui_plan_basic: "基础套餐", ui_plan_basic_desc: "每日130次充值", ui_plan_premium: "高级套餐", ui_plan_premium_desc: "每日300次充值", ui_plan_vip: "VIP套餐", ui_plan_vip_desc: "每日400次充值" },
+    "es": { ui_plan_basic: "Plan Básico", ui_plan_basic_desc: "130 créditos diarios", ui_plan_premium: "Plan Premium", ui_plan_premium_desc: "300 créditos diarios", ui_plan_vip: "Plan VIP", ui_plan_vip_desc: "400 créditos diarios" },
+    "th": { ui_plan_basic: "แผนพื้นฐาน", ui_plan_basic_desc: "ชาร์จ 130 ครั้ง/วัน", ui_plan_premium: "แผนพรีเมียม", ui_plan_premium_desc: "ชาร์จ 300 ครั้ง/วัน", ui_plan_vip: "แผน VIP", ui_plan_vip_desc: "ชาร์จ 400 ครั้ง/วัน" },
+    "vi": { ui_plan_basic: "Gói Cơ bản", ui_plan_basic_desc: "130 lượt/ngày", ui_plan_premium: "Gói Premium", ui_plan_premium_desc: "300 lượt/ngày", ui_plan_vip: "Gói VIP", ui_plan_vip_desc: "400 lượt/ngày" },
+    "ar": { ui_plan_basic: "خطة أساسية", ui_plan_basic_desc: "130 رصيد يومياً", ui_plan_premium: "خطة مميزة", ui_plan_premium_desc: "300 رصيد يومياً", ui_plan_vip: "خطة VIP", ui_plan_vip_desc: "400 رصيد يومياً" },
+    "fr": { ui_plan_basic: "Plan Basique", ui_plan_basic_desc: "130 crédits/jour", ui_plan_premium: "Plan Premium", ui_plan_premium_desc: "300 crédits/jour", ui_plan_vip: "Plan VIP", ui_plan_vip_desc: "400 crédits/jour" },
+    "de": { ui_plan_basic: "Basis-Plan", ui_plan_basic_desc: "130 Credits täglich", ui_plan_premium: "Premium-Plan", ui_plan_premium_desc: "300 Credits täglich", ui_plan_vip: "VIP-Plan", ui_plan_vip_desc: "400 Credits täglich" },
+    "ru": { ui_plan_basic: "Базовый", ui_plan_basic_desc: "130 кредитов в день", ui_plan_premium: "Премиум", ui_plan_premium_desc: "300 кредитов в день", ui_plan_vip: "VIP", ui_plan_vip_desc: "400 кредитов в день" },
+    "id": { ui_plan_basic: "Paket Dasar", ui_plan_basic_desc: "130 kredit/hari", ui_plan_premium: "Paket Premium", ui_plan_premium_desc: "300 kredit/hari", ui_plan_vip: "Paket VIP", ui_plan_vip_desc: "400 kredit/hari" },
+    "hi": { ui_plan_basic: "बेसिक प्लान", ui_plan_basic_desc: "130 क्रेडिट प्रतिदिन", ui_plan_premium: "प्रीमियम प्लान", ui_plan_premium_desc: "300 क्रेडिट प्रतिदिन", ui_plan_vip: "VIP प्लान", ui_plan_vip_desc: "400 क्रेडिट प्रतिदिन" },
+    "pl": { ui_plan_basic: "Podstawowy", ui_plan_basic_desc: "130 kredytów dziennie", ui_plan_premium: "Premium", ui_plan_premium_desc: "300 kredytów dziennie", ui_plan_vip: "VIP", ui_plan_vip_desc: "400 kredytów dziennie" },
+    "gd": { ui_plan_basic: "Bunasach", ui_plan_basic_desc: "130 faclan gach latha", ui_plan_premium: "Premium", ui_plan_premium_desc: "300 faclan gach latha", ui_plan_vip: "VIP", ui_plan_vip_desc: "400 faclan gach latha" },
+    "la": { ui_plan_basic: "Planum Basic", ui_plan_basic_desc: "130 credita cotidie", ui_plan_premium: "Planum Premium", ui_plan_premium_desc: "300 credita cotidie", ui_plan_vip: "Planum VIP", ui_plan_vip_desc: "400 credita cotidie" },
+    "he": { ui_plan_basic: "תוכנית בסיסית", ui_plan_basic_desc: "130 קרדיטים ביום", ui_plan_premium: "תוכנית פרימיום", ui_plan_premium_desc: "300 קרדיטים ביום", ui_plan_vip: "תוכנית VIP", ui_plan_vip_desc: "400 קרדיטים ביום" },
+    "ne": { ui_plan_basic: "आधारभूत", ui_plan_basic_desc: "१३० क्रेडिट प्रतिदिन", ui_plan_premium: "प्रीमियम", ui_plan_premium_desc: "३०० क्रेडिट प्रतिदिन", ui_plan_vip: "VIP", ui_plan_vip_desc: "४०० क्रेडिट प्रतिदिन" },
+    "mn": { ui_plan_basic: "Үндсэн", ui_plan_basic_desc: "Өдөрт 130 кредит", ui_plan_premium: "Дээд", ui_plan_premium_desc: "Өдөрт 300 кредит", ui_plan_vip: "VIP", ui_plan_vip_desc: "Өдөрт 400 кредит" },
+    "bo": { ui_plan_basic: "གཞི་རིམ།", ui_plan_basic_desc: "ཉིན་རེར་ཐོབ་ཆ་ 130", ui_plan_premium: "མཆོག་རིམ།", ui_plan_premium_desc: "ཉིན་རེར་ཐོབ་ཆ་ 300", ui_plan_vip: "VIP", ui_plan_vip_desc: "ཉིན་རེར་ཐོབ་ཆ་ 400" },
+    "sw": { ui_plan_basic: "Mpango Msingi", ui_plan_basic_desc: "Krediti 130 kila siku", ui_plan_premium: "Mpango Premium", ui_plan_premium_desc: "Krediti 300 kila siku", ui_plan_vip: "Mpango VIP", ui_plan_vip_desc: "Krediti 400 kila siku" }
+};
+
+// 사전 병합
+Object.keys(SUBSCRIPTION_TRANS).forEach(lang => {
+    if (window.UI_DICTIONARY[lang]) {
+        Object.assign(window.UI_DICTIONARY[lang], SUBSCRIPTION_TRANS[lang]);
+    }
+});
+
+
+// ==========================================
+// 🚨 보관함 & 통역기 & 자동 전송 추가 번역 (data.js 맨 아래 추가)
+// ==========================================
+const EXTRA_TRANS = {
+    "ko": {
+        ui_archive_title: "내 보관함", ui_archive_desc: "문장 및 단어 보관",
+        ui_archive_tab_script: "대본", ui_archive_tab_vocab: "단어장", ui_archive_tab_freetalk: "프리토킹",
+        ui_auto_send: "자동 전송", ui_auto_send_on: "자동 전송 ON", ui_auto_send_off: "자동 전송 OFF",
+        ui_interp_live: "🎙️ 실시간 대면 통역", ui_interp_smart: "🧠 스마트 번역",
+        ui_interp_mic_other: "상대방 마이크 (터치하여 말하기)", ui_interp_mic_me: "내 마이크 (터치하여 말하기)",
+        ui_interp_listening: "듣는 중... (터치 시 턴 뺏기)", ui_interp_select_mic: "마이크를 선택하세요 🎙️",
+        ui_interp_my_turn: "내 차례입니다 🎙️", ui_interp_other_turn: "상대방 차례입니다 🎙️",
+        ui_interp_paused: "대기 중 (마이크를 눌러 재개) ⏸️",
+        ui_interp_lang_changed: "언어가 변경되었습니다 🎙️", ui_interp_getting_turn: "턴을 가져오는 중... ⚡",
+        ui_interp_error: "오류 발생. 마이크를 다시 누르세요.", ui_interp_changing_turn: "턴 교체 중... 🏓",
+        ui_interp_keep_listening: "계속 듣고 있습니다... 👂"
+    },
+    "en": {
+        ui_archive_title: "My Archive", ui_archive_desc: "Saved Sentences & Words",
+        ui_archive_tab_script: "Scripts", ui_archive_tab_vocab: "Vocab", ui_archive_tab_freetalk: "Free Talk",
+        ui_auto_send: "Auto Send", ui_auto_send_on: "Auto Send ON", ui_auto_send_off: "Auto Send OFF",
+        ui_interp_live: "🎙️ Live Interpreter", ui_interp_smart: "🧠 Smart Translate",
+        ui_interp_mic_other: "Other's Mic (Touch to speak)", ui_interp_mic_me: "My Mic (Touch to speak)",
+        ui_interp_listening: "Listening... (Touch to take turn)", ui_interp_select_mic: "Select a microphone 🎙️",
+        ui_interp_my_turn: "My turn 🎙️", ui_interp_other_turn: "Other's turn 🎙️",
+        ui_interp_paused: "Paused (Press mic to resume) ⏸️",
+        ui_interp_lang_changed: "Language changed 🎙️", ui_interp_getting_turn: "Taking turn... ⚡",
+        ui_interp_error: "Error. Press mic again.", ui_interp_changing_turn: "Changing turn... 🏓",
+        ui_interp_keep_listening: "Still listening... 👂"
+    },
+    "ja": {
+        ui_archive_title: "保管箱", ui_archive_desc: "文章と単語の保存",
+        ui_archive_tab_script: "台本", ui_archive_tab_vocab: "単語帳", ui_archive_tab_freetalk: "フリートーク",
+        ui_auto_send: "自動送信", ui_auto_send_on: "自動送信 ON", ui_auto_send_off: "自動送信 OFF",
+        ui_interp_live: "🎙️ リアルタイム通訳", ui_interp_smart: "🧠 スマート翻訳",
+        ui_interp_mic_other: "相手のマイク (タッチして話す)", ui_interp_mic_me: "自分のマイク (タッチして話す)",
+        ui_interp_listening: "リスニング中... (タッチでターンを奪う)", ui_interp_select_mic: "マイクを選択してください 🎙️",
+        ui_interp_my_turn: "私のターンです 🎙️", ui_interp_other_turn: "相手のターンです 🎙️",
+        ui_interp_paused: "待機中 (マイクを押して再開) ⏸️",
+        ui_interp_lang_changed: "言語が変更されました 🎙️", ui_interp_getting_turn: "ターンを取得中... ⚡",
+        ui_interp_error: "エラー発生。再度押してください。", ui_interp_changing_turn: "ターン交替中... 🏓",
+        ui_interp_keep_listening: "継続してリスニング中... 👂"
+    },
+    "zh": {
+        ui_archive_title: "我的收藏", ui_archive_desc: "句子和单词保存",
+        ui_archive_tab_script: "剧本", ui_archive_tab_vocab: "单词本", ui_archive_tab_freetalk: "自由对话",
+        ui_auto_send: "自动发送", ui_auto_send_on: "自动发送开启", ui_auto_send_off: "自动发送关闭",
+        ui_interp_live: "🎙️ 实时同传", ui_interp_smart: "🧠 智能翻译",
+        ui_interp_mic_other: "对方麦克风 (点击说话)", ui_interp_mic_me: "我的麦克风 (点击说话)",
+        ui_interp_listening: "聆听中... (点击抢占回合)", ui_interp_select_mic: "请选择麦克风 🎙️",
+        ui_interp_my_turn: "到我了 🎙️", ui_interp_other_turn: "对方回合 🎙️",
+        ui_interp_paused: "暂停中 (点击麦克风恢复) ⏸️",
+        ui_interp_lang_changed: "语言已更改 🎙️", ui_interp_getting_turn: "正在抢占回合... ⚡",
+        ui_interp_error: "发生错误，请重新点击。", ui_interp_changing_turn: "回合切换中... 🏓",
+        ui_interp_keep_listening: "继续聆听中... 👂"
+    },
+    "es": {
+        ui_archive_title: "Mi Archivo", ui_archive_desc: "Oraciones y palabras guardadas",
+        ui_archive_tab_script: "Guion", ui_archive_tab_vocab: "Vocabulario", ui_archive_tab_freetalk: "Charla Libre",
+        ui_auto_send: "Envío Auto", ui_auto_send_on: "Envío Auto ON", ui_auto_send_off: "Envío Auto OFF",
+        ui_interp_live: "🎙️ Intérprete en Vivo", ui_interp_smart: "🧠 Traducción Inteligente",
+        ui_interp_mic_other: "Mic. del Otro (Toca para hablar)", ui_interp_mic_me: "Mi Mic (Toca para hablar)",
+        ui_interp_listening: "Escuchando... (Toca para tu turno)", ui_interp_select_mic: "Selecciona un micrófono 🎙️",
+        ui_interp_my_turn: "Mi turno 🎙️", ui_interp_other_turn: "Turno del otro 🎙️",
+        ui_interp_paused: "En espera (Presiona el mic) ⏸️",
+        ui_interp_lang_changed: "Idioma cambiado 🎙️", ui_interp_getting_turn: "Tomando el turno... ⚡",
+        ui_interp_error: "Error. Presiona el micrófono.", ui_interp_changing_turn: "Cambiando turno... 🏓",
+        ui_interp_keep_listening: "Sigo escuchando... 👂"
+    },
+    "fr": {
+        ui_archive_title: "Mon Archive", ui_archive_desc: "Phrases et mots",
+        ui_archive_tab_script: "Script", ui_archive_tab_vocab: "Vocabulaire", ui_archive_tab_freetalk: "Disc. Libre",
+        ui_auto_send: "Envoi Auto", ui_auto_send_on: "Envoi Auto ON", ui_auto_send_off: "Envoi Auto OFF",
+        ui_interp_live: "🎙️ Interprète en Direct", ui_interp_smart: "🧠 Traduction Intelligente",
+        ui_interp_mic_other: "Mic. Autre (Toucher pour parler)", ui_interp_mic_me: "Mon Mic (Toucher pour parler)",
+        ui_interp_listening: "Écoute... (Toucher pour votre tour)", ui_interp_select_mic: "Sélectionnez un micro 🎙️",
+        ui_interp_my_turn: "Mon tour 🎙️", ui_interp_other_turn: "Tour de l'autre 🎙️",
+        ui_interp_paused: "En attente (Appuyez sur le micro) ⏸️",
+        ui_interp_lang_changed: "Langue changée 🎙️", ui_interp_getting_turn: "Prise du tour... ⚡",
+        ui_interp_error: "Erreur. Appuyez à nouveau.", ui_interp_changing_turn: "Changement de tour... 🏓",
+        ui_interp_keep_listening: "Je continue d'écouter... 👂"
+    },
+    "de": {
+        ui_archive_title: "Mein Archiv", ui_archive_desc: "Gespeicherte Sätze & Wörter",
+        ui_archive_tab_script: "Skript", ui_archive_tab_vocab: "Vokabeln", ui_archive_tab_freetalk: "Freies Gespräch",
+        ui_auto_send: "Auto-Senden", ui_auto_send_on: "Auto-Senden AN", ui_auto_send_off: "Auto-Senden AUS",
+        ui_interp_live: "🎙️ Live-Dolmetscher", ui_interp_smart: "🧠 Smart-Übersetzer",
+        ui_interp_mic_other: "Anderes Mikro (Tippen zum Sprechen)", ui_interp_mic_me: "Mein Mikro (Tippen zum Sprechen)",
+        ui_interp_listening: "Höre zu... (Tippen für deinen Zug)", ui_interp_select_mic: "Mikrofon auswählen 🎙️",
+        ui_interp_my_turn: "Ich bin dran 🎙️", ui_interp_other_turn: "Anderer ist dran 🎙️",
+        ui_interp_paused: "Pausiert (Mikrofon drücken) ⏸️",
+        ui_interp_lang_changed: "Sprache geändert 🎙️", ui_interp_getting_turn: "Zug wird übernommen... ⚡",
+        ui_interp_error: "Fehler. Mikrofon erneut drücken.", ui_interp_changing_turn: "Zugwechsel... 🏓",
+        ui_interp_keep_listening: "Höre weiterhin zu... 👂"
+    },
+    "vi": {
+        ui_archive_title: "Lưu trữ của tôi", ui_archive_desc: "Lưu câu và từ vựng",
+        ui_archive_tab_script: "Kịch bản", ui_archive_tab_vocab: "Từ vựng", ui_archive_tab_freetalk: "Trò chuyện",
+        ui_auto_send: "Gửi tự động", ui_auto_send_on: "Gửi tự động BẬT", ui_auto_send_off: "Gửi tự động TẮT",
+        ui_interp_live: "🎙️ Phiên dịch trực tiếp", ui_interp_smart: "🧠 Dịch thông minh",
+        ui_interp_mic_other: "Mic đối phương (Chạm để nói)", ui_interp_mic_me: "Mic của tôi (Chạm để nói)",
+        ui_interp_listening: "Đang nghe... (Chạm để giành lượt)", ui_interp_select_mic: "Chọn micro 🎙️",
+        ui_interp_my_turn: "Lượt của tôi 🎙️", ui_interp_other_turn: "Lượt đối phương 🎙️",
+        ui_interp_paused: "Tạm dừng (Nhấn mic để tiếp tục) ⏸️",
+        ui_interp_lang_changed: "Đã thay đổi ngôn ngữ 🎙️", ui_interp_getting_turn: "Đang chuyển lượt... ⚡",
+        ui_interp_error: "Có lỗi. Nhấn lại mic.", ui_interp_changing_turn: "Đang đổi lượt... 🏓",
+        ui_interp_keep_listening: "Vẫn đang nghe... 👂"
+    },
+    "ru": {
+        ui_archive_title: "Мой архив", ui_archive_desc: "Сохраненные предложения и слова",
+        ui_archive_tab_script: "Сценарий", ui_archive_tab_vocab: "Словарь", ui_archive_tab_freetalk: "Общение",
+        ui_auto_send: "Автоотправка", ui_auto_send_on: "Автоотправка ВКЛ", ui_auto_send_off: "Автоотправка ВЫКЛ",
+        ui_interp_live: "🎙️ Живой переводчик", ui_interp_smart: "🧠 Умный перевод",
+        ui_interp_mic_other: "Микр. собеседника (Нажмите, чтобы говорить)", ui_interp_mic_me: "Мой микр. (Нажмите, чтобы говорить)",
+        ui_interp_listening: "Слушаю... (Нажмите, чтобы перебить)", ui_interp_select_mic: "Выберите микрофон 🎙️",
+        ui_interp_my_turn: "Моя очередь 🎙️", ui_interp_other_turn: "Очередь собеседника 🎙️",
+        ui_interp_paused: "Ожидание (Нажмите микрофон) ⏸️",
+        ui_interp_lang_changed: "Язык изменен 🎙️", ui_interp_getting_turn: "Беру слово... ⚡",
+        ui_interp_error: "Ошибка. Нажмите микрофон еще раз.", ui_interp_changing_turn: "Смена очереди... 🏓",
+        ui_interp_keep_listening: "Продолжаю слушать... 👂"
+    },
+    "th": {
+        ui_archive_title: "ที่เก็บข้อมูล", ui_archive_desc: "บันทึกประโยคและคำศัพท์",
+        ui_archive_tab_script: "สคริปต์", ui_archive_tab_vocab: "คำศัพท์", ui_archive_tab_freetalk: "คุยอิสระ",
+        ui_auto_send: "ส่งอัตโนมัติ", ui_auto_send_on: "เปิดส่งอัตโนมัติ", ui_auto_send_off: "ปิดส่งอัตโนมัติ",
+        ui_interp_live: "🎙️ ล่ามสด", ui_interp_smart: "🧠 แปลอัจฉริยะ",
+        ui_interp_mic_other: "ไมค์อีกฝ่าย (แตะเพื่อพูด)", ui_interp_mic_me: "ไมค์ของฉัน (แตะเพื่อพูด)",
+        ui_interp_listening: "กำลังฟัง... (แตะเพื่อแย่งคิว)", ui_interp_select_mic: "เลือกไมโครโฟน 🎙️",
+        ui_interp_my_turn: "ตาฉันแล้ว 🎙️", ui_interp_other_turn: "ตาอีกฝ่าย 🎙️",
+        ui_interp_paused: "หยุดชั่วคราว (กดไมค์เพื่อทำต่อ) ⏸️",
+        ui_interp_lang_changed: "เปลี่ยนภาษาแล้ว 🎙️", ui_interp_getting_turn: "กำลังรับคิว... ⚡",
+        ui_interp_error: "เกิดข้อผิดพลาด โปรดกดไมค์อีกครั้ง", ui_interp_changing_turn: "กำลังเปลี่ยนคิว... 🏓",
+        ui_interp_keep_listening: "กำลังฟังอยู่... 👂"
+    },
+    "ar": {
+        ui_archive_title: "أرشيفي", ui_archive_desc: "حفظ الجمل والكلمات",
+        ui_archive_tab_script: "سيناريو", ui_archive_tab_vocab: "مفردات", ui_archive_tab_freetalk: "محادثة حرة",
+        ui_auto_send: "إرسال تلقائي", ui_auto_send_on: "تشغيل الإرسال التلقائي", ui_auto_send_off: "إيقاف الإرسال التلقائي",
+        ui_interp_live: "🎙️ مترجم مباشر", ui_interp_smart: "🧠 ترجمة ذكية",
+        ui_interp_mic_other: "ميكروفون الطرف الآخر (المس للتحدث)", ui_interp_mic_me: "ميكروفوني (المس للتحدث)",
+        ui_interp_listening: "أستمع... (المس لأخذ الدور)", ui_interp_select_mic: "اختر الميكروفون 🎙️",
+        ui_interp_my_turn: "دوري 🎙️", ui_interp_other_turn: "دور الطرف الآخر 🎙️",
+        ui_interp_paused: "قيد الانتظار (اضغط على الميكروفون) ⏸️",
+        ui_interp_lang_changed: "تم تغيير اللغة 🎙️", ui_interp_getting_turn: "أخذ الدور... ⚡",
+        ui_interp_error: "حدث خطأ. اضغط على الميكروفون مرة أخرى.", ui_interp_changing_turn: "جاري تبديل الدور... 🏓",
+        ui_interp_keep_listening: "ما زلت أستمع... 👂"
+    }
+};
+
+Object.keys(EXTRA_TRANS).forEach(lang => {
+    if (window.UI_DICTIONARY && window.UI_DICTIONARY[lang]) {
+        Object.assign(window.UI_DICTIONARY[lang], EXTRA_TRANS[lang]);
+    }
+});
