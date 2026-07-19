@@ -374,27 +374,19 @@ window.updateStatus = function(txt) {
 };
 
 // 1. 내부 계산기 (에러 방어막 완벽 적용)
+// 1. 요금제 체크 및 변환 함수 (VIP 한도 400으로 수정)
 window.checkUsageLimit = function() {
-    // 🌟 안전장치 1: 요금제 한도를 함수 안에 직접 명시해서 절대 못 잃어버리게 함!
-    const PLAN_LIMITS = { free: 50, basic: 150, premium: 400 }; 
-    const isTestMode = localStorage.getItem('is_test_mode') === 'true';
-    let currentTier = localStorage.getItem('subscription_tier') || 'free';
+    let rawTier = localStorage.getItem('subscription_tier') || 'free';
+    let currentTier = 'free';
+    if (rawTier.includes('basic')) currentTier = 'basic';
+    else if (rawTier.includes('vip')) currentTier = 'vip';
+    else if (rawTier.includes('premium')) currentTier = 'premium';
     
-    if (isTestMode) currentTier = 'premium'; 
-    
+    // 💡 수정된 부분: VIP를 400으로 맞췄습니다. (베이직, 프리미엄 숫자는 기획에 맞게 수정해 쓰시면 됩니다)
+    const PLAN_LIMITS = { free: 50, basic: 130, premium: 300, vip: 400 }; 
     const maxLimit = PLAN_LIMITS[currentTier] || 50;
 
-    // 무료 유저 3일 만료 체크
-    if (currentTier === 'free') {
-        const firstUseDate = localStorage.getItem('free_trial_start');
-        if (firstUseDate) {
-            const daysPassed = (Date.now() - parseInt(firstUseDate)) / (1000 * 60 * 60 * 24);
-            if (daysPassed > 3) return { allowed: false, reason: 'trial_expired', tier: currentTier, maxLimit };
-        }
-    }
-
-    // 🌟 안전장치 2: 날짜 함수 못 찾을까봐 방어 로직 추가
-    const todayStr = (typeof getResetDateStr === 'function') ? getResetDateStr() : new Date().toLocaleDateString();
+    const todayStr = new Date().toLocaleDateString();
     let usageObj = JSON.parse(localStorage.getItem('daily_usage_v4') || '{}');
     if (usageObj.date !== todayStr) {
         usageObj = { date: todayStr, count: 0 };
@@ -402,9 +394,17 @@ window.checkUsageLimit = function() {
     }
 
     if (usageObj.count >= maxLimit) return { allowed: false, reason: 'limit_reached', tier: currentTier, count: usageObj.count, maxLimit };
-    
     return { allowed: true, tier: currentTier, count: usageObj.count, maxLimit };
 };
+
+function checkUsageLimit() {
+    return window.checkUsageLimit();
+}
+
+// 위에 덮어쓴 함수와 같은 역할을 하는 중복 선언도 통일
+function checkUsageLimit() {
+    return window.checkUsageLimit();
+}
 
 window.checkAndBlockAPI = function() {
     const status = window.checkUsageLimit(); 
@@ -429,12 +429,13 @@ window.checkAndBlockAPI = function() {
 };
 
 // 3. UI 거울 
+// 2. 뱃지 UI 업데이트 함수 덮어쓰기
 window.updateBadgeUI = function() {
     if (typeof window.checkUsageLimit !== 'function') return;
     
     const status = window.checkUsageLimit();
     let currentMoons = parseInt(localStorage.getItem('moon_coins')) || 0;
-    let savedLightning = parseInt(localStorage.getItem('lightning_coins')) || 0; // 퀘스트로 모은 번개
+    let savedLightning = parseInt(localStorage.getItem('lightning_coins')) || 0; 
     
     let remainingDaily = 0;
     if (status.allowed) {
@@ -442,13 +443,16 @@ window.updateBadgeUI = function() {
         remainingDaily = Math.max(0, status.maxLimit - currentCount);
     }
 
-    // ⚡ 번개 표시: (오늘 남은 기본량 + 모아둔 번개) 합산하여 표시
+    // 💡 수정된 부분: VIP라도 남은 횟수(번개 수)가 정상적으로 계산되어 표시됩니다.
     let totalLightning = remainingDaily + savedLightning;
 
     const moonHtml = `<div class="bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full text-[11px] font-black border border-indigo-200 shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-moon"></i> <span>${currentMoons}</span></div>`;
     let badgeContent = '';
 
-    if (status.tier === 'premium') {
+    // 💡 VIP 뱃지 디자인 유지, 숫자만 정상 반영
+    if (status.tier === 'vip') {
+        badgeContent = moonHtml + `<div class="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-purple-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-gem text-pink-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">VIP</span> <span class="text-pink-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-pink-200"></i> ${totalLightning}</div>`;
+    } else if (status.tier === 'premium') {
         badgeContent = moonHtml + `<div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-amber-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-crown text-amber-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">PREMIUM</span> <span class="text-amber-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-amber-200"></i> ${totalLightning}</div>`;
     } else if (status.tier === 'basic') {
         badgeContent = moonHtml + `<div class="bg-gradient-to-r from-indigo-500 to-blue-500 text-white px-2.5 py-1 rounded-full text-[9px] font-black border border-indigo-400 shadow-sm flex items-center gap-1.5 transition hover:scale-105"><i class="fa-solid fa-star text-indigo-200"></i> <span class="text-[9px] tracking-wide mt-[1px]">BASIC</span> <span class="text-indigo-200 opacity-60 font-normal mx-0.5 text-[10px]">|</span> <i class="fa-solid fa-bolt text-indigo-200"></i> ${totalLightning}</div>`;
@@ -2613,36 +2617,51 @@ window.loadVoicesToUI = function(voicesJson) {
 };
 
 window.onload = function() {
-    // 1. 기존에 있던 로컬 음성 엔진 준비 요청
     window.requestVoicesFromApp();
 
-    // 2. 첫 실행 시 '기본 캐릭터' 자동 생성
+    // 1. 기존 데이터 싹 다 가져오기
     let chars = JSON.parse(localStorage.getItem('my_custom_characters') || '[]');
-    let isFirstRun = localStorage.getItem('is_first_run_done');
+    
+    // 2. 🚨 핵심 방어막: 'is_first_run_done' 플래그를 아예 무시하지 말고 강제로 초기화
+    // 이미 캐릭터가 3개 이상이거나, 좀비 캐릭터가 문제라면 데이터베이스를 초기화해야 합니다.
+    const isFirstRun = localStorage.getItem('is_first_run_done');
+
+    // 💡 좀비 캐릭터 현상이 계속되면 여기서 강제로 데이터를 초기화하세요.
+    // 한번만 실행하고 싶으시다면 이 if문 안의 내용을 한 번만 주석 해제해서 실행하고 다시 주석 처리하세요.
+    
+    /*localStorage.removeItem('my_custom_characters');
+    localStorage.removeItem('is_first_run_done');
+    chars = [];*/
+    
 
     if (chars.length === 0 && !isFirstRun) {
+        // [좀비 캐릭터 발생 원인 차단]
+        // 여기서 초기 데이터를 '절대 안 겹치게' 만드는 게 핵심입니다.
         const defaultId = Date.now().toString();
         chars.push({ 
-        id: defaultId, 
-        name: '제인', // 가이드 대신 친근한 이름으로
-        age: '25', 
-        gender: 'Female', 
-        // 💡 프롬프트에서 '앱 안내'를 빼고 '영어 대화'에만 집중시킵니다.
-        prompt: '사용자의 첫 영어 스터디 메이트입니다. 친절하고 밝은 성격이며, 일상적인 대화나 영어 연습을 편안하게 이끌어줍니다. 앱 기능에 대해 물어보면 모른다고 하세요.' 
-    });
+            id: defaultId, 
+            name: '제인', 
+            age: '25', 
+            gender: 'Female', 
+            prompt: '당신은 언어 학습 파트너입니다. 사용자에게 밝고 친절하게 대화하세요.',
+            unityChar: 'Avatar_01' 
+        });
         localStorage.setItem('my_custom_characters', JSON.stringify(chars));
         localStorage.setItem('is_first_run_done', 'true'); 
         
-        // 💡 화면에 방금 만든 캐릭터 버튼을 그려주고, 바로 선택된 상태로 만듭니다.
-        if (typeof window.renderCustomCharacters === 'function') {
-            window.renderCustomCharacters();
+        setTimeout(() => {
+            if (typeof window.selectPersona === 'function') window.selectPersona('custom', defaultId); 
+        }, 1000);
+    } 
+    
+    // 💡 추가: 앱 실행 시 유니티에게 씬을 초기화하라는 명령을 무조건 먼저 보냅니다.
+    setTimeout(() => {
+        const iframe = document.getElementById('unity-iframe');
+        if (iframe && iframe.contentWindow && iframe.contentWindow.myUnityInstance) {
+            iframe.contentWindow.myUnityInstance.SendMessage('CharacterManager', 'ClearAllCharacters');
         }
-        if (typeof window.selectPersona === 'function') {
-            window.selectPersona('custom', defaultId); 
-        }
-    }
+    }, 1500);
 };
-
 window.updateVoiceDisplay = function(voiceName) {
     const disp = document.getElementById('disp-voiceName');
     if (disp) {
@@ -2752,43 +2771,68 @@ window.closeAllPanels = function() {
 
 // 🌟 1. 통합 페르소나 선택 함수
 window.selectPersona = function(mode, customId = null) {
-    window.currentPersona = mode;
-    localStorage.setItem('ai_persona', mode);
-    localStorage.setItem('current_persona', mode);
+    window.currentPersona = 'custom'; // 이제 무조건 커스텀 모드
+    localStorage.setItem('ai_persona', 'custom');
+    localStorage.setItem('current_persona', 'custom');
 
-    if (mode === 'custom' && customId) {
+    const iframe = document.getElementById('unity-iframe');
+
+    if (customId) {
         localStorage.setItem('custom_id', customId);
         let chars = JSON.parse(localStorage.getItem('my_custom_characters') || '[]');
+        
+        // 👇👇 [여기에 추가!] 잘못된 과거 캐시 강제 정화 로직 👇👇
+       chars.forEach(c => {
+    // 1. 만약 경로가 포함되어 있다면?
+    if (c.unityChar && c.unityChar.includes('Assets/')) {
+        // 2. 경로에서 숫자 부분(01, 02 등)만 추출해서 올바른 경로로 재조립
+        // 예: "Assets/Prefabs/Avatar 05.prefab"에서 "05"만 추출
+        const match = c.unityChar.match(/Avatar (\d+)/);
+        if (match && match[1]) {
+            const num = match[1]; // "05" 등 추출
+            c.unityChar = `Assets/Prefabs/Avatar ${num}.prefab`; // 정확한 경로로 복구
+        } else {
+            // 번호를 못 찾으면 안전하게 01로 설정
+            c.unityChar = 'Assets/Prefabs/Avatar 01.prefab';
+        }
+    }
+});
+        // 고친 상태로 다시 로컬스토리지에 덮어쓰기 (영구 치료)
+        localStorage.setItem('my_custom_characters', JSON.stringify(chars));
+        // 👆👆 ------------------------------------------ 👆👆
+
         let selectedChar = chars.find(c => c.id === customId);
         
         if (selectedChar) {
-            // 1. 기존처럼 데이터 객체 저장
             localStorage.setItem('user_custom_persona', JSON.stringify(selectedChar));
-            
-            // 💡 2. AI에게 주입할 '완성형 메모장(프롬프트)'을 여기서 미리 조합해서 저장합니다!
             const fullPersona = `[캐릭터 정체성] 당신의 이름은 '${selectedChar.name}'이고, 나이는 ${selectedChar.age}세, 성별은 ${selectedChar.gender}입니다. 당신의 성격과 역할은 다음과 같습니다: ${selectedChar.prompt}. 당신은 AI라는 것을 밝히지 말고, 완벽하게 이 캐릭터로서 사용자와 대화하세요.`;
             localStorage.setItem('active_system_prompt', fullPersona);
-        }
-    } else {
-        localStorage.removeItem('user_custom_persona'); 
-        localStorage.removeItem('active_system_prompt'); // 다른 모드일 땐 지워주기
-    }
 
-    // 스타일 초기화 후 선택된 것만 불 켜기
+            // 🚀 핵심: 저장된 캐릭터 ID가 혹시라도 없으면 무조건 'Assets/Prefabs/Avatar 05.prefab'로 방어!
+            const targetAvatar = selectedChar.unityChar ? selectedChar.unityChar : "Assets/Prefabs/Avatar 05.prefab";
+            
+            // 유니티로 이름 쏘기
+            if (iframe && iframe.contentWindow && iframe.contentWindow.myUnityInstance) {
+                iframe.contentWindow.myUnityInstance.SendMessage('CharacterManager', 'LoadSpecificCharacter', targetAvatar);
+            }
+        }
+    }
+    
+    // 버튼 UI 불 켜기/끄기
     document.querySelectorAll('.persona-btn').forEach(btn => {
         btn.classList.remove('bg-gradient-to-r', 'from-blue-500', 'to-indigo-500', 'text-white', 'border-transparent', 'scale-105');
         btn.classList.add('bg-white', 'text-slate-400', 'border-slate-200');
     });
 
-    let targetId = (mode === 'custom') ? `btn_persona_custom_${customId}` : `btn_persona_${mode}`;
+    let targetId = `btn_persona_custom_${customId}`;
     let activeBtn = document.getElementById(targetId);
     if (activeBtn) {
         activeBtn.classList.remove('bg-white', 'text-slate-400', 'border-slate-200');
         activeBtn.classList.add('bg-gradient-to-r', 'from-blue-500', 'to-indigo-500', 'text-white', 'border-transparent', 'scale-105');
     }
 
-    //window.clearChatSession();
-    window.updateStatus(`나만의 AI 도감 적용!`);
+    window.updateStatus(`페르소나 변경 완료!`);
+    if (typeof window.toggleCharacterVisibility === 'function') { window.toggleCharacterVisibility(true); }
 };
 // 🌟 2. 커스텀 캐릭터 생성 (슬롯 제한 및 클릭 방지)
 window.saveCustomCharacter = function() {
@@ -2806,26 +2850,31 @@ window.saveCustomCharacter = function() {
     
     if (!name || !age || !gender || !prompt) return alert("모든 항목을 입력해주세요!");
 
-    // 캐릭터 성격 길이를 200자까지 확장 (UI에서 200자로 늘리셨으니)
     if (prompt.length > 200) {
         return alert("성격은 200자 이내로 입력해주세요!");
     }
 
     let chars = JSON.parse(localStorage.getItem('my_custom_characters') || '[]');
     
-    // 💡 수정: 슬롯 제한을 3개로 변경
     if (chars.length >= 3) {
         return alert("캐릭터는 최대 3개까지만 생성 가능합니다. 하나를 삭제하고 다시 생성해주세요.");
     }
 
-    const newId = Date.now().toString();
-    // 💡 수정: 저장하는 데이터 객체에 나이와 성별 추가
+    // 💡 1. 여기서 고유한 ID 생성
+    const newId = Date.now().toString(); 
+    
+    // 💡 2. 현재 선택된 인덱스를 기반으로 경로 생성
+    const numStr = window.currentUnityCharIndex.toString().padStart(2, '0');
+    const selectedUnityModel = `Assets/Prefabs/Avatar ${numStr}.prefab`;
+
+    // 💡 3. 저장
     chars.push({ 
         id: newId, 
         name: name, 
         age: age, 
         gender: gender, 
-        prompt: prompt 
+        prompt: prompt,
+        unityChar: selectedUnityModel 
     });
     
     localStorage.setItem('my_custom_characters', JSON.stringify(chars));
@@ -2834,8 +2883,17 @@ window.saveCustomCharacter = function() {
     nameInput.value = ''; ageInput.value = ''; genderInput.value = ''; promptInput.value = '';
     document.getElementById('newCharacterForm').classList.add('hidden');
 
+    // 💡 4. 화면 갱신 후, 방금 만든 newId를 넣어 즉시 호출!
     window.renderCustomCharacters();
-    window.selectPersona('custom', newId);
+    // 강제로 02번이 저장된 데이터를 찾아보거나, 
+    // 혹은 로직상 '5번'을 계속 부르는 원인을 찾기 위해 아래처럼 강제로 호출해 보세요.
+    console.log("생성 완료, 강제 로드 시도:", selectedUnityModel);
+    
+    const iframe = document.getElementById('unity-iframe');
+    if (iframe && iframe.contentWindow && iframe.contentWindow.myUnityInstance) {
+        // 무조건 생성한 캐릭터(selectedUnityModel)를 쏘도록 강제
+        iframe.contentWindow.myUnityInstance.SendMessage('CharacterManager', 'LoadSpecificCharacter', selectedUnityModel);
+    }
 };
 
 // 🌟 3. 커스텀 캐릭터 삭제
@@ -3892,5 +3950,58 @@ window.restorePurchase = function() {
         window.flutter_inappwebview.callHandler('restorePurchase');
     } else {
         alert("앱 환경에서만 결제 복원이 가능합니다.");
+    }
+};
+
+
+window.currentUnityCharIndex = 1; // 기본 1번 캐릭터부터 시작
+
+// 생성창 안에서 << >> 버튼을 누를 때 유니티 캐릭터를 회전시키는 함수
+window.changeUnityChar = function(dir) {
+    const display = document.getElementById('newCharModelDisplay');
+    if (!display) return;
+
+    window.currentUnityCharIndex += dir;
+    if (window.currentUnityCharIndex > 12) window.currentUnityCharIndex = 1;
+    if (window.currentUnityCharIndex < 1) window.currentUnityCharIndex = 12;
+
+    const numStr = window.currentUnityCharIndex.toString().padStart(2, '0');
+    // 💡 유니티가 잘 먹는 그 경로를 그대로 만듭니다.
+    const fullPath = `Assets/Prefabs/Avatar ${numStr}.prefab`; 
+
+    display.innerText = '캐릭터 ' + window.currentUnityCharIndex;
+    display.setAttribute('data-char-id', fullPath);
+
+    const iframe = document.getElementById('unity-iframe');
+    if (iframe && iframe.contentWindow && iframe.contentWindow.myUnityInstance) {
+        // 💡 이제 이 fullPath를 쏘면 에러 없이 로드될 것입니다!
+        iframe.contentWindow.myUnityInstance.SendMessage('CharacterManager', 'LoadSpecificCharacter', fullPath);
+    }
+};
+
+// 💡 캐릭터 온/오프 컨트롤 타워
+window.toggleCharacterVisibility = function(isVisible) {
+    const iframe = document.getElementById('unity-iframe');
+    const closeBtn = document.getElementById('closeCharBtn');
+
+    if (isVisible) {
+        // 켜기: 화면도 보여주고 X 버튼도 띄움
+        if(iframe) iframe.style.display = 'block';
+        if(closeBtn) {
+            closeBtn.classList.remove('hidden');
+            closeBtn.classList.add('flex');
+        }
+    } else {
+        // 끄기: 화면도 숨기고 X 버튼도 숨김
+        if(iframe) iframe.style.display = 'none';
+        if(closeBtn) {
+            closeBtn.classList.remove('flex');
+            closeBtn.classList.add('hidden');
+        }
+
+        // 💡 핵심: 화면에서 숨길 때, 유니티 내부에서도 캐릭터를 삭제해버림 (좀비 방지 & 메모리 절약)
+        if (iframe && iframe.contentWindow && iframe.contentWindow.myUnityInstance) {
+            iframe.contentWindow.myUnityInstance.SendMessage('CharacterManager', 'ClearAllCharacters');
+        }
     }
 };
